@@ -57,3 +57,9 @@
 MP3／FLAC 已用真實本機 WASM 編碼器產生測試音訊並重新讀取，驗證格式、聲道與時長。M4A／MOV 使用正式容器及原有 AAC／H.264 編碼流程；尚未完成瀏覽器端端到端測試。
 
 額外編碼器取自 `@mediabunny/mp3-encoder@1.55.7` 和 `@mediabunny/flac-encoder@1.55.7`，僅把 bare `mediabunny` import 改為本機相對路徑；WASM 內嵌於模組，不呼叫 CDN。授權、來源及重建說明見 `vendor/*-encoder-README.md`、`vendor/*-encoder-LICENSE`。
+
+## GitHub Pages
+
+`.github/workflows/pages.yml` 在 `main` 更新時執行測試、產生 `dist/`，並使用 GitHub Actions 部署。只發布 `dist/` 的公開檔案，不發布 Git、設定資料或測試原始檔。所有網頁資源使用相對路徑，可支援 `/YuMeewMusic/` 專案網址。
+
+啟用前請在 Repository Settings → Pages 選擇 GitHub Actions。私人倉庫需要支援私人 Pages 的 GitHub 方案；否則需由擁有者決定是否公開倉庫。預定網址為 `https://yueyuhoshizora.github.io/YuMeewMusic/`，實際啟用及部署成功後才可使用。

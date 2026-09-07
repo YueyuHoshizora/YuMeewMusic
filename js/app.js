@@ -167,7 +167,7 @@ async function loadAudio(file) {
   update();
   let context;
   try {
-    if (file.size > 150 * 1024 * 1024) throw Error("音樂檔案請小於 150 MB。");
+    if (file.size > 300 * 1024 * 1024) throw Error("音樂檔案大小不可超過 300 MB。");
     context = new AudioContext();
     const buffer = await context.decodeAudioData(await file.arrayBuffer());
     if (buffer.duration > 1200) throw Error("請選擇 20 分鐘以內的音樂。");

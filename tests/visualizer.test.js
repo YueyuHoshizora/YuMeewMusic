@@ -140,3 +140,21 @@ test("vinyl slides out before rotating clockwise at 33⅓ rpm", () => {
   assert.ok(Math.abs(vinylPose(3.8).angle - Math.PI * 2) < 1e-10);
   assert.deepEqual(vinylPose(5), vinylPose(5));
 });
+
+test("vinyl renders independent sleeve and circular record artwork", () => {
+  const sleeve = {width: 800, height: 600}, record = {width: 600, height: 900};
+  const commands = [];
+  const context = new Proxy({}, {
+    get: (_, key) => key === 'createRadialGradient' ? () => ({addColorStop() {}}) : (...args) => commands.push([key, ...args]),
+    set: () => true,
+  });
+  draw({width:1280,height:720,getContext:()=>context}, 3, null, null, {
+    style:18,color:'#c5fa75',strength:70,darkness:45,sleeve,record,
+  });
+  const images = commands.filter(([key]) => key === 'drawImage');
+  assert.equal(images.length, 2);
+  assert.equal(images[0][1], record);
+  assert.equal(images[1][1], sleeve);
+  assert.ok(commands.findIndex(([key]) => key === 'clip') < commands.findIndex(([key]) => key === 'drawImage'));
+  assert.ok(commands.some(([key, angle]) => key === 'rotate' && angle > 0));
+});

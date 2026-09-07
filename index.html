@@ -84,6 +84,20 @@
             </button>
             <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
             <button id="remove-image" class="text-button" hidden type="button">移除圖片</button>
+<div id="vinyl-assets" class="song-details" hidden>
+<span class="field-label">黑膠封套 <span>選填</span></span>
+<button id="sleeve-drop" aria-describedby="sleeve-error" class="upload image-upload" type="button">
+<span aria-hidden="true">▧ ＋</span><strong id="sleeve-name">加入黑膠封套圖片</strong><small>JPG · PNG · WebP · 30 MB 以內</small>
+<span id="sleeve-error" class="file-error" role="status" hidden></span></button>
+<input id="sleeve-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+<button id="remove-sleeve" class="text-button" hidden type="button">移除黑膠封套</button>
+<span class="field-label">唱片封面 <span>選填</span></span>
+<button id="record-drop" aria-describedby="record-error" class="upload image-upload" type="button">
+<span aria-hidden="true">▧ ＋</span><strong id="record-name">加入唱片封面圖片</strong><small>JPG · PNG · WebP · 30 MB 以內</small>
+<span id="record-error" class="file-error" role="status" hidden></span></button>
+<input id="record-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+<button id="remove-record" class="text-button" hidden type="button">移除唱片封面</button>
+</div>
             <div class="song-details">
               <label class="field-label" for="songTitle">歌曲名稱</label>
               <input id="songTitle" class="text-input" type="text" maxlength="120" placeholder="輸入歌曲名稱">

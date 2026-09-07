@@ -13,6 +13,10 @@ const state = {
   ...restored,
   buffer: null,
   image: null,
+  sleeve: null,
+  record: null,
+  sleeveName: "",
+  recordName: "",
   name: "",
   imageName: "",
   url: "",
@@ -101,10 +105,15 @@ function fileError(kind, text = "") {
 }
 
 function update() {
+  $("vinyl-assets").hidden = state.style !== 18;
+  for (const [key, label] of [["sleeve", "黑膠封套"], ["record", "唱片封面"]]) {
+    $(`${key}-name`).textContent = state[`${key}Name`] || `加入${label}圖片`;
+    $(`remove-${key}`).hidden = !state[key];
+  }
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -312,10 +321,10 @@ async function loadAudio(file) {
     update();
   }
 }
-async function loadImage(file) {
+async function loadImage(file, kind = "image") {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.imageLoading = true;
-  fileError("image");
+  fileError(kind);
   update();
   message();
   let url;
@@ -327,10 +336,10 @@ async function loadImage(file) {
     const image = new Image();
     image.src = url;
     await image.decode();
-    state.image = image;
-    state.imageName = file.name;
+    state[kind] = image;
+    state[`${kind}Name`] = file.name;
   } catch (error) {
-    fileError("image", error.message || "請選擇可讀取的圖片檔案。");
+    fileError(kind, error.message || "請選擇可讀取的圖片檔案。");
     message(`無法讀取圖片：${error.message}`);
   } finally {
     if (url) URL.revokeObjectURL(url);
@@ -354,6 +363,16 @@ function bindFile(kind, load) {
 }
 bindFile("audio", loadAudio);
 bindFile("image", loadImage);
+for (const kind of ["sleeve", "record"]) {
+  bindFile(kind, file => loadImage(file, kind));
+  $(`remove-${kind}`).addEventListener("click", () => {
+    if (state.busy || state.loading || state.imageLoading) return;
+    state[kind] = null;
+    state[`${kind}Name`] = "";
+    fileError(kind);
+    update();
+  });
+}
 $("remove-image").addEventListener("click", () => {
   state.image = null;
   state.imageName = "";

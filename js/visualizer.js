@@ -114,7 +114,7 @@ export function draw(canvas, t, b, img, s) {
     c.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
     c.stroke();
   } else if (s.style === 18) {
-    drawVinyl(c, w, h, t, values, gain, img, s.color);
+    drawVinyl(c, w, h, t, values, gain, s.sleeve || img, s.color, s.record);
   } else if (s.style >= 6) {
     drawExtra(c, w, h, t, values, gain, s.style);
   } else if (s.style === 3) {
@@ -371,7 +371,7 @@ export function vinylPose(time) {
   };
 }
 
-function drawVinyl(c, w, h, time, values, gain, image, color) {
+function drawVinyl(c, w, h, time, values, gain, image, color, recordImage) {
   const { slide, angle } = vinylPose(time);
   const cy = h * .47, size = h * .42, radius = h * .20;
   const sleeveX = w / 2 - h * .46, sleeveY = cy - size / 2;
@@ -407,9 +407,20 @@ function drawVinyl(c, w, h, time, values, gain, image, color) {
   c.beginPath();
   c.arc(0, 0, radius * .32, 0, Math.PI * 2);
   c.fill();
+  if (recordImage) {
+    c.save();
+    c.beginPath();
+    c.arc(0, 0, radius * .32, 0, Math.PI * 2);
+    c.clip();
+    const crop = Math.min(recordImage.width, recordImage.height);
+    c.drawImage(recordImage, (recordImage.width - crop) / 2, (recordImage.height - crop) / 2, crop, crop, -radius * .32, -radius * .32, radius * .64, radius * .64);
+    c.restore();
+  }
   c.fillStyle = "#15171c";
+  if (!recordImage) {
   c.fillRect(-radius * .18, -radius * .17, radius * .36, radius * .045);
   c.fillRect(-radius * .12, radius * .13, radius * .24, radius * .025);
+  }
   c.beginPath();
   c.arc(0, 0, radius * .04, 0, Math.PI * 2);
   c.fill();

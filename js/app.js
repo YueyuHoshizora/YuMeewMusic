@@ -4,7 +4,7 @@ import { applyTheme } from "./themes.js";
 import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
-import { loadSettings, saveSettings } from "./settings.js";
+import { DEFAULT_SETTINGS, loadSettings, saveSettings, clearSettings } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 const audio = $("audio");
@@ -90,7 +90,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #songTitle, #lyricist, #composer, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #songTitle, #lyricist, #composer, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -345,6 +345,22 @@ for (const id of ["strength", "darkness", "positionX", "positionY"])
     state[id] = Number($(id).value);
     update();
   });
+$("reset-settings").addEventListener("click", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  if (!window.confirm("確定要重置所有設定嗎？\n\n將恢復預設的佈景、頻譜、位置、比例與匯出設定，並清空歌曲名稱、作詞及作曲。\n目前載入的音樂和圖片會保留。")) return;
+  Object.assign(state, DEFAULT_SETTINGS);
+  for (const id of ["songTitle", "lyricist", "composer", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
+    $(id).value = state[id];
+  }
+  $("spectrum-color").value = state.color;
+  $("aspect-ratio").value = state.aspectRatio;
+  $("appearance-mode").value = state.mode;
+  $("appearance-theme").value = state.theme;
+  applyTheme(state.mode, state.theme);
+  update();
+  const cleared = clearSettings();
+  message(cleared ? "所有設定已恢復預設值。" : "本次設定已重置，但瀏覽器無法清除儲存的設定。");
+});
 $("reset-position").addEventListener("click", () => {
   state.positionX = state.positionY = 0;
   $("positionX").value = $("positionY").value = 0;

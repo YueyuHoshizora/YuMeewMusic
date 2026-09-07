@@ -65,6 +65,8 @@ test("editor initializes, switches formats and reaches download for every format
     },
     videoDimensions,
     STYLES,
+    DEFAULT_SETTINGS,
+    clearSettings: () => true,
     getFormat,
     exportFilename,
     loadSettings: () => ({ ...DEFAULT_SETTINGS }),
@@ -106,5 +108,16 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(elements.get("preview").width, 720);
   assert.equal(elements.get("preview").height, 1280);
   assert.equal(elements.get("preview-aspect").textContent, "9:16");
+  context.window.confirm = () => false;
+  elements.get("reset-settings").listeners.click();
+  assert.equal(elements.get("aspect-ratio").value, "9:16");
+  context.window.confirm = () => true;
+  elements.get("reset-settings").listeners.click();
+  assert.equal(elements.get("aspect-ratio").value, "16:9");
+  assert.equal(elements.get("format").value, "mp4");
+  assert.equal(elements.get("songTitle").value, "");
+  assert.equal(elements.get("appearance-mode").value, "dark");
+  assert.equal(elements.get("export").disabled, false);
+  assert.match(elements.get("audio-info").textContent, /01:05/);
   assert.equal(downloads.length, 5);
 });

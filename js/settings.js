@@ -74,3 +74,12 @@ export function saveSettings(settings, getStorage = () => window.localStorage) {
     return false;
   }
 }
+
+export function clearSettings(getStorage = () => window.localStorage) {
+  try {
+    getStorage().removeItem(KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}

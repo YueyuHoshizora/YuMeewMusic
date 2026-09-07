@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_SETTINGS, loadSettings, saveSettings, validateSettings } from "../js/settings.js";
+import { DEFAULT_SETTINGS, clearSettings, loadSettings, saveSettings, validateSettings } from "../js/settings.js";
 
 function memoryStorage() {
   const data = new Map();
@@ -90,4 +90,12 @@ test("new animation choices persist while old selections remain compatible", () 
     assert.equal(loadSettings(() => storage).style, style);
   }
   assert.equal(validateSettings({ style: 12 }).style, 0);
+});
+
+test("reset removes only this app's preferences", () => {
+  const data = new Map([["yumeew.settings.v1", "{}"], ["unrelated", "keep"]]);
+  assert.equal(clearSettings(() => ({ removeItem: key => data.delete(key) })), true);
+  assert.equal(data.has("yumeew.settings.v1"), false);
+  assert.equal(data.get("unrelated"), "keep");
+  assert.equal(clearSettings(() => { throw Error("Blocked"); }), false);
 });

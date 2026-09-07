@@ -221,14 +221,15 @@ test('vertical subtitles flow downward with subsequent columns to the left',()=>
  assert.equal(text[2][2],text[0][2]);
 });
 
-test('identity image is positioned independently and remains in frame at slider endpoints',()=>{
- for(const position of [0,50,100]) {
+test('identity image is positioned independently, scales from 10–300%, and remains in frame',()=>{
+ for(const position of [0,50,100]) for(const identityScale of [10,100,300]) {
   const calls=[]; const logo={width:400,height:200};
   const c=new Proxy({}, {get:(_,key)=>(...args)=>calls.push([key,...args]),set:()=>true});
-  draw({width:1280,height:720,getContext:()=>c},0,null,{width:100,height:100},{style:19,darkness:45,identityType:'image',identityImage:logo,identityX:position,identityY:position});
+  draw({width:1280,height:720,getContext:()=>c},0,null,{width:100,height:100},{style:19,darkness:45,identityType:'image',identityImage:logo,identityX:position,identityY:position,identityScale});
   const [,image,x,y,w,h]=calls.filter(([key])=>key==='drawImage').at(-1);
   assert.equal(image,logo);
   assert.ok(x>=0 && y>=0 && x+w<=1280 && y+h<=720);
   assert.equal(w/h,2);
+  assert.ok(Math.abs(w-720*.16*identityScale/100)<1e-9);
  }
 });

@@ -270,6 +270,8 @@
                 <button id="identity-drop" class="upload image-upload" type="button" aria-describedby="identity-error"><span aria-hidden="true">▧</span><strong id="identity-name">選擇識別圖片</strong><small>JPG · PNG · WebP</small><span id="identity-error" class="file-error" role="status" hidden></span></button>
                 <input id="identity-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
                 <button id="remove-identity" class="text-button" type="button" hidden>移除識別圖片</button>
+                <label class="range-label" for="identityScale">圖片縮放<output id="identityScale-value">100%</output></label>
+                <input id="identityScale" type="range" min="10" max="300" step="5" value="100">
               </div>
               <label class="range-label" for="identityX">水平位置<output id="identityX-value">90%</output></label>
               <input id="identityX" type="range" min="0" max="100" value="90">

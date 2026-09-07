@@ -79,6 +79,7 @@ function persistSettings() {
     identityData: state.identityData,
     identityX: state.identityX,
     identityY: state.identityY,
+    identityScale: state.identityScale,
     songTitle: state.songTitle,
     lyricist: state.lyricist,
     composer: state.composer,
@@ -134,6 +135,8 @@ function update() {
   $("identity-image-controls").hidden = state.identityType !== "image";
   $("identity-name").textContent = state.identityImage ? "已載入識別圖片" : "選擇識別圖片";
   $("remove-identity").hidden = !state.identityData;
+  $("identityScale").value = state.identityScale;
+  $("identityScale-value").textContent = `${state.identityScale}%`;
   for (const key of ["identityX", "identityY"]) {
     $(key).value = state[key];
     $(`${key}-value`).textContent = `${state[key]}%`;
@@ -160,7 +163,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#identityType, #identityText, #identityX, #identityY, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#identityType, #identityText, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -820,10 +823,10 @@ $("subtitleFont").addEventListener("change", () => {
   update();
 });
 
-for (const id of ["identityType", "identityText", "identityX", "identityY"]) {
+for (const id of ["identityType", "identityText", "identityX", "identityY", "identityScale"]) {
   $(id).addEventListener(id === "identityType" ? "change" : "input", () => {
     if (state.busy || state.loading || state.imageLoading) return;
-    state[id] = id === "identityX" || id === "identityY" ? Number($(id).value) : $(id).value;
+    state[id] = ["identityX", "identityY", "identityScale"].includes(id) ? Number($(id).value) : $(id).value;
     update();
   });
 }

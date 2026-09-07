@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   identityData: "",
   identityX: 90,
   identityY: 10,
+  identityScale: 100,
   songTitle: "",
   lyricist: "",
   composer: "",
@@ -84,6 +85,8 @@ export function validateSettings(value) {
   if (["text", "image"].includes(source.identityType)) result.identityType = source.identityType;
   if (typeof source.identityText === "string") result.identityText = source.identityText.slice(0, 80);
   if (typeof source.identityData === "string" && source.identityData.length <= 1500000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(source.identityData)) result.identityData = source.identityData;
+  if (Number.isFinite(source.identityScale) && source.identityScale >= 10 && source.identityScale <= 300)
+    result.identityScale = source.identityScale;
   return result;
 }
 

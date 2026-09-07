@@ -538,7 +538,8 @@ function drawIdentity(c, width, height, settings) {
   const unit = Math.min(width, height);
   const size = unit * .03;
   c.font = `600 ${size}px sans-serif`;
-  const scale = image ? Math.min(unit * .16 / image.width, unit * .16 / image.height) : 1;
+  const identityScale = Math.max(10, Math.min(300, settings.identityScale ?? 100)) / 100;
+  const scale = image ? Math.min(unit * .16 / image.width, unit * .16 / image.height) * identityScale : 1;
   const w = image ? image.width * scale : Math.min(width * .8, c.measureText(text).width);
   const h = image ? image.height * scale : size * 1.4;
   const x = (width - w) * Math.max(0, Math.min(100, settings.identityX ?? 90)) / 100;

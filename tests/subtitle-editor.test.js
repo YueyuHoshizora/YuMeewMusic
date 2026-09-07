@@ -12,7 +12,7 @@ test('standalone subtitle editor has every referenced control and only local ass
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
   assert.match(script, /saveStoredMedia\('subtitle'/);
   assert.match(script, /serializeSubtitles/);
-  assert.match(script, /list\.scrollTo\(\{ top:/);
+  assert.doesNotMatch(script, /scrollCueToCenter|scrollIntoView/);
   assert.match(script, /createUndoHistory\(5\)/);
   assert.ok(ids.includes('undo-edit'));
   assert.ok(ids.includes('redo-edit'));

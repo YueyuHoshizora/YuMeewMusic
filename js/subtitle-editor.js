@@ -1,7 +1,7 @@
 import { applyTheme } from './themes.js';
 import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
-import { formatSubtitleTime, parseSubtitleTime, parseSubtitles, serializeSubtitles, subtitleIndexAt } from './subtitles.js';
+import { formatSubtitleTime, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
 import { createUndoHistory } from './undo-history.js';
 
 const $ = id => document.getElementById(id);
@@ -296,29 +296,8 @@ function downloadSrt() {
   status(`已下載 ${srtFilename()}`, 'success');
 }
 
-function scrollCueToCenter(index) {
-  const list = $('cue-list');
-  const item = list.querySelector(`.cue-list-item[data-index="${index}"]`);
-  if (!item) return;
-  const listBox = list.getBoundingClientRect();
-  const itemBox = item.getBoundingClientRect();
-  const outside = itemBox.top < listBox.top || itemBox.bottom > listBox.bottom;
-  if (!outside) return;
-  const centeredTop = list.scrollTop + itemBox.top - listBox.top - (list.clientHeight - itemBox.height) / 2;
-  list.scrollTo({ top: Math.max(0, centeredTop), behavior: 'smooth' });
-}
-
-function updatePlayhead(followPlayback = false) {
+function updatePlayhead() {
   const time = audio.currentTime || 0;
-  const activeIndex = subtitleIndexAt({ cues: state.cues }, time);
-  if (followPlayback && activeIndex !== state.selected) {
-    state.selected = activeIndex;
-    textHistoryCue = null;
-    renderList();
-    renderTimeline();
-    renderForm();
-    if (activeIndex >= 0) requestAnimationFrame(() => scrollCueToCenter(activeIndex));
-  }
   $('playhead').style.left = `${Math.max(0, Math.min(100, time / state.duration * 100))}%`;
   $('editor-current-time').textContent = editorTime(time);
   document.querySelectorAll('.cue-list-item').forEach((item, index) => {
@@ -400,15 +379,15 @@ $('timeline').addEventListener('pointerdown', event => {
   if (event.target !== $('timeline') && event.target !== $('waveform') && event.target !== $('cue-bands')) return;
   const rect = $('timeline').getBoundingClientRect();
   audio.currentTime = Math.max(0, Math.min(state.duration, (event.clientX - rect.left) / rect.width * state.duration));
-  updatePlayhead(true);
+  updatePlayhead();
 });
 $('timeline').addEventListener('keydown', event => {
   if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
   event.preventDefault();
   audio.currentTime = Math.max(0, Math.min(state.duration, (audio.currentTime || 0) + (event.key === 'ArrowRight' ? 1 : -1) * (event.shiftKey ? 5 : .1)));
-  updatePlayhead(true);
+  updatePlayhead();
 });
-audio.addEventListener('timeupdate', () => updatePlayhead(true));
+audio.addEventListener('timeupdate', updatePlayhead);
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) { state.duration = audio.duration; $('editor-duration').textContent = editorTime(state.duration); renderTimeline(); } });
 $('add-cue').addEventListener('click', addCue);
 $('delete-cue').addEventListener('click', deleteCue);

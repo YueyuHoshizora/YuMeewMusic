@@ -55,7 +55,7 @@ test('edited subtitles serialize as standard SRT and can be parsed again',()=>{
  assert.equal(parseSubtitleTime('01:05.250'),65.25);
 });
 
-test('current playback time selects its matching subtitle cue',()=>{
+test('current playback time identifies its matching subtitle cue',()=>{
  const data={cues:[{start:1,end:2,text:'一'},{start:3,end:5,text:'二'}]};
  assert.equal(subtitleIndexAt(data,0),-1);
  assert.equal(subtitleIndexAt(data,1),0);

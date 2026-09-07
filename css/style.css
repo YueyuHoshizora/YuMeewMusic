@@ -404,12 +404,6 @@ h1 span {
   outline-offset: 4px;
   border-radius: 4px;
 }
-.screen-settings > summary span {
-  color: var(--muted);
-  font-family: monospace;
-  font-size: 12px;
-  margin-right: 8px;
-}
 .setting-select {
   width: 100%;
   height: 39px !important;
@@ -739,7 +733,7 @@ header { flex-wrap: nowrap; }
 .song-settings > summary {
   cursor: pointer;
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   padding: 8px 0;
 }

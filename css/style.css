@@ -316,7 +316,7 @@ h1 span {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 23px 0 15px;
+  margin: 16px 0 10px;
 }
 .styles-heading > span {
   font-size: 12px;
@@ -324,21 +324,29 @@ h1 span {
 }
 .styles {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, 76px);
+  gap: 8px;
 }
 .style-card {
   position: relative;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 9px;
-  padding: 4px 10px 11px;
-  text-align: left;
+  border-radius: 8px;
+  width: 76px;
+  height: 76px;
+  padding: 6px 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
   color: var(--muted);
 }
 .style-card svg {
-  width: 100%;
-  height: 57px;
+  width: 52px;
+  height: 32px;
+  flex-shrink: 0;
 }
 .style-card > span {
   font-size: 12px;
@@ -354,8 +362,8 @@ h1 span {
 }
 .style-card svg.check {
   position: absolute;
-  right: 10px;
-  bottom: 13px;
+  right: 3px;
+  top: 3px;
   width: 13px;
   height: 13px;
 }

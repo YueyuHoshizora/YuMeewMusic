@@ -71,6 +71,19 @@
               ><span id="audio-error" class="file-error" role="status" hidden></span>
             </button>
             <input id="audio-input" type="file" accept="audio/*" hidden />
+            <details id="trim-panel" class="song-details song-settings" hidden>
+              <summary>音樂裁剪</summary>
+              <label class="field-label" for="trim-start">開始時間（秒）</label>
+              <input id="trim-start" class="text-input" type="number" min="0" step="0.01" value="0">
+              <input id="trim-start-range" aria-label="裁剪開始時間" type="range" min="0" step="0.01" value="0">
+              <label class="field-label" for="trim-end">結束時間（秒）</label>
+              <input id="trim-end" class="text-input" type="number" min="0" step="0.01">
+              <input id="trim-end-range" aria-label="裁剪結束時間" type="range" min="0" step="0.01">
+              <p id="trim-info" class="position-help" role="status"></p>
+              <button id="trim-apply" class="text-button" type="button">套用裁剪</button>
+              <button id="trim-reset" class="text-button" type="button">恢復完整音樂</button>
+              <p class="position-help">套用後可播放試聽，匯出僅包含選取片段。原始檔案不會修改。</p>
+            </details>
             <span class="field-label">背景圖片 <span>選填</span></span>
             <button
               id="image-drop"

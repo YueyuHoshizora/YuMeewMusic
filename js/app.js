@@ -12,6 +12,8 @@ const restored = loadSettings();
 const state = {
   ...restored,
   buffer: null,
+  originalBuffer: null,
+  trimStart: 0,
   image: null,
   sleeve: null,
   record: null,
@@ -112,10 +114,11 @@ function update() {
     $(`remove-${key}`).hidden = !state[key];
   }
   $("textFadeAfter-value").textContent = `${state.textFadeAfter} 秒`;
+  $("trim-panel").hidden = !state.originalBuffer;
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -313,6 +316,9 @@ async function loadAudio(file) {
     state.url = URL.createObjectURL(file);
     audio.src = state.url;
     state.buffer = buffer;
+    state.originalBuffer = buffer;
+    state.trimStart = 0;
+    resetTrimInputs();
     state.name = file.name;
   } catch (error) {
     fileError("audio", error.message || "請選擇可讀取的音樂檔案。");
@@ -384,7 +390,10 @@ $("remove-image").addEventListener("click", () => {
 $("dismiss-message").addEventListener("click", () => message());
 $("play").addEventListener("click", async () => {
   try {
-    if (audio.paused) await audio.play();
+    if (audio.paused) {
+      if (audio.currentTime < state.trimStart || audio.currentTime >= state.trimStart + state.buffer.duration) audio.currentTime = state.trimStart;
+      await audio.play();
+    }
     else audio.pause();
   } catch {
     message("播放失敗，請重新載入音樂。");
@@ -396,10 +405,10 @@ for (const event of ["play", "pause", "ended"])
     $("play").setAttribute("aria-label", audio.paused ? "播放" : "暫停");
   });
 $("seek").addEventListener("input", () => {
-  audio.currentTime = Number($("seek").value);
+  audio.currentTime = state.trimStart + Number($("seek").value);
 });
 $("restart").addEventListener("click", () => {
-  audio.currentTime = 0;
+  audio.currentTime = state.trimStart;
 });
 for (const id of ["strength", "darkness", "positionX", "positionY", "textX", "textY", "textSize", "textFadeAfter"])
   $(id).addEventListener("input", () => {
@@ -487,9 +496,11 @@ $("export").addEventListener("click", async () => {
 });
 
 function animate() {
-  if (!state.busy) draw($("preview"), audio.currentTime || 0, state.buffer, state.image, state);
-  $("time").textContent = formatTime(audio.currentTime || 0);
-  $("seek").value = audio.currentTime || 0;
+  enforceTrimEnd();
+  const time = Math.max(0, (audio.currentTime || 0) - state.trimStart);
+  if (!state.busy) draw($("preview"), time, state.buffer, state.image, state);
+  $("time").textContent = formatTime(time);
+  $("seek").value = time;
   requestAnimationFrame(animate);
 }
 window.addEventListener("beforeunload", (event) => {
@@ -550,3 +561,51 @@ if (document.modelContext?.registerTool) {
 }
 update();
 animate();
+
+function resetTrimInputs() {
+  for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
+    const input = $(`trim-${edge}${suffix}`);
+    input.max = state.originalBuffer.duration;
+    input.value = edge === "start" ? 0 : state.originalBuffer.duration;
+  }
+  $("trim-info").textContent = `完整音樂：${state.originalBuffer.duration.toFixed(2)} 秒`;
+}
+for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
+  $(`trim-${edge}${suffix}`).addEventListener("input", () => {
+    $(`trim-${edge}${suffix ? "" : "-range"}`).value = $(`trim-${edge}${suffix}`).value;
+    const length = Number($("trim-end").value) - Number($("trim-start").value);
+    $("trim-info").textContent = length > 0 ? `選取 ${length.toFixed(2)} 秒，按「套用裁剪」生效` : "結束時間必須大於開始時間";
+  });
+}
+$("trim-apply").addEventListener("click", async () => {
+  if (!state.originalBuffer || state.busy || state.loading || state.imageLoading) return;
+  state.loading = true;
+  audio.pause();
+  update();
+  try {
+    const { trimAudio } = await import("./trim.js");
+    const result = trimAudio(state.originalBuffer, Number($("trim-start").value), Number($("trim-end").value));
+    state.buffer = result.buffer;
+    state.trimStart = result.start;
+    audio.currentTime = state.trimStart;
+    $("trim-info").textContent = `已套用：${state.buffer.duration.toFixed(2)} 秒`;
+    message("裁剪已套用，可播放試聽或匯出。");
+  } catch (error) { message(error.message || "裁剪失敗，請重新設定範圍。"); }
+  finally { state.loading = false; update(); }
+});
+$("trim-reset").addEventListener("click", () => {
+  if (!state.originalBuffer || state.busy || state.loading || state.imageLoading) return;
+  audio.pause();
+  state.buffer = state.originalBuffer;
+  state.trimStart = 0;
+  audio.currentTime = 0;
+  resetTrimInputs();
+  update();
+});
+function enforceTrimEnd() {
+  if (state.buffer && !audio.paused && audio.currentTime >= state.trimStart + state.buffer.duration) {
+    audio.pause();
+    audio.currentTime = state.trimStart + state.buffer.duration;
+  }
+}
+audio.addEventListener("timeupdate", enforceTrimEnd);

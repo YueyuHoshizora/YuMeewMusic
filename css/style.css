@@ -740,23 +740,16 @@ header {
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
 .reset-confirm { border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); padding: 9px 16px; font-size: 14px; }
 
-/* Keep preview visible while the surrounding settings scroll. */
+/* Keep only the preview docked; let every rhythm option expand with the page. */
 
   .center {
-    position: sticky;
-    top: 16px;
+    position: relative;
     align-self: start;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    height: calc(100dvh - 32px);
-    overflow: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-    scroll-padding-top: 16px;
   }
   .preview-dock {
-    flex: 0 0 auto;
+    position: sticky;
+    top: 16px;
     z-index: 2;
     background: var(--background);
     padding-top: 4px;
@@ -769,14 +762,10 @@ header {
     width: min(100%, 360px, calc(max(80px, min(55dvh, 100dvh - 360px)) * 9 / 16));
   }
   .preview-dock .transport { margin-bottom: 0; }
-  .center .styles-heading { flex: 0 0 auto; }
   .center .styles {
-    min-height: 0;
-    overflow-y: auto;
+    overflow: visible;
     align-content: start;
     padding-bottom: 12px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
   }
 
 

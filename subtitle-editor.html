@@ -23,7 +23,13 @@
           <h1>字幕編輯器<span>。</span></h1>
           <p>拖曳時間軸上的字幕色帶，或直接輸入時間與文字。儲存後會覆寫主畫面目前的字幕。</p>
         </div>
-        <div id="editor-status" class="editor-status" role="status">正在讀取瀏覽器中的素材…</div>
+        <div class="editor-heading-tools">
+          <div class="history-actions" aria-label="字幕編輯歷史">
+            <button id="undo-edit" class="editor-small-button" type="button" disabled>↶ 復原</button>
+            <button id="redo-edit" class="editor-small-button" type="button" disabled>↷ 反復原</button>
+          </div>
+          <div id="editor-status" class="editor-status" role="status">正在讀取瀏覽器中的素材…</div>
+        </div>
       </section>
 
       <section class="editor-player panel">

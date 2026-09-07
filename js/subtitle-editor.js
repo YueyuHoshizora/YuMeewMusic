@@ -2,10 +2,13 @@ import { applyTheme } from './themes.js';
 import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
 import { formatSubtitleTime, parseSubtitleTime, parseSubtitles, serializeSubtitles, subtitleIndexAt } from './subtitles.js';
+import { createUndoHistory } from './undo-history.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
 const state = { cues: [], selected: -1, duration: 60, subtitleName: 'edited-subtitles.srt', dirty: false, audioUrl: '', waveformBuffer: null };
+const editHistory = createUndoHistory(5);
+let textHistoryCue = null;
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 
@@ -32,6 +35,38 @@ function currentCue() {
   return state.cues[state.selected] || null;
 }
 
+function editorSnapshot() {
+  return { cues: state.cues.map(cue => ({ ...cue })), selected: state.selected };
+}
+
+function syncHistoryButtons() {
+  $('undo-edit').disabled = !editHistory.canUndo;
+  $('redo-edit').disabled = !editHistory.canRedo;
+}
+
+function recordHistory() {
+  editHistory.checkpoint(editorSnapshot());
+  syncHistoryButtons();
+}
+
+function restoreHistory(snapshot, action) {
+  if (!snapshot) return;
+  state.cues = snapshot.cues;
+  state.selected = Math.max(-1, Math.min(snapshot.selected, state.cues.length - 1));
+  state.dirty = true;
+  textHistoryCue = null;
+  status(`已${action}上一個操作`, 'success');
+  render();
+}
+
+function undoEdit() {
+  restoreHistory(editHistory.undo(editorSnapshot()), '復原');
+}
+
+function redoEdit() {
+  restoreHistory(editHistory.redo(editorSnapshot()), '反復原');
+}
+
 function markDirty() {
   state.dirty = true;
   status('尚未儲存的修改', '');
@@ -40,6 +75,7 @@ function markDirty() {
 function selectCue(index, seek = false) {
   if (!state.cues.length) index = -1;
   state.selected = Math.max(-1, Math.min(state.cues.length - 1, index));
+  textHistoryCue = null;
   if (seek && currentCue() && audio.src) audio.currentTime = currentCue().start;
   render();
 }
@@ -71,10 +107,11 @@ function startBandDrag(event, index, mode) {
   const cue = state.cues[index];
   const timelineWidth = $('timeline').getBoundingClientRect().width;
   if (!cue || timelineWidth <= 0) return;
-  const drag = { pointerId: event.pointerId, x: event.clientX, start: cue.start, end: cue.end, mode };
+  const drag = { pointerId: event.pointerId, x: event.clientX, start: cue.start, end: cue.end, mode, recorded: false };
   band.setPointerCapture(event.pointerId);
   const move = moveEvent => {
     if (moveEvent.pointerId !== drag.pointerId) return;
+    if (!drag.recorded) { recordHistory(); drag.recorded = true; }
     const delta = (moveEvent.clientX - drag.x) / timelineWidth * state.duration;
     if (mode === 'start') cue.start = Math.max(0, Math.min(drag.end - .1, drag.start + delta));
     else if (mode === 'end') cue.end = Math.max(drag.start + .1, Math.min(state.duration, drag.end + delta));
@@ -146,6 +183,7 @@ function render() {
   renderList();
   renderTimeline();
   renderForm();
+  syncHistoryButtons();
 }
 
 function applyTimeField(id, key) {
@@ -159,6 +197,7 @@ function applyTimeField(id, key) {
     $(id).value = editorTime(cue[key]);
     return;
   }
+  recordHistory();
   cue[key] = key === 'end' ? Math.min(state.duration, value) : value;
   const selected = cue;
   state.cues.sort((a, b) => a.start - b.start || a.end - b.end);
@@ -171,9 +210,12 @@ function adjustCueTime(key, delta) {
   const cue = currentCue();
   if (!cue || !['start', 'end'].includes(key) || !Number.isFinite(delta)) return;
   const value = Math.round((cue[key] + delta) * 1000) / 1000;
-  cue[key] = key === 'start'
+  const adjusted = key === 'start'
     ? Math.max(0, Math.min(cue.end - .1, value))
     : Math.max(cue.start + .1, Math.min(state.duration, value));
+  if (adjusted === cue[key]) return;
+  recordHistory();
+  cue[key] = adjusted;
   const selected = cue;
   state.cues.sort((a, b) => a.start - b.start || a.end - b.end);
   state.selected = state.cues.indexOf(selected);
@@ -182,6 +224,7 @@ function adjustCueTime(key, delta) {
 }
 
 function addCue() {
+  recordHistory();
   const start = Math.max(0, Math.min(state.duration - .1, audio.currentTime || currentCue()?.end || 0));
   const cue = { start, end: Math.min(state.duration, start + 3), text: '新字幕' };
   if (cue.end <= cue.start) cue.end = cue.start + 3;
@@ -197,6 +240,7 @@ function addCue() {
 
 function deleteCue() {
   if (!currentCue()) return;
+  recordHistory();
   state.cues.splice(state.selected, 1);
   state.selected = Math.min(state.selected, state.cues.length - 1);
   markDirty();
@@ -206,6 +250,7 @@ function deleteCue() {
 function duplicateCue() {
   const cue = currentCue();
   if (!cue) return;
+  recordHistory();
   const length = cue.end - cue.start;
   const copy = { start: Math.min(state.duration, cue.end), end: Math.min(state.duration, cue.end + length), text: cue.text };
   if (copy.end <= copy.start) { copy.start = cue.start; copy.end = cue.end; }
@@ -268,6 +313,7 @@ function updatePlayhead(followPlayback = false) {
   const activeIndex = subtitleIndexAt({ cues: state.cues }, time);
   if (followPlayback && activeIndex !== state.selected) {
     state.selected = activeIndex;
+    textHistoryCue = null;
     renderList();
     renderTimeline();
     renderForm();
@@ -375,9 +421,27 @@ $('cue-end').addEventListener('change', () => applyTimeField('cue-end', 'end'));
 $('cue-form').querySelectorAll('[data-time-field]').forEach(button => button.addEventListener('click', () => {
   adjustCueTime(button.dataset.timeField, Number(button.dataset.timeDelta));
 }));
-$('cue-text').addEventListener('input', () => { const cue = currentCue(); if (!cue) return; cue.text = $('cue-text').value; markDirty(); renderList(); renderTimeline(); });
+$('cue-text').addEventListener('input', () => {
+  const cue = currentCue();
+  if (!cue) return;
+  if (textHistoryCue !== cue) { recordHistory(); textHistoryCue = cue; }
+  cue.text = $('cue-text').value;
+  markDirty();
+  renderList();
+  renderTimeline();
+});
+$('cue-text').addEventListener('blur', () => { textHistoryCue = null; });
+$('undo-edit').addEventListener('click', undoEdit);
+$('redo-edit').addEventListener('click', redoEdit);
 $('download-subtitles').addEventListener('click', downloadSrt);
 $('save-subtitles').addEventListener('click', saveAndReturn);
+document.addEventListener('keydown', event => {
+  if (!(event.ctrlKey || event.metaKey) || !['z', 'y'].includes(event.key.toLowerCase())) return;
+  if (event.target?.matches?.('input, textarea, [contenteditable="true"]')) return;
+  event.preventDefault();
+  if (event.key.toLowerCase() === 'y' || event.shiftKey) redoEdit();
+  else undoEdit();
+});
 window.addEventListener('resize', () => drawWaveform(state.waveformBuffer));
 window.addEventListener('beforeunload', event => { if (!state.dirty) return; event.preventDefault(); event.returnValue = ''; });
 window.addEventListener('unload', () => { if (state.audioUrl) URL.revokeObjectURL(state.audioUrl); });

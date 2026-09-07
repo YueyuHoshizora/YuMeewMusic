@@ -84,6 +84,7 @@ function persistSettings() {
     subtitleMargin: state.subtitleMargin,
     subtitleSize: state.subtitleSize,
     subtitleDirection: state.subtitleDirection,
+    subtitleTypewriter: state.subtitleTypewriter,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -129,6 +130,7 @@ function update() {
   $("subtitleMargin").value = $("subtitleMargin-range").value = state.subtitleMargin;
   $("subtitleSize").value = state.subtitleSize;
   $("subtitleDirection").value = state.subtitleDirection;
+  $("subtitleTypewriter").checked = state.subtitleTypewriter;
   $("subtitleMargin-value").textContent = `${state.subtitleMargin}%`;
   $("subtitleSize-value").textContent = `${state.subtitleSize}%`;
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
@@ -138,7 +140,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -780,5 +782,11 @@ for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize"]) {
 $("subtitleDirection").addEventListener("change", () => {
   if (state.busy || state.loading || state.imageLoading) return;
   state.subtitleDirection = $("subtitleDirection").value;
+  update();
+});
+
+$("subtitleTypewriter").addEventListener("change", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.subtitleTypewriter = $("subtitleTypewriter").checked;
   update();
 });

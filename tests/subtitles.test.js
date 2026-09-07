@@ -29,3 +29,15 @@ test('TXT supports SRT ranges and plain timestamp lines',()=>{
  assert.equal(subtitleAt(plain,4.5,10),'第二行');
  assert.equal(subtitleAt(plain,10,10),'');
 });
+
+test('typewriter follows cue timestamps and retains complete Unicode characters',()=>{
+ const data={cues:[{start:2,end:6,text:'甲乙丙丁'}]};
+ assert.equal(subtitleAt(data,2,10,true),'甲');
+ assert.equal(subtitleAt(data,4,10,true),'甲乙丙');
+ assert.equal(subtitleAt(data,5.9,10,true),'甲乙丙丁');
+ assert.equal(subtitleAt(data,6,10,true),'');
+ assert.equal(subtitleAt(data,2,10,false),'甲乙丙丁');
+ const emoji={cues:[{start:0,end:Infinity,text:'👨‍👩‍👧‍👦好'}]};
+ assert.equal(subtitleAt(emoji,0,4,true),'👨‍👩‍👧‍👦');
+ assert.equal(subtitleAt(emoji,3,4,true),'👨‍👩‍👧‍👦好');
+});

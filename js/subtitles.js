@@ -62,7 +62,17 @@ export function parseSubtitles(source, extension) {
   if (!cues.length) throw Error('找不到有效的字幕時間碼與文字。');
   return {cues:cues.sort((a,b)=>a.start-b.start)};
 }
-export function subtitleAt(data, time, duration) {
+const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter(undefined, {granularity:'grapheme'}) : null;
+export function subtitleCharacters(text) {
+  return segmenter ? Array.from(segmenter.segment(text), part=>part.segment) : Array.from(text);
+}
+export function subtitleAt(data, time, duration, typewriter = false) {
   if (!data || time < 0 || time >= duration) return '';
-  return data.cues.filter(cue=>time >= cue.start && time < cue.end).map(cue=>cue.text).join('\n');
+  return data.cues.filter(cue=>time >= cue.start && time < cue.end) .map(cue=>{
+    if (!typewriter) return cue.text;
+    const characters = subtitleCharacters(cue.text);
+    const span = Math.min(cue.end, duration) - cue.start;
+    const count = Math.min(characters.length, 1 + Math.floor((time - cue.start) / span * characters.length));
+    return characters.slice(0, count).join('');
+  }).join('\n');
 }

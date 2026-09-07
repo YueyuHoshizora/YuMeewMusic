@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   subtitleMargin: 5,
   subtitleSize: 100,
   subtitleDirection: "horizontal",
+  subtitleTypewriter: false,
   style: 0,
   color: "#c5fa75",
   strength: 70,
@@ -69,6 +70,7 @@ export function validateSettings(value) {
     if (Number.isFinite(source[key]) && source[key] >= min && source[key] <= max) result[key] = source[key];
   }
   if (["horizontal", "vertical"].includes(source.subtitleDirection)) result.subtitleDirection = source.subtitleDirection;
+  if (typeof source.subtitleTypewriter === "boolean") result.subtitleTypewriter = source.subtitleTypewriter;
   return result;
 }
 

@@ -472,7 +472,7 @@ function drawVinyl(c, w, h, time, values, gain, image, color, recordImage) {
 }
 
 function drawSubtitles(c, width, height, settings, time) {
-  const text = subtitleAt(settings.subtitles, time + (settings.trimStart || 0), settings.originalBuffer?.duration || settings.buffer?.duration || 0);
+  const text = subtitleAt(settings.subtitles, time + (settings.trimStart || 0), settings.originalBuffer?.duration || settings.buffer?.duration || 0, settings.subtitleTypewriter);
   if (!text) return;
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);

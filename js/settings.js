@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   positionY: 0,
   resolution: "1080",
   aspectRatio: "16:9",
-  fps: "30",
+  fps: "60",
   format: "mp4",
   mode: "dark",
   theme: "lime",

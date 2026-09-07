@@ -103,7 +103,7 @@ test("editor initializes, switches formats and reaches download for every format
     assert.equal(elements.get("fps").disabled, !type.video);
     await elements.get("export").listeners.click();
     assert.equal(encoded.at(-1), format);
-    assert.equal(downloads.at(-1), exportFilename("song.wav", format, "1080", "30"));
+    assert.equal(downloads.at(-1), exportFilename("song.wav", format, "1080", "60"));
     assert.match(elements.get("message-text").textContent, /下載已開始/);
     assert.equal(elements.get("export").disabled, false);
   }

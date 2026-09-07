@@ -1,5 +1,6 @@
+import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
-import { encodeVideo } from "./export.js";
+import { encodeMedia } from "./export.js";
 import { loadSettings, saveSettings } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
@@ -21,6 +22,7 @@ $("strength").value = state.strength;
 $("darkness").value = state.darkness;
 $("resolution").value = restored.resolution;
 $("fps").value = restored.fps;
+$("format").value = restored.format;
 
 function persistSettings() {
   saveSettings({
@@ -30,6 +32,7 @@ function persistSettings() {
     darkness: state.darkness,
     resolution: $("resolution").value,
     fps: $("fps").value,
+    format: $("format").value,
   });
 }
 
@@ -55,9 +58,13 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #spectrum-color, #strength, #darkness, #resolution, #fps, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #spectrum-color, #strength, #darkness, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
+  const format = $("format").value;
+  const type = getFormat(format);
+  $("resolution").disabled = $("fps").disabled = locked || !type.video;
+  $("format-description").textContent = type.description + (type.video ? "" : " · 不包含頻譜畫面");
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;
   $("audio-name").textContent = state.loading ? "正在讀取音樂…" : state.name || "選擇本機音樂";
   $("audio-info").textContent = state.buffer
@@ -77,9 +84,9 @@ function update() {
   $("darkness-value").textContent = `${state.darkness}%`;
   $("export-note").textContent = state.buffer
     ? "匯出期間請保持此頁面開啟。"
-    : "先選擇音樂，就能匯出影片。";
+    : "先選擇音樂，就能匯出。";
   $("progress").hidden = $("cancel").hidden = !state.busy;
-  if (!state.busy) $("export").textContent = "↓ 匯出 MP4 ↗";
+  if (!state.busy) $("export").textContent = `↓ 匯出 ${format.toUpperCase()} ↗`;
   document.querySelectorAll(".style-card").forEach((el, i) => {
     el.classList.toggle("selected", state.style === i);
     el.setAttribute("aria-pressed", String(state.style === i));
@@ -255,6 +262,7 @@ for (const id of ["strength", "darkness"])
   });
 $("resolution").addEventListener("change", update);
 $("fps").addEventListener("change", persistSettings);
+$("format").addEventListener("change", update);
 $("cancel").addEventListener("click", () => exportController?.abort());
 $("export").addEventListener("click", async () => {
   if (!state.buffer || state.busy || state.loading || state.imageLoading) return;
@@ -268,7 +276,9 @@ $("export").addEventListener("click", async () => {
   try {
     const resolution = $("resolution").value,
       fps = $("fps").value;
-    const blob = await encodeVideo({
+    const format = $("format").value;
+    const blob = await encodeMedia({
+      format,
       buffer: state.buffer,
       image: state.image,
       settings: { ...state },
@@ -283,12 +293,12 @@ $("export").addEventListener("click", async () => {
     const url = URL.createObjectURL(blob),
       link = document.createElement("a");
     link.href = url;
-    link.download = `${state.name.replace(/\.[^.]+$/, "") || "yumeew"}-${resolution}p-${fps}fps.mp4`;
+    link.download = exportFilename(state.name, format, resolution, fps);
     document.body.append(link);
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    message("MP4 已完成，下載已開始。");
+    message(`${format.toUpperCase()} 已完成，下載已開始。`);
   } catch (error) {
     message(error.message || "匯出失敗，請降低解析度再試。");
   } finally {

@@ -1,4 +1,23 @@
 import { draw } from "./visualizer.js";
+import { getFormat } from "./formats.js";
+
+const registrations = new Map();
+async function registerAudioEncoder(codec) {
+  if (!registrations.has(codec)) {
+    const task =
+      codec === "mp3"
+        ? import("../vendor/mediabunny-mp3-encoder.min.mjs").then((m) => m.registerMp3Encoder())
+        : import("../vendor/mediabunny-flac-encoder.min.mjs").then((m) => m.registerFlacEncoder());
+    registrations.set(
+      codec,
+      task.catch((error) => {
+        registrations.delete(codec);
+        throw error;
+      }),
+    );
+  }
+  await registrations.get(codec);
+}
 
 export function frameTiming(index, fps, duration) {
   const timestamp = index / fps;
@@ -6,7 +25,8 @@ export function frameTiming(index, fps, duration) {
 }
 
 /** Local WebCodecs encoding; no upload or remote encoding fallback. */
-export async function encodeVideo({
+export async function encodeMedia({
+  format = "mp4",
   buffer,
   image,
   settings,
@@ -16,47 +36,81 @@ export async function encodeVideo({
   onProgress,
 }) {
   const m = await import("../vendor/mediabunny.min.mjs");
+  const type = getFormat(format);
   const height = Number(resolution),
     rate = Number(fps);
-  if (![720, 1080].includes(height) || ![30, 60].includes(rate)) throw Error("無效的影片設定。");
+  if (type.video && (![720, 1080].includes(height) || ![30, 60].includes(rate)))
+    throw Error("無效的影片設定。");
   const checkCanceled = () => {
     if (signal.aborted) throw Error("已取消匯出。");
   };
   checkCanceled();
+  if (type.codec === "mp3") {
+    await registerAudioEncoder("mp3");
+    // LAME accepts at most stereo, with one of these sample rates.
+    const sampleRate = [32000, 44100, 48000].includes(buffer.sampleRate)
+      ? buffer.sampleRate
+      : 44100;
+    if (sampleRate !== buffer.sampleRate || buffer.numberOfChannels > 2) {
+      const context = new OfflineAudioContext(
+        Math.min(2, buffer.numberOfChannels),
+        Math.ceil(buffer.duration * sampleRate),
+        sampleRate,
+      );
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(context.destination);
+      source.start();
+      buffer = await context.startRendering();
+      checkCanceled();
+    }
+  } else if (type.codec === "flac") await registerAudioEncoder("flac");
   if (
-    !(await m.canEncodeVideo("avc", { width: (height * 16) / 9, height })) ||
-    !(await m.canEncodeAudio("aac", {
+    !(await m.canEncodeAudio(type.codec, {
       numberOfChannels: buffer.numberOfChannels,
       sampleRate: buffer.sampleRate,
-    }))
+    })) ||
+    (type.video && !(await m.canEncodeVideo("avc", { width: (height * 16) / 9, height })))
   ) {
     throw Error(
-      "此瀏覽器無法編碼 H.264／AAC，請使用最新版 Chrome 或 Edge 再試。檔案不會改送至伺服器。",
+      `此瀏覽器無法編碼 ${format.toUpperCase()}，請使用最新版 Chrome 或 Edge 再試。檔案不會改送至伺服器。`,
     );
   }
-  const canvas = document.createElement("canvas");
-  canvas.width = (height * 16) / 9;
-  canvas.height = height;
+  checkCanceled();
+  const canvas = type.video ? document.createElement("canvas") : null;
+  if (canvas) {
+    canvas.width = (height * 16) / 9;
+    canvas.height = height;
+  }
   const target = new m.BufferTarget();
-  const output = new m.Output({ format: new m.Mp4OutputFormat(), target });
+  const output = new m.Output({ format: new m[type.container](), target });
   try {
-    const video = new m.CanvasSource(canvas, {
-      codec: "avc",
-      bitrate: height === 1080 ? 8_000_000 : 4_000_000,
+    const video = type.video
+      ? new m.CanvasSource(canvas, {
+          codec: "avc",
+          bitrate: height === 1080 ? 8_000_000 : 4_000_000,
+        })
+      : null;
+    const audio = new m.AudioBufferSource({
+      codec: type.codec,
+      ...(type.codec === "flac" ? {} : { bitrate: 192_000 }),
     });
-    const audio = new m.AudioBufferSource({ codec: "aac", bitrate: 192_000 });
-    output.addVideoTrack(video, { frameRate: rate });
+    if (video) output.addVideoTrack(video, { frameRate: rate });
     output.addAudioTrack(audio);
     await output.start();
-    const count = Math.ceil(buffer.duration * rate);
+    const count = type.video
+      ? Math.ceil(buffer.duration * rate)
+      : Math.ceil(buffer.length / buffer.sampleRate);
     let audioOffset = 0;
     for (let i = 0; i < count; i++) {
       checkCanceled();
-      const frame = frameTiming(i, rate, buffer.duration);
-      draw(canvas, frame.timestamp, buffer, image, settings);
-      await video.add(frame.timestamp, frame.duration);
+      if (video) {
+        const frame = frameTiming(i, rate, buffer.duration);
+        draw(canvas, frame.timestamp, buffer, image, settings);
+        await video.add(frame.timestamp, frame.duration);
+      }
       // Feed small audio blocks alongside video to bound muxer buffering and allow cancellation.
-      if (i % rate === 0) {
+      if (!type.video || i % rate === 0) {
         const length = Math.min(buffer.sampleRate, buffer.length - audioOffset);
         if (length > 0) {
           const part = new AudioBuffer({
@@ -74,18 +128,18 @@ export async function encodeVideo({
           audioOffset += length;
         }
       }
-      if (i % 10 === 0) {
+      if (!type.video || i % 10 === 0) {
         onProgress(Math.round((i / count) * 98));
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
     checkCanceled();
-    video.close();
+    video?.close();
     audio.close();
     await output.finalize();
     checkCanceled();
     onProgress(100);
-    return new Blob([target.buffer], { type: "video/mp4" });
+    return new Blob([target.buffer], { type: type.mime });
   } catch (error) {
     if (output.state !== "finalized" && output.state !== "canceled")
       await output.cancel().catch(() => {});

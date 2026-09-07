@@ -92,6 +92,7 @@ export function draw(canvas, t, b, img, s) {
     c.restore();
     drawSongDetails(c, canvas.width, canvas.height, s, t);
     drawSubtitles(c, canvas.width, canvas.height, s, t);
+    drawIdentity(c, canvas.width, canvas.height, s);
     return;
   }
   const values = spectrum(b, t),
@@ -156,6 +157,7 @@ export function draw(canvas, t, b, img, s) {
   c.restore();
   drawSongDetails(c, canvas.width, canvas.height, s, t);
     drawSubtitles(c, canvas.width, canvas.height, s, t);
+    drawIdentity(c, canvas.width, canvas.height, s);
 }
 
 export function songTextOpacity(time, fadeAfter = 5) {
@@ -523,5 +525,34 @@ function drawSubtitles(c, width, height, settings, time) {
       paintText(character, x + boxWidth - padding - (column + .5) * lineHeight, y + padding + (row + .5) * lineHeight, lineHeight);
     }));
   } else visible.forEach((line,i)=>paintText(line,textX,y+padding+(i+.5)*lineHeight,maxWidth));
+  c.restore();
+}
+
+function drawIdentity(c, width, height, settings) {
+  const image = settings.identityType === "image" ? settings.identityImage : null;
+  const text = settings.identityType !== "image" ? settings.identityText?.trim() : "";
+  if (!image && !text) return;
+  c.save();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalAlpha = 1;
+  const unit = Math.min(width, height);
+  const size = unit * .03;
+  c.font = `600 ${size}px sans-serif`;
+  const scale = image ? Math.min(unit * .16 / image.width, unit * .16 / image.height) : 1;
+  const w = image ? image.width * scale : Math.min(width * .8, c.measureText(text).width);
+  const h = image ? image.height * scale : size * 1.4;
+  const x = (width - w) * Math.max(0, Math.min(100, settings.identityX ?? 90)) / 100;
+  const y = (height - h) * Math.max(0, Math.min(100, settings.identityY ?? 10)) / 100;
+  if (image) c.drawImage(image, x, y, w, h);
+  else {
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillStyle = "#ffffff";
+    c.strokeStyle = "#000000";
+    c.lineWidth = size * .12;
+    c.lineJoin = "round";
+    c.strokeText(text, x, y + h / 2, width * .8);
+    c.fillText(text, x, y + h / 2, width * .8);
+  }
   c.restore();
 }

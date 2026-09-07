@@ -259,6 +259,24 @@
               <button id="reset-position" type="button" class="text-button">重設位置</button>
             </div>
             <div class="export-section">
+              <div class="section-title"><h2>個人識別</h2></div>
+              <label class="field-label" for="identityType">識別類型</label>
+              <select id="identityType"><option value="text">文字</option><option value="image">圖片</option></select>
+              <div id="identity-text-controls">
+                <label class="field-label" for="identityText">識別文字</label>
+                <input id="identityText" class="text-input" type="text" maxlength="80" placeholder="輸入名稱或品牌，留空不顯示">
+              </div>
+              <div id="identity-image-controls" hidden>
+                <button id="identity-drop" class="upload image-upload" type="button" aria-describedby="identity-error"><span aria-hidden="true">▧</span><strong id="identity-name">選擇識別圖片</strong><small>JPG · PNG · WebP</small><span id="identity-error" class="file-error" role="status" hidden></span></button>
+                <input id="identity-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+                <button id="remove-identity" class="text-button" type="button" hidden>移除識別圖片</button>
+              </div>
+              <label class="range-label" for="identityX">水平位置<output id="identityX-value">90%</output></label>
+              <input id="identityX" type="range" min="0" max="100" value="90">
+              <label class="range-label" for="identityY">垂直位置<output id="identityY-value">10%</output></label>
+              <input id="identityY" type="range" min="0" max="100" value="10">
+            </div>
+            <div class="export-section">
               <div class="section-title">
                 <span>03</span>
                 <h2>匯出檔案</h2>

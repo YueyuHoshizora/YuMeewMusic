@@ -21,6 +21,7 @@ const state = {
   trimStart: 0,
   trimDirty: false,
   image: null,
+  identityImage: null,
   sleeve: null,
   record: null,
   sleeveName: "",
@@ -72,7 +73,12 @@ for (const id of ["appearance-mode", "appearance-theme"]) {
 }
 
 function persistSettings() {
-  saveSettings({
+  return saveSettings({
+    identityType: state.identityType,
+    identityText: state.identityText,
+    identityData: state.identityData,
+    identityX: state.identityX,
+    identityY: state.identityY,
     songTitle: state.songTitle,
     lyricist: state.lyricist,
     composer: state.composer,
@@ -122,6 +128,16 @@ function fileError(kind, text = "") {
 }
 
 function update() {
+  $("identityType").value = state.identityType;
+  $("identityText").value = state.identityText;
+  $("identity-text-controls").hidden = state.identityType !== "text";
+  $("identity-image-controls").hidden = state.identityType !== "image";
+  $("identity-name").textContent = state.identityImage ? "已載入識別圖片" : "選擇識別圖片";
+  $("remove-identity").hidden = !state.identityData;
+  for (const key of ["identityX", "identityY"]) {
+    $(key).value = state[key];
+    $(`${key}-value`).textContent = `${state[key]}%`;
+  }
   $("vinyl-assets").hidden = state.style !== 18;
   for (const [key, label] of [["sleeve", "黑膠封套"], ["record", "唱片封面"]]) {
     $(`${key}-name`).textContent = state[`${key}Name`] || `加入${label}圖片`;
@@ -144,7 +160,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#identityType, #identityText, #identityX, #identityY, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -466,6 +482,8 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   if (!$("reset-dialog").open || state.busy || state.loading || state.imageLoading) return;
   $("reset-dialog").close();
   Object.assign(state, DEFAULT_SETTINGS);
+  state.identityImage = null;
+  fileError("identity");
   for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile"]) {
     $(id).value = state[id];
   }
@@ -801,3 +819,60 @@ $("subtitleFont").addEventListener("change", () => {
   state.subtitleFont = $("subtitleFont").value;
   update();
 });
+
+for (const id of ["identityType", "identityText", "identityX", "identityY"]) {
+  $(id).addEventListener(id === "identityType" ? "change" : "input", () => {
+    if (state.busy || state.loading || state.imageLoading) return;
+    state[id] = id === "identityX" || id === "identityY" ? Number($(id).value) : $(id).value;
+    update();
+  });
+}
+bindFile("identity", async file => {
+  if (!file || state.busy || state.loading || state.imageLoading) return;
+  state.imageLoading = true;
+  fileError("identity");
+  update();
+  let url;
+  try {
+    if (file.size > 30 * 1024 * 1024) throw Error("圖片請小於 30 MB。");
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) throw Error("請選擇 JPG、PNG 或 WebP。");
+    const original = new Image();
+    url = URL.createObjectURL(file);
+    original.src = url;
+    await original.decode();
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 512 / Math.max(original.width, original.height));
+    canvas.width = Math.max(1, Math.round(original.width * scale));
+    canvas.height = Math.max(1, Math.round(original.height * scale));
+    canvas.getContext("2d").drawImage(original, 0, 0, canvas.width, canvas.height);
+    const data = canvas.toDataURL("image/png");
+    if (data.length > 1500000) throw Error("圖片儲存後仍過大，請改用較簡單的識別圖片。");
+    const image = new Image();
+    image.src = data;
+    await image.decode();
+    state.identityImage = image;
+    state.identityData = data;
+    if (!persistSettings()) message("圖片已套用，但瀏覽器儲存空間不足或被封鎖，下次開啟可能無法還原。");
+  } catch (error) { fileError("identity", error.message || "無法讀取識別圖片。"); }
+  finally { if (url) URL.revokeObjectURL(url); state.imageLoading = false; update(); }
+});
+$("remove-identity").addEventListener("click", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.identityImage = null;
+  state.identityData = "";
+  fileError("identity");
+  update();
+});
+async function restoreIdentityImage() {
+  if (!state.identityData) return;
+  state.imageLoading = true;
+  update();
+  try {
+    const image = new Image();
+    image.src = state.identityData;
+    await image.decode();
+    state.identityImage = image;
+  } catch { fileError("identity", "無法還原識別圖片，請重新選擇。"); }
+  finally { state.imageLoading = false; update(); }
+}
+void restoreIdentityImage();

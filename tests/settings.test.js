@@ -11,6 +11,11 @@ function memoryStorage() {
 test("settings survive another load and exclude all media-related data", () => {
   const storage = memoryStorage();
   const settings = {
+    identityType: "image",
+    identityText: "brand",
+    identityData: "data:image/png;base64,aGVsbG8=",
+    identityX: 90,
+    identityY: 10,
     songTitle: "測試歌曲",
     lyricist: "作詞者",
     composer: "作曲者",

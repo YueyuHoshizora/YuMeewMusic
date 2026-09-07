@@ -4,6 +4,11 @@ import { THEMES } from "./themes.js";
 import { FORMATS } from "./formats.js";
 const KEY = "yumeew.settings.v1";
 export const DEFAULT_SETTINGS = Object.freeze({
+  identityType: "text",
+  identityText: "",
+  identityData: "",
+  identityX: 90,
+  identityY: 10,
   songTitle: "",
   lyricist: "",
   composer: "",
@@ -41,7 +46,7 @@ export function validateSettings(value) {
     result.style = source.style;
   if (typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color))
     result.color = source.color.toLowerCase();
-  for (const key of ["strength", "darkness", "textX", "textY"]) {
+  for (const key of ["strength", "darkness", "textX", "textY", "identityX", "identityY"]) {
     if (
       typeof source[key] === "number" &&
       Number.isFinite(source[key]) &&
@@ -76,6 +81,9 @@ export function validateSettings(value) {
   if (typeof source.subtitleTypewriter === "boolean") result.subtitleTypewriter = source.subtitleTypewriter;
   if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
   if (typeof source.subtitleFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.subtitleFont)) result.subtitleFont = source.subtitleFont;
+  if (["text", "image"].includes(source.identityType)) result.identityType = source.identityType;
+  if (typeof source.identityText === "string") result.identityText = source.identityText.slice(0, 80);
+  if (typeof source.identityData === "string" && source.identityData.length <= 1500000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(source.identityData)) result.identityData = source.identityData;
   return result;
 }
 

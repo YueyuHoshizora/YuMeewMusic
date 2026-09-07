@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "YuMeew Jason Handwriting Rounded";
+  src: url("./fonts/jason-handwriting-rounded.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 /* Theme accents are set by themes.js; surfaces follow the selected day/night mode. */
 :root {
   color-scheme: dark;

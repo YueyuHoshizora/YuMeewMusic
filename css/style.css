@@ -656,3 +656,17 @@ input:focus-visible {
     align-self: center;
   }
 }
+
+/* File-specific failures remain visible until another file is selected. */
+.upload.load-error,
+.upload.load-error:hover {
+  border: 1px solid #ff6b75;
+  box-shadow: 0 0 0 1px #ff6b75;
+  background: #321f23;
+}
+.upload .file-error {
+  color: #ffadb3;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

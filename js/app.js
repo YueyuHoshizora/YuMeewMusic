@@ -28,6 +28,15 @@ function message(text = "") {
   $("message-text").textContent = text;
   $("message").hidden = !text;
 }
+function fileError(kind, text = "") {
+  const area = $(`${kind}-drop`);
+  const hint = $(`${kind}-error`);
+  area.classList.toggle("load-error", Boolean(text));
+  area.setAttribute("aria-invalid", String(Boolean(text)));
+  hint.textContent = text ? `載入失敗：${text}` : "";
+  hint.hidden = !text;
+}
+
 function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
@@ -140,6 +149,7 @@ colors.forEach((color, index) => {
 async function loadAudio(file) {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.loading = true;
+  fileError("audio");
   message();
   update();
   let context;
@@ -156,6 +166,7 @@ async function loadAudio(file) {
     state.buffer = buffer;
     state.name = file.name;
   } catch (error) {
+    fileError("audio", error.message || "請選擇可讀取的音樂檔案。");
     message(`無法讀取音樂：${error.message}`);
   } finally {
     if (context) await context.close().catch(() => {});
@@ -166,6 +177,7 @@ async function loadAudio(file) {
 async function loadImage(file) {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.imageLoading = true;
+  fileError("image");
   update();
   message();
   let url;
@@ -180,6 +192,7 @@ async function loadImage(file) {
     state.image = image;
     state.imageName = file.name;
   } catch (error) {
+    fileError("image", error.message || "請選擇可讀取的圖片檔案。");
     message(`無法讀取圖片：${error.message}`);
   } finally {
     if (url) URL.revokeObjectURL(url);
@@ -206,6 +219,7 @@ bindFile("image", loadImage);
 $("remove-image").addEventListener("click", () => {
   state.image = null;
   state.imageName = "";
+  fileError("image");
   update();
 });
 $("dismiss-message").addEventListener("click", () => message());

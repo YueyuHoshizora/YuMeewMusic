@@ -39,17 +39,17 @@
               <h2>創作素材</h2>
             </div>
             <span class="field-label">音樂</span>
-            <button id="audio-drop" class="upload" type="button">
+            <button id="audio-drop" aria-describedby="audio-error" class="upload" type="button">
               <span class="upload-icon" aria-hidden="true">♫</span
               ><strong id="audio-name">選擇本機音樂</strong
               ><small id="audio-info">拖放檔案或點擊選擇</small
-              ><span class="filetype">MP3 · WAV · M4A · FLAC</span>
+              ><span class="filetype">MP3 · WAV · M4A · FLAC</span><span id="audio-error" class="file-error" role="status" hidden></span>
             </button>
             <input id="audio-input" type="file" accept="audio/*" hidden />
             <span class="field-label">背景圖片 <span>選填</span></span>
-            <button id="image-drop" class="upload image-upload" type="button">
+            <button id="image-drop" aria-describedby="image-error" class="upload image-upload" type="button">
               <span aria-hidden="true">▧ ＋</span><strong id="image-name">加入背景圖片</strong
-              ><small>JPG · PNG · WebP</small>
+              ><small>JPG · PNG · WebP</small><span id="image-error" class="file-error" role="status" hidden></span>
             </button>
             <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
             <button id="remove-image" class="text-button" hidden type="button">移除圖片</button>

@@ -155,7 +155,7 @@
             <div class="transport">
               <button id="play" class="play" type="button" aria-label="播放" disabled>▶</button
               ><span id="time" class="time">00:00</span
-              ><input
+              ><div class="seek-area"><input
                 id="seek"
                 type="range"
                 aria-label="播放進度"
@@ -164,7 +164,12 @@
                 step="0.1"
                 value="0"
                 disabled
-              /><span id="duration" class="time muted">00:00</span
+              />
+              <div id="trim-markers" class="trim-markers" hidden>
+                <div class="trim-track"><span id="trim-selection"></span></div>
+                <div class="trim-marker-labels"><span id="trim-start-label"></span><span id="trim-end-label"></span></div>
+              </div>
+              </div><span id="duration" class="time muted">00:00</span
               ><button id="restart" class="icon-button" type="button" aria-label="回到開頭">
                 ↺
               </button>

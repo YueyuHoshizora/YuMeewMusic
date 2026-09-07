@@ -726,3 +726,12 @@ header { flex-wrap: nowrap; }
 .upload strong { min-width: 0; }
 .upload small, .upload .filetype, .upload .file-error { grid-column: 1 / -1; }
 .upload small { line-height: 1.4; }
+
+.seek-area { flex: 1; min-width: 0; }
+.trim-markers { margin-top: 2px; }
+.trim-track { height: 5px; background: var(--border); position: relative; margin-inline: 7px; border-radius: 3px; }
+#trim-selection { position: absolute; height: 100%; background: var(--primary); border-inline: 2px solid var(--primary-text); box-sizing: border-box; }
+#trim-selection::before, #trim-selection::after { content: ""; position: absolute; top: -3px; height: 11px; width: 2px; background: var(--primary-text); }
+#trim-selection::before { left: -2px; }
+#trim-selection::after { right: -2px; }
+.trim-marker-labels { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }

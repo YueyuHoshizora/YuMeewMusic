@@ -136,8 +136,9 @@ function update() {
     ? "正在讀取圖片…"
     : state.imageName || "加入背景圖片";
   $("remove-image").hidden = !state.image;
-  $("duration").textContent = formatTime(state.buffer?.duration || 0);
-  $("seek").max = state.buffer?.duration || 1;
+  $("duration").textContent = formatTime(state.originalBuffer?.duration || 0);
+  $("seek").max = state.originalBuffer?.duration || 1;
+  updateTrimMarkers();
   const aspectRatio = $("aspect-ratio").value;
   const size = videoDimensions(720, aspectRatio);
   const preview = $("preview");
@@ -407,7 +408,7 @@ for (const event of ["play", "pause", "ended"])
     $("play").setAttribute("aria-label", audio.paused ? "播放" : "暫停");
   });
 $("seek").addEventListener("input", () => {
-  audio.currentTime = state.trimStart + Number($("seek").value);
+  audio.currentTime = Math.max(state.trimStart, Math.min(state.trimStart + state.buffer.duration, Number($("seek").value)));
 });
 $("restart").addEventListener("click", () => {
   audio.currentTime = state.trimStart;
@@ -501,8 +502,8 @@ function animate() {
   enforceTrimEnd();
   const time = Math.max(0, (audio.currentTime || 0) - state.trimStart);
   if (!state.busy) draw($("preview"), time, state.buffer, state.image, state);
-  $("time").textContent = formatTime(time);
-  $("seek").value = time;
+  $("time").textContent = formatTime(audio.currentTime || 0);
+  $("seek").value = audio.currentTime || 0;
   requestAnimationFrame(animate);
 }
 window.addEventListener("beforeunload", (event) => {
@@ -578,6 +579,7 @@ for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
     const value = $(`trim-${edge}${suffix}`).value;
     if (suffix) $(`trim-${edge}`).value = formatTrimTime(Number(value));
     else if (Number.isFinite(parseTrimTime(value))) $(`trim-${edge}-range`).value = parseTrimTime(value);
+    updateTrimMarkers();
     const length = parseTrimTime($("trim-end").value) - parseTrimTime($("trim-start").value);
     $("trim-info").textContent = length > 0 ? `選取 ${formatTrimTime(length)}，按「套用裁剪」生效` : "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間";
   });
@@ -618,3 +620,16 @@ function enforceTrimEnd() {
   }
 }
 audio.addEventListener("timeupdate", enforceTrimEnd);
+
+function updateTrimMarkers() {
+  const duration = state.originalBuffer?.duration || 0;
+  const start = parseTrimTime($("trim-start").value);
+  const end = parseTrimTime($("trim-end").value);
+  const valid = duration > 0 && Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end > start && end <= duration + .005;
+  $("trim-markers").hidden = !valid;
+  if (!valid) return;
+  $("trim-selection").style.left = `${start / duration * 100}%`;
+  $("trim-selection").style.width = `${(Math.min(end, duration) - start) / duration * 100}%`;
+  $("trim-start-label").textContent = `開始 ${formatTrimTime(start)}`;
+  $("trim-end-label").textContent = `結束 ${formatTrimTime(end)}`;
+}

@@ -146,6 +146,10 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(elements.get("trim-start").value, "00:10.00");
   assert.equal(elements.get("trim-end").value, "00:30.00");
   assert.equal(elements.get("trim-start-range").value, "10");
+  assert.equal(elements.get("trim-markers").hidden, false);
+  assert.equal(elements.get("trim-start-label").textContent, "開始 00:10.00");
+  assert.equal(elements.get("trim-end-label").textContent, "結束 00:30.00");
+  assert.equal(elements.get("seek").max, 65);
   assert.equal(elements.get("trim-end-range").value, "30");
   assert.equal(vm.runInContext("state.buffer === state.originalBuffer && state.trimStart === 0", context), true);
   assert.equal(elements.get("duration").textContent, "01:05");

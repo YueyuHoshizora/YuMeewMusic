@@ -146,10 +146,15 @@ export function draw(canvas, t, b, img, s) {
   }
   c.shadowBlur = 0;
   c.restore();
-  drawSongDetails(c, canvas.width, canvas.height, s);
+  drawSongDetails(c, canvas.width, canvas.height, s, t);
 }
 
-function drawSongDetails(c, width, height, settings) {
+export function songTextOpacity(time, fadeAfter = 5) {
+  const delay = Number.isFinite(fadeAfter) ? Math.max(1, Math.min(15, fadeAfter)) : 5;
+  return Math.max(0, Math.min(1, 1 - (time - delay)));
+}
+
+function drawSongDetails(c, width, height, settings, time) {
   const lines = [
     [settings.songTitle, true],
     [settings.lyricist ? `作詞：${settings.lyricist}` : "", false],
@@ -164,7 +169,7 @@ function drawSongDetails(c, width, height, settings) {
   const lineHeight = unit * .04 * scale;
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
-  c.globalAlpha = 1;
+  c.globalAlpha = songTextOpacity(time, settings.textFadeAfter);
   c.globalCompositeOperation = "source-over";
   c.textAlign = "center";
   c.textBaseline = "middle";

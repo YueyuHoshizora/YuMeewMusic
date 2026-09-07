@@ -1,7 +1,7 @@
 import { STYLES } from "../js/styles.js";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { spectrum, draw, vinylPose } from "../js/visualizer.js";
+import { spectrum, draw, vinylPose, songTextOpacity } from "../js/visualizer.js";
 import { frameTiming } from "../js/export.js";
 import { readFileSync, existsSync } from "node:fs";
 const buffer = (data) => ({ sampleRate: 48000, getChannelData: () => data });
@@ -157,4 +157,14 @@ test("vinyl renders independent sleeve and circular record artwork", () => {
   assert.equal(images[1][1], sleeve);
   assert.ok(commands.findIndex(([key]) => key === 'clip') < commands.findIndex(([key]) => key === 'drawImage'));
   assert.ok(commands.some(([key, angle]) => key === 'rotate' && angle > 0));
+});
+
+test("song text holds for chosen delay then fades over one second", () => {
+  for (const delay of [1,5,15]) {
+    assert.equal(songTextOpacity(0, delay), 1);
+    assert.equal(songTextOpacity(delay, delay), 1);
+    assert.equal(songTextOpacity(delay + .5, delay), .5);
+    assert.equal(songTextOpacity(delay + 1, delay), 0);
+    assert.equal(songTextOpacity(60, delay), 0);
+  }
 });

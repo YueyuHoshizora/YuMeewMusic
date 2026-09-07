@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   textX: 50,
   textY: 91,
   textSize: 100,
+  textFadeAfter: 5,
   textColor: "#ffffff",
   style: 0,
   color: "#c5fa75",
@@ -58,6 +59,7 @@ export function validateSettings(value) {
   }
   if (typeof source.textSize === "number" && Number.isFinite(source.textSize) && source.textSize >= 50 && source.textSize <= 250) result.textSize = source.textSize;
   if (typeof source.textColor === "string" && /^#[0-9a-f]{6}$/i.test(source.textColor)) result.textColor = source.textColor.toLowerCase();
+  if (Number.isInteger(source.textFadeAfter) && source.textFadeAfter >= 1 && source.textFadeAfter <= 15) result.textFadeAfter = source.textFadeAfter;
   return result;
 }
 

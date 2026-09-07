@@ -17,6 +17,7 @@ test("settings survive another load and exclude all media-related data", () => {
     textX: 35,
     textY: 60,
     textSize: 150,
+    textFadeAfter: 8,
     textColor: "#ff6688",
     style: 5,
     color: "#A1B2C3",
@@ -103,4 +104,9 @@ test("reset removes only this app's preferences", () => {
   assert.equal(data.has("yumeew.settings.v1"), false);
   assert.equal(data.get("unrelated"), "keep");
   assert.equal(clearSettings(() => { throw Error("Blocked"); }), false);
+});
+
+test("song fade delay defaults to five seconds and accepts only 1–15", () => {
+  for (const value of [1, 5, 15]) assert.equal(validateSettings({textFadeAfter:value}).textFadeAfter, value);
+  for (const value of [0, 16, 2.5, null]) assert.equal(validateSettings({textFadeAfter:value}).textFadeAfter, 5);
 });

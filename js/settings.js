@@ -26,7 +26,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   aspectRatio: "16:9",
   fps: "60",
   format: "mp4",
-  profile: "main",
+  profile: "auto",
   mode: "dark",
   theme: "lime",
 });

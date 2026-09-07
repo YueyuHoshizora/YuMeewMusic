@@ -83,7 +83,7 @@ export async function encodeMedia({
   }
   checkCanceled();
   const bitrate = height === 1080 ? 8_000_000 : 4_000_000;
-  const profileOptions = type.video ? videoProfileConfig(settings?.profile ?? "main", dimensions, rate) : {};
+  const profileOptions = type.video ? videoProfileConfig(settings?.profile ?? "auto", dimensions, rate) : {};
   const hardwareAcceleration = type.video
     ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate, ...profileOptions}, signal)
     : null;

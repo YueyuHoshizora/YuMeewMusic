@@ -1,5 +1,5 @@
 // Level follows the macroblock limits for this editor's 720p/1080p at 30/60 fps.
-export function videoProfileConfig(profile = 'main', {width, height}, fps) {
+export function videoProfileConfig(profile = 'auto', {width, height}, fps) {
   if (profile === 'auto') return {};
   const prefixes = {baseline:'42e0', main:'4d00', high:'6400'};
   if (!Object.hasOwn(prefixes, profile)) throw Error('無效的 H.264 Profile。');

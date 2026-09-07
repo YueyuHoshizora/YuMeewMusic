@@ -1,3 +1,4 @@
+import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
 import { draw } from "./visualizer.js";
 import { getFormat } from "./formats.js";
@@ -36,6 +37,7 @@ export async function encodeMedia({
   fps,
   signal,
   onProgress,
+  onEncodingMode = () => {},
 }) {
   const m = await import("../vendor/mediabunny.min.mjs");
   const type = getFormat(format);
@@ -72,13 +74,18 @@ export async function encodeMedia({
     !(await m.canEncodeAudio(type.codec, {
       numberOfChannels: buffer.numberOfChannels,
       sampleRate: buffer.sampleRate,
-    })) ||
-    (type.video && !(await m.canEncodeVideo("avc", dimensions)))
+    }))
   ) {
     throw Error(
       `此瀏覽器無法編碼 ${format.toUpperCase()}，請使用最新版 Chrome 或 Edge 再試。檔案不會改送至伺服器。`,
     );
   }
+  checkCanceled();
+  const bitrate = height === 1080 ? 8_000_000 : 4_000_000;
+  const hardwareAcceleration = type.video
+    ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate}, signal)
+    : null;
+  if (type.video) onEncodingMode(hardwareAcceleration);
   checkCanceled();
   const canvas = type.video ? document.createElement("canvas") : null;
   if (canvas) {
@@ -91,7 +98,8 @@ export async function encodeMedia({
     const video = type.video
       ? new m.CanvasSource(canvas, {
           codec: "avc",
-          bitrate: height === 1080 ? 8_000_000 : 4_000_000,
+          bitrate,
+          hardwareAcceleration,
         })
       : null;
     const audio = new m.AudioBufferSource({

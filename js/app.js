@@ -505,6 +505,11 @@ $("export").addEventListener("click", async () => {
       aspectRatio: $("aspect-ratio").value,
       fps,
       signal: exportController.signal,
+      onEncodingMode: mode => {
+        $("export-note").textContent = mode === "prefer-hardware"
+          ? "硬體編碼優先（由瀏覽器決定實際加速方式）"
+          : mode === "prefer-software" ? "使用軟體編碼" : "使用瀏覽器自動選擇的編碼方式";
+      },
       onProgress: (value) => {
         $("progress").value = value;
         $("export").textContent = `正在匯出 ${value}%`;

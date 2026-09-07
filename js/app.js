@@ -19,8 +19,6 @@ const state = {
 };
 let exportController;
 const styles = ["環形脈衝", "經典音柱", "鏡像頻譜", "流動波形", "放射光芒", "點陣節奏"];
-const colors = ["#c5fa75", "#a99bff", "#61dcff", "#ff9caf", "#ffffff"];
-const colorNames = ["萊姆綠", "紫色", "冰藍", "粉紅", "白色"];
 const format = (t) =>
   `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
@@ -41,7 +39,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, .colors button, #strength, #darkness, #resolution, #fps, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #spectrum-color, #strength, #darkness, #resolution, #fps, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;
@@ -71,11 +69,7 @@ function update() {
     el.setAttribute("aria-pressed", String(state.style === i));
     el.querySelector(".check").hidden = state.style !== i;
   });
-  document.querySelectorAll(".colors button").forEach((el, i) => {
-    el.classList.toggle("active", state.color === colors[i]);
-    el.setAttribute("aria-pressed", String(state.color === colors[i]));
-    el.textContent = state.color === colors[i] ? "✓" : "";
-  });
+  $("color-value").textContent = state.color.toUpperCase();
 }
 
 function mini(index) {
@@ -134,16 +128,10 @@ styles.forEach((name, index) => {
   });
   $("styles").append(button);
 });
-colors.forEach((color, index) => {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.style.background = color;
-  button.setAttribute("aria-label", colorNames[index]);
-  button.addEventListener("click", () => {
-    state.color = color;
-    update();
-  });
-  $("colors").append(button);
+$("spectrum-color").addEventListener("input", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.color = $("spectrum-color").value;
+  $("color-value").textContent = state.color.toUpperCase();
 });
 
 async function loadAudio(file) {

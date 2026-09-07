@@ -357,24 +357,6 @@ h1 span {
   width: 13px;
   height: 13px;
 }
-.colors {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-.colors button {
-  border: 3px solid #191d1c;
-  outline: 1px solid transparent;
-  color: #1e2520;
-  border-radius: 50%;
-  width: 29px;
-  height: 29px;
-  display: grid;
-  place-items: center;
-}
-.colors button.active {
-  outline-color: #c5fa75;
-}
 .range-label {
   display: flex;
   justify-content: space-between;
@@ -576,10 +558,6 @@ progress {
     margin-top: 26px;
     padding: 25px 0 0;
   }
-  .colors {
-    justify-content: start;
-    gap: 16px;
-  }
   .styles {
     gap: 7px;
   }
@@ -670,3 +648,24 @@ input:focus-visible {
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.color-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.color-picker input[type="color"] {
+  flex: 0 0 52px;
+  width: 52px;
+  height: 44px;
+  padding: 3px;
+  background: #222822;
+  border: 1px solid #526049;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.color-picker input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-picker input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+.color-picker input[type="color"]::-moz-color-swatch { border: 0; border-radius: 4px; }
+.color-picker output { display: block; font: 14px monospace; color: #eeefec; }
+.color-picker span { display: block; margin-top: 5px; font-size: 12px; color: #9ca893; }

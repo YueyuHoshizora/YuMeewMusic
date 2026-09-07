@@ -167,15 +167,15 @@ function renderTimeline() {
 
 function renderForm() {
   const cue = currentCue();
-  $('cue-form').hidden = !cue;
-  $('cue-form-empty').hidden = Boolean(cue);
-  $('selected-label').textContent = cue ? `第 ${state.selected + 1} 句` : '尚未選擇字幕';
+  $('cue-form').hidden = false;
+  $('cue-form-empty').hidden = true;
+  $('selected-label').textContent = cue ? `第 ${state.selected + 1} 句` : '目前沒有字幕';
   $('previous-cue').disabled = state.selected <= 0;
   $('next-cue').disabled = state.selected < 0 || state.selected >= state.cues.length - 1;
-  if (!cue) return;
-  $('cue-start').value = editorTime(cue.start);
-  $('cue-end').value = editorTime(cue.end);
-  $('cue-text').value = cue.text;
+  $('cue-form').querySelectorAll('input, textarea, button').forEach(control => { control.disabled = !cue; });
+  $('cue-start').value = cue ? editorTime(cue.start) : '';
+  $('cue-end').value = cue ? editorTime(cue.end) : '';
+  $('cue-text').value = cue?.text || '';
   $('cue-error').hidden = true;
 }
 

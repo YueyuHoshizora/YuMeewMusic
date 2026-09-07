@@ -281,16 +281,7 @@ h1 span {
   height: 100%;
   display: block;
 }
-.preview-tag {
-  position: absolute;
-  bottom: 17px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 9px;
-  letter-spacing: 2px;
-  color: #788877;
-}
+
 .transport {
   display: flex;
   align-items: center;
@@ -572,9 +563,7 @@ progress {
   .styles {
     gap: 7px;
   }
-  .preview-tag {
-    font-size: 7px;
-  }
+
   .style-card > span {
     font-size: 12px;
   }
@@ -730,9 +719,7 @@ header {
   background: var(--hover);
   border-color: var(--primary);
 }
-.preview-tag {
-  color: #b2c2b2;
-}
+
 @media (max-width: 1250px) {
   .header-note {
     display: none;

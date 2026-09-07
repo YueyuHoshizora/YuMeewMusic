@@ -112,9 +112,6 @@ function update() {
   $("remove-image").hidden = !state.image;
   $("duration").textContent = formatTime(state.buffer?.duration || 0);
   $("seek").max = state.buffer?.duration || 1;
-  $("preview-tag").textContent = state.buffer
-    ? "YOUR SOUND, IN MOTION"
-    : "DEMO VISUAL · 選擇音樂開始創作";
   const aspectRatio = $("aspect-ratio").value;
   const size = videoDimensions(720, aspectRatio);
   const preview = $("preview");

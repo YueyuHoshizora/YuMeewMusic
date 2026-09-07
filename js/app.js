@@ -114,13 +114,14 @@ function update() {
     $(`remove-${key}`).hidden = !state[key];
   }
   $("textFadeAfter-value").textContent = `${state.textFadeAfter} 秒`;
-  $("trim-panel").hidden = !state.originalBuffer;
+  $("trim-empty").hidden = Boolean(state.originalBuffer);
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
       "#trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
+  for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
   const format = $("format").value;
   const type = getFormat(format);
   $("resolution").disabled = $("fps").disabled = locked || !type.video;

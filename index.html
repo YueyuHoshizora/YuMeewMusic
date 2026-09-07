@@ -71,8 +71,9 @@
               ><span id="audio-error" class="file-error" role="status" hidden></span>
             </button>
             <input id="audio-input" type="file" accept="audio/*" hidden />
-            <details id="trim-panel" class="song-details song-settings" hidden>
-              <summary>音樂裁剪</summary>
+            <details id="trim-panel" class="song-details song-settings" open>
+              <summary>✂ 音樂裁剪</summary>
+              <p id="trim-empty" class="position-help">請先在上方選擇音樂，即可設定裁剪範圍。</p>
               <label class="field-label" for="trim-start">開始時間（秒）</label>
               <input id="trim-start" class="text-input" type="number" min="0" step="0.01" value="0">
               <input id="trim-start-range" aria-label="裁剪開始時間" type="range" min="0" step="0.01" value="0">

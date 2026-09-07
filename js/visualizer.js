@@ -113,13 +113,6 @@ export function draw(canvas, t, b, img, s) {
     c.beginPath();
     c.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
     c.stroke();
-    c.fillStyle = "#edf4e9";
-    c.font = `500 ${h * 0.04}px sans-serif`;
-    c.textAlign = "center";
-    c.fillText("Y U M E E W", cx, cy);
-    c.fillStyle = "#a3afa6";
-    c.font = `${h * 0.015}px sans-serif`;
-    c.fillText("S O U N D  I N  M O T I O N", cx, cy + h * 0.04);
   } else if (s.style >= 6) {
     drawExtra(c, w, h, t, values, gain, s.style);
   } else if (s.style === 3) {

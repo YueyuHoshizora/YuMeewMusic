@@ -534,7 +534,7 @@ function drawIdentity(c, width, height, settings) {
   if (!image && !text) return;
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
-  c.globalAlpha = 1;
+  c.globalAlpha = Math.max(0, Math.min(100, settings.identityOpacity ?? 100)) / 100;
   const unit = Math.min(width, height);
   const size = unit * .03 * Math.max(50, Math.min(300, settings.identityTextSize ?? 100)) / 100;
   c.font = `600 ${size}px ${subtitleFontFamily(settings.identityFont)}`;

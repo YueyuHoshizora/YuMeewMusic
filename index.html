@@ -214,6 +214,8 @@
               <summary>個人識別</summary>
               <label class="field-label" for="identityType">識別類型</label>
               <select id="identityType"><option value="text">文字</option><option value="image">圖片</option></select>
+              <label class="range-label" for="identityOpacity">不透明度<output id="identityOpacity-value">100%</output></label>
+              <input id="identityOpacity" type="range" min="0" max="100" step="1" value="100">
               <div id="identity-text-controls">
                 <label class="field-label" for="identityText">識別文字</label>
                 <input id="identityText" class="text-input" type="text" maxlength="80" placeholder="輸入名稱或品牌，留空不顯示">

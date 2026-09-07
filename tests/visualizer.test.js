@@ -241,14 +241,15 @@ test('subtitle text and outline colors apply with safe defaults',()=>{
 
 test('identity image is positioned independently, scales from 10–300%, and remains in frame',()=>{
  for(const position of [0,50,100]) for(const identityScale of [10,100,300]) {
-  const calls=[]; const logo={width:400,height:200};
-  const c=new Proxy({}, {get:(_,key)=>(...args)=>calls.push([key,...args]),set:()=>true});
-  draw({width:1280,height:720,getContext:()=>c},0,null,{width:100,height:100},{style:19,darkness:45,identityType:'image',identityImage:logo,identityX:position,identityY:position,identityScale});
+  const calls=[]; const properties={}; const logo={width:400,height:200};
+  const c=new Proxy({}, {get:(_,key)=>(...args)=>calls.push([key,...args]),set:(_,key,value)=>{properties[key]=value;return true;}});
+  draw({width:1280,height:720,getContext:()=>c},0,null,{width:100,height:100},{style:19,darkness:45,identityType:'image',identityImage:logo,identityX:position,identityY:position,identityScale,identityOpacity:40});
   const [,image,x,y,w,h]=calls.filter(([key])=>key==='drawImage').at(-1);
   assert.equal(image,logo);
   assert.ok(x>=0 && y>=0 && x+w<=1280 && y+h<=720);
   assert.equal(w/h,2);
   assert.ok(Math.abs(w-720*.16*identityScale/100)<1e-9);
+  assert.equal(properties.globalAlpha,.4);
  }
 });
 
@@ -260,12 +261,13 @@ test('identity text applies size, local font, fill color and outline color',()=>
    set:(_,key,value)=>{properties[key]=value;return true;},
   });
   draw({width:1280,height:720,getContext:()=>c},0,null,{width:100,height:100},{
-   style:19,darkness:45,identityType:'text',identityText:'品牌',identityTextSize,identityFont:'kai',identityTextColor:'#fedcba',identityOutlineColor:'#123456',
+   style:19,darkness:45,identityType:'text',identityText:'品牌',identityTextSize,identityFont:'kai',identityTextColor:'#fedcba',identityOutlineColor:'#123456',identityOpacity:35,
   });
   assert.ok(properties.font.includes(`${720*.03*identityTextSize/100}px`));
   assert.ok(properties.font.includes('DFKai-SB'));
   assert.equal(properties.fillStyle,'#fedcba');
   assert.equal(properties.strokeStyle,'#123456');
+  assert.equal(properties.globalAlpha,.35);
   assert.ok(calls.some(([key,text])=>key==='strokeText'&&text==='品牌'));
   assert.ok(calls.some(([key,text])=>key==='fillText'&&text==='品牌'));
  }

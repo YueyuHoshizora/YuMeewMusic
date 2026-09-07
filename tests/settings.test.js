@@ -17,6 +17,7 @@ test("settings survive another load and exclude all media-related data", () => {
     identityX: 90,
     identityY: 10,
     identityScale: 175,
+    identityOpacity: 65,
     identityTextSize: 225,
     identityFont: "kai",
     identityTextColor: "#fedcba",

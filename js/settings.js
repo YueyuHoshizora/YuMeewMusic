@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   identityX: 90,
   identityY: 10,
   identityScale: 100,
+  identityOpacity: 100,
   identityTextSize: 100,
   identityFont: "system",
   identityTextColor: "#ffffff",
@@ -54,7 +55,7 @@ export function validateSettings(value) {
     result.style = source.style;
   if (typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color))
     result.color = source.color.toLowerCase();
-  for (const key of ["strength", "darkness", "textX", "textY", "identityX", "identityY"]) {
+  for (const key of ["strength", "darkness", "textX", "textY", "identityX", "identityY", "identityOpacity"]) {
     if (
       typeof source[key] === "number" &&
       Number.isFinite(source[key]) &&

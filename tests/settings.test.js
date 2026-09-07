@@ -17,6 +17,7 @@ test("settings survive another load and exclude all media-related data", () => {
     positionX: -23,
     positionY: 18,
     resolution: "720",
+    aspectRatio: "9:16",
     fps: "60",
     format: "flac",
     mode: "light",

@@ -1,3 +1,4 @@
+import { videoDimensions } from "../js/dimensions.js";
 import { STYLES } from "../js/styles.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -46,6 +47,7 @@ test("editor initializes, switches formats and reaches download for every format
     document: {
       getElementById: (id) => elements.get(id),
       querySelectorAll: () => [],
+      querySelector: () => element(),
       createElementNS: element,
       createElement: element,
       body: element(),
@@ -61,6 +63,7 @@ test("editor initializes, switches formats and reaches download for every format
       }
       async close() {}
     },
+    videoDimensions,
     STYLES,
     getFormat,
     exportFilename,
@@ -98,5 +101,10 @@ test("editor initializes, switches formats and reaches download for every format
     assert.match(elements.get("message-text").textContent, /下載已開始/);
     assert.equal(elements.get("export").disabled, false);
   }
+  elements.get("aspect-ratio").value = "9:16";
+  elements.get("aspect-ratio").listeners.change();
+  assert.equal(elements.get("preview").width, 720);
+  assert.equal(elements.get("preview").height, 1280);
+  assert.equal(elements.get("preview-aspect").textContent, "9:16");
   assert.equal(downloads.length, 5);
 });

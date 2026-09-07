@@ -1,3 +1,4 @@
+import { videoDimensions } from "./dimensions.js";
 import { draw } from "./visualizer.js";
 import { getFormat } from "./formats.js";
 
@@ -31,6 +32,7 @@ export async function encodeMedia({
   image,
   settings,
   resolution,
+  aspectRatio = "16:9",
   fps,
   signal,
   onProgress,
@@ -41,6 +43,7 @@ export async function encodeMedia({
     rate = Number(fps);
   if (type.video && (![720, 1080].includes(height) || ![30, 60].includes(rate)))
     throw Error("無效的影片設定。");
+  const dimensions = type.video ? videoDimensions(resolution, aspectRatio) : null;
   const checkCanceled = () => {
     if (signal.aborted) throw Error("已取消匯出。");
   };
@@ -70,7 +73,7 @@ export async function encodeMedia({
       numberOfChannels: buffer.numberOfChannels,
       sampleRate: buffer.sampleRate,
     })) ||
-    (type.video && !(await m.canEncodeVideo("avc", { width: (height * 16) / 9, height })))
+    (type.video && !(await m.canEncodeVideo("avc", dimensions)))
   ) {
     throw Error(
       `此瀏覽器無法編碼 ${format.toUpperCase()}，請使用最新版 Chrome 或 Edge 再試。檔案不會改送至伺服器。`,
@@ -79,8 +82,8 @@ export async function encodeMedia({
   checkCanceled();
   const canvas = type.video ? document.createElement("canvas") : null;
   if (canvas) {
-    canvas.width = (height * 16) / 9;
-    canvas.height = height;
+    canvas.width = dimensions.width;
+    canvas.height = dimensions.height;
   }
   const target = new m.BufferTarget();
   const output = new m.Output({ format: new m[type.container](), target });

@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   positionX: 0,
   positionY: 0,
   resolution: "1080",
+  aspectRatio: "16:9",
   fps: "30",
   format: "mp4",
   mode: "dark",
@@ -44,6 +45,7 @@ export function validateSettings(value) {
   if (["light", "dark"].includes(source.mode)) result.mode = source.mode;
   if (typeof source.theme === "string" && Object.hasOwn(THEMES, source.theme))
     result.theme = source.theme;
+  if (["16:9", "9:16"].includes(source.aspectRatio)) result.aspectRatio = source.aspectRatio;
   return result;
 }
 

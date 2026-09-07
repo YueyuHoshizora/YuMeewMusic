@@ -43,8 +43,8 @@ export function spectrum(b, t) {
 }
 export function draw(canvas, t, b, img, s) {
   const c = canvas.getContext("2d");
-  const w = canvas.width,
-    h = canvas.height;
+  const w = canvas.width;
+  let h = canvas.height;
   c.fillStyle = "#0c1112";
   c.fillRect(0, 0, w, h);
   if (img) {
@@ -83,6 +83,9 @@ export function draw(canvas, t, b, img, s) {
   c.save();
   const position = key => Number.isFinite(s[key]) ? Math.max(-50, Math.min(50, s[key])) : 0;
   c.translate(w * position("positionX") / 100, h * position("positionY") / 100);
+  // Keep circular and radial styles within the narrow side of portrait frames.
+  c.translate(0, (h - Math.min(w, h)) / 2);
+  h = Math.min(w, h);
   const values = spectrum(b, t),
     gain = 0.35 + s.strength / 70;
   c.strokeStyle = s.color;

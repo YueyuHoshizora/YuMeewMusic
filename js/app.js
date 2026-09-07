@@ -1,3 +1,4 @@
+import { videoDimensions } from "./dimensions.js";
 import { STYLES } from "./styles.js";
 import { applyTheme } from "./themes.js";
 import { getFormat, exportFilename } from "./formats.js";
@@ -25,6 +26,7 @@ $("darkness").value = state.darkness;
 $("positionX").value = state.positionX;
 $("positionY").value = state.positionY;
 $("resolution").value = restored.resolution;
+$("aspect-ratio").value = restored.aspectRatio;
 $("fps").value = restored.fps;
 $("format").value = restored.format;
 $("appearance-mode").value = restored.mode;
@@ -48,6 +50,7 @@ function persistSettings() {
     positionX: state.positionX,
     positionY: state.positionY,
     resolution: $("resolution").value,
+    aspectRatio: $("aspect-ratio").value,
     fps: $("fps").value,
     format: $("format").value,
     mode: state.mode,
@@ -77,7 +80,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -98,6 +101,15 @@ function update() {
   $("preview-tag").textContent = state.buffer
     ? "YOUR SOUND, IN MOTION"
     : "DEMO VISUAL · 選擇音樂開始創作";
+  const aspectRatio = $("aspect-ratio").value;
+  const size = videoDimensions(720, aspectRatio);
+  const preview = $("preview");
+  if (preview.width !== size.width || preview.height !== size.height) {
+    preview.width = size.width;
+    preview.height = size.height;
+  }
+  document.querySelector(".canvas-wrap").classList.toggle("portrait", aspectRatio === "9:16");
+  $("preview-aspect").textContent = aspectRatio;
   $("preview-resolution").textContent = `${$("resolution").value}p`;
   $("strength-value").textContent = `${state.strength}%`;
   $("darkness-value").textContent = `${state.darkness}%`;
@@ -329,6 +341,7 @@ $("reset-position").addEventListener("click", () => {
   update();
 });
 $("resolution").addEventListener("change", update);
+$("aspect-ratio").addEventListener("change", update);
 $("fps").addEventListener("change", persistSettings);
 $("format").addEventListener("change", update);
 $("cancel").addEventListener("click", () => exportController?.abort());
@@ -351,6 +364,7 @@ $("export").addEventListener("click", async () => {
       image: state.image,
       settings: { ...state },
       resolution,
+      aspectRatio: $("aspect-ratio").value,
       fps,
       signal: exportController.signal,
       onProgress: (value) => {

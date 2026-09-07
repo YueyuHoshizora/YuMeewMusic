@@ -704,3 +704,21 @@ body { min-width: 1280px; }
 header { flex-wrap: nowrap; }
 .header-note { display: none; }
 .workspace { grid-template-columns: 235px minmax(400px, 1fr) 260px; }
+
+.song-settings {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.song-settings > summary {
+  cursor: pointer;
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 0;
+}
+.song-settings > summary::marker { color: var(--primary-text); }
+.song-settings > summary:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 4px;
+  border-radius: 4px;
+}

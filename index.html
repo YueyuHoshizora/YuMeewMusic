@@ -98,7 +98,8 @@
 <input id="record-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
 <button id="remove-record" class="text-button" hidden type="button">移除唱片封面</button>
 </div>
-            <div class="song-details">
+            <details class="song-details song-settings">
+              <summary>歌曲資訊與文字設定</summary>
               <label class="field-label" for="songTitle">歌曲名稱</label>
               <input id="songTitle" class="text-input" type="text" maxlength="120" placeholder="輸入歌曲名稱">
               <label class="field-label" for="lyricist">作詞</label>
@@ -118,7 +119,7 @@
               <input id="textSize" type="range" min="50" max="250" step="5" value="100">
               <p class="position-help">三行文字一起調整。水平由左至右，垂直由上至下；超出畫面的部分會裁切。</p>
 
-            </div>
+            </details>
           </aside>
           <section class="center" aria-label="預覽與頻譜風格">
             <div class="preview-dock">

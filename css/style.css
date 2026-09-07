@@ -789,3 +789,34 @@ header {
 .reset-dialog p { margin: 0; font-size: 16px; line-height: 1.8; color: var(--muted); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
 .reset-confirm { border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); padding: 9px 16px; font-size: 14px; }
+
+/* Keep preview visible while the surrounding settings scroll. */
+@media (min-width: 701px) {
+  .center {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+    min-width: 0;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    scroll-padding-top: 16px;
+  }
+  .preview-dock {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--background);
+    padding-top: 4px;
+  }
+  .preview-dock .canvas-wrap {
+    width: min(100%, calc(max(100px, 100dvh - 220px) * 16 / 9));
+    margin-inline: auto;
+  }
+  .preview-dock .canvas-wrap.portrait {
+    width: min(100%, 360px, calc(max(100px, 100dvh - 220px) * 9 / 16));
+  }
+  .preview-dock .transport { margin-bottom: 0; }
+  .center .styles { padding-bottom: 12px; }
+}

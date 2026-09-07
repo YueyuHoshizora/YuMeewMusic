@@ -16,6 +16,8 @@ test('standalone subtitle editor has every referenced control and only local ass
   assert.match(script, /createUndoHistory\(5\)/);
   assert.ok(ids.includes('undo-edit'));
   assert.ok(ids.includes('redo-edit'));
+  assert.match(html, /id="undo-edit"[^>]*>↶ 復原<\/button>/);
+  assert.match(html, /id="redo-edit"[^>]*>↷ 恢復<\/button>/);
   assert.match(html, /id="add-cue"[^>]*>＋<\/button>/);
   assert.match(html, /id="delete-cue"[^>]*>−<\/button>/);
   assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);

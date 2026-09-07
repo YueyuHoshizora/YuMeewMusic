@@ -64,7 +64,7 @@ function undoEdit() {
 }
 
 function redoEdit() {
-  restoreHistory(editHistory.redo(editorSnapshot()), '反復原');
+  restoreHistory(editHistory.redo(editorSnapshot()), '恢復');
 }
 
 function markDirty() {

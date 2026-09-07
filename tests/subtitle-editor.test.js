@@ -12,4 +12,7 @@ test('standalone subtitle editor has every referenced control and only local ass
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
   assert.match(script, /saveStoredMedia\('subtitle'/);
   assert.match(script, /serializeSubtitles/);
+  assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);
+  assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);
+  for (const delta of ['0.5', '0.1', '-0.5', '-0.1']) assert.match(html, new RegExp(`data-time-delta="${delta}"`));
 });

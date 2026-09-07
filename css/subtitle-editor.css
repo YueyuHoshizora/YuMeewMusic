@@ -47,7 +47,11 @@ body.subtitle-editor-body { min-width: 1100px; }
 .cue-list-text { overflow: hidden; color: var(--foreground); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
 .editor-empty { margin: 35px auto; max-width: 360px; color: var(--muted); font-size: 14px; line-height: 1.8; text-align: center; }
 .cue-time-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.cue-time-fields label, .cue-text-label { display: flex; flex-direction: column; gap: 9px; color: var(--muted); font-size: 13px; }
+.cue-time-field { display: flex; flex-direction: column; gap: 9px; }
+.cue-time-field label, .cue-text-label { color: var(--muted); font-size: 13px; }
+.time-adjustments { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.time-adjustments button { min-width: 0; padding: 7px 3px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--foreground); font-size: 11px; white-space: nowrap; }
+.time-adjustments button:hover { border-color: var(--primary); background: var(--hover); }
 .cue-text-label { margin-top: 18px; }
 #cue-text { width: 100%; resize: vertical; min-height: 145px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); font: inherit; line-height: 1.7; }
 #cue-text:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }

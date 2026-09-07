@@ -167,6 +167,20 @@ function applyTimeField(id, key) {
   render();
 }
 
+function adjustCueTime(key, delta) {
+  const cue = currentCue();
+  if (!cue || !['start', 'end'].includes(key) || !Number.isFinite(delta)) return;
+  const value = Math.round((cue[key] + delta) * 1000) / 1000;
+  cue[key] = key === 'start'
+    ? Math.max(0, Math.min(cue.end - .1, value))
+    : Math.max(cue.start + .1, Math.min(state.duration, value));
+  const selected = cue;
+  state.cues.sort((a, b) => a.start - b.start || a.end - b.end);
+  state.selected = state.cues.indexOf(selected);
+  markDirty();
+  render();
+}
+
 function addCue() {
   const start = Math.max(0, Math.min(state.duration - .1, audio.currentTime || currentCue()?.end || 0));
   const cue = { start, end: Math.min(state.duration, start + 3), text: '新字幕' };
@@ -346,6 +360,9 @@ $('next-cue').addEventListener('click', () => selectCue(state.selected + 1, true
 $('preview-cue').addEventListener('click', async () => { const cue = currentCue(); if (cue && audio.src) { audio.currentTime = cue.start; await audio.play(); } });
 $('cue-start').addEventListener('change', () => applyTimeField('cue-start', 'start'));
 $('cue-end').addEventListener('change', () => applyTimeField('cue-end', 'end'));
+$('cue-form').querySelectorAll('[data-time-field]').forEach(button => button.addEventListener('click', () => {
+  adjustCueTime(button.dataset.timeField, Number(button.dataset.timeDelta));
+}));
 $('cue-text').addEventListener('input', () => { const cue = currentCue(); if (!cue) return; cue.text = $('cue-text').value; markDirty(); renderList(); renderTimeline(); });
 $('download-subtitles').addEventListener('click', downloadSrt);
 $('save-subtitles').addEventListener('click', saveAndReturn);

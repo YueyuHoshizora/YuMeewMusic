@@ -63,8 +63,26 @@
           </div>
           <div id="cue-form" hidden>
             <div class="cue-time-fields">
-              <label>開始時間<input id="cue-start" class="text-input" type="text" inputmode="decimal" placeholder="00:05.000" /></label>
-              <label>結束時間<input id="cue-end" class="text-input" type="text" inputmode="decimal" placeholder="00:08.000" /></label>
+              <div class="cue-time-field">
+                <label for="cue-start">開始時間</label>
+                <input id="cue-start" class="text-input" type="text" inputmode="decimal" placeholder="00:05.000" />
+                <div class="time-adjustments" aria-label="微調開始時間">
+                  <button type="button" data-time-field="start" data-time-delta="0.5">+0.5 秒</button>
+                  <button type="button" data-time-field="start" data-time-delta="0.1">+0.1 秒</button>
+                  <button type="button" data-time-field="start" data-time-delta="-0.5">−0.5 秒</button>
+                  <button type="button" data-time-field="start" data-time-delta="-0.1">−0.1 秒</button>
+                </div>
+              </div>
+              <div class="cue-time-field">
+                <label for="cue-end">結束時間</label>
+                <input id="cue-end" class="text-input" type="text" inputmode="decimal" placeholder="00:08.000" />
+                <div class="time-adjustments" aria-label="微調結束時間">
+                  <button type="button" data-time-field="end" data-time-delta="0.5">+0.5 秒</button>
+                  <button type="button" data-time-field="end" data-time-delta="0.1">+0.1 秒</button>
+                  <button type="button" data-time-field="end" data-time-delta="-0.5">−0.5 秒</button>
+                  <button type="button" data-time-field="end" data-time-delta="-0.1">−0.1 秒</button>
+                </div>
+              </div>
             </div>
             <label class="cue-text-label" for="cue-text">字幕文字</label>
             <textarea id="cue-text" rows="7" placeholder="輸入字幕文字"></textarea>

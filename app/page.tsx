@@ -280,7 +280,7 @@ export default function Home() {
         <span className="header-note">讓每一段聲音，都有畫面。</span>
         <span className="local">
           <i />
-          本機安全處理
+          檔案不上傳伺服器
         </span>
       </header>
       <main>
@@ -290,7 +290,7 @@ export default function Home() {
             <h1>
               你的音樂，視覺化<span>。</span>
             </h1>
-            <p>加入音樂與圖片，創作屬於你的頻譜影片。</p>
+            <p>音樂、圖片與 MP4 匯出全程在你的瀏覽器處理，檔案不會上傳至伺服器。</p>
           </div>
           <div className="step">
             01 素材 <span>／</span> 02 風格 <span>／</span> 03 匯出
@@ -317,7 +317,7 @@ export default function Home() {
                 <Music2 />
               </span>
               <strong>
-                {loading ? '正在讀取音樂…' : name || '上傳你的音樂'}
+                {loading ? '正在讀取音樂…' : name || '選擇本機音樂'}
               </strong>
               <small>
                 {name ? `${format(duration)} · 點擊更換` : '拖放檔案或點擊選擇'}
@@ -376,9 +376,9 @@ export default function Home() {
             <div className="privacy">
               <span>✳</span>
               <p>
-                靈感留在畫面裡。
+                音樂、圖片與影片
                 <br />
-                你的檔案留在裝置裡。
+                全程在瀏覽器處理，不上傳。
               </p>
             </div>
           </aside>
@@ -401,7 +401,7 @@ export default function Home() {
               <span className="preview-tag">
                 {name
                   ? 'YOUR SOUND, IN MOTION'
-                  : 'DEMO VISUAL · 上傳音樂開始創作'}
+                  : 'DEMO VISUAL · 選擇音樂開始創作'}
               </span>
             </div>
             <div className="transport">
@@ -578,7 +578,7 @@ export default function Home() {
               <p className="export-note">
                 {name
                   ? '匯出期間請保持此頁面開啟。'
-                  : '先上傳音樂，就能匯出影片。'}
+                  : '先選擇音樂，就能匯出影片。'}
               </p>
             </div>
           </aside>

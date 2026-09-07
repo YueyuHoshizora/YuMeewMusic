@@ -263,15 +263,15 @@ function scrollCueToCenter(index) {
   list.scrollTo({ top: Math.max(0, centeredTop), behavior: 'smooth' });
 }
 
-function updatePlayhead() {
+function updatePlayhead(followPlayback = false) {
   const time = audio.currentTime || 0;
   const activeIndex = subtitleIndexAt({ cues: state.cues }, time);
-  if (activeIndex >= 0 && activeIndex !== state.selected) {
+  if (followPlayback && activeIndex !== state.selected) {
     state.selected = activeIndex;
     renderList();
     renderTimeline();
     renderForm();
-    requestAnimationFrame(() => scrollCueToCenter(activeIndex));
+    if (activeIndex >= 0) requestAnimationFrame(() => scrollCueToCenter(activeIndex));
   }
   $('playhead').style.left = `${Math.max(0, Math.min(100, time / state.duration * 100))}%`;
   $('editor-current-time').textContent = editorTime(time);
@@ -354,15 +354,15 @@ $('timeline').addEventListener('pointerdown', event => {
   if (event.target !== $('timeline') && event.target !== $('waveform') && event.target !== $('cue-bands')) return;
   const rect = $('timeline').getBoundingClientRect();
   audio.currentTime = Math.max(0, Math.min(state.duration, (event.clientX - rect.left) / rect.width * state.duration));
-  updatePlayhead();
+  updatePlayhead(true);
 });
 $('timeline').addEventListener('keydown', event => {
   if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
   event.preventDefault();
   audio.currentTime = Math.max(0, Math.min(state.duration, (audio.currentTime || 0) + (event.key === 'ArrowRight' ? 1 : -1) * (event.shiftKey ? 5 : .1)));
-  updatePlayhead();
+  updatePlayhead(true);
 });
-audio.addEventListener('timeupdate', updatePlayhead);
+audio.addEventListener('timeupdate', () => updatePlayhead(true));
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) { state.duration = audio.duration; $('editor-duration').textContent = editorTime(state.duration); renderTimeline(); } });
 $('add-cue').addEventListener('click', addCue);
 $('delete-cue').addEventListener('click', deleteCue);

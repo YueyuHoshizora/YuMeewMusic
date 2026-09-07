@@ -52,7 +52,7 @@ function persistSettings() {
 
 let exportController;
 const styles = ["環形脈衝", "經典音柱", "鏡像頻譜", "流動波形", "放射光芒", "點陣節奏"];
-const format = (t) =>
+const formatTime = (t) =>
   `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 function message(text = "") {
@@ -82,13 +82,13 @@ function update() {
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;
   $("audio-name").textContent = state.loading ? "正在讀取音樂…" : state.name || "選擇本機音樂";
   $("audio-info").textContent = state.buffer
-    ? `${format(state.buffer.duration)} · 點擊更換`
+    ? `${formatTime(state.buffer.duration)} · 點擊更換`
     : "拖放檔案或點擊選擇";
   $("image-name").textContent = state.imageLoading
     ? "正在讀取圖片…"
     : state.imageName || "加入背景圖片";
   $("remove-image").hidden = !state.image;
-  $("duration").textContent = format(state.buffer?.duration || 0);
+  $("duration").textContent = formatTime(state.buffer?.duration || 0);
   $("seek").max = state.buffer?.duration || 1;
   $("preview-tag").textContent = state.buffer
     ? "YOUR SOUND, IN MOTION"
@@ -324,7 +324,7 @@ $("export").addEventListener("click", async () => {
 
 function animate() {
   if (!state.busy) draw($("preview"), audio.currentTime || 0, state.buffer, state.image, state);
-  $("time").textContent = format(audio.currentTime || 0);
+  $("time").textContent = formatTime(audio.currentTime || 0);
   $("seek").value = audio.currentTime || 0;
   requestAnimationFrame(animate);
 }

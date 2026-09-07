@@ -34,6 +34,7 @@ test("settings survive another load and exclude all media-related data", () => {
     aspectRatio: "9:16",
     fps: "60",
     format: "flac",
+    profile: "high",
     mode: "light",
     theme: "ocean",
   };

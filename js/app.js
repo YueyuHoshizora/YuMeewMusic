@@ -57,6 +57,7 @@ $("textColor").addEventListener("input", () => {
 $("resolution").value = restored.resolution;
 $("aspect-ratio").value = restored.aspectRatio;
 $("fps").value = restored.fps;
+$("profile").value = restored.profile;
 $("format").value = restored.format;
 $("appearance-mode").value = restored.mode;
 $("appearance-theme").value = restored.theme;
@@ -95,6 +96,7 @@ function persistSettings() {
     aspectRatio: $("aspect-ratio").value,
     fps: $("fps").value,
     format: $("format").value,
+    profile: $("profile").value,
     mode: state.mode,
     theme: state.theme,
   });
@@ -146,7 +148,7 @@ function update() {
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
   const format = $("format").value;
   const type = getFormat(format);
-  $("resolution").disabled = $("fps").disabled = locked || !type.video;
+  $("profile").disabled = $("resolution").disabled = $("fps").disabled = locked || !type.video;
   $("format-description").textContent = type.description + (type.video ? "" : " · 不包含頻譜畫面");
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;
   $("audio-name").textContent = state.loading ? "正在讀取音樂…" : state.name || "選擇本機音樂";
@@ -462,7 +464,7 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   if (!$("reset-dialog").open || state.busy || state.loading || state.imageLoading) return;
   $("reset-dialog").close();
   Object.assign(state, DEFAULT_SETTINGS);
-  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
+  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile"]) {
     $(id).value = state[id];
   }
   $("spectrum-color").value = state.color;
@@ -482,6 +484,7 @@ $("reset-position").addEventListener("click", () => {
 $("resolution").addEventListener("change", update);
 $("aspect-ratio").addEventListener("change", update);
 $("fps").addEventListener("change", persistSettings);
+$("profile").addEventListener("change", persistSettings);
 $("format").addEventListener("change", update);
 $("cancel").addEventListener("click", () => exportController?.abort());
 $("export").addEventListener("click", async () => {
@@ -505,7 +508,7 @@ $("export").addEventListener("click", async () => {
       format,
       buffer: state.buffer,
       image: state.image,
-      settings: { ...state },
+      settings: { ...state, profile: $("profile").value },
       resolution,
       aspectRatio: $("aspect-ratio").value,
       fps,

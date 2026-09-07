@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   aspectRatio: "16:9",
   fps: "60",
   format: "mp4",
+  profile: "main",
   mode: "dark",
   theme: "lime",
 });
@@ -71,6 +72,7 @@ export function validateSettings(value) {
   }
   if (["horizontal", "vertical"].includes(source.subtitleDirection)) result.subtitleDirection = source.subtitleDirection;
   if (typeof source.subtitleTypewriter === "boolean") result.subtitleTypewriter = source.subtitleTypewriter;
+  if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
   return result;
 }
 

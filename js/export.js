@@ -1,3 +1,4 @@
+import { videoProfileConfig } from "./video-profile.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
 import { draw } from "./visualizer.js";
@@ -82,8 +83,9 @@ export async function encodeMedia({
   }
   checkCanceled();
   const bitrate = height === 1080 ? 8_000_000 : 4_000_000;
+  const profileOptions = type.video ? videoProfileConfig(settings?.profile ?? "main", dimensions, rate) : {};
   const hardwareAcceleration = type.video
-    ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate}, signal)
+    ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate, ...profileOptions}, signal)
     : null;
   if (type.video) onEncodingMode(hardwareAcceleration);
   checkCanceled();
@@ -98,6 +100,7 @@ export async function encodeMedia({
     const video = type.video
       ? new m.CanvasSource(canvas, {
           codec: "avc",
+          ...profileOptions,
           bitrate,
           hardwareAcceleration,
         })

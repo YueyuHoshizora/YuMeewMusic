@@ -36,7 +36,12 @@ $("strength").value = state.strength;
 $("darkness").value = state.darkness;
 $("positionX").value = state.positionX;
 $("positionY").value = state.positionY;
-for (const id of ["textX", "textY", "textSize"]) $(id).value = state[id];
+for (const id of ["textX", "textY", "textSize", "textColor"]) $(id).value = state[id];
+$("textColor").addEventListener("input", () => {
+  state.textColor = $("textColor").value;
+  $("text-color-value").textContent = state.textColor.toUpperCase();
+  persistSettings();
+});
 $("resolution").value = restored.resolution;
 $("aspect-ratio").value = restored.aspectRatio;
 $("fps").value = restored.fps;
@@ -61,6 +66,7 @@ function persistSettings() {
     textX: state.textX,
     textY: state.textY,
     textSize: state.textSize,
+    textColor: state.textColor,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -98,7 +104,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -143,6 +149,7 @@ function update() {
     el.querySelector(".check").hidden = state.style !== i;
   });
   $("color-value").textContent = state.color.toUpperCase();
+  $("text-color-value").textContent = state.textColor.toUpperCase();
   persistSettings();
 }
 
@@ -247,6 +254,7 @@ $("spectrum-color").addEventListener("input", () => {
   if (state.busy || state.loading || state.imageLoading) return;
   state.color = $("spectrum-color").value;
   $("color-value").textContent = state.color.toUpperCase();
+  $("text-color-value").textContent = state.textColor.toUpperCase();
   persistSettings();
 });
 
@@ -361,7 +369,7 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   if (!$("reset-dialog").open || state.busy || state.loading || state.imageLoading) return;
   $("reset-dialog").close();
   Object.assign(state, DEFAULT_SETTINGS);
-  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
+  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
     $(id).value = state[id];
   }
   $("spectrum-color").value = state.color;

@@ -91,6 +91,11 @@
               <input id="lyricist" class="text-input" type="text" maxlength="120" placeholder="輸入作詞者">
               <label class="field-label" for="composer">作曲</label>
               <input id="composer" class="text-input" type="text" maxlength="120" placeholder="輸入作曲者">
+              <label class="field-label" for="textColor">文字顏色</label>
+              <div class="color-picker">
+                <input id="textColor" type="color" value="#ffffff" aria-describedby="text-color-hint">
+                <div><output id="text-color-value" for="textColor">#FFFFFF</output><span id="text-color-hint">點擊色塊開啟調色盤</span></div>
+              </div>
               <label class="range-label" for="textX">文字水平位置<output id="textX-value">50%</output></label>
               <input id="textX" type="range" min="0" max="100" value="50">
               <label class="range-label" for="textY">文字垂直位置<output id="textY-value">91%</output></label>

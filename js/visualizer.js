@@ -169,7 +169,7 @@ function drawSongDetails(c, width, height, settings) {
   c.shadowColor = "#000000";
   c.shadowBlur = unit * .012;
   lines.forEach(([text, title], i) => {
-    c.fillStyle = title ? "#ffffff" : "#e1e8e4";
+    c.fillStyle = typeof settings.textColor === "string" && /^#[0-9a-f]{6}$/i.test(settings.textColor) ? settings.textColor : "#ffffff";
     c.font = `${title ? 600 : 400} ${unit * (title ? .032 : .022) * scale}px sans-serif`;
     c.fillText(text, x, y - (lines.length - 1 - i) * lineHeight, width * .86);
   });

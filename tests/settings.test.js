@@ -16,6 +16,7 @@ test("settings survive another load and exclude all media-related data", () => {
     textX: 35,
     textY: 60,
     textSize: 150,
+    textColor: "#ff6688",
     style: 5,
     color: "#A1B2C3",
     strength: 0,

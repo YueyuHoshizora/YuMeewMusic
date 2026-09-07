@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   textX: 50,
   textY: 91,
   textSize: 100,
+  textColor: "#ffffff",
   style: 0,
   color: "#c5fa75",
   strength: 70,
@@ -56,6 +57,7 @@ export function validateSettings(value) {
     if (typeof source[key] === "string") result[key] = source[key].slice(0, 120);
   }
   if (typeof source.textSize === "number" && Number.isFinite(source.textSize) && source.textSize >= 50 && source.textSize <= 250) result.textSize = source.textSize;
+  if (typeof source.textColor === "string" && /^#[0-9a-f]{6}$/i.test(source.textColor)) result.textColor = source.textColor.toLowerCase();
   return result;
 }
 

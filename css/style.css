@@ -383,18 +383,27 @@ h1 span {
   margin-top: 29px;
   padding-top: 24px;
 }
-.identity-settings > summary {
+.identity-settings > summary,
+.screen-settings > summary {
   cursor: pointer;
   color: var(--foreground);
   font-size: 16px;
   font-weight: 600;
   padding: 4px 0;
 }
-.identity-settings > summary::marker { color: var(--primary-text); }
-.identity-settings > summary:focus-visible {
+.identity-settings > summary::marker,
+.screen-settings > summary::marker { color: var(--primary-text); }
+.identity-settings > summary:focus-visible,
+.screen-settings > summary:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 4px;
   border-radius: 4px;
+}
+.screen-settings > summary span {
+  color: var(--muted);
+  font-family: monospace;
+  font-size: 12px;
+  margin-right: 8px;
 }
 .setting-select {
   width: 100%;

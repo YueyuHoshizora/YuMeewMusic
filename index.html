@@ -235,10 +235,8 @@
             <div id="styles" class="styles" aria-label="頻譜風格"></div>
           </section>
           <aside class="panel settings">
-            <div class="section-title">
-              <span>☷</span>
-              <h2>畫面設定</h2>
-            </div>
+            <details class="screen-settings">
+            <summary><span aria-hidden="true">☷</span>畫面設定</summary>
             <label class="field-label" for="spectrum-color">頻譜色彩</label>
             <div class="color-picker">
               <input
@@ -266,6 +264,7 @@
               <p id="position-help" class="position-help">水平：左 −／右 ＋ · 垂直：上 −／下 ＋<br>超出畫面的部分不會顯示。</p>
               <button id="reset-position" type="button" class="text-button">重設位置</button>
             </div>
+            </details>
             <details class="export-section identity-settings">
               <summary>個人識別</summary>
               <label class="field-label" for="identityType">識別類型</label>

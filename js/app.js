@@ -608,7 +608,7 @@ $("trim-reset").addEventListener("click", () => {
   state.buffer = state.originalBuffer;
   state.trimStart = 0;
   audio.currentTime = 0;
-  resetTrimInputs();
+  $("trim-info").textContent = `已恢復完整音樂：${formatTrimTime(state.buffer.duration)}，裁剪時間已保留`;
   update();
 });
 function enforceTrimEnd() {

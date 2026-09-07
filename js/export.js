@@ -44,7 +44,7 @@ export async function encodeMedia({
   const type = getFormat(format);
   const height = Number(resolution),
     rate = Number(fps);
-  if (type.video && (![720, 1080].includes(height) || ![30, 60].includes(rate)))
+  if (type.video && (![480, 720, 1080].includes(height) || ![30, 60].includes(rate)))
     throw Error("無效的影片設定。");
   const dimensions = type.video ? videoDimensions(resolution, aspectRatio) : null;
   const checkCanceled = () => {
@@ -82,7 +82,7 @@ export async function encodeMedia({
     );
   }
   checkCanceled();
-  const bitrate = height === 1080 ? 8_000_000 : 4_000_000;
+  const bitrate = height === 1080 ? 8_000_000 : height === 720 ? 4_000_000 : 2_000_000;
   const profileOptions = type.video ? videoProfileConfig(settings?.profile ?? "auto", dimensions, rate) : {};
   const hardwareAcceleration = type.video
     ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate, ...profileOptions}, signal)

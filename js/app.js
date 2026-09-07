@@ -574,7 +574,7 @@ if (document.modelContext?.registerTool) {
             type: "object",
             properties: {
               style: { type: "integer", minimum: 0, maximum: STYLES.length - 1 },
-              resolution: { type: "string", enum: ["720", "1080"] },
+              resolution: { type: "string", enum: ["480", "720", "1080"] },
               fps: { type: "string", enum: ["30", "60"] },
             },
             required: ["style", "resolution", "fps"],
@@ -589,7 +589,7 @@ if (document.modelContext?.registerTool) {
               !Number.isInteger(input.style) ||
               input.style < 0 ||
               input.style >= STYLES.length ||
-              !["720", "1080"].includes(input.resolution) ||
+              !["480", "720", "1080"].includes(input.resolution) ||
               !["30", "60"].includes(input.fps)
             )
               throw Error("Invalid settings");

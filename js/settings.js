@@ -54,7 +54,7 @@ export function validateSettings(value) {
     if (typeof source[key] === "number" && Number.isFinite(source[key]) && source[key] >= -50 && source[key] <= 50)
       result[key] = source[key];
   }
-  if (["720", "1080"].includes(source.resolution)) result.resolution = source.resolution;
+  if (["480", "720", "1080"].includes(source.resolution)) result.resolution = source.resolution;
   if (["30", "60"].includes(source.fps)) result.fps = source.fps;
   if (typeof source.format === "string" && Object.hasOwn(FORMATS, source.format))
     result.format = source.format;

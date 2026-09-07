@@ -1,4 +1,4 @@
-// Level follows the macroblock limits for this editor's 720p/1080p at 30/60 fps.
+// Level follows the macroblock limits for this editor's 480p/720p/1080p at 30/60 fps.
 export function videoProfileConfig(profile = 'auto', {width, height}, fps) {
   if (profile === 'auto') return {};
   const prefixes = {baseline:'42e0', main:'4d00', high:'6400'};

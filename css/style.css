@@ -658,28 +658,37 @@ header {
     top: 16px;
     align-self: start;
     min-width: 0;
-    max-height: calc(100dvh - 32px);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 32px);
+    overflow: hidden;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
     scroll-padding-top: 16px;
   }
   .preview-dock {
-    position: sticky;
-    top: 0;
+    flex: 0 0 auto;
     z-index: 2;
     background: var(--background);
     padding-top: 4px;
   }
   .preview-dock .canvas-wrap {
-    width: min(100%, calc(max(100px, 100dvh - 220px) * 16 / 9));
+    width: min(100%, calc(max(80px, min(55dvh, 100dvh - 360px)) * 16 / 9));
     margin-inline: auto;
   }
   .preview-dock .canvas-wrap.portrait {
-    width: min(100%, 360px, calc(max(100px, 100dvh - 220px) * 9 / 16));
+    width: min(100%, 360px, calc(max(80px, min(55dvh, 100dvh - 360px)) * 9 / 16));
   }
   .preview-dock .transport { margin-bottom: 0; }
-  .center .styles { padding-bottom: 12px; }
+  .center .styles-heading { flex: 0 0 auto; }
+  .center .styles {
+    min-height: 0;
+    overflow-y: auto;
+    align-content: start;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
 
 
 /* Desktop-only editor: preserve three columns at every viewport width. */

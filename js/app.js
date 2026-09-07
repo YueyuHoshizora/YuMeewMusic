@@ -22,6 +22,8 @@ const state = {
 $("spectrum-color").value = state.color;
 $("strength").value = state.strength;
 $("darkness").value = state.darkness;
+$("positionX").value = state.positionX;
+$("positionY").value = state.positionY;
 $("resolution").value = restored.resolution;
 $("fps").value = restored.fps;
 $("format").value = restored.format;
@@ -43,6 +45,8 @@ function persistSettings() {
     color: state.color,
     strength: state.strength,
     darkness: state.darkness,
+    positionX: state.positionX,
+    positionY: state.positionY,
     resolution: $("resolution").value,
     fps: $("fps").value,
     format: $("format").value,
@@ -73,7 +77,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #spectrum-color, #strength, #darkness, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -97,6 +101,9 @@ function update() {
   $("preview-resolution").textContent = `${$("resolution").value}p`;
   $("strength-value").textContent = `${state.strength}%`;
   $("darkness-value").textContent = `${state.darkness}%`;
+  for (const key of ["positionX", "positionY"]) {
+    $(`${key}-value`).textContent = `${state[key] > 0 ? "+" : ""}${state[key]}%`;
+  }
   $("export-note").textContent = state.buffer
     ? "匯出期間請保持此頁面開啟。"
     : "先選擇音樂，就能匯出。";
@@ -311,11 +318,16 @@ $("seek").addEventListener("input", () => {
 $("restart").addEventListener("click", () => {
   audio.currentTime = 0;
 });
-for (const id of ["strength", "darkness"])
+for (const id of ["strength", "darkness", "positionX", "positionY"])
   $(id).addEventListener("input", () => {
     state[id] = Number($(id).value);
     update();
   });
+$("reset-position").addEventListener("click", () => {
+  state.positionX = state.positionY = 0;
+  $("positionX").value = $("positionY").value = 0;
+  update();
+});
 $("resolution").addEventListener("change", update);
 $("fps").addEventListener("change", persistSettings);
 $("format").addEventListener("change", update);

@@ -79,6 +79,10 @@ export function draw(canvas, t, b, img, s) {
   }
   c.fillStyle = `rgba(0,0,0,${(s.darkness / 100) * 0.85})`;
   c.fillRect(0, 0, w, h);
+  // Translate only the visualizer, after painting the fixed background.
+  c.save();
+  const position = key => Number.isFinite(s[key]) ? Math.max(-50, Math.min(50, s[key])) : 0;
+  c.translate(w * position("positionX") / 100, h * position("positionY") / 100);
   const values = spectrum(b, t),
     gain = 0.35 + s.strength / 70;
   c.strokeStyle = s.color;
@@ -143,6 +147,7 @@ export function draw(canvas, t, b, img, s) {
     }
   }
   c.shadowBlur = 0;
+  c.restore();
 }
 
 // Every frame depends only on audio and timestamp, so seeking and export stay consistent.

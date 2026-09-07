@@ -97,3 +97,22 @@ test("new animations respond to audio and reproduce the same frame when seeking"
     assert.notDeepEqual(render(style, tone), render(style, silent));
   }
 });
+
+test('position transforms only animation after background and restores every frame', () => {
+  for (const height of [720, 1080]) for (let style = 0; style < STYLES.length; style++) {
+    const calls = [];
+    const context = new Proxy({}, {
+      get: (_, key) => key === 'createRadialGradient' ? () => ({addColorStop() {}}) : (...args) => calls.push([key, ...args]),
+      set: () => true,
+    });
+    const width = height * 16 / 9;
+    const canvas = {width, height, getContext:()=>context};
+    const settings = {style, color:'#c5fa75', strength:70, darkness:45, positionX:25, positionY:-20};
+    draw(canvas, .5, null, null, settings);
+    const translation = calls.findIndex(call => call[0] === 'translate');
+    assert.deepEqual(calls[translation], ['translate', width * .25, -height * .2]);
+    assert.equal(calls[translation - 1][0], 'save');
+    assert.ok(calls.slice(0, translation).some(call => call[0] === 'fillRect'));
+    assert.equal(calls.at(-1)[0], 'restore');
+  }
+});

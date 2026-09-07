@@ -7,6 +7,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   color: "#c5fa75",
   strength: 70,
   darkness: 45,
+  positionX: 0,
+  positionY: 0,
   resolution: "1080",
   fps: "30",
   format: "mp4",
@@ -29,6 +31,10 @@ export function validateSettings(value) {
       source[key] >= 0 &&
       source[key] <= 100
     )
+      result[key] = source[key];
+  }
+  for (const key of ["positionX", "positionY"]) {
+    if (typeof source[key] === "number" && Number.isFinite(source[key]) && source[key] >= -50 && source[key] <= 50)
       result[key] = source[key];
   }
   if (["720", "1080"].includes(source.resolution)) result.resolution = source.resolution;

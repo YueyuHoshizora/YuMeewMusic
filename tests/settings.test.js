@@ -14,6 +14,8 @@ test("settings survive another load and exclude all media-related data", () => {
     color: "#A1B2C3",
     strength: 0,
     darkness: 100,
+    positionX: -23,
+    positionY: 18,
     resolution: "720",
     fps: "60",
     format: "flac",

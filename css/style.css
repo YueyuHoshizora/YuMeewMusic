@@ -754,3 +754,6 @@ header {
     min-width: 0;
   }
 }
+
+.position-controls { grid-column: 1; min-width: 0; }
+.position-help { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 12px 0 0; }

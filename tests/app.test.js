@@ -57,6 +57,11 @@ test("editor initializes, switches formats and reaches download for every format
   buffer.getChannelData = () => new Float32Array(buffer.length);
   const context = vm.createContext({
     trimAudio: (source, start, end) => realTrimAudio(source, start, end, options => ({...options, duration:options.length/options.sampleRate, getChannelData:()=>new Float32Array(options.length)})),
+    saveStoredMedia: async () => {},
+    loadStoredMedia: async () => null,
+    deleteStoredMedia: async () => {},
+    unpackStoredMedia: record => record,
+    navigator: { storage: { persist: async () => true } },
     document: {
       getElementById: (id) => elements.get(id),
       querySelectorAll: () => [],

@@ -7,6 +7,7 @@ import { applyTheme } from "./themes.js";
 import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
+import { deleteStoredMedia, loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, clearSettings } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
@@ -363,7 +364,16 @@ $("spectrum-color").addEventListener("input", () => {
   persistSettings();
 });
 
-async function loadAudio(file) {
+async function persistMediaFile(kind, file) {
+  try {
+    await saveStoredMedia(kind, file);
+    void navigator.storage?.persist?.().catch(() => false);
+  } catch (error) {
+    message(`${kind === "audio" ? "音樂" : kind === "image" ? "背景圖片" : "字幕"}已載入，但無法保存到瀏覽器：${error.message}`);
+  }
+}
+
+async function loadAudio(file, persist = true) {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.loading = true;
   fileError("audio");
@@ -385,16 +395,19 @@ async function loadAudio(file) {
     state.trimStart = 0;
     resetTrimInputs();
     state.name = file.name;
+    if (persist) await persistMediaFile("audio", file);
+    return true;
   } catch (error) {
     fileError("audio", error.message || "請選擇可讀取的音樂檔案。");
     message(`無法讀取音樂：${error.message}`);
+    return false;
   } finally {
     if (context) await context.close().catch(() => {});
     state.loading = false;
     update();
   }
 }
-async function loadImage(file, kind = "image") {
+async function loadImage(file, kind = "image", persist = true) {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.imageLoading = true;
   fileError(kind);
@@ -411,9 +424,12 @@ async function loadImage(file, kind = "image") {
     await image.decode();
     state[kind] = image;
     state[`${kind}Name`] = file.name;
+    if (kind === "image" && persist) await persistMediaFile("image", file);
+    return true;
   } catch (error) {
     fileError(kind, error.message || "請選擇可讀取的圖片檔案。");
     message(`無法讀取圖片：${error.message}`);
+    return false;
   } finally {
     if (url) URL.revokeObjectURL(url);
     state.imageLoading = false;
@@ -451,6 +467,7 @@ $("remove-image").addEventListener("click", () => {
   state.imageName = "";
   fileError("image");
   update();
+  void deleteStoredMedia("image").catch(error => message(`背景圖片已移除，但無法清除瀏覽器副本：${error.message}`));
 });
 $("dismiss-message").addEventListener("click", () => message());
 async function applyPreviewVolume(startingPlayback = false) {
@@ -791,7 +808,7 @@ for (const mode of ["start", "body", "end"]) {
   });
 }
 
-bindFile("subtitle", async file => {
+async function loadSubtitle(file, persist = true) {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.imageLoading = true;
   fileError("subtitle");
@@ -807,15 +824,19 @@ bindFile("subtitle", async file => {
     const {parseSubtitles} = await import("./subtitles.js");
     state.subtitles = parseSubtitles(text, extension);
     state.subtitleName = file.name;
-  } catch (error) { fileError("subtitle", error.message || "無法讀取字幕檔。"); }
+    if (persist) await persistMediaFile("subtitle", file);
+    return true;
+  } catch (error) { fileError("subtitle", error.message || "無法讀取字幕檔。"); return false; }
   finally { state.imageLoading = false; update(); }
-});
+}
+bindFile("subtitle", loadSubtitle);
 $("remove-subtitle").addEventListener("click", () => {
   if (state.busy || state.loading || state.imageLoading) return;
   state.subtitles = null;
   state.subtitleName = "";
   fileError("subtitle");
   update();
+  void deleteStoredMedia("subtitle").catch(error => message(`字幕已移除，但無法清除瀏覽器副本：${error.message}`));
 });
 
 $("subtitlePosition").addEventListener("change", () => {
@@ -909,4 +930,22 @@ async function restoreIdentityImage() {
   } catch { fileError("identity", "無法還原識別圖片，請重新選擇。"); }
   finally { state.imageLoading = false; update(); }
 }
-void restoreIdentityImage();
+async function restoreSavedMedia() {
+  for (const [kind, loader] of [
+    ["audio", file => loadAudio(file, false)],
+    ["image", file => loadImage(file, "image", false)],
+    ["subtitle", file => loadSubtitle(file, false)],
+  ]) {
+    try {
+      const record = await loadStoredMedia(kind);
+      if (record) await loader(unpackStoredMedia(record));
+    } catch (error) {
+      message(`無法還原保存的${kind === "audio" ? "音樂" : kind === "image" ? "背景圖片" : "字幕"}：${error.message}`);
+    }
+  }
+}
+async function restoreBrowserState() {
+  await restoreIdentityImage();
+  await restoreSavedMedia();
+}
+void restoreBrowserState();

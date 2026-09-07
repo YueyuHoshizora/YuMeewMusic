@@ -169,6 +169,16 @@
                 <option value="courier">Courier New</option>
               </select>
               <small class="position-help">使用本機字型；未安裝時會使用替代字型。</small>
+              <label class="field-label" for="subtitleTextColor">字幕文字顏色</label>
+              <div class="color-picker">
+                <input id="subtitleTextColor" type="color" value="#ffffff" aria-describedby="subtitle-text-color-hint">
+                <div><output id="subtitle-text-color-value" for="subtitleTextColor">#FFFFFF</output><span id="subtitle-text-color-hint">點擊色塊開啟調色盤</span></div>
+              </div>
+              <label class="field-label" for="subtitleOutlineColor">字幕邊框顏色</label>
+              <div class="color-picker">
+                <input id="subtitleOutlineColor" type="color" value="#000000" aria-describedby="subtitle-outline-color-hint">
+                <div><output id="subtitle-outline-color-value" for="subtitleOutlineColor">#000000</output><span id="subtitle-outline-color-hint">點擊色塊開啟調色盤</span></div>
+              </div>
               <label class="field-label" for="subtitleDirection">字幕顯示方向</label>
               <select id="subtitleDirection"><option value="horizontal">水平顯示（橫排）</option><option value="vertical">垂直顯示（直排）</option></select>
               <label class="field-label" for="subtitleTypewriter">逐字顯示<input id="subtitleTypewriter" type="checkbox" role="switch"></label>

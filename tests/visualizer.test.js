@@ -221,6 +221,24 @@ test('vertical subtitles flow downward with subsequent columns to the left',()=>
  assert.equal(text[2][2],text[0][2]);
 });
 
+test('subtitle text and outline colors apply with safe defaults',()=>{
+ for(const [settings,expectedFill,expectedStroke] of [
+  [{subtitleTextColor:'#12ab34',subtitleOutlineColor:'#654321'},'#12ab34','#654321'],
+  [{subtitleTextColor:'invalid',subtitleOutlineColor:'invalid'},'#ffffff','#000000'],
+ ]) {
+  const colors={fill:[],stroke:[]};
+  const context=new Proxy({}, {
+   get:(_,key)=>key==='measureText'?()=>({width:100}):()=>{},
+   set:(_,key,value)=>{if(key==='fillStyle') colors.fill.push(value);if(key==='strokeStyle') colors.stroke.push(value);return true;},
+  });
+  draw({width:1280,height:720,getContext:()=>context},1,null,{width:100,height:100},{
+   style:19,darkness:45,subtitles:{cues:[{start:0,end:3,text:'字幕'}]},originalBuffer:{duration:5},...settings,
+  });
+  assert.equal(colors.fill.at(-1),expectedFill);
+  assert.equal(colors.stroke.at(-1),expectedStroke);
+ }
+});
+
 test('identity image is positioned independently, scales from 10–300%, and remains in frame',()=>{
  for(const position of [0,50,100]) for(const identityScale of [10,100,300]) {
   const calls=[]; const logo={width:400,height:200};

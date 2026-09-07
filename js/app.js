@@ -97,6 +97,8 @@ function persistSettings() {
     subtitleDirection: state.subtitleDirection,
     subtitleFont: state.subtitleFont,
     subtitleTypewriter: state.subtitleTypewriter,
+    subtitleTextColor: state.subtitleTextColor,
+    subtitleOutlineColor: state.subtitleOutlineColor,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -158,6 +160,9 @@ function update() {
   $("subtitleDirection").value = state.subtitleDirection;
   $("subtitleFont").value = state.subtitleFont;
   $("subtitleTypewriter").checked = state.subtitleTypewriter;
+  for (const id of ["subtitleTextColor", "subtitleOutlineColor"]) $(id).value = state[id];
+  $("subtitle-text-color-value").textContent = state.subtitleTextColor.toUpperCase();
+  $("subtitle-outline-color-value").textContent = state.subtitleOutlineColor.toUpperCase();
   $("subtitleMargin-value").textContent = `${state.subtitleMargin}%`;
   $("subtitleSize-value").textContent = `${state.subtitleSize}%`;
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
@@ -169,7 +174,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#exportVolume, #identityType, #identityText, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#exportVolume, #identityType, #identityText, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -874,6 +879,14 @@ $("subtitleFont").addEventListener("change", () => {
   state.subtitleFont = $("subtitleFont").value;
   update();
 });
+
+for (const id of ["subtitleTextColor", "subtitleOutlineColor"]) {
+  $(id).addEventListener("input", () => {
+    if (state.busy || state.loading || state.imageLoading) return;
+    state[id] = $(id).value;
+    update();
+  });
+}
 
 for (const id of ["identityType", "identityText", "identityX", "identityY", "identityScale"]) {
   $(id).addEventListener(id === "identityType" ? "change" : "input", () => {

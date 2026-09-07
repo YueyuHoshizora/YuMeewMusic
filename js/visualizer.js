@@ -511,8 +511,8 @@ function drawSubtitles(c, width, height, settings, time) {
 
   x = Math.max(0, Math.min(width - boxWidth, x));
   y = Math.max(0, Math.min(height - boxHeight, y));
-  c.fillStyle = "#ffffff";
-  c.strokeStyle = "#000000";
+  c.fillStyle = typeof settings.subtitleTextColor === "string" && /^#[0-9a-f]{6}$/i.test(settings.subtitleTextColor) ? settings.subtitleTextColor : "#ffffff";
+  c.strokeStyle = typeof settings.subtitleOutlineColor === "string" && /^#[0-9a-f]{6}$/i.test(settings.subtitleOutlineColor) ? settings.subtitleOutlineColor : "#000000";
   c.lineWidth = size * .12;
   c.lineJoin = "round";
   c.shadowBlur = 0;

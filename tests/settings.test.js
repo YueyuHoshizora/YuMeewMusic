@@ -31,6 +31,8 @@ test("settings survive another load and exclude all media-related data", () => {
     subtitleDirection: "vertical",
     subtitleFont: "kai",
     subtitleTypewriter: true,
+    subtitleTextColor: "#ffeedd",
+    subtitleOutlineColor: "#123456",
     style: 5,
     color: "#A1B2C3",
     strength: 0,

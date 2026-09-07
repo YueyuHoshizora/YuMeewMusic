@@ -24,6 +24,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   subtitleDirection: "horizontal",
   subtitleFont: "system",
   subtitleTypewriter: false,
+  subtitleTextColor: "#ffffff",
+  subtitleOutlineColor: "#000000",
   style: 0,
   color: "#c5fa75",
   strength: 70,
@@ -81,6 +83,9 @@ export function validateSettings(value) {
   }
   if (["horizontal", "vertical"].includes(source.subtitleDirection)) result.subtitleDirection = source.subtitleDirection;
   if (typeof source.subtitleTypewriter === "boolean") result.subtitleTypewriter = source.subtitleTypewriter;
+  for (const key of ["subtitleTextColor", "subtitleOutlineColor"]) {
+    if (typeof source[key] === "string" && /^#[0-9a-f]{6}$/i.test(source[key])) result[key] = source[key].toLowerCase();
+  }
   if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
   if (Number.isFinite(source.exportVolume) && source.exportVolume >= 1 && source.exportVolume <= 200)
     result.exportVolume = source.exportVolume;

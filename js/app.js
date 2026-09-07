@@ -81,6 +81,8 @@ function persistSettings() {
     subtitlePosition: state.subtitlePosition,
     subtitleMargin: state.subtitleMargin,
     subtitleSize: state.subtitleSize,
+    subtitleX: state.subtitleX,
+    subtitleY: state.subtitleY,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -125,6 +127,10 @@ function update() {
   $("subtitlePosition").value = state.subtitlePosition;
   $("subtitleMargin").value = $("subtitleMargin-range").value = state.subtitleMargin;
   $("subtitleSize").value = state.subtitleSize;
+  for (const key of ["subtitleX", "subtitleY"]) {
+    $(key).value = state[key];
+    $(`${key}-value`).textContent = `${state[key] > 0 ? "+" : ""}${state[key]}%`;
+  }
   $("subtitleMargin-value").textContent = `${state.subtitleMargin}%`;
   $("subtitleSize-value").textContent = `${state.subtitleSize}%`;
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
@@ -134,7 +140,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleX, #subtitleY, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -749,13 +755,14 @@ $("subtitlePosition").addEventListener("change", () => {
   state.subtitlePosition = $("subtitlePosition").value;
   update();
 });
-for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize"]) {
+for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize", "subtitleX", "subtitleY"]) {
   $(id).addEventListener("input", () => {
     if (state.busy || state.loading || state.imageLoading || $(id).value === "") return;
     const key = id === "subtitleMargin-range" ? "subtitleMargin" : id;
     const value = Number($(id).value);
     if (!Number.isFinite(value)) return;
-    state[key] = Math.max(key === "subtitleSize" ? 100 : 0, Math.min(key === "subtitleSize" ? 250 : 40, value));
+    const [min, max] = key === "subtitleSize" ? [100, 250] : key === "subtitleMargin" ? [0, 40] : [-50, 50];
+    state[key] = Math.max(min, Math.min(max, value));
     update();
   });
   $(id).addEventListener("change", update);

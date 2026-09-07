@@ -503,6 +503,8 @@ function drawSubtitles(c, width, height, settings, time) {
   if (position === "right") x = width * (1 - margin) - boxWidth;
   if (position === "top") y = height * margin;
   if (position === "bottom") y = height * (1 - margin) - boxHeight;
+  x += width * Math.max(-50, Math.min(50, settings.subtitleX ?? 0)) / 100;
+  y += height * Math.max(-50, Math.min(50, settings.subtitleY ?? 0)) / 100;
   x = Math.max(0, Math.min(width - boxWidth, x));
   y = Math.max(0, Math.min(height - boxHeight, y));
   c.fillStyle = "#000000b3";

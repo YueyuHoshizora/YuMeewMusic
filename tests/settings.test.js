@@ -22,6 +22,8 @@ test("settings survive another load and exclude all media-related data", () => {
     subtitlePosition: "left",
     subtitleMargin: 12,
     subtitleSize: 150,
+    subtitleX: -10,
+    subtitleY: 15,
     style: 5,
     color: "#A1B2C3",
     strength: 0,

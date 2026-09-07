@@ -158,6 +158,23 @@ function mini(index) {
     svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 150 65");
   svg.setAttribute("aria-hidden", "true");
+  if (index >= 12) {
+    const paths = [
+      "M10 48 L28 30 L40 40 L60 12 L78 35 L96 20 L115 40 L140 25",
+      "M75 8 Q110 0 94 25 Q140 35 94 42 Q100 65 75 48 Q45 65 55 42 Q10 35 55 25 Q40 0 75 8Z",
+      "M25 8V30 M45 20V55 M65 5V40 M85 25V60 M105 10V40 M125 18V48",
+      "M75 5L125 32L75 60L25 32Z M75 15L105 32L75 50L45 32Z",
+      "M20 32 A55 18 0 1 0 130 32 A55 18 0 1 0 20 32 M50 8 Q110 10 100 55 Q40 55 50 8",
+      "M8 32L28 32L38 22L48 45L60 8L72 56L85 20L98 38L112 28L125 32H142",
+    ];
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", paths[index - 12]);
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("fill", "none");
+    svg.append(path);
+    return svg;
+  }
   if (index >= 6) {
     const count = index === 9 ? 30 : index === 10 ? 2 : index === 7 ? 3 : 5;
     for (let layer = 0; layer < count; layer++) {

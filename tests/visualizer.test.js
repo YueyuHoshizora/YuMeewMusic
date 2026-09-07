@@ -16,7 +16,7 @@ test("FFT responds to audio and safely handles silence and end padding", () => {
   assert.ok(Math.max(...values) > 0.5);
   assert.ok(values.every((x) => Number.isFinite(x) && x >= 0 && x <= 1));
 });
-test("all twelve renderers work at both requested resolutions", () => {
+test("all renderers work at both requested resolutions", () => {
   for (const height of [720, 1080])
     for (let style = 0; style < STYLES.length; style++) {
       let calls = 0;

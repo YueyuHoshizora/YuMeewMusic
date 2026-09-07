@@ -1,3 +1,4 @@
+import { STYLES } from "../js/styles.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DEFAULT_SETTINGS, clearSettings, loadSettings, saveSettings, validateSettings } from "../js/settings.js";
@@ -89,11 +90,11 @@ test("unavailable storage and quota errors do not break the editor", () => {
 
 test("new animation choices persist while old selections remain compatible", () => {
   const storage = memoryStorage();
-  for (let style = 0; style < 12; style++) {
+  for (let style = 0; style < STYLES.length; style++) {
     saveSettings({ ...DEFAULT_SETTINGS, style }, () => storage);
     assert.equal(loadSettings(() => storage).style, style);
   }
-  assert.equal(validateSettings({ style: 12 }).style, 0);
+  assert.equal(validateSettings({ style: STYLES.length }).style, 0);
 });
 
 test("reset removes only this app's preferences", () => {

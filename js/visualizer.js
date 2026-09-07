@@ -287,5 +287,75 @@ function drawExtra(c, w, h, t, values, gain, style) {
       c.stroke();
     }
   }
+  if (style === 12) {
+    for (let layer = 0; layer < 4; layer++) {
+      c.globalAlpha = .35 + layer * .2;
+      c.beginPath();
+      for (let i = 0; i < 64; i++) {
+        const x = w * (.08 + i / 63 * .84);
+        const y = cy + h * (.18 - layer * .07) - values[i] * gain * h * .22;
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  } else if (style === 13) {
+    for (let layer = 0; layer < 3; layer++) {
+      c.globalAlpha = .9 - layer * .25;
+      c.beginPath();
+      for (let i = 0; i <= 256; i++) {
+        const a = i / 256 * Math.PI * 2;
+        const radius = h * (.12 + layer * .035 + Math.sin(a * 6 + t) * (.035 + energy * gain * .12) + values[i % 64] * gain * .025);
+        const x = cx + Math.cos(a + t * .12) * radius;
+        const y = cy + Math.sin(a + t * .12) * radius;
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  } else if (style === 14) {
+    for (let i = 0; i < 64; i++) {
+      const phase = (i * .618 + t * (.12 + i % 5 * .025)) % 1;
+      const x = w * (.1 + i / 63 * .8), y = h * (.14 + phase * .65);
+      c.globalAlpha = Math.sin(phase * Math.PI) * .9;
+      c.fillRect(x, y, h * .004, h * (.015 + values[i] * gain * .14));
+    }
+  } else if (style === 15) {
+    for (let layer = 0; layer < 8; layer++) {
+      const radius = h * (.04 + layer * .032 + values[layer * 8] * gain * .06);
+      const angle = Math.sin(t * .5) * .25 + layer * .035;
+      c.globalAlpha = 1 - layer * .09;
+      c.beginPath();
+      for (let i = 0; i <= 4; i++) {
+        const a = i * Math.PI / 2 + angle;
+        const x = cx + Math.cos(a) * radius, y = cy + Math.sin(a) * radius;
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  } else if (style === 16) {
+    for (let orbit = 0; orbit < 5; orbit++) {
+      const radius = h * (.08 + orbit * .045 + values[orbit * 12] * gain * .025);
+      c.globalAlpha = .35;
+      c.beginPath();
+      c.ellipse(cx, cy, radius * 1.4, radius * .65, orbit * .5, 0, Math.PI * 2);
+      c.stroke();
+      const a = t * (.4 + orbit * .12) + orbit;
+      const x = Math.cos(a) * radius * 1.4, y = Math.sin(a) * radius * .65;
+      c.globalAlpha = 1;
+      c.beginPath();
+      c.arc(cx + x * Math.cos(orbit * .5) - y * Math.sin(orbit * .5), cy + x * Math.sin(orbit * .5) + y * Math.cos(orbit * .5), h * (.005 + values[orbit * 12] * gain * .014), 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (style === 17) {
+    for (let layer = 0; layer < 3; layer++) {
+      c.globalAlpha = 1 - layer * .3;
+      c.beginPath();
+      for (let i = 0; i < 128; i++) {
+        const x = w * (.08 + i / 127 * .84);
+        const y = cy + Math.sin(i * 2.4 + t * 12 + layer) * h * (.004 + values[i % 64] * gain * .2) * Math.sin(i / 127 * Math.PI);
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  }
   c.globalAlpha = 1;
 }

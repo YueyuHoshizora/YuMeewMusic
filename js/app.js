@@ -647,6 +647,8 @@ function updateTrimMarkers() {
   if (!valid) return;
   $("trim-selection").style.left = `${start / duration * 100}%`;
   $("trim-selection").style.width = `${(Math.min(end, duration) - start) / duration * 100}%`;
+  $("trim-selection-duration").textContent = formatTrimTime(Math.min(end, duration) - start);
+  $("trim-drag-body").setAttribute("aria-label", `拖曳平移裁剪範圍，長度 ${formatTrimTime(Math.min(end, duration) - start)}`);
   $("trim-start-label").textContent = `開始 ${formatTrimTime(start)}`;
   $("trim-end-label").textContent = `結束 ${formatTrimTime(end)}`;
 }

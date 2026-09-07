@@ -739,3 +739,20 @@ header { flex-wrap: nowrap; }
 .trim-track button:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
 .trim-drag-hint { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
 .trim-marker-labels { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+
+#trim-selection-duration {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}

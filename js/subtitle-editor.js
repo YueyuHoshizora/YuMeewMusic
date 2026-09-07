@@ -172,6 +172,7 @@ function renderForm() {
   $('selected-label').textContent = cue ? `第 ${state.selected + 1} 句` : '目前沒有字幕';
   $('previous-cue').disabled = state.selected <= 0;
   $('next-cue').disabled = state.selected < 0 || state.selected >= state.cues.length - 1;
+  $('delete-cue').disabled = !cue;
   $('cue-form').querySelectorAll('input, textarea, button').forEach(control => { control.disabled = !cue; });
   $('cue-start').value = cue ? editorTime(cue.start) : '';
   $('cue-end').value = cue ? editorTime(cue.end) : '';

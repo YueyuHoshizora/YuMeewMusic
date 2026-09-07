@@ -53,7 +53,10 @@
         <aside class="cue-list-panel panel">
           <div class="editor-panel-title">
             <div><span>字幕清單</span><strong id="cue-count">0 句</strong></div>
-            <button id="add-cue" class="editor-small-button" type="button">＋ 新增</button>
+            <div class="cue-list-actions" role="group" aria-label="新增或刪除字幕">
+              <button id="add-cue" class="editor-icon-button cue-add-button" type="button" aria-label="新增字幕" title="從目前時間新增字幕">＋</button>
+              <button id="delete-cue" class="editor-icon-button cue-delete-button" type="button" aria-label="刪除選取的字幕" title="刪除選取的字幕" disabled>−</button>
+            </div>
           </div>
           <div id="cue-list" class="cue-list"></div>
           <p id="cue-empty" class="editor-empty">主畫面尚未保存字幕。你可以從目前播放位置新增第一句。</p>
@@ -96,7 +99,6 @@
             <div class="cue-form-actions">
               <button id="preview-cue" class="editor-small-button" type="button">▶ 從這句播放</button>
               <button id="duplicate-cue" class="editor-small-button" type="button">複製</button>
-              <button id="delete-cue" class="editor-danger-button" type="button">刪除</button>
             </div>
           </div>
           <p id="cue-form-empty" class="editor-empty" hidden></p>

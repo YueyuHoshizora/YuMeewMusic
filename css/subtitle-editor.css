@@ -38,7 +38,10 @@ body.subtitle-editor-body { min-width: 1100px; }
 .editor-small-button:hover, .editor-icon-button:hover { border-color: var(--primary); background: var(--hover); }
 .editor-danger-button { border-color: var(--error); color: var(--error-text); background: var(--error-surface); }
 .editor-icon-button { width: 36px; padding-inline: 0; }
-.cue-navigation { display: flex; gap: 7px; }
+.cue-navigation, .cue-list-actions { display: flex; gap: 7px; }
+.cue-add-button { border-color: var(--primary); color: var(--primary-text); font-size: 18px; }
+.cue-delete-button { border-color: var(--error); color: var(--error-text); font-size: 20px; }
+.cue-delete-button:not(:disabled):hover { border-color: var(--error); background: var(--error-surface); }
 .cue-list { max-height: 520px; overflow-y: auto; scroll-behavior: smooth; scrollbar-color: var(--border) transparent; }
 .cue-list-item { display: grid; grid-template-columns: 42px 104px minmax(0, 1fr); gap: 9px; align-items: center; width: 100%; margin-bottom: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); text-align: left; }
 .cue-list-item:hover { border-color: var(--primary); background: var(--hover); }
@@ -59,7 +62,6 @@ body.subtitle-editor-body { min-width: 1100px; }
 #cue-text:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
 .cue-error { margin: 10px 0 0; color: var(--error-text); font-size: 13px; }
 .cue-form-actions { display: flex; gap: 9px; margin-top: 16px; }
-.cue-form-actions .editor-danger-button { margin-left: auto; }
 .editor-actions { position: sticky; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; margin-top: 22px; padding: 14px 18px; border: 1px solid var(--border); border-radius: 12px 12px 0 0; background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(12px); color: var(--muted); font-size: 12px; }
 .editor-actions > div { display: flex; gap: 10px; }
 .editor-save { width: auto; min-width: 200px; padding-inline: 18px; }

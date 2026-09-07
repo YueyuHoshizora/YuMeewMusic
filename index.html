@@ -72,6 +72,10 @@
               ><span id="audio-error" class="file-error" role="status" hidden></span>
             </button>
             <input id="audio-input" type="file" accept="audio/*" hidden />
+            <div class="song-details volume-control">
+              <label class="range-label" for="exportVolume">播放與輸出音量<output id="exportVolume-value">100%</output></label>
+              <input id="exportVolume" type="range" min="10" max="200" step="1" value="100" />
+            </div>
             <details id="trim-panel" class="song-details song-settings">
               <summary>✂ 音樂裁剪</summary>
               <p id="trim-empty" class="position-help">請先在上方選擇音樂，即可設定裁剪範圍。</p>
@@ -305,9 +309,6 @@
                 <option value="30">30 fps</option>
                 <option value="60" selected>60 fps</option>
               </select>
-              <label class="range-label" for="exportVolume"
-                >播放與輸出音量<output id="exportVolume-value">100%</output></label
-              ><input id="exportVolume" type="range" min="10" max="200" step="1" value="100" />
               <button id="export" class="export-button" type="button" disabled>↓ 匯出 MP4 ↗</button>
               <progress id="progress" value="0" max="100" aria-label="匯出進度" hidden></progress
               ><button id="cancel" class="text-button" type="button" hidden>取消匯出</button>

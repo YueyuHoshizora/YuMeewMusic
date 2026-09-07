@@ -651,6 +651,7 @@ header {
 .assets > .aspect-control { padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 
 .song-details { grid-column: 1 / -1; min-width: 0; }
+.volume-control .range-label { margin: 14px 0 10px; }
 .text-input { width: 100%; min-width: 0; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); padding: 8px 10px; font-size: 14px; }
 .text-input::placeholder { color: var(--muted); }
 .text-input:disabled { opacity: .45; }

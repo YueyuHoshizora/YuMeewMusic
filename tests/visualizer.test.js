@@ -251,3 +251,22 @@ test('identity image is positioned independently, scales from 10–300%, and rem
   assert.ok(Math.abs(w-720*.16*identityScale/100)<1e-9);
  }
 });
+
+test('identity text applies size, local font, fill color and outline color',()=>{
+ for(const identityTextSize of [50,300]) {
+  const calls=[]; const properties={};
+  const c=new Proxy({}, {
+   get:(_,key)=>key==='measureText'?()=>({width:180}):(...args)=>calls.push([key,...args]),
+   set:(_,key,value)=>{properties[key]=value;return true;},
+  });
+  draw({width:1280,height:720,getContext:()=>c},0,null,{width:100,height:100},{
+   style:19,darkness:45,identityType:'text',identityText:'品牌',identityTextSize,identityFont:'kai',identityTextColor:'#fedcba',identityOutlineColor:'#123456',
+  });
+  assert.ok(properties.font.includes(`${720*.03*identityTextSize/100}px`));
+  assert.ok(properties.font.includes('DFKai-SB'));
+  assert.equal(properties.fillStyle,'#fedcba');
+  assert.equal(properties.strokeStyle,'#123456');
+  assert.ok(calls.some(([key,text])=>key==='strokeText'&&text==='品牌'));
+  assert.ok(calls.some(([key,text])=>key==='fillText'&&text==='品牌'));
+ }
+});

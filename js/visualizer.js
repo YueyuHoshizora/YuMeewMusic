@@ -536,8 +536,8 @@ function drawIdentity(c, width, height, settings) {
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.globalAlpha = 1;
   const unit = Math.min(width, height);
-  const size = unit * .03;
-  c.font = `600 ${size}px sans-serif`;
+  const size = unit * .03 * Math.max(50, Math.min(300, settings.identityTextSize ?? 100)) / 100;
+  c.font = `600 ${size}px ${subtitleFontFamily(settings.identityFont)}`;
   const identityScale = Math.max(10, Math.min(300, settings.identityScale ?? 100)) / 100;
   const scale = image ? Math.min(unit * .16 / image.width, unit * .16 / image.height) * identityScale : 1;
   const w = image ? image.width * scale : Math.min(width * .8, c.measureText(text).width);
@@ -548,8 +548,8 @@ function drawIdentity(c, width, height, settings) {
   else {
     c.textAlign = "left";
     c.textBaseline = "middle";
-    c.fillStyle = "#ffffff";
-    c.strokeStyle = "#000000";
+    c.fillStyle = typeof settings.identityTextColor === "string" && /^#[0-9a-f]{6}$/i.test(settings.identityTextColor) ? settings.identityTextColor : "#ffffff";
+    c.strokeStyle = typeof settings.identityOutlineColor === "string" && /^#[0-9a-f]{6}$/i.test(settings.identityOutlineColor) ? settings.identityOutlineColor : "#000000";
     c.lineWidth = size * .12;
     c.lineJoin = "round";
     c.strokeText(text, x, y + h / 2, width * .8);

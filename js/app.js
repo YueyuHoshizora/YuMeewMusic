@@ -83,6 +83,10 @@ function persistSettings() {
     identityX: state.identityX,
     identityY: state.identityY,
     identityScale: state.identityScale,
+    identityTextSize: state.identityTextSize,
+    identityFont: state.identityFont,
+    identityTextColor: state.identityTextColor,
+    identityOutlineColor: state.identityOutlineColor,
     songTitle: state.songTitle,
     lyricist: state.lyricist,
     composer: state.composer,
@@ -143,6 +147,12 @@ function update() {
   $("remove-identity").hidden = !state.identityData;
   $("identityScale").value = state.identityScale;
   $("identityScale-value").textContent = `${state.identityScale}%`;
+  $("identityTextSize").value = state.identityTextSize;
+  $("identityTextSize-value").textContent = `${state.identityTextSize}%`;
+  $("identityFont").value = state.identityFont;
+  for (const id of ["identityTextColor", "identityOutlineColor"]) $(id).value = state[id];
+  $("identity-text-color-value").textContent = state.identityTextColor.toUpperCase();
+  $("identity-outline-color-value").textContent = state.identityOutlineColor.toUpperCase();
   for (const key of ["identityX", "identityY"]) {
     $(key).value = state[key];
     $(`${key}-value`).textContent = `${state[key]}%`;
@@ -174,7 +184,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#exportVolume, #identityType, #identityText, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#exportVolume, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -888,10 +898,10 @@ for (const id of ["subtitleTextColor", "subtitleOutlineColor"]) {
   });
 }
 
-for (const id of ["identityType", "identityText", "identityX", "identityY", "identityScale"]) {
-  $(id).addEventListener(id === "identityType" ? "change" : "input", () => {
+for (const id of ["identityType", "identityText", "identityTextSize", "identityFont", "identityTextColor", "identityOutlineColor", "identityX", "identityY", "identityScale"]) {
+  $(id).addEventListener(["identityType", "identityFont"].includes(id) ? "change" : "input", () => {
     if (state.busy || state.loading || state.imageLoading) return;
-    state[id] = ["identityX", "identityY", "identityScale"].includes(id) ? Number($(id).value) : $(id).value;
+    state[id] = ["identityTextSize", "identityX", "identityY", "identityScale"].includes(id) ? Number($(id).value) : $(id).value;
     update();
   });
 }

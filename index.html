@@ -217,6 +217,31 @@
               <div id="identity-text-controls">
                 <label class="field-label" for="identityText">識別文字</label>
                 <input id="identityText" class="text-input" type="text" maxlength="80" placeholder="輸入名稱或品牌，留空不顯示">
+                <label class="range-label" for="identityTextSize">文字大小<output id="identityTextSize-value">100%</output></label>
+                <input id="identityTextSize" type="range" min="50" max="300" step="5" value="100">
+                <label class="field-label" for="identityFont">文字字型</label>
+                <select id="identityFont">
+                  <option value="system">系統預設</option>
+                  <option value="jhenghei">微軟正黑體</option>
+                  <option value="pingfang">蘋方（繁體）</option>
+                  <option value="notoSans">思源黑體</option>
+                  <option value="notoSerif">思源宋體</option>
+                  <option value="mingliu">新細明體</option>
+                  <option value="kai">標楷體</option>
+                  <option value="arial">Arial</option>
+                  <option value="times">Times New Roman</option>
+                  <option value="courier">Courier New</option>
+                </select>
+                <label class="field-label" for="identityTextColor">文字顏色</label>
+                <div class="color-picker">
+                  <input id="identityTextColor" type="color" value="#ffffff" aria-describedby="identity-text-color-hint">
+                  <div><output id="identity-text-color-value" for="identityTextColor">#FFFFFF</output><span id="identity-text-color-hint">點擊色塊開啟調色盤</span></div>
+                </div>
+                <label class="field-label" for="identityOutlineColor">框線顏色</label>
+                <div class="color-picker">
+                  <input id="identityOutlineColor" type="color" value="#000000" aria-describedby="identity-outline-color-hint">
+                  <div><output id="identity-outline-color-value" for="identityOutlineColor">#000000</output><span id="identity-outline-color-hint">點擊色塊開啟調色盤</span></div>
+                </div>
               </div>
               <div id="identity-image-controls" hidden>
                 <button id="identity-drop" class="upload image-upload" type="button" aria-describedby="identity-error"><span aria-hidden="true">▧</span><strong id="identity-name">選擇識別圖片</strong><small>JPG · PNG · WebP</small><span id="identity-error" class="file-error" role="status" hidden></span></button>

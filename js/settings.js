@@ -10,6 +10,10 @@ export const DEFAULT_SETTINGS = Object.freeze({
   identityX: 90,
   identityY: 10,
   identityScale: 100,
+  identityTextSize: 100,
+  identityFont: "system",
+  identityTextColor: "#ffffff",
+  identityOutlineColor: "#000000",
   songTitle: "",
   lyricist: "",
   composer: "",
@@ -92,6 +96,12 @@ export function validateSettings(value) {
   if (typeof source.subtitleFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.subtitleFont)) result.subtitleFont = source.subtitleFont;
   if (["text", "image"].includes(source.identityType)) result.identityType = source.identityType;
   if (typeof source.identityText === "string") result.identityText = source.identityText.slice(0, 80);
+  if (Number.isFinite(source.identityTextSize) && source.identityTextSize >= 50 && source.identityTextSize <= 300)
+    result.identityTextSize = source.identityTextSize;
+  if (typeof source.identityFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.identityFont)) result.identityFont = source.identityFont;
+  for (const key of ["identityTextColor", "identityOutlineColor"]) {
+    if (typeof source[key] === "string" && /^#[0-9a-f]{6}$/i.test(source[key])) result[key] = source[key].toLowerCase();
+  }
   if (typeof source.identityData === "string" && source.identityData.length <= 1500000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(source.identityData)) result.identityData = source.identityData;
   if (Number.isFinite(source.identityScale) && source.identityScale >= 10 && source.identityScale <= 300)
     result.identityScale = source.identityScale;

@@ -1,3 +1,4 @@
+import { trimAudio } from "./trim.js";
 import { moveTrimRange } from "./trim-range.js";
 import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import { videoDimensions } from "./dimensions.js";
@@ -18,6 +19,7 @@ const state = {
   subtitles: null,
   subtitleName: "",
   trimStart: 0,
+  trimDirty: false,
   image: null,
   sleeve: null,
   record: null,
@@ -482,6 +484,7 @@ $("format").addEventListener("change", update);
 $("cancel").addEventListener("click", () => exportController?.abort());
 $("export").addEventListener("click", async () => {
   if (!state.buffer || state.busy || state.loading || state.imageLoading) return;
+  if (state.trimDirty && !(await applyTrim())) return;
   syncSongDetails();
   persistSettings();
   state.busy = true;
@@ -601,6 +604,7 @@ update();
 animate();
 
 function resetTrimInputs() {
+  state.trimDirty = false;
   for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
     const input = $(`trim-${edge}${suffix}`);
     input.max = state.originalBuffer.duration;
@@ -611,6 +615,7 @@ function resetTrimInputs() {
 }
 for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
   $(`trim-${edge}${suffix}`).addEventListener("input", () => {
+    state.trimDirty = true;
     const value = $(`trim-${edge}${suffix}`).value;
     if (suffix) $(`trim-${edge}`).value = formatTrimTime(Number(value));
     else if (Number.isFinite(parseTrimTime(value))) $(`trim-${edge}-range`).value = parseTrimTime(value);
@@ -625,7 +630,6 @@ async function applyTrim() {
   audio.pause();
   update();
   try {
-    const { trimAudio } = await import("./trim.js");
     const start = parseTrimTime($("trim-start").value);
     let end = parseTrimTime($("trim-end").value);
     // The displayed end is rounded to hundredths; retain the exact full endpoint.
@@ -633,18 +637,21 @@ async function applyTrim() {
     const result = trimAudio(state.originalBuffer, start, end);
     state.buffer = result.buffer;
     state.trimStart = result.start;
+    state.trimDirty = false;
     audio.currentTime = state.trimStart;
     $("trim-info").textContent = `已套用：${formatTrimTime(state.buffer.duration)}`;
     message("裁剪已套用，可播放試聽或匯出。");
+    return true;
   } catch (error) { message(error.message || "裁剪失敗，請重新設定範圍。"); }
   finally { state.loading = false; update(); }
 }
 $("trim-apply").addEventListener("click", applyTrim);
-for (const edge of ["start", "end"]) $(`trim-${edge}-range`).addEventListener("change", applyTrim);
+for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) $(`trim-${edge}${suffix}`).addEventListener("change", applyTrim);
 $("trim-reset").addEventListener("click", () => {
   if (!state.originalBuffer || state.busy || state.loading || state.imageLoading) return;
   audio.pause();
   state.buffer = state.originalBuffer;
+  state.trimDirty = false;
   state.trimStart = 0;
   audio.currentTime = 0;
   $("trim-info").textContent = `已恢復完整音樂：${formatTrimTime(state.buffer.duration)}，裁剪時間已保留`;
@@ -674,6 +681,7 @@ function updateTrimMarkers() {
 }
 
 function setTrimRange(start, end) {
+  state.trimDirty = true;
   for (const [edge, value] of [["start", start], ["end", end]]) {
     $(`trim-${edge}`).value = formatTrimTime(value);
     $(`trim-${edge}-range`).value = value;

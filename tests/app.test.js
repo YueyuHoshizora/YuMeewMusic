@@ -1,3 +1,4 @@
+import { trimAudio as realTrimAudio } from "../js/trim.js";
 import { moveTrimRange } from "../js/trim-range.js";
 import { formatTrimTime, parseTrimTime } from "../js/trim-time.js";
 import { videoDimensions } from "../js/dimensions.js";
@@ -10,6 +11,7 @@ import { getFormat, exportFilename, FORMATS } from "../js/formats.js";
 import { DEFAULT_SETTINGS } from "../js/settings.js";
 
 test("editor initializes, switches formats and reaches download for every format", async () => {
+  const durations = [];
   const downloads = [],
     encoded = [],
     elements = new Map();
@@ -49,7 +51,9 @@ test("editor initializes, switches formats and reaches download for every format
   const html = readFileSync("index.html", "utf8");
   for (const [, id] of html.matchAll(/id="([^"]+)"/g)) elements.set(id, element());
   const buffer = { duration: 65, length: 3120000, sampleRate: 48000, numberOfChannels: 2 };
+  buffer.getChannelData = () => new Float32Array(buffer.length);
   const context = vm.createContext({
+    trimAudio: (source, start, end) => realTrimAudio(source, start, end, options => ({...options, duration:options.length/options.sampleRate, getChannelData:()=>new Float32Array(options.length)})),
     document: {
       getElementById: (id) => elements.get(id),
       querySelectorAll: () => [],
@@ -82,6 +86,7 @@ test("editor initializes, switches formats and reaches download for every format
     draw() {},
     encodeMedia: async (options) => {
       encoded.push(options.format);
+      durations.push(options.buffer.duration);
       assert.equal(options.settings.songTitle, "測試歌曲");
       assert.equal(options.settings.lyricist, "測試作詞");
       assert.equal(options.settings.composer, "測試作曲");
@@ -121,6 +126,22 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(elements.get("preview").width, 720);
   assert.equal(elements.get("preview").height, 1280);
   assert.equal(elements.get("preview-aspect").textContent, "9:16");
+  elements.get("trim-start").value = "00:10.00";
+  elements.get("trim-end").value = "01:05.00";
+  await elements.get("trim-apply").listeners.click();
+  assert.equal(vm.runInContext("state.buffer.duration", context),55);
+  elements.get("trim-end").value = "00:30.00";
+  elements.get("trim-end").listeners.input();
+  await elements.get("export").listeners.click();
+  assert.equal(durations.at(-1),20);
+  assert.equal(vm.runInContext("state.trimStart + state.buffer.duration", context),30);
+  elements.get("trim-end").value = "00:25.00";
+  await elements.get("trim-end").listeners.change();
+  assert.equal(vm.runInContext("state.buffer.duration", context),15);
+  elements.get("trim-reset").listeners.click();
+  await elements.get("export").listeners.click();
+  assert.equal(durations.at(-1),65);
+  assert.equal(elements.get("trim-end").value,"00:25.00");
   context.window.confirm = () => { throw Error("Native confirm must not be used"); };
   elements.get("reset-settings").listeners.click();
   assert.equal(elements.get("aspect-ratio").value, "9:16");
@@ -137,7 +158,7 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(elements.get("appearance-mode").value, "dark");
   assert.equal(elements.get("export").disabled, false);
   assert.match(elements.get("audio-info").textContent, /01:05/);
-  assert.equal(downloads.length, 5);
+  assert.equal(downloads.length, 7);
   elements.get("trim-start").value = "00:10.00";
   elements.get("trim-end").value = "00:30.00";
   elements.get("trim-start-range").value = "10";

@@ -10,6 +10,9 @@ function memoryStorage() {
 test("settings survive another load and exclude all media-related data", () => {
   const storage = memoryStorage();
   const settings = {
+    songTitle: "測試歌曲",
+    lyricist: "作詞者",
+    composer: "作曲者",
     style: 5,
     color: "#A1B2C3",
     strength: 0,

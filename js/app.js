@@ -20,6 +20,13 @@ const state = {
   loading: false,
   imageLoading: false,
 };
+for (const id of ["songTitle", "lyricist", "composer"]) {
+  $(id).value = state[id];
+  $(id).addEventListener("input", () => {
+    state[id] = $(id).value.slice(0, 120);
+    persistSettings();
+  });
+}
 $("spectrum-color").value = state.color;
 $("strength").value = state.strength;
 $("darkness").value = state.darkness;
@@ -43,6 +50,9 @@ for (const id of ["appearance-mode", "appearance-theme"]) {
 
 function persistSettings() {
   saveSettings({
+    songTitle: state.songTitle,
+    lyricist: state.lyricist,
+    composer: state.composer,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -80,7 +90,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #songTitle, #lyricist, #composer, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;

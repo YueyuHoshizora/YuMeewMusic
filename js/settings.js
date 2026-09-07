@@ -3,6 +3,9 @@ import { THEMES } from "./themes.js";
 import { FORMATS } from "./formats.js";
 const KEY = "yumeew.settings.v1";
 export const DEFAULT_SETTINGS = Object.freeze({
+  songTitle: "",
+  lyricist: "",
+  composer: "",
   style: 0,
   color: "#c5fa75",
   strength: 70,
@@ -46,6 +49,9 @@ export function validateSettings(value) {
   if (typeof source.theme === "string" && Object.hasOwn(THEMES, source.theme))
     result.theme = source.theme;
   if (["16:9", "9:16"].includes(source.aspectRatio)) result.aspectRatio = source.aspectRatio;
+  for (const key of ["songTitle", "lyricist", "composer"]) {
+    if (typeof source[key] === "string") result[key] = source[key].slice(0, 120);
+  }
   return result;
 }
 

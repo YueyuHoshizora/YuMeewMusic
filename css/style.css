@@ -762,3 +762,8 @@ header {
 .canvas-wrap.portrait { aspect-ratio: 9 / 16; width: min(100%, 360px); margin-inline: auto; }
 
 .assets > .aspect-control { padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+.song-details { grid-column: 1 / -1; min-width: 0; }
+.text-input { width: 100%; min-width: 0; height: 40px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); padding: 8px 10px; font-size: 14px; }
+.text-input::placeholder { color: var(--muted); }
+.text-input:disabled { opacity: .45; }

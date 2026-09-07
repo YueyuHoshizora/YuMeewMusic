@@ -83,9 +83,13 @@
             </button>
             <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
             <button id="remove-image" class="text-button" hidden type="button">移除圖片</button>
-            <div class="privacy">
-              <span>✳</span>
-              <p>音樂、圖片與影片<br />全程在瀏覽器處理，不上傳。</p>
+            <div class="song-details">
+              <label class="field-label" for="songTitle">歌曲名稱</label>
+              <input id="songTitle" class="text-input" type="text" maxlength="120" placeholder="輸入歌曲名稱">
+              <label class="field-label" for="lyricist">作詞</label>
+              <input id="lyricist" class="text-input" type="text" maxlength="120" placeholder="輸入作詞者">
+              <label class="field-label" for="composer">作曲</label>
+              <input id="composer" class="text-input" type="text" maxlength="120" placeholder="輸入作曲者">
             </div>
           </aside>
           <section class="center" aria-label="預覽與頻譜風格">

@@ -151,6 +151,29 @@ export function draw(canvas, t, b, img, s) {
   }
   c.shadowBlur = 0;
   c.restore();
+  drawSongDetails(c, canvas.width, canvas.height, s);
+}
+
+function drawSongDetails(c, width, height, settings) {
+  const lines = [
+    [settings.songTitle, true],
+    [settings.lyricist ? `作詞：${settings.lyricist}` : "", false],
+    [settings.composer ? `作曲：${settings.composer}` : "", false],
+  ].filter(([text]) => typeof text === "string" && text.trim());
+  if (!lines.length) return;
+  const unit = Math.min(width, height);
+  const lineHeight = unit * .04;
+  c.save();
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  c.shadowColor = "#000000";
+  c.shadowBlur = unit * .012;
+  lines.forEach(([text, title], i) => {
+    c.fillStyle = title ? "#ffffff" : "#e1e8e4";
+    c.font = `${title ? 600 : 400} ${unit * (title ? .032 : .022)}px sans-serif`;
+    c.fillText(text, width / 2, height * .91 - (lines.length - 1 - i) * lineHeight, width * .86);
+  });
+  c.restore();
 }
 
 // Every frame depends only on audio and timestamp, so seeking and export stay consistent.

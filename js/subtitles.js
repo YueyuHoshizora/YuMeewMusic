@@ -1,18 +1,40 @@
 function timestamp(value) {
-  const match = /^(\d+):(\d{2}):(\d{2})[.,](\d{1,3})$/.exec(value.trim());
-  return match && Number(match[2]) < 60 && Number(match[3]) < 60
-    ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]) + Number(`0.${match[4]}`) : NaN;
+  const match = /^(?:(\d+):)?(\d+):([0-5]\d)(?:[.,](\d{1,3}))?$/.exec(value.trim());
+  if (!match || (match[1] !== undefined && Number(match[2]) >= 60)) return NaN;
+  return Number(match[1] || 0) * 3600 + Number(match[2]) * 60 + Number(match[3]) + Number(`0.${match[4] || '0'}`);
 }
 export function parseSubtitles(source, extension) {
   const text = source.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n').trim();
   if (!text) throw Error('字幕檔沒有文字內容。');
-  if (extension === 'txt') return {lines:text.split('\n').map(line=>line.trim()).filter(Boolean)};
+  if (extension === 'txt' && !text.includes('-->')) {
+    const entries = [];
+    for (const line of text.split('\n')) {
+      const tagged = /^(?:\[[\d:.,]+\])+/.exec(line.trim());
+      const plain = /^(\d+:\d{2}(?::\d{2})?(?:[.,]\d{1,3})?)\s+(.*)$/.exec(line.trim());
+      if (tagged) {
+        const content = line.trim().slice(tagged[0].length).trim();
+        for (const [, stamp] of tagged[0].matchAll(/\[([^\]]+)\]/g)) {
+          const start = timestamp(stamp);
+          if (Number.isFinite(start)) entries.push({start, text:content});
+        }
+      } else if (plain) {
+        const start = timestamp(plain[1]);
+        if (Number.isFinite(start)) entries.push({start, text:plain[2].trim()});
+      }
+    }
+    entries.sort((a,b)=>a.start-b.start);
+    if (!entries.some(entry=>entry.text)) throw Error('TXT 找不到有效時間碼，請使用 [00:12.50] 字幕文字或 SRT 式起訖時間碼。');
+    return {cues:entries.map(entry=>({
+      ...entry,
+      end:entries.find(next=>next.start > entry.start)?.start ?? Infinity,
+    }))};
+  }
   const cues = [];
   const add = (start, end, text) => {
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || !text.trim()) return;
     cues.push({start, end, text:text.trim()});
   };
-  if (extension === 'srt') {
+  if (extension === 'srt' || extension === 'txt') {
     for (const block of text.split(/\n\s*\n/)) {
       const lines = block.split('\n');
       const index = lines.findIndex(line=>line.includes('-->'));
@@ -42,6 +64,5 @@ export function parseSubtitles(source, extension) {
 }
 export function subtitleAt(data, time, duration) {
   if (!data || time < 0 || time >= duration) return '';
-  if (data.lines) return data.lines[Math.min(data.lines.length-1, Math.floor(time/duration*data.lines.length))] || '';
   return data.cues.filter(cue=>time >= cue.start && time < cue.end).map(cue=>cue.text).join('\n');
 }

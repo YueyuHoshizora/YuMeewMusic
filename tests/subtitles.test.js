@@ -11,11 +11,21 @@ test('ASS handles commas, line breaks and strips style overrides',()=>{
  const data=parseSubtitles('[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:02.00,0:00:05.00,Default,,0,0,0,,{\\b1}Hello, world\\N字幕','ass');
  assert.equal(subtitleAt(data,3,10),'Hello, world\n字幕');
 });
-test('TXT distributes lines across original duration and malformed timed files fail',()=>{
- const data=parseSubtitles('甲\n乙','txt');
- assert.equal(subtitleAt(data,0,10),'甲');
+test('TXT respects timestamps, next-cue boundaries, blank clearing and repeated timestamps',()=>{
+ const data=parseSubtitles('[00:02.50]甲\n[00:05][00:08]乙\n[00:09]','txt');
+ assert.equal(subtitleAt(data,0,10),'');
+ assert.equal(subtitleAt(data,2.5,10),'甲');
  assert.equal(subtitleAt(data,5,10),'乙');
- assert.equal(subtitleAt(data,10,10),'');
+ assert.equal(subtitleAt(data,9,10),'');
+ assert.throws(()=>parseSubtitles('甲\n乙','txt'));
+ assert.throws(()=>parseSubtitles('[00:99]錯誤','txt'));
  assert.throws(()=>parseSubtitles('invalid','srt'));
- assert.throws(()=>parseSubtitles('','txt'));
+});
+test('TXT supports SRT ranges and plain timestamp lines',()=>{
+ const srt=parseSubtitles('1\n00:00:02,000 --> 00:00:04,000\n字幕','txt');
+ assert.equal(subtitleAt(srt,3,10),'字幕');
+ assert.equal(subtitleAt(srt,4,10),'');
+ const plain=parseSubtitles('00:02 第一行\n00:04.50 第二行','txt');
+ assert.equal(subtitleAt(plain,4.5,10),'第二行');
+ assert.equal(subtitleAt(plain,10,10),'');
 });

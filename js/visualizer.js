@@ -156,7 +156,7 @@ function drawSongDetails(c, width, height, settings) {
   if (!lines.length) return;
   const unit = Math.min(width, height);
   const bounded = (value, fallback, min, max) => Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
-  const scale = bounded(settings.textSize, 100, 50, 250) / 100;
+  const scale = bounded(settings.textSize, 100, 50, 250) / 50;
   const x = width * bounded(settings.textX, 50, 0, 100) / 100;
   const y = height * bounded(settings.textY, 91, 0, 100) / 100;
   const lineHeight = unit * .04 * scale;

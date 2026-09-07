@@ -784,3 +784,21 @@ header {
   header .local { order: 2; margin-left: 0; }
   header .appearance { order: 3; }
 }
+
+.reset-dialog {
+  width: min(440px, calc(100vw - 40px));
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  margin: auto;
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 24px 80px #0006;
+}
+.reset-dialog::backdrop { background: #0009; }
+.reset-dialog h2 { margin: 0 0 14px; font-size: 22px; }
+.reset-dialog p { margin: 0; font-size: 16px; line-height: 1.8; color: var(--muted); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+.reset-confirm { border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); padding: 9px 16px; font-size: 14px; }

@@ -203,6 +203,14 @@
         </footer>
         <noscript>請啟用 JavaScript 以在瀏覽器內處理音樂與匯出影片。</noscript>
       </main>
+      <dialog id="reset-dialog" class="reset-dialog" aria-labelledby="reset-dialog-title" aria-describedby="reset-dialog-description">
+        <h2 id="reset-dialog-title">重置所有設定？</h2>
+        <p id="reset-dialog-description">將恢復預設佈景、頻譜、位置、比例與匯出設定，並清空歌曲名稱、作詞及作曲。<br>目前載入的音樂和圖片會保留。</p>
+        <div class="dialog-actions">
+          <button id="reset-dialog-cancel" class="reset-settings" type="button" autofocus>取消</button>
+          <button id="reset-dialog-confirm" class="reset-confirm" type="button">確認重置</button>
+        </div>
+      </dialog>
       <audio id="audio"></audio>
     </div>
   </body>

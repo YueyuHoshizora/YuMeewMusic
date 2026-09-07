@@ -347,7 +347,13 @@ for (const id of ["strength", "darkness", "positionX", "positionY"])
   });
 $("reset-settings").addEventListener("click", () => {
   if (state.busy || state.loading || state.imageLoading) return;
-  if (!window.confirm("確定要重置所有設定嗎？\n\n將恢復預設的佈景、頻譜、位置、比例與匯出設定，並清空歌曲名稱、作詞及作曲。\n目前載入的音樂和圖片會保留。")) return;
+  if (!$("reset-dialog").open) $("reset-dialog").showModal();
+});
+$("reset-dialog-cancel").addEventListener("click", () => $("reset-dialog").close());
+$("reset-dialog").addEventListener("close", () => $("reset-settings").focus());
+$("reset-dialog-confirm").addEventListener("click", () => {
+  if (!$("reset-dialog").open || state.busy || state.loading || state.imageLoading) return;
+  $("reset-dialog").close();
   Object.assign(state, DEFAULT_SETTINGS);
   for (const id of ["songTitle", "lyricist", "composer", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
     $(id).value = state[id];

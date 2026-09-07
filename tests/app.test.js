@@ -13,6 +13,10 @@ test("editor initializes, switches formats and reaches download for every format
     elements = new Map();
   function element() {
     return {
+      open: false,
+      showModal() { this.open = true; },
+      close() { this.open = false; this.listeners.close?.(); },
+      focus() {},
       value: "",
       textContent: "",
       disabled: false,
@@ -108,11 +112,16 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(elements.get("preview").width, 720);
   assert.equal(elements.get("preview").height, 1280);
   assert.equal(elements.get("preview-aspect").textContent, "9:16");
-  context.window.confirm = () => false;
+  context.window.confirm = () => { throw Error("Native confirm must not be used"); };
   elements.get("reset-settings").listeners.click();
   assert.equal(elements.get("aspect-ratio").value, "9:16");
-  context.window.confirm = () => true;
+  assert.equal(elements.get("reset-dialog").open, true);
+  elements.get("reset-dialog-cancel").listeners.click();
+  assert.equal(elements.get("reset-dialog").open, false);
+  assert.equal(elements.get("aspect-ratio").value, "9:16");
   elements.get("reset-settings").listeners.click();
+  elements.get("reset-dialog-confirm").listeners.click();
+  assert.equal(elements.get("reset-dialog").open, false);
   assert.equal(elements.get("aspect-ratio").value, "16:9");
   assert.equal(elements.get("format").value, "mp4");
   assert.equal(elements.get("songTitle").value, "");

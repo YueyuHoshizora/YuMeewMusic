@@ -1,3 +1,4 @@
+import { subtitleFontFamily } from "./fonts.js";
 import { subtitleAt } from "./subtitles.js";
 export function spectrum(b, t) {
   const out = new Float32Array(64);
@@ -482,7 +483,7 @@ function drawSubtitles(c, width, height, settings, time) {
   const size = Math.min(width, height) * .035 * Math.max(100, Math.min(250, settings.subtitleSize ?? 100)) / 100;
   const padding = size * .3;
   const maxWidth = Math.max(size, width * (position === "left" || position === "right" ? 1 - margin - .05 : .9) - padding * 2);
-  c.font = `600 ${size}px sans-serif`;
+  c.font = `600 ${size}px ${subtitleFontFamily(settings.subtitleFont)}`;
   c.textAlign = "center";
   c.textBaseline = "middle";
   const vertical = settings.subtitleDirection === "vertical";

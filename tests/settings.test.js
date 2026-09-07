@@ -23,6 +23,7 @@ test("settings survive another load and exclude all media-related data", () => {
     subtitleMargin: 12,
     subtitleSize: 150,
     subtitleDirection: "vertical",
+    subtitleFont: "kai",
     subtitleTypewriter: true,
     style: 5,
     color: "#A1B2C3",

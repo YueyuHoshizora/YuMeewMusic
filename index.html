@@ -155,6 +155,20 @@
                 <input id="subtitleMargin" class="text-input" type="number" min="0" max="40" step="1" value="5" aria-label="字幕邊界距離百分比">
                 <input id="subtitleMargin-range" type="range" min="0" max="40" step="1" value="5" aria-label="字幕邊界距離滑軸">
               </div>
+              <label class="field-label" for="subtitleFont">字幕字型</label>
+              <select id="subtitleFont">
+                <option value="system">系統預設</option>
+                <option value="jhenghei">微軟正黑體</option>
+                <option value="pingfang">蘋方（繁體）</option>
+                <option value="notoSans">思源黑體／Noto Sans TC</option>
+                <option value="notoSerif">思源宋體／Noto Serif TC</option>
+                <option value="mingliu">新細明體</option>
+                <option value="kai">標楷體</option>
+                <option value="arial">Arial</option>
+                <option value="times">Times New Roman</option>
+                <option value="courier">Courier New</option>
+              </select>
+              <small class="position-help">使用本機字型；未安裝時會使用替代字型。</small>
               <label class="field-label" for="subtitleDirection">字幕顯示方向</label>
               <select id="subtitleDirection"><option value="horizontal">水平顯示（橫排）</option><option value="vertical">垂直顯示（直排）</option></select>
               <label class="field-label" for="subtitleTypewriter">逐字顯示<input id="subtitleTypewriter" type="checkbox" role="switch"></label>

@@ -1,3 +1,4 @@
+import { SUBTITLE_FONTS } from "./fonts.js";
 import { STYLES } from "./styles.js";
 import { THEMES } from "./themes.js";
 import { FORMATS } from "./formats.js";
@@ -15,6 +16,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   subtitleMargin: 5,
   subtitleSize: 100,
   subtitleDirection: "horizontal",
+  subtitleFont: "system",
   subtitleTypewriter: false,
   style: 0,
   color: "#c5fa75",
@@ -73,6 +75,7 @@ export function validateSettings(value) {
   if (["horizontal", "vertical"].includes(source.subtitleDirection)) result.subtitleDirection = source.subtitleDirection;
   if (typeof source.subtitleTypewriter === "boolean") result.subtitleTypewriter = source.subtitleTypewriter;
   if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
+  if (typeof source.subtitleFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.subtitleFont)) result.subtitleFont = source.subtitleFont;
   return result;
 }
 

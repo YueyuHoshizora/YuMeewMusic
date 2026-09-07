@@ -155,7 +155,11 @@ function drawSongDetails(c, width, height, settings) {
   ].filter(([text]) => typeof text === "string" && text.trim());
   if (!lines.length) return;
   const unit = Math.min(width, height);
-  const lineHeight = unit * .04;
+  const bounded = (value, fallback, min, max) => Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
+  const scale = bounded(settings.textSize, 100, 50, 250) / 100;
+  const x = width * bounded(settings.textX, 50, 0, 100) / 100;
+  const y = height * bounded(settings.textY, 91, 0, 100) / 100;
+  const lineHeight = unit * .04 * scale;
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.globalAlpha = 1;
@@ -166,8 +170,8 @@ function drawSongDetails(c, width, height, settings) {
   c.shadowBlur = unit * .012;
   lines.forEach(([text, title], i) => {
     c.fillStyle = title ? "#ffffff" : "#e1e8e4";
-    c.font = `${title ? 600 : 400} ${unit * (title ? .032 : .022)}px sans-serif`;
-    c.fillText(text, width / 2, height * .91 - (lines.length - 1 - i) * lineHeight, width * .86);
+    c.font = `${title ? 600 : 400} ${unit * (title ? .032 : .022) * scale}px sans-serif`;
+    c.fillText(text, x, y - (lines.length - 1 - i) * lineHeight, width * .86);
   });
   c.restore();
 }

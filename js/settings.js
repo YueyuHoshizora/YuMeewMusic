@@ -6,6 +6,9 @@ export const DEFAULT_SETTINGS = Object.freeze({
   songTitle: "",
   lyricist: "",
   composer: "",
+  textX: 50,
+  textY: 91,
+  textSize: 100,
   style: 0,
   color: "#c5fa75",
   strength: 70,
@@ -28,7 +31,7 @@ export function validateSettings(value) {
     result.style = source.style;
   if (typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color))
     result.color = source.color.toLowerCase();
-  for (const key of ["strength", "darkness"]) {
+  for (const key of ["strength", "darkness", "textX", "textY"]) {
     if (
       typeof source[key] === "number" &&
       Number.isFinite(source[key]) &&
@@ -52,6 +55,7 @@ export function validateSettings(value) {
   for (const key of ["songTitle", "lyricist", "composer"]) {
     if (typeof source[key] === "string") result[key] = source[key].slice(0, 120);
   }
+  if (typeof source.textSize === "number" && Number.isFinite(source.textSize) && source.textSize >= 50 && source.textSize <= 250) result.textSize = source.textSize;
   return result;
 }
 

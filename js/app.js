@@ -36,6 +36,7 @@ $("strength").value = state.strength;
 $("darkness").value = state.darkness;
 $("positionX").value = state.positionX;
 $("positionY").value = state.positionY;
+for (const id of ["textX", "textY", "textSize"]) $(id).value = state[id];
 $("resolution").value = restored.resolution;
 $("aspect-ratio").value = restored.aspectRatio;
 $("fps").value = restored.fps;
@@ -57,6 +58,9 @@ function persistSettings() {
     songTitle: state.songTitle,
     lyricist: state.lyricist,
     composer: state.composer,
+    textX: state.textX,
+    textY: state.textY,
+    textSize: state.textSize,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -94,7 +98,7 @@ function update() {
   const locked = state.busy || state.loading || state.imageLoading;
   document
     .querySelectorAll(
-      ".style-card, #songTitle, #lyricist, #composer, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
+      ".style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop",
     )
     .forEach((el) => (el.disabled = locked));
   const format = $("format").value;
@@ -122,6 +126,7 @@ function update() {
   document.querySelector(".canvas-wrap").classList.toggle("portrait", aspectRatio === "9:16");
   $("preview-aspect").textContent = aspectRatio;
   $("preview-resolution").textContent = `${$("resolution").value}p`;
+  for (const id of ["textX", "textY", "textSize"]) $(`${id}-value`).textContent = `${state[id]}%`;
   $("strength-value").textContent = `${state.strength}%`;
   $("darkness-value").textContent = `${state.darkness}%`;
   for (const key of ["positionX", "positionY"]) {
@@ -341,7 +346,7 @@ $("seek").addEventListener("input", () => {
 $("restart").addEventListener("click", () => {
   audio.currentTime = 0;
 });
-for (const id of ["strength", "darkness", "positionX", "positionY"])
+for (const id of ["strength", "darkness", "positionX", "positionY", "textX", "textY", "textSize"])
   $(id).addEventListener("input", () => {
     state[id] = Number($(id).value);
     update();
@@ -356,7 +361,7 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   if (!$("reset-dialog").open || state.busy || state.loading || state.imageLoading) return;
   $("reset-dialog").close();
   Object.assign(state, DEFAULT_SETTINGS);
-  for (const id of ["songTitle", "lyricist", "composer", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
+  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format"]) {
     $(id).value = state[id];
   }
   $("spectrum-color").value = state.color;

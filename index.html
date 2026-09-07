@@ -91,6 +91,14 @@
               <input id="lyricist" class="text-input" type="text" maxlength="120" placeholder="輸入作詞者">
               <label class="field-label" for="composer">作曲</label>
               <input id="composer" class="text-input" type="text" maxlength="120" placeholder="輸入作曲者">
+              <label class="range-label" for="textX">文字水平位置<output id="textX-value">50%</output></label>
+              <input id="textX" type="range" min="0" max="100" value="50">
+              <label class="range-label" for="textY">文字垂直位置<output id="textY-value">91%</output></label>
+              <input id="textY" type="range" min="0" max="100" value="91">
+              <label class="range-label" for="textSize">字體大小<output id="textSize-value">100%</output></label>
+              <input id="textSize" type="range" min="50" max="250" step="5" value="100">
+              <p class="position-help">三行文字一起調整。水平由左至右，垂直由上至下；超出畫面的部分會裁切。</p>
+
             </div>
           </aside>
           <section class="center" aria-label="預覽與頻譜風格">

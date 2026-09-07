@@ -268,8 +268,8 @@
               <p id="position-help" class="position-help">水平：左 −／右 ＋ · 垂直：上 −／下 ＋<br>超出畫面的部分不會顯示。</p>
               <button id="reset-position" type="button" class="text-button">重設位置</button>
             </div>
-            <div class="export-section">
-              <div class="section-title"><h2>個人識別</h2></div>
+            <details class="export-section identity-settings">
+              <summary>個人識別</summary>
               <label class="field-label" for="identityType">識別類型</label>
               <select id="identityType"><option value="text">文字</option><option value="image">圖片</option></select>
               <div id="identity-text-controls">
@@ -287,7 +287,7 @@
               <input id="identityX" type="range" min="0" max="100" value="90">
               <label class="range-label" for="identityY">垂直位置<output id="identityY-value">10%</output></label>
               <input id="identityY" type="range" min="0" max="100" value="10">
-            </div>
+            </details>
             <div class="export-section">
               <div class="section-title">
                 <span>03</span>

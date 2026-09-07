@@ -388,6 +388,11 @@ h1 span {
   margin-top: 0;
   padding-top: 0;
 }
+.assets details.export-section {
+  border-top: 0;
+  margin-top: 4px;
+  padding-top: 0;
+}
 .identity-settings > summary,
 .screen-settings > summary {
   cursor: pointer;
@@ -727,21 +732,25 @@ header { flex-wrap: nowrap; }
 .workspace { grid-template-columns: 235px minmax(400px, 1fr) 260px; }
 
 .song-settings {
-  border-top: 1px solid var(--border);
-  padding-top: 14px;
+  border-top: 0;
+  margin-top: 4px;
+  padding-top: 0;
 }
 .song-settings > summary {
   cursor: pointer;
   color: var(--foreground);
   font-size: 16px;
   font-weight: 600;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 .song-settings > summary::marker { color: var(--primary-text); }
 .song-settings > summary:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 4px;
   border-radius: 4px;
+}
+.assets details[open] > summary + .field-label {
+  margin-top: 14px;
 }
 
 .upload strong { min-width: 0; }

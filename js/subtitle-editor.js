@@ -251,6 +251,18 @@ function downloadSrt() {
   status(`已下載 ${srtFilename()}`, 'success');
 }
 
+function scrollCueToCenter(index) {
+  const list = $('cue-list');
+  const item = list.querySelector(`.cue-list-item[data-index="${index}"]`);
+  if (!item) return;
+  const listBox = list.getBoundingClientRect();
+  const itemBox = item.getBoundingClientRect();
+  const outside = itemBox.top < listBox.top || itemBox.bottom > listBox.bottom;
+  if (!outside) return;
+  const centeredTop = list.scrollTop + itemBox.top - listBox.top - (list.clientHeight - itemBox.height) / 2;
+  list.scrollTo({ top: Math.max(0, centeredTop), behavior: 'smooth' });
+}
+
 function updatePlayhead() {
   const time = audio.currentTime || 0;
   const activeIndex = subtitleIndexAt({ cues: state.cues }, time);
@@ -259,7 +271,7 @@ function updatePlayhead() {
     renderList();
     renderTimeline();
     renderForm();
-    requestAnimationFrame(() => document.querySelector(`.cue-list-item[data-index="${activeIndex}"]`)?.scrollIntoView({ block: 'nearest' }));
+    requestAnimationFrame(() => scrollCueToCenter(activeIndex));
   }
   $('playhead').style.left = `${Math.max(0, Math.min(100, time / state.duration * 100))}%`;
   $('editor-current-time').textContent = editorTime(time);

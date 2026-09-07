@@ -37,7 +37,7 @@ body.subtitle-editor-body { min-width: 1100px; }
 .editor-danger-button { border-color: var(--error); color: var(--error-text); background: var(--error-surface); }
 .editor-icon-button { width: 36px; padding-inline: 0; }
 .cue-navigation { display: flex; gap: 7px; }
-.cue-list { max-height: 520px; overflow-y: auto; scrollbar-color: var(--border) transparent; }
+.cue-list { max-height: 520px; overflow-y: auto; scroll-behavior: smooth; scrollbar-color: var(--border) transparent; }
 .cue-list-item { display: grid; grid-template-columns: 42px 104px minmax(0, 1fr); gap: 9px; align-items: center; width: 100%; margin-bottom: 7px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); text-align: left; }
 .cue-list-item:hover { border-color: var(--primary); background: var(--hover); }
 .cue-list-item.selected { border-color: var(--primary); background: var(--tint); }

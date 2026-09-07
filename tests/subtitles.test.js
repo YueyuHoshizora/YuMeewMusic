@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseSubtitles,subtitleAt} from '../js/subtitles.js';
+import {formatSubtitleTime,parseSubtitleTime,parseSubtitles,serializeSubtitles,subtitleAt} from '../js/subtitles.js';
 test('SRT timing and multiline text survive parsing, with exclusive end time',()=>{
   const data=parseSubtitles('1\r\n00:00:01,500 --> 00:00:03,000\r\n<b>你好</b>\r\n世界','srt');
   assert.equal(subtitleAt(data,1,10),'');
@@ -40,4 +40,17 @@ test('typewriter follows cue timestamps and retains complete Unicode characters'
  const emoji={cues:[{start:0,end:Infinity,text:'👨‍👩‍👧‍👦好'}]};
  assert.equal(subtitleAt(emoji,0,4,true),'👨‍👩‍👧‍👦');
  assert.equal(subtitleAt(emoji,3,4,true),'👨‍👩‍👧‍👦好');
+});
+
+test('edited subtitles serialize as standard SRT and can be parsed again',()=>{
+ const source={cues:[
+  {start:65.25,end:68.5,text:'第二行\n字幕'},
+  {start:1.005,end:2,text:'第一行'},
+ ]};
+ const text=serializeSubtitles(source);
+ assert.match(text,/1\n00:00:01,005 --> 00:00:02,000\n第一行/);
+ assert.match(text,/2\n00:01:05,250 --> 00:01:08,500\n第二行\n字幕/);
+ assert.deepEqual(parseSubtitles(text,'srt').cues,source.cues.toSorted((a,b)=>a.start-b.start));
+ assert.equal(formatSubtitleTime(65.25),'01:05.250');
+ assert.equal(parseSubtitleTime('01:05.250'),65.25);
 });

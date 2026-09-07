@@ -1,4 +1,4 @@
-function timestamp(value) {
+export function parseSubtitleTime(value) {
   const match = /^(?:(\d+):)?(\d+):([0-5]\d)(?:[.,](\d{1,3}))?$/.exec(value.trim());
   if (!match || (match[1] !== undefined && Number(match[2]) >= 60)) return NaN;
   return Number(match[1] || 0) * 3600 + Number(match[2]) * 60 + Number(match[3]) + Number(`0.${match[4] || '0'}`);
@@ -14,11 +14,11 @@ export function parseSubtitles(source, extension) {
       if (tagged) {
         const content = line.trim().slice(tagged[0].length).trim();
         for (const [, stamp] of tagged[0].matchAll(/\[([^\]]+)\]/g)) {
-          const start = timestamp(stamp);
+          const start = parseSubtitleTime(stamp);
           if (Number.isFinite(start)) entries.push({start, text:content});
         }
       } else if (plain) {
-        const start = timestamp(plain[1]);
+        const start = parseSubtitleTime(plain[1]);
         if (Number.isFinite(start)) entries.push({start, text:plain[2].trim()});
       }
     }
@@ -40,7 +40,7 @@ export function parseSubtitles(source, extension) {
       const index = lines.findIndex(line=>line.includes('-->'));
       if (index < 0) continue;
       const [start,end] = lines[index].split('-->');
-      add(timestamp(start), timestamp(end.trim().split(/\s/)[0]), lines.slice(index+1).join('\n').replace(/<[^>]*>/g,''));
+      add(parseSubtitleTime(start), parseSubtitleTime(end.trim().split(/\s/)[0]), lines.slice(index+1).join('\n').replace(/<[^>]*>/g,''));
     }
   } else if (extension === 'ass') {
     let events = false, fields = [];
@@ -56,11 +56,34 @@ export function parseSubtitles(source, extension) {
       const content = parts.slice(textIndex).join(',');
       // ASS drawing commands are not subtitle text.
       if (/\\p[1-9]/.test(content)) continue;
-      add(timestamp(parts[fields.indexOf('start')] || ''), timestamp(parts[fields.indexOf('end')] || ''), content.replace(/\{[^}]*\}/g,'').replace(/\\[Nn]/g,'\n').replace(/\\h/g,' '));
+      add(parseSubtitleTime(parts[fields.indexOf('start')] || ''), parseSubtitleTime(parts[fields.indexOf('end')] || ''), content.replace(/\{[^}]*\}/g,'').replace(/\\[Nn]/g,'\n').replace(/\\h/g,' '));
     }
   } else throw Error('請選擇 SRT、ASS 或 TXT 字幕檔。');
   if (!cues.length) throw Error('找不到有效的字幕時間碼與文字。');
   return {cues:cues.sort((a,b)=>a.start-b.start)};
+}
+
+export function formatSubtitleTime(seconds, separator = '.', alwaysHours = false) {
+  const totalMilliseconds = Math.max(0, Math.round(Number(seconds) * 1000));
+  const milliseconds = totalMilliseconds % 1000;
+  const totalSeconds = Math.floor(totalMilliseconds / 1000);
+  const secs = totalSeconds % 60;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const minutes = totalMinutes % 60;
+  const hours = Math.floor(totalMinutes / 60);
+  const main = hours || alwaysHours
+    ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    : `${String(totalMinutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  return `${main}${separator}${String(milliseconds).padStart(3, '0')}`;
+}
+
+export function serializeSubtitles(data) {
+  const cues = (Array.isArray(data?.cues) ? data.cues : [])
+    .filter(cue => Number.isFinite(cue.start) && Number.isFinite(cue.end) && cue.end > cue.start && String(cue.text || '').trim())
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+  return cues
+    .map((cue, index) => `${index + 1}\n${formatSubtitleTime(cue.start, ',', true)} --> ${formatSubtitleTime(cue.end, ',', true)}\n${String(cue.text).trim()}`)
+    .join('\n\n') + (cues.length ? '\n' : '');
 }
 const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter(undefined, {granularity:'grapheme'}) : null;
 export function subtitleCharacters(text) {

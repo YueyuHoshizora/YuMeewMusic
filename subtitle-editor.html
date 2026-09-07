@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在瀏覽器內編輯 YuMeew Music 字幕，音樂與字幕不會上傳伺服器。" />
+    <title>字幕編輯器 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/subtitle-editor.css" />
+    <script type="module" src="./js/subtitle-editor.js"></script>
+  </head>
+  <body class="subtitle-editor-body">
+    <header class="editor-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SUBTITLE EDITOR</span></a>
+      <span class="local"><i></i>音樂與字幕只在瀏覽器內處理</span>
+      <a class="reset-settings editor-back" href="./">← 返回主畫面</a>
+    </header>
+    <main class="subtitle-editor-main">
+      <section class="editor-heading">
+        <div>
+          <div class="eyebrow">CLIENT-SIDE SUBTITLE WORKSPACE</div>
+          <h1>字幕編輯器<span>。</span></h1>
+          <p>拖曳時間軸上的字幕色帶，或直接輸入時間與文字。儲存後會覆寫主畫面目前的字幕。</p>
+        </div>
+        <div id="editor-status" class="editor-status" role="status">正在讀取瀏覽器中的素材…</div>
+      </section>
+
+      <section class="editor-player panel">
+        <div class="editor-player-row">
+          <div>
+            <strong id="editor-audio-name">尚未載入音樂</strong>
+            <span id="editor-subtitle-name">尚未載入字幕</span>
+          </div>
+          <div class="editor-time"><span id="editor-current-time">00:00.000</span><span>/</span><span id="editor-duration">00:00.000</span></div>
+        </div>
+        <audio id="editor-audio" controls preload="metadata"></audio>
+        <div id="timeline" class="subtitle-timeline" tabindex="0" aria-label="字幕時間軸，點擊可移動播放位置">
+          <canvas id="waveform" width="1200" height="180"></canvas>
+          <div id="cue-bands" class="cue-bands"></div>
+          <div id="playhead" class="playhead" aria-hidden="true"></div>
+        </div>
+        <div class="timeline-help">點擊時間軸跳轉；拖曳色帶中央可移動整句，拖曳左右邊緣可調整起訖時間。</div>
+      </section>
+
+      <section class="editor-workspace">
+        <aside class="cue-list-panel panel">
+          <div class="editor-panel-title">
+            <div><span>字幕清單</span><strong id="cue-count">0 句</strong></div>
+            <button id="add-cue" class="editor-small-button" type="button">＋ 新增</button>
+          </div>
+          <div id="cue-list" class="cue-list"></div>
+          <p id="cue-empty" class="editor-empty">主畫面尚未保存字幕。你可以從目前播放位置新增第一句。</p>
+        </aside>
+
+        <section class="cue-form-panel panel">
+          <div class="editor-panel-title">
+            <div><span>編輯內容</span><strong id="selected-label">尚未選擇字幕</strong></div>
+            <div class="cue-navigation">
+              <button id="previous-cue" class="editor-icon-button" type="button" aria-label="上一句">←</button>
+              <button id="next-cue" class="editor-icon-button" type="button" aria-label="下一句">→</button>
+            </div>
+          </div>
+          <div id="cue-form" hidden>
+            <div class="cue-time-fields">
+              <label>開始時間<input id="cue-start" class="text-input" type="text" inputmode="decimal" placeholder="00:05.000" /></label>
+              <label>結束時間<input id="cue-end" class="text-input" type="text" inputmode="decimal" placeholder="00:08.000" /></label>
+            </div>
+            <label class="cue-text-label" for="cue-text">字幕文字</label>
+            <textarea id="cue-text" rows="7" placeholder="輸入字幕文字"></textarea>
+            <p id="cue-error" class="cue-error" role="status" hidden></p>
+            <div class="cue-form-actions">
+              <button id="preview-cue" class="editor-small-button" type="button">▶ 從這句播放</button>
+              <button id="duplicate-cue" class="editor-small-button" type="button">複製</button>
+              <button id="delete-cue" class="editor-danger-button" type="button">刪除</button>
+            </div>
+          </div>
+          <p id="cue-form-empty" class="editor-empty">從左側選擇字幕，或新增一筆字幕。</p>
+        </section>
+      </section>
+
+      <footer class="editor-actions">
+        <span>所有修改只會保存在目前瀏覽器。</span>
+        <div>
+          <button id="download-subtitles" class="reset-settings" type="button">↓ 下載 SRT</button>
+          <button id="save-subtitles" class="export-button editor-save" type="button">儲存並返回主畫面</button>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>

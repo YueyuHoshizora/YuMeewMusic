@@ -513,6 +513,21 @@ h1 span {
   font-size: 12px;
   padding: 9px 0;
 }
+.subtitle-editor-link {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--tint-border);
+  border-radius: 8px;
+  background: var(--tint);
+  color: var(--primary-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.subtitle-editor-link:hover { background: var(--hover); border-color: var(--primary); }
 .message {
   display: flex;
   justify-content: space-between;

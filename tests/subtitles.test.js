@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {formatSubtitleTime,parseSubtitleTime,parseSubtitles,serializeSubtitles,subtitleAt,subtitleIndexAt} from '../js/subtitles.js';
+import {formatSubtitleTime,generatedSubtitleFilename,parseSubtitleTime,parseSubtitles,serializeSubtitles,subtitleAt,subtitleIndexAt} from '../js/subtitles.js';
 test('SRT timing and multiline text survive parsing, with exclusive end time',()=>{
   const data=parseSubtitles('1\r\n00:00:01,500 --> 00:00:03,000\r\n<b>你好</b>\r\n世界','srt');
   assert.equal(subtitleAt(data,1,10),'');
@@ -62,4 +62,8 @@ test('current playback time identifies its matching subtitle cue',()=>{
  assert.equal(subtitleIndexAt(data,2),-1);
  assert.equal(subtitleIndexAt(data,4.999),1);
  assert.equal(subtitleIndexAt(data,5),-1);
+});
+
+test('edited subtitle filename clearly identifies its local timestamped version',()=>{
+ assert.equal(generatedSubtitleFilename(new Date(2026,8,8,15,30,45)),'YuMeew字幕_20260908_153045.srt');
 });

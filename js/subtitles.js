@@ -85,6 +85,15 @@ export function serializeSubtitles(data) {
     .map((cue, index) => `${index + 1}\n${formatSubtitleTime(cue.start, ',', true)} --> ${formatSubtitleTime(cue.end, ',', true)}\n${String(cue.text).trim()}`)
     .join('\n\n') + (cues.length ? '\n' : '');
 }
+
+export function generatedSubtitleFilename(date = new Date()) {
+  const value = date instanceof Date ? date : new Date(date);
+  const valid = Number.isFinite(value.getTime()) ? value : new Date();
+  const part = number => String(number).padStart(2, '0');
+  const day = `${valid.getFullYear()}${part(valid.getMonth() + 1)}${part(valid.getDate())}`;
+  const time = `${part(valid.getHours())}${part(valid.getMinutes())}${part(valid.getSeconds())}`;
+  return `YuMeew字幕_${day}_${time}.srt`;
+}
 const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter(undefined, {granularity:'grapheme'}) : null;
 export function subtitleCharacters(text) {
   return segmenter ? Array.from(segmenter.segment(text), part=>part.segment) : Array.from(text);

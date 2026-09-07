@@ -1,7 +1,7 @@
 import { applyTheme } from './themes.js';
 import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
-import { formatSubtitleTime, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
+import { formatSubtitleTime, generatedSubtitleFilename, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
 import { createUndoHistory } from './undo-history.js';
 
 const $ = id => document.getElementById(id);
@@ -262,13 +262,8 @@ function duplicateCue() {
   render();
 }
 
-function srtFilename() {
-  const base = state.subtitleName.replace(/\.(srt|ass|txt)$/i, '') || 'edited-subtitles';
-  return `${base}.srt`;
-}
-
 function subtitleFile() {
-  return new File([serializeSubtitles({ cues: state.cues })], srtFilename(), { type: 'application/x-subrip', lastModified: Date.now() });
+  return new File([serializeSubtitles({ cues: state.cues })], generatedSubtitleFilename(), { type: 'application/x-subrip', lastModified: Date.now() });
 }
 
 async function saveAndReturn() {
@@ -276,7 +271,9 @@ async function saveAndReturn() {
   try {
     $('save-subtitles').disabled = true;
     status('正在保存字幕…');
-    await saveStoredMedia('subtitle', subtitleFile());
+    const file = subtitleFile();
+    await saveStoredMedia('subtitle', file);
+    state.subtitleName = file.name;
     state.dirty = false;
     status('字幕已保存，正在返回主畫面。', 'success');
     location.href = `./?subtitleUpdated=${Date.now()}`;
@@ -288,13 +285,14 @@ async function saveAndReturn() {
 
 function downloadSrt() {
   if (!state.cues.length) { status('目前沒有可下載的字幕。', 'error'); return; }
-  const url = URL.createObjectURL(subtitleFile());
+  const file = subtitleFile();
+  const url = URL.createObjectURL(file);
   const link = document.createElement('a');
   link.href = url;
-  link.download = srtFilename();
+  link.download = file.name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 0);
-  status(`已下載 ${srtFilename()}`, 'success');
+  status(`已下載 ${file.name}`, 'success');
 }
 
 function updatePlayhead() {

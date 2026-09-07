@@ -758,13 +758,13 @@ header {
 /* Keep only the preview docked; let every rhythm option expand with the page. */
 
   .center {
-    position: relative;
+    position: sticky;
+    top: 16px;
     align-self: start;
     min-width: 0;
   }
   .preview-dock {
-    position: sticky;
-    top: 16px;
+    position: relative;
     z-index: 2;
     background: var(--background);
     padding-top: 4px;
@@ -777,11 +777,11 @@ header {
     width: min(100%, 360px, calc(max(80px, min(55dvh, 100dvh - 360px)) * 9 / 16));
   }
   .preview-dock .transport { margin-bottom: 0; }
-  .center .styles {
-    overflow: visible;
-    align-content: start;
-    padding-bottom: 12px;
-  }
+  .settings .styles-heading { margin: 0 0 12px; }
+  .settings .styles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .settings .style-card { width: 100%; height: 68px; padding: 4px 2px; gap: 2px; }
+  .settings .style-card svg { width: 44px; height: 27px; }
+  .settings .style-card > span { font-size: 11px; }
 
 
 /* Desktop-only editor: preserve three columns at every viewport width. */

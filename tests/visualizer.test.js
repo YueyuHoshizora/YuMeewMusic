@@ -61,6 +61,7 @@ test("every statically referenced UI element exists and public assets are local"
   for (const [, id] of references) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#]+)"/g))
     assert.ok(existsSync(path), path);
+  assert.match(html, /<aside class="panel settings">[\s\S]*id="styles"[\s\S]*id="format"/);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
 });
 

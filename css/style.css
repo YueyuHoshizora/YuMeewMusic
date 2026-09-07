@@ -5,6 +5,13 @@
   font-weight: 400;
   font-display: swap;
 }
+@font-face {
+  font-family: "YuMeew Bakudai";
+  src: url("./fonts/bakudai-regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
 
 /* Theme accents are set by themes.js; surfaces follow the selected day/night mode. */
 :root {

@@ -1,7 +1,8 @@
-// Local fonts only. Missing fonts fall back without downloading any resources.
+// Bundled fonts are served with the site; system fonts use local fallbacks.
 export const SUBTITLE_FONTS = Object.freeze({
   system: 'system-ui, sans-serif',
   jasonRounded: '"YuMeew Jason Handwriting Rounded", "Microsoft JhengHei", sans-serif',
+  bakudai: '"YuMeew Bakudai", "Microsoft JhengHei", sans-serif',
   jhenghei: '"Microsoft JhengHei", "PingFang TC", sans-serif',
   pingfang: '"PingFang TC", "Microsoft JhengHei", sans-serif',
   notoSans: '"Noto Sans TC", "Noto Sans CJK TC", sans-serif',

@@ -27,6 +27,13 @@ export function frameTiming(index, fps, duration) {
   return { timestamp, duration: Math.min(1 / fps, duration - timestamp) };
 }
 
+export function scalePcmSamples(source, volumePercent = 100) {
+  const gain = Math.max(1, Math.min(200, Number(volumePercent) || 100)) / 100;
+  const output = new Float32Array(source.length);
+  for (let i = 0; i < source.length; i++) output[i] = Math.max(-1, Math.min(1, source[i] * gain));
+  return output;
+}
+
 /** Local WebCodecs encoding; no upload or remote encoding fallback. */
 export async function encodeMedia({
   format = "mp4",
@@ -42,6 +49,7 @@ export async function encodeMedia({
 }) {
   const m = await import("../vendor/mediabunny.min.mjs");
   const type = getFormat(format);
+  const exportVolume = settings?.exportVolume ?? 100;
   const height = Number(resolution),
     rate = Number(fps);
   if (type.video && (![480, 720, 1080].includes(height) || ![30, 60].includes(rate)))
@@ -134,7 +142,10 @@ export async function encodeMedia({
           });
           for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
             part.copyToChannel(
-              buffer.getChannelData(channel).subarray(audioOffset, audioOffset + length),
+              scalePcmSamples(
+                buffer.getChannelData(channel).subarray(audioOffset, audioOffset + length),
+                exportVolume,
+              ),
               channel,
             );
           }

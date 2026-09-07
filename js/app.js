@@ -105,6 +105,7 @@ function persistSettings() {
     fps: $("fps").value,
     format: $("format").value,
     profile: $("profile").value,
+    exportVolume: state.exportVolume,
     mode: state.mode,
     theme: state.theme,
   });
@@ -157,13 +158,15 @@ function update() {
   $("subtitleMargin-value").textContent = `${state.subtitleMargin}%`;
   $("subtitleSize-value").textContent = `${state.subtitleSize}%`;
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
+  $("exportVolume").value = state.exportVolume;
+  $("exportVolume-value").textContent = `${state.exportVolume}%`;
   $("subtitle-name").textContent = state.subtitleName || "選擇字幕檔";
   $("remove-subtitle").hidden = !state.subtitles;
   const locked = state.busy || state.loading || state.imageLoading;
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#identityType, #identityText, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#exportVolume, #identityType, #identityText, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -487,7 +490,7 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   Object.assign(state, DEFAULT_SETTINGS);
   state.identityImage = null;
   fileError("identity");
-  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile"]) {
+  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile", "exportVolume"]) {
     $(id).value = state[id];
   }
   $("spectrum-color").value = state.color;
@@ -508,6 +511,11 @@ $("resolution").addEventListener("change", update);
 $("aspect-ratio").addEventListener("change", update);
 $("fps").addEventListener("change", persistSettings);
 $("profile").addEventListener("change", persistSettings);
+$("exportVolume").addEventListener("input", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.exportVolume = Number($("exportVolume").value);
+  update();
+});
 $("format").addEventListener("change", update);
 $("cancel").addEventListener("click", () => exportController?.abort());
 $("export").addEventListener("click", async () => {

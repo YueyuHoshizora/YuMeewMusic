@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { encodeMedia } from "../js/export.js";
+import { encodeMedia, scalePcmSamples } from "../js/export.js";
 import { FORMATS, getFormat, exportFilename } from "../js/formats.js";
 import * as m from "../vendor/mediabunny.min.mjs";
 
@@ -31,6 +31,14 @@ test("format definitions use real containers and appropriate file names", () => 
   }
   assert.throws(() => getFormat("exe"));
   assert.equal(new m.MovOutputFormat().mimeType, "video/quicktime");
+});
+
+test("export volume scales PCM from 1–200 percent and clips safely", () => {
+  assert.deepEqual([...scalePcmSamples(Float32Array.from([-.8, -.25, 0, .25, .8]), 200)], [-1, -.5, 0, .5, 1]);
+  const quiet = scalePcmSamples(Float32Array.from([-.5, .5]), 1);
+  assert.ok(Math.abs(quiet[0] + .005) < 1e-8);
+  assert.ok(Math.abs(quiet[1] - .005) < 1e-8);
+  assert.deepEqual([...scalePcmSamples(Float32Array.from([-.5, .5]))], [-.5, .5]);
 });
 
 test(

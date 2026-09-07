@@ -158,6 +158,15 @@ function mini(index) {
     svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 150 65");
   svg.setAttribute("aria-hidden", "true");
+  if (index === 18) {
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", "M18 8H70V57H18Z M75 9A24 24 0 1 1 75 56 M82 18A16 16 0 1 1 82 47 M92 28A5 5 0 1 1 92 38A5 5 0 1 1 92 28");
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "2");
+    svg.append(path);
+    return svg;
+  }
   if (index >= 12) {
     const paths = [
       "M10 48 L28 30 L40 40 L60 12 L78 35 L96 20 L115 40 L140 25",

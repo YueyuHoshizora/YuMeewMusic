@@ -1,7 +1,7 @@
 import { STYLES } from "../js/styles.js";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { spectrum, draw } from "../js/visualizer.js";
+import { spectrum, draw, vinylPose } from "../js/visualizer.js";
 import { frameTiming } from "../js/export.js";
 import { readFileSync, existsSync } from "node:fs";
 const buffer = (data) => ({ sampleRate: 48000, getChannelData: () => data });
@@ -128,4 +128,15 @@ test('song title and credits are painted inside landscape and portrait frames in
     assert.deepEqual(text.slice(-3).map(line=>line[0]), ['測試歌曲','作詞：甲','作曲：乙']);
     for (const [,x,y] of text.slice(-3)) assert.ok(x > 0 && x < width && y > 0 && y < height);
   }
+});
+
+test("vinyl slides out before rotating clockwise at 33⅓ rpm", () => {
+  assert.deepEqual(vinylPose(0), {slide: 0, angle: 0});
+  assert.equal(vinylPose(1).slide, .5);
+  assert.equal(vinylPose(1).angle, 0);
+  assert.equal(vinylPose(2).slide, 1);
+  assert.equal(vinylPose(2).angle, 0);
+  assert.ok(vinylPose(4).angle > vinylPose(3).angle);
+  assert.ok(Math.abs(vinylPose(3.8).angle - Math.PI * 2) < 1e-10);
+  assert.deepEqual(vinylPose(5), vinylPose(5));
 });

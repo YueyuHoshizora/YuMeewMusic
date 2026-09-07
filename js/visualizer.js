@@ -113,6 +113,8 @@ export function draw(canvas, t, b, img, s) {
     c.beginPath();
     c.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
     c.stroke();
+  } else if (s.style === 18) {
+    drawVinyl(c, w, h, t, values, gain, img, s.color);
   } else if (s.style >= 6) {
     drawExtra(c, w, h, t, values, gain, s.style);
   } else if (s.style === 3) {
@@ -358,4 +360,89 @@ function drawExtra(c, w, h, t, values, gain, style) {
     }
   }
   c.globalAlpha = 1;
+}
+
+// Derive extraction and rotation from media time for pause, seek and export parity.
+export function vinylPose(time) {
+  const progress = Math.max(0, Math.min(1, time / 2));
+  return {
+    slide: progress * progress * (3 - 2 * progress),
+    angle: Math.max(0, time - 2) * Math.PI * 2 * (33 + 1 / 3) / 60,
+  };
+}
+
+function drawVinyl(c, w, h, time, values, gain, image, color) {
+  const { slide, angle } = vinylPose(time);
+  const cy = h * .47, size = h * .42, radius = h * .20;
+  const sleeveX = w / 2 - h * .46, sleeveY = cy - size / 2;
+  const discX = sleeveX + size / 2 + h * .48 * slide;
+  const energy = values.reduce((sum, value) => sum + value, 0) / values.length;
+  c.save();
+  c.shadowColor = "#000000";
+  c.shadowBlur = h * .025;
+  c.fillStyle = "#08090b";
+  c.beginPath();
+  c.arc(discX, cy, radius, 0, Math.PI * 2);
+  c.fill();
+  c.shadowBlur = 0;
+  c.save();
+  c.translate(discX, cy);
+  c.rotate(angle);
+  // Fine grooves and asymmetric highlights make clockwise rotation visible.
+  for (let groove = 0; groove < 30; groove++) {
+    c.strokeStyle = groove % 3 ? "#25272b" : "#41434a";
+    c.lineWidth = h * .0008;
+    c.beginPath();
+    c.arc(0, 0, radius * (.36 + groove * .021), 0, Math.PI * 2);
+    c.stroke();
+  }
+  c.lineWidth = radius * .46;
+  c.strokeStyle = "#ffffff12";
+  for (const start of [.2, 3.5]) {
+    c.beginPath();
+    c.arc(0, 0, radius * .7, start, start + .4);
+    c.stroke();
+  }
+  c.fillStyle = color;
+  c.beginPath();
+  c.arc(0, 0, radius * .32, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "#15171c";
+  c.fillRect(-radius * .18, -radius * .17, radius * .36, radius * .045);
+  c.fillRect(-radius * .12, radius * .13, radius * .24, radius * .025);
+  c.beginPath();
+  c.arc(0, 0, radius * .04, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+  // Sleeve is painted last so the record emerges from its right edge.
+  c.shadowColor = "#000000";
+  c.shadowBlur = h * .018;
+  c.fillStyle = "#20242b";
+  c.fillRect(sleeveX, sleeveY, size, size);
+  c.shadowBlur = 0;
+  if (image) {
+    const crop = Math.min(image.width, image.height);
+    c.drawImage(image, (image.width - crop) / 2, (image.height - crop) / 2, crop, crop, sleeveX, sleeveY, size, size);
+  } else {
+    c.fillStyle = color;
+    c.globalAlpha = .18;
+    c.fillRect(sleeveX, sleeveY, size, size);
+    c.globalAlpha = 1;
+    c.strokeStyle = color;
+    c.lineWidth = h * .002;
+    for (let ring = 1; ring <= 4; ring++) {
+      c.beginPath();
+      c.arc(sleeveX + size / 2, cy, size * ring * .085, 0, Math.PI * 2);
+      c.stroke();
+    }
+  }
+  c.fillStyle = "#ffffff18";
+  c.fillRect(sleeveX, sleeveY, size * .025, size);
+  c.fillStyle = "#00000055";
+  c.fillRect(sleeveX + size * .975, sleeveY, size * .025, size);
+  c.strokeStyle = color;
+  c.globalAlpha = .3 + Math.min(.7, energy * gain);
+  c.lineWidth = h * (.001 + energy * gain * .003);
+  c.strokeRect(sleeveX, sleeveY, size, size);
+  c.restore();
 }

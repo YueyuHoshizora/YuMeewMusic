@@ -74,11 +74,11 @@
             <details id="trim-panel" class="song-details song-settings" open>
               <summary>✂ 音樂裁剪</summary>
               <p id="trim-empty" class="position-help">請先在上方選擇音樂，即可設定裁剪範圍。</p>
-              <label class="field-label" for="trim-start">開始時間（秒）</label>
-              <input id="trim-start" class="text-input" type="number" min="0" step="0.01" value="0">
+              <label class="field-label" for="trim-start">開始時間（分：秒）</label>
+              <input id="trim-start" class="text-input" type="text" placeholder="00:00.00" value="00:00.00">
               <input id="trim-start-range" aria-label="裁剪開始時間" type="range" min="0" step="0.01" value="0">
-              <label class="field-label" for="trim-end">結束時間（秒）</label>
-              <input id="trim-end" class="text-input" type="number" min="0" step="0.01">
+              <label class="field-label" for="trim-end">結束時間（分：秒）</label>
+              <input id="trim-end" class="text-input" type="text" placeholder="01:30.00">
               <input id="trim-end-range" aria-label="裁剪結束時間" type="range" min="0" step="0.01">
               <p id="trim-info" class="position-help" role="status"></p>
               <button id="trim-apply" class="text-button" type="button">套用裁剪</button>

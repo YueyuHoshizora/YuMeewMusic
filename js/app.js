@@ -1,3 +1,4 @@
+import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import { videoDimensions } from "./dimensions.js";
 import { STYLES } from "./styles.js";
 import { applyTheme } from "./themes.js";
@@ -567,15 +568,18 @@ function resetTrimInputs() {
   for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
     const input = $(`trim-${edge}${suffix}`);
     input.max = state.originalBuffer.duration;
-    input.value = edge === "start" ? 0 : state.originalBuffer.duration;
+    const seconds = edge === "start" ? 0 : state.originalBuffer.duration;
+    input.value = suffix ? seconds : formatTrimTime(seconds);
   }
-  $("trim-info").textContent = `完整音樂：${state.originalBuffer.duration.toFixed(2)} 秒`;
+  $("trim-info").textContent = `完整音樂：${formatTrimTime(state.originalBuffer.duration)}`;
 }
 for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
   $(`trim-${edge}${suffix}`).addEventListener("input", () => {
-    $(`trim-${edge}${suffix ? "" : "-range"}`).value = $(`trim-${edge}${suffix}`).value;
-    const length = Number($("trim-end").value) - Number($("trim-start").value);
-    $("trim-info").textContent = length > 0 ? `選取 ${length.toFixed(2)} 秒，按「套用裁剪」生效` : "結束時間必須大於開始時間";
+    const value = $(`trim-${edge}${suffix}`).value;
+    if (suffix) $(`trim-${edge}`).value = formatTrimTime(Number(value));
+    else if (Number.isFinite(parseTrimTime(value))) $(`trim-${edge}-range`).value = parseTrimTime(value);
+    const length = parseTrimTime($("trim-end").value) - parseTrimTime($("trim-start").value);
+    $("trim-info").textContent = length > 0 ? `選取 ${formatTrimTime(length)}，按「套用裁剪」生效` : "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間";
   });
 }
 $("trim-apply").addEventListener("click", async () => {
@@ -585,11 +589,15 @@ $("trim-apply").addEventListener("click", async () => {
   update();
   try {
     const { trimAudio } = await import("./trim.js");
-    const result = trimAudio(state.originalBuffer, Number($("trim-start").value), Number($("trim-end").value));
+    const start = parseTrimTime($("trim-start").value);
+    let end = parseTrimTime($("trim-end").value);
+    // The displayed end is rounded to hundredths; retain the exact full endpoint.
+    if ($("trim-end").value === formatTrimTime(state.originalBuffer.duration)) end = state.originalBuffer.duration;
+    const result = trimAudio(state.originalBuffer, start, end);
     state.buffer = result.buffer;
     state.trimStart = result.start;
     audio.currentTime = state.trimStart;
-    $("trim-info").textContent = `已套用：${state.buffer.duration.toFixed(2)} 秒`;
+    $("trim-info").textContent = `已套用：${formatTrimTime(state.buffer.duration)}`;
     message("裁剪已套用，可播放試聽或匯出。");
   } catch (error) { message(error.message || "裁剪失敗，請重新設定範圍。"); }
   finally { state.loading = false; update(); }

@@ -1,3 +1,4 @@
+import { formatTrimTime, parseTrimTime } from "../js/trim-time.js";
 import { videoDimensions } from "../js/dimensions.js";
 import { STYLES } from "../js/styles.js";
 import test from "node:test";
@@ -69,6 +70,7 @@ test("editor initializes, switches formats and reaches download for every format
     },
     videoDimensions,
     STYLES,
+    formatTrimTime, parseTrimTime,
     DEFAULT_SETTINGS,
     clearSettings: () => true,
     getFormat,

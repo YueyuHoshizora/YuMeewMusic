@@ -9,6 +9,7 @@
 - `js/app.js`：本機檔案讀取、播放、介面事件與狀態
 - `js/visualizer.js`：FFT 音訊分析與六種 Canvas 頻譜
 - `js/export.js`：客戶端 H.264／AAC MP4 編碼
+- `js/settings.js`：驗證與保留本機偏好設定
 - `vendor/`：隨站提供的 Mediabunny 1.55.7 與 MPL-2.0 授權
 - `scripts/`：可選的本機靜態伺服器與檔案複製工具
 - `tests/`：Node.js 內建測試
@@ -36,3 +37,7 @@
 ## 第三方授權
 
 `vendor/mediabunny.min.mjs` 原封不動取自 npm `mediabunny@1.55.7`。原始碼：https://github.com/Vanilagy/mediabunny/tree/v1.55.7 。授權全文見 `vendor/LICENSE.mediabunny`。
+
+## 自動保留設定
+
+頻譜樣式、色彩、動態強度、背景暗度、解析度與影格率會即時儲存到 `localStorage`（`yumeew.settings.v1`），下次開啟同一網站時自動還原。只儲存這六個設定，不包含音樂、圖片、影片、檔名或播放進度。不同網址／瀏覽器不共用設定。瀏覽器若封鎖儲存或資料損毀，網站仍可操作，必要時使用預設值。

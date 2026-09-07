@@ -1,13 +1,12 @@
 import { draw } from "./visualizer.js";
 import { encodeVideo } from "./export.js";
+import { loadSettings, saveSettings } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 const audio = $("audio");
+const restored = loadSettings();
 const state = {
-  style: 0,
-  color: "#c5fa75",
-  strength: 70,
-  darkness: 45,
+  ...restored,
   buffer: null,
   image: null,
   name: "",
@@ -17,6 +16,23 @@ const state = {
   loading: false,
   imageLoading: false,
 };
+$("spectrum-color").value = state.color;
+$("strength").value = state.strength;
+$("darkness").value = state.darkness;
+$("resolution").value = restored.resolution;
+$("fps").value = restored.fps;
+
+function persistSettings() {
+  saveSettings({
+    style: state.style,
+    color: state.color,
+    strength: state.strength,
+    darkness: state.darkness,
+    resolution: $("resolution").value,
+    fps: $("fps").value,
+  });
+}
+
 let exportController;
 const styles = ["環形脈衝", "經典音柱", "鏡像頻譜", "流動波形", "放射光芒", "點陣節奏"];
 const format = (t) =>
@@ -70,6 +86,7 @@ function update() {
     el.querySelector(".check").hidden = state.style !== i;
   });
   $("color-value").textContent = state.color.toUpperCase();
+  persistSettings();
 }
 
 function mini(index) {
@@ -132,6 +149,7 @@ $("spectrum-color").addEventListener("input", () => {
   if (state.busy || state.loading || state.imageLoading) return;
   state.color = $("spectrum-color").value;
   $("color-value").textContent = state.color.toUpperCase();
+  persistSettings();
 });
 
 async function loadAudio(file) {
@@ -236,6 +254,7 @@ for (const id of ["strength", "darkness"])
     update();
   });
 $("resolution").addEventListener("change", update);
+$("fps").addEventListener("change", persistSettings);
 $("cancel").addEventListener("click", () => exportController?.abort());
 $("export").addEventListener("click", async () => {
   if (!state.buffer || state.busy || state.loading || state.imageLoading) return;

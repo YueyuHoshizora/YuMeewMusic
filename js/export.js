@@ -28,7 +28,7 @@ export function frameTiming(index, fps, duration) {
 }
 
 export function scalePcmSamples(source, volumePercent = 100) {
-  const gain = Math.max(1, Math.min(200, Number(volumePercent) || 100)) / 100;
+  const gain = Math.max(10, Math.min(200, Number(volumePercent) || 100)) / 100;
   const output = new Float32Array(source.length);
   for (let i = 0; i < source.length; i++) output[i] = Math.max(-1, Math.min(1, source[i] * gain));
   return output;

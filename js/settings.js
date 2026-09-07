@@ -87,7 +87,7 @@ export function validateSettings(value) {
     if (typeof source[key] === "string" && /^#[0-9a-f]{6}$/i.test(source[key])) result[key] = source[key].toLowerCase();
   }
   if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
-  if (Number.isFinite(source.exportVolume) && source.exportVolume >= 1 && source.exportVolume <= 200)
+  if (Number.isFinite(source.exportVolume) && source.exportVolume >= 10 && source.exportVolume <= 200)
     result.exportVolume = source.exportVolume;
   if (typeof source.subtitleFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.subtitleFont)) result.subtitleFont = source.subtitleFont;
   if (["text", "image"].includes(source.identityType)) result.identityType = source.identityType;

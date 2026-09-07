@@ -476,7 +476,7 @@ $("remove-image").addEventListener("click", () => {
 });
 $("dismiss-message").addEventListener("click", () => message());
 async function applyPreviewVolume(startingPlayback = false) {
-  const gain = Math.max(1, Math.min(200, state.exportVolume)) / 100;
+  const gain = Math.max(10, Math.min(200, state.exportVolume)) / 100;
   if (!previewGain && startingPlayback) {
     const context = new AudioContext();
     if (typeof context.createMediaElementSource === "function" && typeof context.createGain === "function") {

@@ -117,9 +117,13 @@ test("editor initializes, switches formats and reaches download for every format
   );
   assert.equal(elements.get("duration").textContent, "01:05");
   assert.match(elements.get("audio-info").textContent, /01:05/);
+  elements.get("exportVolume").value = "10";
+  elements.get("exportVolume").listeners.input();
+  assert.equal(elements.get("audio").volume, .1);
+  await elements.get("play").listeners.click();
+  assert.equal(vm.runInContext("previewGain.gain.value", context), .1);
   elements.get("exportVolume").value = "200";
   elements.get("exportVolume").listeners.input();
-  await elements.get("play").listeners.click();
   assert.equal(vm.runInContext("previewGain.gain.value", context), 2);
   assert.equal(elements.get("audio").volume, 1);
   elements.get("play").listeners.click();

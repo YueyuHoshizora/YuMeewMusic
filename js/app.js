@@ -1,3 +1,4 @@
+import { moveTrimRange } from "./trim-range.js";
 import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import { videoDimensions } from "./dimensions.js";
 import { STYLES } from "./styles.js";
@@ -117,6 +118,7 @@ function update() {
   $("textFadeAfter-value").textContent = `${state.textFadeAfter} 秒`;
   $("trim-empty").hidden = Boolean(state.originalBuffer);
   const locked = state.busy || state.loading || state.imageLoading;
+  for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
       "#trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
@@ -632,4 +634,45 @@ function updateTrimMarkers() {
   $("trim-selection").style.width = `${(Math.min(end, duration) - start) / duration * 100}%`;
   $("trim-start-label").textContent = `開始 ${formatTrimTime(start)}`;
   $("trim-end-label").textContent = `結束 ${formatTrimTime(end)}`;
+}
+
+function setTrimRange(start, end) {
+  for (const [edge, value] of [["start", start], ["end", end]]) {
+    $(`trim-${edge}`).value = formatTrimTime(value);
+    $(`trim-${edge}-range`).value = value;
+  }
+  updateTrimMarkers();
+  $("trim-info").textContent = `選取 ${formatTrimTime(end - start)}，按「套用裁剪」生效`;
+}
+for (const mode of ["start", "body", "end"]) {
+  const handle = $(`trim-drag-${mode}`);
+  let drag = null;
+  const locked = () => !state.originalBuffer || state.busy || state.loading || state.imageLoading;
+  handle.addEventListener("pointerdown", event => {
+    if (locked() || event.button !== 0) return;
+    const start = parseTrimTime($("trim-start").value);
+    const end = Math.min(state.originalBuffer.duration, parseTrimTime($("trim-end").value));
+    const width = $("trim-track").getBoundingClientRect().width;
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || width <= 0) return;
+    event.preventDefault();
+    drag = {id:event.pointerId, x:event.clientX, start, end, width, duration:state.originalBuffer.duration};
+    handle.setPointerCapture(event.pointerId);
+  });
+  handle.addEventListener("pointermove", event => {
+    if (!drag || drag.id !== event.pointerId || locked()) return;
+    const delta = (event.clientX - drag.x) / drag.width * drag.duration;
+    setTrimRange(...moveTrimRange(drag.start, drag.end, delta, drag.duration, mode));
+  });
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) handle.addEventListener(type, event => {
+    if (!drag || drag.id !== event.pointerId) return;
+    drag = null;
+    if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+  });
+  handle.addEventListener("keydown", event => {
+    if (locked() || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    event.preventDefault();
+    const start = parseTrimTime($("trim-start").value), end = Math.min(state.originalBuffer.duration, parseTrimTime($("trim-end").value));
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+    setTrimRange(...moveTrimRange(start, end, (event.key === "ArrowRight" ? 1 : -1) * (event.shiftKey ? 1 : .1), state.originalBuffer.duration, mode));
+  });
 }

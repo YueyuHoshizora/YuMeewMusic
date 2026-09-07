@@ -729,9 +729,13 @@ header { flex-wrap: nowrap; }
 
 .seek-area { flex: 1; min-width: 0; }
 .trim-markers { margin-top: 2px; }
-.trim-track { height: 5px; background: var(--border); position: relative; margin-inline: 7px; border-radius: 3px; }
-#trim-selection { position: absolute; height: 100%; background: var(--primary); border-inline: 2px solid var(--primary-text); box-sizing: border-box; }
-#trim-selection::before, #trim-selection::after { content: ""; position: absolute; top: -3px; height: 11px; width: 2px; background: var(--primary-text); }
-#trim-selection::before { left: -2px; }
-#trim-selection::after { right: -2px; }
+.trim-track { height: 20px; background: var(--border); position: relative; margin: 8px 10px 0; border-radius: 4px; }
+#trim-selection { position: absolute; height: 100%; background: var(--primary); box-sizing: border-box; }
+.trim-drag-body { position: absolute; inset: 0; width: 100%; border: 0; background: transparent; cursor: grab; touch-action: none; }
+.trim-drag-body:active { cursor: grabbing; }
+.trim-handle { position: absolute; top: -3px; width: 12px; height: 26px; z-index: 1; padding: 0; border: 2px solid var(--primary-text); border-radius: 3px; background: var(--surface); cursor: ew-resize; touch-action: none; }
+.trim-handle.start { left: -10px; }
+.trim-handle.end { right: -10px; }
+.trim-track button:focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.trim-drag-hint { margin: 6px 0 0; font-size: 11px; color: var(--muted); }
 .trim-marker-labels { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }

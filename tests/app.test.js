@@ -1,3 +1,4 @@
+import { moveTrimRange } from "../js/trim-range.js";
 import { formatTrimTime, parseTrimTime } from "../js/trim-time.js";
 import { videoDimensions } from "../js/dimensions.js";
 import { STYLES } from "../js/styles.js";
@@ -70,7 +71,7 @@ test("editor initializes, switches formats and reaches download for every format
     },
     videoDimensions,
     STYLES,
-    formatTrimTime, parseTrimTime,
+    moveTrimRange, formatTrimTime, parseTrimTime,
     DEFAULT_SETTINGS,
     clearSettings: () => true,
     getFormat,

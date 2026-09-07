@@ -20,12 +20,16 @@ const state = {
   loading: false,
   imageLoading: false,
 };
+function syncSongDetails() {
+  for (const id of ["songTitle", "lyricist", "composer"]) {
+    state[id] = $(id).value.slice(0, 120);
+  }
+}
 for (const id of ["songTitle", "lyricist", "composer"]) {
   $(id).value = state[id];
-  $(id).addEventListener("input", () => {
-    state[id] = $(id).value.slice(0, 120);
-    persistSettings();
-  });
+  const sync = () => { syncSongDetails(); persistSettings(); };
+  $(id).addEventListener("input", sync);
+  $(id).addEventListener("change", sync);
 }
 $("spectrum-color").value = state.color;
 $("strength").value = state.strength;
@@ -379,6 +383,8 @@ $("format").addEventListener("change", update);
 $("cancel").addEventListener("click", () => exportController?.abort());
 $("export").addEventListener("click", async () => {
   if (!state.buffer || state.busy || state.loading || state.imageLoading) return;
+  syncSongDetails();
+  persistSettings();
   state.busy = true;
   exportController = new AbortController();
   audio.pause();
@@ -390,6 +396,7 @@ $("export").addEventListener("click", async () => {
     const resolution = $("resolution").value,
       fps = $("fps").value;
     const format = $("format").value;
+    if (document.fonts?.ready) await document.fonts.ready;
     const blob = await encodeMedia({
       format,
       buffer: state.buffer,

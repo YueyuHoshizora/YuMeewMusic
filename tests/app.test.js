@@ -79,6 +79,9 @@ test("editor initializes, switches formats and reaches download for every format
     draw() {},
     encodeMedia: async (options) => {
       encoded.push(options.format);
+      assert.equal(options.settings.songTitle, "測試歌曲");
+      assert.equal(options.settings.lyricist, "測試作詞");
+      assert.equal(options.settings.composer, "測試作曲");
       return new Blob(["test"]);
     },
   });
@@ -94,6 +97,9 @@ test("editor initializes, switches formats and reaches download for every format
   );
   assert.equal(elements.get("duration").textContent, "01:05");
   assert.match(elements.get("audio-info").textContent, /01:05/);
+  elements.get("songTitle").value = "測試歌曲";
+  elements.get("lyricist").value = "測試作詞";
+  elements.get("composer").value = "測試作曲";
   for (const [format, type] of Object.entries(FORMATS)) {
     elements.get("format").value = format;
     elements.get("format").listeners.change();

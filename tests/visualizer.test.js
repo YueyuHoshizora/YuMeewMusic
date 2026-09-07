@@ -116,3 +116,16 @@ test('position transforms only animation after background and restores every fra
     assert.equal(calls.at(-1)[0], 'restore');
   }
 });
+
+test('song title and credits are painted inside landscape and portrait frames in every style', () => {
+  for (const [width, height] of [[1920,1080],[1080,1920]]) for (let style = 0; style < STYLES.length; style++) {
+    const text = [];
+    const c = new Proxy({}, {
+      get: (_, key) => key === 'createRadialGradient' ? () => ({addColorStop(){}}) : key === 'fillText' ? (...args) => text.push(args) : () => {},
+      set: () => true,
+    });
+    draw({width,height,getContext:()=>c}, 0, null, null, {style,color:'#c5fa75',strength:70,darkness:45,positionX:50,positionY:50,songTitle:'測試歌曲',lyricist:'甲',composer:'乙'});
+    assert.deepEqual(text.slice(-3).map(line=>line[0]), ['測試歌曲','作詞：甲','作曲：乙']);
+    for (const [,x,y] of text.slice(-3)) assert.ok(x > 0 && x < width && y > 0 && y < height);
+  }
+});

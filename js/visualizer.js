@@ -164,6 +164,9 @@ function drawSongDetails(c, width, height, settings) {
   const unit = Math.min(width, height);
   const lineHeight = unit * .04;
   c.save();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalAlpha = 1;
+  c.globalCompositeOperation = "source-over";
   c.textAlign = "center";
   c.textBaseline = "middle";
   c.shadowColor = "#000000";

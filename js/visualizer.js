@@ -485,26 +485,27 @@ function drawSubtitles(c, width, height, settings, time) {
   c.font = `600 ${size}px sans-serif`;
   c.textAlign = "center";
   c.textBaseline = "middle";
+  const vertical = settings.subtitleDirection === "vertical";
+  const lineHeight = size * 1.4;
   const lines = [];
+  const rowLimit = Math.max(1, Math.floor((height * .8 - padding * 2) / lineHeight));
   for (const paragraph of text.split("\n")) {
     let line = "";
     for (const character of paragraph) {
-      if (line && c.measureText(line + character).width > maxWidth) { lines.push(line); line = ""; }
+      if (line && (vertical ? Array.from(line).length >= rowLimit : c.measureText(line + character).width > maxWidth)) { lines.push(line); line = ""; }
       line += character;
     }
     lines.push(line);
   }
-  const lineHeight = size * 1.4;
-  const visible = lines.slice(0, Math.max(1, Math.floor((height - padding * 2) / lineHeight)));
-  const boxWidth = Math.min(width, Math.max(...visible.map(line=>c.measureText(line).width)) + padding * 2);
-  const boxHeight = visible.length * lineHeight + padding * 2;
+  const visible = lines.slice(0, Math.max(1, Math.floor(((vertical ? width * .9 : height) - padding * 2) / lineHeight)));
+  const boxWidth = vertical ? visible.length * lineHeight + padding * 2 : Math.min(width, Math.max(...visible.map(line=>c.measureText(line).width)) + padding * 2);
+  const boxHeight = (vertical ? Math.max(...visible.map(line=>Array.from(line).length)) : visible.length) * lineHeight + padding * 2;
   let x = (width - boxWidth) / 2, y = (height - boxHeight) / 2;
   if (position === "left") x = width * margin;
   if (position === "right") x = width * (1 - margin) - boxWidth;
   if (position === "top") y = height * margin;
   if (position === "bottom") y = height * (1 - margin) - boxHeight;
-  x += width * Math.max(-50, Math.min(50, settings.subtitleX ?? 0)) / 100;
-  y += height * Math.max(-50, Math.min(50, settings.subtitleY ?? 0)) / 100;
+
   x = Math.max(0, Math.min(width - boxWidth, x));
   y = Math.max(0, Math.min(height - boxHeight, y));
   c.fillStyle = "#000000b3";
@@ -514,6 +515,11 @@ function drawSubtitles(c, width, height, settings, time) {
   c.shadowBlur = size * .15;
   c.textAlign = position === "left" ? "left" : position === "right" ? "right" : "center";
   const textX = position === "left" ? x + padding : position === "right" ? x + boxWidth - padding : x + boxWidth / 2;
-  visible.forEach((line,i)=>c.fillText(line,textX,y+padding+(i+.5)*lineHeight,maxWidth));
+  if (vertical) {
+    c.textAlign = "center";
+    visible.forEach((line,column)=>Array.from(line).forEach((character,row)=> {
+      c.fillText(character, x + boxWidth - padding - (column + .5) * lineHeight, y + padding + (row + .5) * lineHeight, lineHeight);
+    }));
+  } else visible.forEach((line,i)=>c.fillText(line,textX,y+padding+(i+.5)*lineHeight,maxWidth));
   c.restore();
 }

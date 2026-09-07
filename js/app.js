@@ -81,8 +81,7 @@ function persistSettings() {
     subtitlePosition: state.subtitlePosition,
     subtitleMargin: state.subtitleMargin,
     subtitleSize: state.subtitleSize,
-    subtitleX: state.subtitleX,
-    subtitleY: state.subtitleY,
+    subtitleDirection: state.subtitleDirection,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -127,10 +126,7 @@ function update() {
   $("subtitlePosition").value = state.subtitlePosition;
   $("subtitleMargin").value = $("subtitleMargin-range").value = state.subtitleMargin;
   $("subtitleSize").value = state.subtitleSize;
-  for (const key of ["subtitleX", "subtitleY"]) {
-    $(key).value = state[key];
-    $(`${key}-value`).textContent = `${state[key] > 0 ? "+" : ""}${state[key]}%`;
-  }
+  $("subtitleDirection").value = state.subtitleDirection;
   $("subtitleMargin-value").textContent = `${state.subtitleMargin}%`;
   $("subtitleSize-value").textContent = `${state.subtitleSize}%`;
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
@@ -140,7 +136,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleX, #subtitleY, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -755,7 +751,7 @@ $("subtitlePosition").addEventListener("change", () => {
   state.subtitlePosition = $("subtitlePosition").value;
   update();
 });
-for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize", "subtitleX", "subtitleY"]) {
+for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize"]) {
   $(id).addEventListener("input", () => {
     if (state.busy || state.loading || state.imageLoading || $(id).value === "") return;
     const key = id === "subtitleMargin-range" ? "subtitleMargin" : id;
@@ -767,3 +763,9 @@ for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize", "sub
   });
   $(id).addEventListener("change", update);
 }
+
+$("subtitleDirection").addEventListener("change", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.subtitleDirection = $("subtitleDirection").value;
+  update();
+});

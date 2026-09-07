@@ -206,3 +206,14 @@ test('subtitle placement and scale apply independently across all five anchors',
     assert.ok(fonts[0].includes(String(720*.035*scale/100)));
   }
 });
+
+test('vertical subtitles flow downward with subsequent columns to the left',()=>{
+ const text=[];
+ const context=new Proxy({}, {get:(_,key)=>key==='measureText'?()=>({width:100}):key==='fillText'?(...args)=>text.push(args):()=>{},set:()=>true});
+ draw({width:1280,height:720,getContext:()=>context},1,null,{width:100,height:100},{style:19,darkness:45,subtitles:{cues:[{start:0,end:3,text:'甲乙\n丙丁'}]},originalBuffer:{duration:5},subtitleDirection:'vertical'});
+ assert.deepEqual(text.map(line=>line[0]),['甲','乙','丙','丁']);
+ assert.equal(text[0][1],text[1][1]);
+ assert.ok(text[1][2]>text[0][2]);
+ assert.ok(text[2][1]<text[0][1]);
+ assert.equal(text[2][2],text[0][2]);
+});

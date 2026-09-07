@@ -195,14 +195,17 @@ test('subtitle placement and scale apply independently across all five anchors',
       style:19, darkness:45, subtitles:{cues:[{start:0,end:3,text:'字幕'}]},originalBuffer:{duration:5},
       subtitlePosition:position,subtitleMargin:10,subtitleSize:scale,
     });
-    const box=calls.filter(([key])=>key==='fillRect').at(-1);
-    const [,x,y,w,h]=box;
-    assert.ok(x>=0 && y>=0 && x+w<=1280 && y+h<=720);
-    if(position==='left') assert.equal(x,128);
-    if(position==='right') assert.ok(Math.abs(x+w-1152)<1e-8);
-    if(position==='top') assert.equal(y,72);
-    if(position==='bottom') assert.ok(Math.abs(y+h-648)<1e-8);
-    if(position==='center') { assert.equal(x+w/2,640); assert.equal(y+h/2,360); }
+    const [,text,x,y]=calls.find(([key])=>key==='fillText');
+    const size=720*.035*scale/100;
+    const padding=size*.3;
+    assert.ok(x>=0 && y>=0 && x<=1280 && y<=720);
+    if(position==='left') assert.equal(x,128+padding);
+    if(position==='right') assert.ok(Math.abs(x-(1152-padding))<1e-8);
+    if(position==='top') assert.equal(y,72+padding+size*.7);
+    if(position==='bottom') assert.ok(Math.abs(y-(648-padding-size*.7))<1e-8);
+    if(position==='center') { assert.equal(x,640); assert.equal(y,360); }
+    assert.equal(calls.filter(([key])=>key==='fillRect').length,2);
+    assert.deepEqual(calls.find(([key])=>key==='strokeText').slice(1),calls.find(([key])=>key==='fillText').slice(1));
     assert.ok(fonts[0].includes(String(720*.035*scale/100)));
   }
 });

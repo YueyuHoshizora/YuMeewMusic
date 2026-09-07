@@ -508,18 +508,19 @@ function drawSubtitles(c, width, height, settings, time) {
 
   x = Math.max(0, Math.min(width - boxWidth, x));
   y = Math.max(0, Math.min(height - boxHeight, y));
-  c.fillStyle = "#000000b3";
-  c.fillRect(x, y, boxWidth, boxHeight);
   c.fillStyle = "#ffffff";
-  c.shadowColor = "#000000";
-  c.shadowBlur = size * .15;
+  c.strokeStyle = "#000000";
+  c.lineWidth = size * .12;
+  c.lineJoin = "round";
+  c.shadowBlur = 0;
+  const paintText = (...args) => { c.strokeText(...args); c.fillText(...args); };
   c.textAlign = position === "left" ? "left" : position === "right" ? "right" : "center";
   const textX = position === "left" ? x + padding : position === "right" ? x + boxWidth - padding : x + boxWidth / 2;
   if (vertical) {
     c.textAlign = "center";
     visible.forEach((line,column)=>Array.from(line).forEach((character,row)=> {
-      c.fillText(character, x + boxWidth - padding - (column + .5) * lineHeight, y + padding + (row + .5) * lineHeight, lineHeight);
+      paintText(character, x + boxWidth - padding - (column + .5) * lineHeight, y + padding + (row + .5) * lineHeight, lineHeight);
     }));
-  } else visible.forEach((line,i)=>c.fillText(line,textX,y+padding+(i+.5)*lineHeight,maxWidth));
+  } else visible.forEach((line,i)=>paintText(line,textX,y+padding+(i+.5)*lineHeight,maxWidth));
   c.restore();
 }

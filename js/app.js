@@ -162,7 +162,8 @@ function update() {
     : "先選擇音樂，就能匯出。";
   $("progress").hidden = $("cancel").hidden = !state.busy;
   if (!state.busy) $("export").textContent = `↓ 匯出 ${format.toUpperCase()} ↗`;
-  document.querySelectorAll(".style-card").forEach((el, i) => {
+  document.querySelectorAll(".style-card").forEach((el) => {
+    const i = Number(el.dataset.style);
     el.classList.toggle("selected", state.style === i);
     el.setAttribute("aria-pressed", String(state.style === i));
     el.querySelector(".check").hidden = state.style !== i;
@@ -287,10 +288,13 @@ function mini(index) {
   }
   return svg;
 }
-styles.forEach((name, index) => {
+styles.map((name, index) => ({ name, index }))
+  .sort((a, b) => Number(b.name === "無") - Number(a.name === "無"))
+  .forEach(({ name, index }) => {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "style-card";
+  button.dataset.style = String(index);
   const label = document.createElement("span");
   label.textContent = name;
   const check = document.createElement("span");

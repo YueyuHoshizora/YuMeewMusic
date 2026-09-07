@@ -113,6 +113,8 @@ export function draw(canvas, t, b, img, s) {
     c.fillStyle = "#a3afa6";
     c.font = `${h * 0.015}px sans-serif`;
     c.fillText("S O U N D  I N  M O T I O N", cx, cy + h * 0.04);
+  } else if (s.style >= 6) {
+    drawExtra(c, w, h, t, values, gain, s.style);
   } else if (s.style === 3) {
     c.beginPath();
     for (let i = 0; i < 256; i++) {
@@ -141,4 +143,118 @@ export function draw(canvas, t, b, img, s) {
     }
   }
   c.shadowBlur = 0;
+}
+
+// Every frame depends only on audio and timestamp, so seeking and export stay consistent.
+function drawExtra(c, w, h, t, values, gain, style) {
+  const cx = w / 2,
+    cy = h * 0.47;
+  const energy = values.reduce((sum, value) => sum + value, 0) / values.length;
+  if (style === 6) {
+    for (let ring = 0; ring < 7; ring++) {
+      c.globalAlpha = 0.25 + (6 - ring) * 0.1;
+      c.beginPath();
+      for (let i = 0; i <= 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        const radius = h * (0.055 + ring * 0.035 + values[(i + ring * 7) % 64] * gain * 0.025);
+        const x = cx + Math.cos(a) * radius,
+          y = cy + Math.sin(a) * radius;
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  } else if (style === 7) {
+    for (let arm = 0; arm < 3; arm++) {
+      c.beginPath();
+      for (let i = 0; i < 192; i++) {
+        const u = i / 191,
+          a = u * Math.PI * 5 + (arm * Math.PI * 2) / 3 + t * 0.35;
+        const radius = h * (0.025 + u * 0.27 + values[i % 64] * gain * 0.035);
+        const x = cx + Math.cos(a) * radius,
+          y = cy + Math.sin(a) * radius;
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  } else if (style === 8) {
+    for (let layer = 0; layer < 5; layer++) {
+      c.globalAlpha = 0.3 + layer * 0.14;
+      c.beginPath();
+      for (let i = 0; i < 128; i++) {
+        const u = i / 127,
+          envelope = Math.sin(u * Math.PI);
+        const v = values[Math.floor(u * 63)];
+        const x = w * (0.1 + u * 0.8);
+        const y =
+          cy +
+          (layer - 2) * h * 0.05 +
+          Math.sin(u * Math.PI * 6 + t * 1.6 + layer * 0.7) *
+            envelope *
+            h *
+            (0.015 + v * gain * 0.13);
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  } else if (style === 9) {
+    c.shadowBlur = h * 0.006;
+    for (let i = 0; i < 120; i++) {
+      const phase = (i * 0.61803398875 + t * 0.035) % 1;
+      const a = i * 2.399963 + t * 0.08;
+      const radius = h * (0.05 + phase * 0.34) * (1 + energy * gain * 0.18);
+      const v = values[i % 64];
+      c.globalAlpha = (0.2 + v * 0.8) * Math.sin(phase * Math.PI);
+      c.beginPath();
+      c.arc(
+        cx + Math.cos(a) * radius * 1.45,
+        cy + Math.sin(a) * radius,
+        h * (0.0018 + v * gain * 0.005),
+        0,
+        Math.PI * 2,
+      );
+      c.fill();
+    }
+  } else if (style === 10) {
+    for (let strand = 0; strand < 2; strand++) {
+      c.beginPath();
+      for (let i = 0; i < 128; i++) {
+        const u = i / 127,
+          v = values[i % 64];
+        const x = w * (0.13 + u * 0.74);
+        const y =
+          cy +
+          Math.sin(u * Math.PI * 5 + t * 1.8 + strand * Math.PI) * h * (0.06 + v * gain * 0.12);
+        i ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+    c.globalAlpha = 0.35;
+    for (let i = 0; i < 40; i++) {
+      const u = i / 39,
+        x = w * (0.13 + u * 0.74);
+      const offset =
+        Math.sin(u * Math.PI * 5 + t * 1.8) *
+        h *
+        (0.06 + values[Math.floor(u * 127) % 64] * gain * 0.12);
+      c.beginPath();
+      c.moveTo(x, cy - offset);
+      c.lineTo(x, cy + offset);
+      c.stroke();
+    }
+  } else if (style === 11) {
+    for (let ring = 0; ring < 10; ring++) {
+      const phase = (ring / 10 + t * 0.12) % 1;
+      const radius = h * (0.025 + phase * 0.35 + values[ring * 6] * gain * 0.025);
+      c.globalAlpha = Math.sin(phase * Math.PI) * 0.8;
+      c.beginPath();
+      for (let corner = 0; corner <= 6; corner++) {
+        const a = (corner * Math.PI) / 3 + t * 0.14 + ring * 0.025;
+        const x = cx + Math.cos(a) * radius * 1.3,
+          y = cy + Math.sin(a) * radius;
+        corner ? c.lineTo(x, y) : c.moveTo(x, y);
+      }
+      c.stroke();
+    }
+  }
+  c.globalAlpha = 1;
 }

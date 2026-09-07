@@ -1,3 +1,4 @@
+import { STYLES } from "./styles.js";
 import { applyTheme } from "./themes.js";
 import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
@@ -51,7 +52,7 @@ function persistSettings() {
 }
 
 let exportController;
-const styles = ["環形脈衝", "經典音柱", "鏡像頻譜", "流動波形", "放射光芒", "點陣節奏"];
+const styles = STYLES;
 const formatTime = (t) =>
   `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
@@ -115,6 +116,47 @@ function mini(index) {
     svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 150 65");
   svg.setAttribute("aria-hidden", "true");
+  if (index >= 6) {
+    const count = index === 9 ? 30 : index === 10 ? 2 : index === 7 ? 3 : 5;
+    for (let layer = 0; layer < count; layer++) {
+      const shape = document.createElementNS(ns, index === 9 ? "circle" : "path");
+      if (index === 9) {
+        shape.setAttribute("cx", String(15 + ((layer * 43) % 120)));
+        shape.setAttribute("cy", String(10 + ((layer * 17) % 43)));
+        shape.setAttribute("r", String(1 + (layer % 3) * 0.6));
+        shape.setAttribute("fill", "currentColor");
+      } else {
+        const points = [];
+        const steps = index === 11 ? 6 : 80;
+        for (let i = 0; i <= steps; i++) {
+          const u = i / steps;
+          let x, y;
+          if (index === 8 || index === 10) {
+            x = 12 + u * 126;
+            y =
+              32 +
+              (index === 8 ? (layer - 2) * 6 : 0) +
+              Math.sin(u * Math.PI * 5 + layer * (index === 10 ? Math.PI : 0.5)) *
+                (index === 10 ? 17 : 7);
+          } else {
+            const a =
+              u * Math.PI * (index === 7 ? 5 : 2) +
+              (index === 7 ? (layer * Math.PI * 2) / 3 : layer * 0.06);
+            const r = index === 7 ? 3 + u * 24 : 6 + layer * 5;
+            x = 75 + Math.cos(a) * r * (index === 11 ? 1.4 : 1);
+            y = 32 + Math.sin(a) * r;
+          }
+          points.push(`${i ? "L" : "M"}${x},${y}`);
+        }
+        shape.setAttribute("d", points.join(" "));
+        shape.setAttribute("stroke", "currentColor");
+        shape.setAttribute("stroke-width", "1.4");
+        shape.setAttribute("fill", "none");
+      }
+      svg.append(shape);
+    }
+    return svg;
+  }
   for (let i = 0; i < 32; i++) {
     const a = (i / 32) * Math.PI * 2,
       h = 4 + Math.abs(Math.sin(i * 1.8)) * 18;
@@ -350,7 +392,7 @@ if (document.modelContext?.registerTool) {
           inputSchema: {
             type: "object",
             properties: {
-              style: { type: "integer", minimum: 0, maximum: 5 },
+              style: { type: "integer", minimum: 0, maximum: STYLES.length - 1 },
               resolution: { type: "string", enum: ["720", "1080"] },
               fps: { type: "string", enum: ["30", "60"] },
             },
@@ -365,7 +407,7 @@ if (document.modelContext?.registerTool) {
               !input ||
               !Number.isInteger(input.style) ||
               input.style < 0 ||
-              input.style > 5 ||
+              input.style >= STYLES.length ||
               !["720", "1080"].includes(input.resolution) ||
               !["30", "60"].includes(input.fps)
             )

@@ -76,3 +76,12 @@ test("unavailable storage and quota errors do not break the editor", () => {
     false,
   );
 });
+
+test("new animation choices persist while old selections remain compatible", () => {
+  const storage = memoryStorage();
+  for (let style = 0; style < 12; style++) {
+    saveSettings({ ...DEFAULT_SETTINGS, style }, () => storage);
+    assert.equal(loadSettings(() => storage).style, style);
+  }
+  assert.equal(validateSettings({ style: 12 }).style, 0);
+});

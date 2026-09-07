@@ -1,3 +1,4 @@
+import { STYLES } from "../js/styles.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spectrum, draw } from "../js/visualizer.js";
@@ -15,9 +16,9 @@ test("FFT responds to audio and safely handles silence and end padding", () => {
   assert.ok(Math.max(...values) > 0.5);
   assert.ok(values.every((x) => Number.isFinite(x) && x >= 0 && x <= 1));
 });
-test("all six renderers work at both requested resolutions", () => {
+test("all twelve renderers work at both requested resolutions", () => {
   for (const height of [720, 1080])
-    for (let style = 0; style < 6; style++) {
+    for (let style = 0; style < STYLES.length; style++) {
       let calls = 0;
       const context = new Proxy(
         {},
@@ -61,4 +62,38 @@ test("every statically referenced UI element exists and public assets are local"
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#]+)"/g))
     assert.ok(existsSync(path), path);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
+});
+
+test("new animations respond to audio and reproduce the same frame when seeking", () => {
+  const silent = buffer(new Float32Array(96000));
+  const tone = buffer(
+    Float32Array.from({ length: 96000 }, (_, i) => Math.sin((2 * Math.PI * 1000 * i) / 48000)),
+  );
+  function render(style, audio) {
+    const commands = [];
+    const context = new Proxy(
+      {},
+      {
+        get: (_, key) =>
+          key === "createRadialGradient"
+            ? () => ({ addColorStop() {} })
+            : (...args) => commands.push([key, ...args]),
+        set: (_, key, value) => {
+          commands.push([key, value]);
+          return true;
+        },
+      },
+    );
+    draw({ width: 1280, height: 720, getContext: () => context }, 0.5, audio, null, {
+      style,
+      color: "#c5fa75",
+      strength: 70,
+      darkness: 45,
+    });
+    return commands;
+  }
+  for (let style = 6; style < STYLES.length; style++) {
+    assert.deepEqual(render(style, tone), render(style, tone));
+    assert.notDeepEqual(render(style, tone), render(style, silent));
+  }
 });

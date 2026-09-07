@@ -1,3 +1,4 @@
+import { STYLES } from "./styles.js";
 import { THEMES } from "./themes.js";
 import { FORMATS } from "./formats.js";
 const KEY = "yumeew.settings.v1";
@@ -17,7 +18,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
 export function validateSettings(value) {
   const source = value && typeof value === "object" ? value : {};
   const result = { ...DEFAULT_SETTINGS };
-  if (Number.isInteger(source.style) && source.style >= 0 && source.style <= 5)
+  if (Number.isInteger(source.style) && source.style >= 0 && source.style < STYLES.length)
     result.style = source.style;
   if (typeof source.color === "string" && /^#[0-9a-f]{6}$/i.test(source.color))
     result.color = source.color.toLowerCase();

@@ -1,0 +1,15 @@
+// Stable indices preserve previously saved selections.
+export const STYLES = Object.freeze([
+  "環形脈衝",
+  "經典音柱",
+  "鏡像頻譜",
+  "流動波形",
+  "放射光芒",
+  "點陣節奏",
+  "同心漣漪",
+  "星旋軌跡",
+  "層疊聲浪",
+  "律動星塵",
+  "雙螺旋",
+  "節拍隧道",
+]);

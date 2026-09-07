@@ -63,6 +63,10 @@ test("editor initializes, switches formats and reaches download for every format
     unpackStoredMedia: record => record,
     navigator: { storage: { persist: async () => true } },
     document: {
+      fullscreenElement: null,
+      listeners: {},
+      addEventListener(type, handler) { this.listeners[type] = handler; },
+      async exitFullscreen() { this.fullscreenElement = null; this.listeners.fullscreenchange?.(); },
       getElementById: (id) => elements.get(id),
       querySelectorAll: () => [],
       querySelector: () => element(),
@@ -105,12 +109,22 @@ test("editor initializes, switches formats and reaches download for every format
       return new Blob(["test"]);
     },
   });
+  elements.get("preview-frame").requestFullscreen = async () => {
+    context.document.fullscreenElement = elements.get("preview-frame");
+    context.document.listeners.fullscreenchange?.();
+  };
   // Execute the full UI module with only browser and encoding boundaries substituted.
   const source = readFileSync("js/app.js", "utf8").replace(/^import .*;\n/gm, "");
   vm.runInContext(source, context);
   assert.equal(elements.get("duration").textContent, "00:00");
   assert.equal(elements.get("export").textContent, "↓ 匯出 MP4 ↗");
   assert.equal(elements.get("export").disabled, true);
+  await elements.get("preview-frame").listeners.click();
+  assert.equal(context.document.fullscreenElement, elements.get("preview-frame"));
+  assert.equal(elements.get("fullscreen-hint").textContent, "↙ 點擊恢復");
+  await elements.get("preview-frame").listeners.click();
+  assert.equal(context.document.fullscreenElement, null);
+  assert.equal(elements.get("fullscreen-hint").textContent, "⛶ 點擊全螢幕");
   await vm.runInContext(
     'loadAudio({ name: "song.wav", size: 100, arrayBuffer: async () => new ArrayBuffer(0) })',
     context,

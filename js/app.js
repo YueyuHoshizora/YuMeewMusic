@@ -130,6 +130,34 @@ function message(text = "") {
   $("message-text").textContent = text;
   $("message").hidden = !text;
 }
+const previewFrame = $("preview-frame");
+const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+function syncPreviewFullscreen() {
+  const active = fullscreenElement() === previewFrame;
+  previewFrame.classList.toggle("is-fullscreen", active);
+  previewFrame.setAttribute("aria-label", active ? "恢復即時預覽原尺寸" : "放大即時預覽至全螢幕");
+  $("fullscreen-hint").textContent = active ? "↙ 點擊恢復" : "⛶ 點擊全螢幕";
+}
+async function togglePreviewFullscreen() {
+  try {
+    if (fullscreenElement()) {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+    } else if (previewFrame.requestFullscreen) await previewFrame.requestFullscreen();
+    else if (previewFrame.webkitRequestFullscreen) await previewFrame.webkitRequestFullscreen();
+    else message("目前瀏覽器不支援預覽全螢幕。");
+  } catch (error) {
+    message(`無法切換全螢幕：${error.message || "請再試一次。"}`);
+  }
+}
+previewFrame.addEventListener("click", togglePreviewFullscreen);
+previewFrame.addEventListener("keydown", event => {
+  if (!["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  void togglePreviewFullscreen();
+});
+document.addEventListener("fullscreenchange", syncPreviewFullscreen);
+document.addEventListener("webkitfullscreenchange", syncPreviewFullscreen);
 function fileError(kind, text = "") {
   const area = $(`${kind}-drop`);
   const hint = $(`${kind}-error`);

@@ -267,9 +267,10 @@
                 <span id="preview-resolution">1080p</span></span
               >
             </div>
-            <div class="canvas-wrap">
+            <div id="preview-frame" class="canvas-wrap" role="button" tabindex="0" aria-label="放大即時預覽至全螢幕" title="點一下全螢幕，再點一下恢復">
               <canvas id="preview" width="1280" height="720" aria-label="音樂頻譜動畫預覽"></canvas
               >
+              <span id="fullscreen-hint" class="fullscreen-hint" aria-hidden="true">⛶ 點擊全螢幕</span>
             </div>
             <div class="transport">
               <button id="play" class="play" type="button" aria-label="播放" disabled>▶</button

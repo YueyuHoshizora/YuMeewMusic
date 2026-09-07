@@ -586,7 +586,7 @@ for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
     $("trim-info").textContent = length > 0 ? `選取 ${formatTrimTime(length)}，按「套用裁剪」生效` : "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間";
   });
 }
-$("trim-apply").addEventListener("click", async () => {
+async function applyTrim() {
   if (!state.originalBuffer || state.busy || state.loading || state.imageLoading) return;
   state.loading = true;
   audio.pause();
@@ -605,7 +605,9 @@ $("trim-apply").addEventListener("click", async () => {
     message("裁剪已套用，可播放試聽或匯出。");
   } catch (error) { message(error.message || "裁剪失敗，請重新設定範圍。"); }
   finally { state.loading = false; update(); }
-});
+}
+$("trim-apply").addEventListener("click", applyTrim);
+for (const edge of ["start", "end"]) $(`trim-${edge}-range`).addEventListener("change", applyTrim);
 $("trim-reset").addEventListener("click", () => {
   if (!state.originalBuffer || state.busy || state.loading || state.imageLoading) return;
   audio.pause();
@@ -642,7 +644,7 @@ function setTrimRange(start, end) {
     $(`trim-${edge}-range`).value = value;
   }
   updateTrimMarkers();
-  $("trim-info").textContent = `選取 ${formatTrimTime(end - start)}，按「套用裁剪」生效`;
+  $("trim-info").textContent = `選取 ${formatTrimTime(end - start)}，放開後自動套用`;
 }
 for (const mode of ["start", "body", "end"]) {
   const handle = $(`trim-drag-${mode}`);
@@ -665,14 +667,24 @@ for (const mode of ["start", "body", "end"]) {
   });
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) handle.addEventListener(type, event => {
     if (!drag || drag.id !== event.pointerId) return;
+    const completed = type === "pointerup";
     drag = null;
+    if (completed && !locked()) void applyTrim();
     if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+  });
+  let keyboardChanged = false;
+  handle.addEventListener("keyup", event => {
+    if (keyboardChanged && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      keyboardChanged = false;
+      void applyTrim();
+    }
   });
   handle.addEventListener("keydown", event => {
     if (locked() || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
     event.preventDefault();
     const start = parseTrimTime($("trim-start").value), end = Math.min(state.originalBuffer.duration, parseTrimTime($("trim-end").value));
     if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+    keyboardChanged = true;
     setTrimRange(...moveTrimRange(start, end, (event.key === "ArrowRight" ? 1 : -1) * (event.shiftKey ? 1 : .1), state.originalBuffer.duration, mode));
   });
 }

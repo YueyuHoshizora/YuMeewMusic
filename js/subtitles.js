@@ -89,6 +89,10 @@ const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter(unde
 export function subtitleCharacters(text) {
   return segmenter ? Array.from(segmenter.segment(text), part=>part.segment) : Array.from(text);
 }
+export function subtitleIndexAt(data, time) {
+  if (!Array.isArray(data?.cues) || !Number.isFinite(time)) return -1;
+  return data.cues.findIndex(cue => time >= cue.start && time < cue.end);
+}
 export function subtitleAt(data, time, duration, typewriter = false) {
   if (!data || time < 0 || time >= duration) return '';
   return data.cues.filter(cue=>time >= cue.start && time < cue.end) .map(cue=>{

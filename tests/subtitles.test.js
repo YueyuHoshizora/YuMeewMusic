@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {formatSubtitleTime,parseSubtitleTime,parseSubtitles,serializeSubtitles,subtitleAt} from '../js/subtitles.js';
+import {formatSubtitleTime,parseSubtitleTime,parseSubtitles,serializeSubtitles,subtitleAt,subtitleIndexAt} from '../js/subtitles.js';
 test('SRT timing and multiline text survive parsing, with exclusive end time',()=>{
   const data=parseSubtitles('1\r\n00:00:01,500 --> 00:00:03,000\r\n<b>你好</b>\r\n世界','srt');
   assert.equal(subtitleAt(data,1,10),'');
@@ -53,4 +53,13 @@ test('edited subtitles serialize as standard SRT and can be parsed again',()=>{
  assert.deepEqual(parseSubtitles(text,'srt').cues,source.cues.toSorted((a,b)=>a.start-b.start));
  assert.equal(formatSubtitleTime(65.25),'01:05.250');
  assert.equal(parseSubtitleTime('01:05.250'),65.25);
+});
+
+test('current playback time selects its matching subtitle cue',()=>{
+ const data={cues:[{start:1,end:2,text:'一'},{start:3,end:5,text:'二'}]};
+ assert.equal(subtitleIndexAt(data,0),-1);
+ assert.equal(subtitleIndexAt(data,1),0);
+ assert.equal(subtitleIndexAt(data,2),-1);
+ assert.equal(subtitleIndexAt(data,4.999),1);
+ assert.equal(subtitleIndexAt(data,5),-1);
 });

@@ -1,7 +1,7 @@
 import { applyTheme } from './themes.js';
 import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
-import { formatSubtitleTime, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
+import { formatSubtitleTime, parseSubtitleTime, parseSubtitles, serializeSubtitles, subtitleIndexAt } from './subtitles.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
@@ -239,6 +239,14 @@ function downloadSrt() {
 
 function updatePlayhead() {
   const time = audio.currentTime || 0;
+  const activeIndex = subtitleIndexAt({ cues: state.cues }, time);
+  if (activeIndex >= 0 && activeIndex !== state.selected) {
+    state.selected = activeIndex;
+    renderList();
+    renderTimeline();
+    renderForm();
+    requestAnimationFrame(() => document.querySelector(`.cue-list-item[data-index="${activeIndex}"]`)?.scrollIntoView({ block: 'nearest' }));
+  }
   $('playhead').style.left = `${Math.max(0, Math.min(100, time / state.duration * 100))}%`;
   $('editor-current-time').textContent = editorTime(time);
   document.querySelectorAll('.cue-list-item').forEach((item, index) => {

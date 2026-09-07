@@ -1,3 +1,4 @@
+import { THEMES } from "./themes.js";
 import { FORMATS } from "./formats.js";
 const KEY = "yumeew.settings.v1";
 export const DEFAULT_SETTINGS = Object.freeze({
@@ -8,6 +9,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   resolution: "1080",
   fps: "30",
   format: "mp4",
+  mode: "dark",
+  theme: "lime",
 });
 
 // Explicit allowlist: media, file names, object URLs and playback state are never persisted.
@@ -31,6 +34,9 @@ export function validateSettings(value) {
   if (["30", "60"].includes(source.fps)) result.fps = source.fps;
   if (typeof source.format === "string" && Object.hasOwn(FORMATS, source.format))
     result.format = source.format;
+  if (["light", "dark"].includes(source.mode)) result.mode = source.mode;
+  if (typeof source.theme === "string" && Object.hasOwn(THEMES, source.theme))
+    result.theme = source.theme;
   return result;
 }
 

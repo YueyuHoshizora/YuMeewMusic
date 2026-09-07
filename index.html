@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -22,6 +22,21 @@
         >
         <span class="header-note">讓每一段聲音，都有畫面。</span>
         <span class="local"><i></i>檔案不上傳伺服器</span>
+        <div class="appearance" role="group" aria-label="介面外觀">
+          <label for="appearance-mode">模式</label>
+          <select id="appearance-mode" aria-label="日夜模式">
+            <option value="dark">☾ 夜間</option>
+            <option value="light">☀ 日間</option>
+          </select>
+          <label for="appearance-theme">佈景</label>
+          <select id="appearance-theme" aria-label="佈景主題">
+            <option value="lime">青檸</option>
+            <option value="ocean">海藍</option>
+            <option value="violet">紫羅蘭</option>
+            <option value="rose">玫瑰</option>
+            <option value="amber">琥珀</option>
+          </select>
+        </div>
       </header>
       <main>
         <div class="heading">

@@ -1,3 +1,4 @@
+import { applyTheme } from "./themes.js";
 import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
@@ -23,6 +24,17 @@ $("darkness").value = state.darkness;
 $("resolution").value = restored.resolution;
 $("fps").value = restored.fps;
 $("format").value = restored.format;
+$("appearance-mode").value = restored.mode;
+$("appearance-theme").value = restored.theme;
+applyTheme(restored.mode, restored.theme);
+for (const id of ["appearance-mode", "appearance-theme"]) {
+  $(id).addEventListener("change", () => {
+    state.mode = $("appearance-mode").value;
+    state.theme = $("appearance-theme").value;
+    applyTheme(state.mode, state.theme);
+    persistSettings();
+  });
+}
 
 function persistSettings() {
   saveSettings({
@@ -33,6 +45,8 @@ function persistSettings() {
     resolution: $("resolution").value,
     fps: $("fps").value,
     format: $("format").value,
+    mode: state.mode,
+    theme: state.theme,
   });
 }
 

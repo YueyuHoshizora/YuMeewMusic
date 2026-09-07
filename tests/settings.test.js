@@ -17,6 +17,8 @@ test("settings survive another load and exclude all media-related data", () => {
     resolution: "720",
     fps: "60",
     format: "flac",
+    mode: "light",
+    theme: "ocean",
   };
   assert.equal(
     saveSettings(

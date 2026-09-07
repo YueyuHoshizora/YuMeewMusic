@@ -183,3 +183,26 @@ test("none style keeps background and song text without drawing animation", () =
   assert.ok(calls.some(([key,text])=>key === "fillText" && text === "歌曲"));
   assert.ok(!calls.some(([key])=>["stroke","arc","lineTo"].includes(key)));
 });
+
+test('subtitle placement and scale apply independently across all five anchors',()=>{
+  for(const position of ['top','bottom','left','right','center']) for(const scale of [100,250]) {
+    const calls=[]; const fonts=[];
+    const context=new Proxy({}, {
+      get:(_,key)=>key==='measureText'?()=>({width:100}):(...args)=>calls.push([key,...args]),
+      set:(_,key,value)=>{if(key==='font') fonts.push(value);return true;},
+    });
+    draw({width:1280,height:720,getContext:()=>context},1,null,{width:100,height:100},{
+      style:19, darkness:45, subtitles:{cues:[{start:0,end:3,text:'字幕'}]},originalBuffer:{duration:5},
+      subtitlePosition:position,subtitleMargin:10,subtitleSize:scale,
+    });
+    const box=calls.filter(([key])=>key==='fillRect').at(-1);
+    const [,x,y,w,h]=box;
+    assert.ok(x>=0 && y>=0 && x+w<=1280 && y+h<=720);
+    if(position==='left') assert.equal(x,128);
+    if(position==='right') assert.ok(Math.abs(x+w-1152)<1e-8);
+    if(position==='top') assert.equal(y,72);
+    if(position==='bottom') assert.ok(Math.abs(y+h-648)<1e-8);
+    if(position==='center') { assert.equal(x+w/2,640); assert.equal(y+h/2,360); }
+    assert.ok(fonts[0].includes(String(720*.035*scale/100)));
+  }
+});

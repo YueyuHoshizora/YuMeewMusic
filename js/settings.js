@@ -11,6 +11,9 @@ export const DEFAULT_SETTINGS = Object.freeze({
   textSize: 100,
   textFadeAfter: 5,
   textColor: "#ffffff",
+  subtitlePosition: "bottom",
+  subtitleMargin: 5,
+  subtitleSize: 100,
   style: 0,
   color: "#c5fa75",
   strength: 70,
@@ -60,6 +63,10 @@ export function validateSettings(value) {
   if (typeof source.textSize === "number" && Number.isFinite(source.textSize) && source.textSize >= 50 && source.textSize <= 250) result.textSize = source.textSize;
   if (typeof source.textColor === "string" && /^#[0-9a-f]{6}$/i.test(source.textColor)) result.textColor = source.textColor.toLowerCase();
   if (Number.isInteger(source.textFadeAfter) && source.textFadeAfter >= 1 && source.textFadeAfter <= 15) result.textFadeAfter = source.textFadeAfter;
+  if (["top", "bottom", "left", "right", "center"].includes(source.subtitlePosition)) result.subtitlePosition = source.subtitlePosition;
+  for (const [key, min, max] of [["subtitleMargin", 0, 40], ["subtitleSize", 100, 250]]) {
+    if (Number.isFinite(source[key]) && source[key] >= min && source[key] <= max) result[key] = source[key];
+  }
   return result;
 }
 

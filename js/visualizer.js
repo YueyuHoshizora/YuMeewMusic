@@ -477,7 +477,11 @@ function drawSubtitles(c, width, height, settings, time) {
   c.save();
   c.setTransform(1, 0, 0, 1, 0, 0);
   c.globalAlpha = 1;
-  const size = Math.min(width, height) * .035;
+  const position = settings.subtitlePosition || "bottom";
+  const margin = Math.max(0, Math.min(40, settings.subtitleMargin ?? 5)) / 100;
+  const size = Math.min(width, height) * .035 * Math.max(100, Math.min(250, settings.subtitleSize ?? 100)) / 100;
+  const padding = size * .3;
+  const maxWidth = Math.max(size, width * (position === "left" || position === "right" ? 1 - margin - .05 : .9) - padding * 2);
   c.font = `600 ${size}px sans-serif`;
   c.textAlign = "center";
   c.textBaseline = "middle";
@@ -485,18 +489,29 @@ function drawSubtitles(c, width, height, settings, time) {
   for (const paragraph of text.split("\n")) {
     let line = "";
     for (const character of paragraph) {
-      if (line && c.measureText(line + character).width > width * .86) { lines.push(line); line = ""; }
+      if (line && c.measureText(line + character).width > maxWidth) { lines.push(line); line = ""; }
       line += character;
     }
     lines.push(line);
   }
   const lineHeight = size * 1.4;
-  const bottom = height * .95;
+  const visible = lines.slice(0, Math.max(1, Math.floor((height - padding * 2) / lineHeight)));
+  const boxWidth = Math.min(width, Math.max(...visible.map(line=>c.measureText(line).width)) + padding * 2);
+  const boxHeight = visible.length * lineHeight + padding * 2;
+  let x = (width - boxWidth) / 2, y = (height - boxHeight) / 2;
+  if (position === "left") x = width * margin;
+  if (position === "right") x = width * (1 - margin) - boxWidth;
+  if (position === "top") y = height * margin;
+  if (position === "bottom") y = height * (1 - margin) - boxHeight;
+  x = Math.max(0, Math.min(width - boxWidth, x));
+  y = Math.max(0, Math.min(height - boxHeight, y));
   c.fillStyle = "#000000b3";
-  c.fillRect(width * .05, bottom - lines.length * lineHeight, width * .9, lines.length * lineHeight + size * .3);
+  c.fillRect(x, y, boxWidth, boxHeight);
   c.fillStyle = "#ffffff";
   c.shadowColor = "#000000";
   c.shadowBlur = size * .15;
-  lines.forEach((line,i)=>c.fillText(line,width/2,bottom-(lines.length-1-i)*lineHeight-lineHeight/2));
+  c.textAlign = position === "left" ? "left" : position === "right" ? "right" : "center";
+  const textX = position === "left" ? x + padding : position === "right" ? x + boxWidth - padding : x + boxWidth / 2;
+  visible.forEach((line,i)=>c.fillText(line,textX,y+padding+(i+.5)*lineHeight,maxWidth));
   c.restore();
 }

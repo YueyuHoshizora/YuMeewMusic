@@ -78,6 +78,9 @@ function persistSettings() {
     textSize: state.textSize,
     textFadeAfter: state.textFadeAfter,
     textColor: state.textColor,
+    subtitlePosition: state.subtitlePosition,
+    subtitleMargin: state.subtitleMargin,
+    subtitleSize: state.subtitleSize,
     style: state.style,
     color: state.color,
     strength: state.strength,
@@ -119,13 +122,19 @@ function update() {
   }
   $("textFadeAfter-value").textContent = `${state.textFadeAfter} 秒`;
   $("trim-empty").hidden = Boolean(state.originalBuffer);
+  $("subtitlePosition").value = state.subtitlePosition;
+  $("subtitleMargin").value = $("subtitleMargin-range").value = state.subtitleMargin;
+  $("subtitleSize").value = state.subtitleSize;
+  $("subtitleMargin-value").textContent = `${state.subtitleMargin}%`;
+  $("subtitleSize-value").textContent = `${state.subtitleSize}%`;
+  $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
   $("subtitle-name").textContent = state.subtitleName || "選擇字幕檔";
   $("remove-subtitle").hidden = !state.subtitles;
   const locked = state.busy || state.loading || state.imageLoading;
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -734,3 +743,20 @@ $("remove-subtitle").addEventListener("click", () => {
   fileError("subtitle");
   update();
 });
+
+$("subtitlePosition").addEventListener("change", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.subtitlePosition = $("subtitlePosition").value;
+  update();
+});
+for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize"]) {
+  $(id).addEventListener("input", () => {
+    if (state.busy || state.loading || state.imageLoading || $(id).value === "") return;
+    const key = id === "subtitleMargin-range" ? "subtitleMargin" : id;
+    const value = Number($(id).value);
+    if (!Number.isFinite(value)) return;
+    state[key] = Math.max(key === "subtitleSize" ? 100 : 0, Math.min(key === "subtitleSize" ? 250 : 40, value));
+    update();
+  });
+  $(id).addEventListener("change", update);
+}

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="音樂、圖片與 MP4 匯出全程在瀏覽器處理。六種頻譜動畫，支援 720p、1080p 與 30、60 fps。"
+    />
+    <title>YuMeew · 音樂視覺工作室</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <script type="module" src="./js/app.js"></script>
+  </head>
+  <body>
+    <div class="studio">
+      <header>
+        <a class="brand" href="./" aria-label="YuMeew 首頁"
+          ><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub"
+            >MUSIC STUDIO</span
+          ></a
+        >
+        <span class="header-note">讓每一段聲音，都有畫面。</span>
+        <span class="local"><i></i>檔案不上傳伺服器</span>
+      </header>
+      <main>
+        <div class="heading">
+          <div>
+            <div class="eyebrow">A LITTLE SOUND. A LOT OF FEELING.</div>
+            <h1>你的音樂，視覺化<span>。</span></h1>
+            <p>音樂、圖片與 MP4 匯出全程在你的瀏覽器處理，檔案不會上傳至伺服器。</p>
+          </div>
+          <div class="step">01 素材 <span>／</span> 02 風格 <span>／</span> 03 匯出</div>
+        </div>
+        <div class="workspace">
+          <aside class="panel assets">
+            <div class="section-title">
+              <span>01</span>
+              <h2>創作素材</h2>
+            </div>
+            <span class="field-label">音樂</span>
+            <button id="audio-drop" class="upload" type="button">
+              <span class="upload-icon" aria-hidden="true">♫</span
+              ><strong id="audio-name">選擇本機音樂</strong
+              ><small id="audio-info">拖放檔案或點擊選擇</small
+              ><span class="filetype">MP3 · WAV · M4A · FLAC</span>
+            </button>
+            <input id="audio-input" type="file" accept="audio/*" hidden />
+            <span class="field-label">背景圖片 <span>選填</span></span>
+            <button id="image-drop" class="upload image-upload" type="button">
+              <span aria-hidden="true">▧ ＋</span><strong id="image-name">加入背景圖片</strong
+              ><small>JPG · PNG · WebP</small>
+            </button>
+            <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+            <button id="remove-image" class="text-button" hidden type="button">移除圖片</button>
+            <div class="privacy">
+              <span>✳</span>
+              <p>音樂、圖片與影片<br />全程在瀏覽器處理，不上傳。</p>
+            </div>
+          </aside>
+          <section class="center" aria-label="預覽與頻譜風格">
+            <div class="preview-top">
+              <span><i></i> 即時預覽</span
+              ><span
+                >16:9 <span class="separator">／</span>
+                <span id="preview-resolution">1080p</span></span
+              >
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="preview" width="1280" height="720" aria-label="音樂頻譜動畫預覽"></canvas
+              ><span id="preview-tag" class="preview-tag">DEMO VISUAL · 選擇音樂開始創作</span>
+            </div>
+            <div class="transport">
+              <button id="play" class="play" type="button" aria-label="播放" disabled>▶</button
+              ><span id="time" class="time">00:00</span
+              ><input
+                id="seek"
+                type="range"
+                aria-label="播放進度"
+                min="0"
+                max="1"
+                step="0.1"
+                value="0"
+                disabled
+              /><span id="duration" class="time muted">00:00</span
+              ><button id="restart" class="icon-button" type="button" aria-label="回到開頭">
+                ↺
+              </button>
+            </div>
+            <div class="styles-heading">
+              <div class="section-title">
+                <span>02</span>
+                <h2>選一種節奏</h2>
+              </div>
+              <span>6 種頻譜風格</span>
+            </div>
+            <div id="styles" class="styles" aria-label="頻譜風格"></div>
+          </section>
+          <aside class="panel settings">
+            <div class="section-title">
+              <span>☷</span>
+              <h2>畫面設定</h2>
+            </div>
+            <span class="field-label">頻譜色彩</span>
+            <div id="colors" class="colors" aria-label="頻譜色彩"></div>
+            <label class="range-label" for="strength"
+              >動態強度<output id="strength-value">70%</output></label
+            ><input id="strength" type="range" min="0" max="100" value="70" />
+            <label class="range-label" for="darkness"
+              >背景暗度<output id="darkness-value">45%</output></label
+            ><input id="darkness" type="range" min="0" max="100" value="45" />
+            <div class="export-section">
+              <div class="section-title">
+                <span>03</span>
+                <h2>匯出影片</h2>
+              </div>
+              <label class="field-label" for="resolution">解析度</label
+              ><select id="resolution" class="setting-select">
+                <option value="1080">1080p · Full HD</option>
+                <option value="720">720p · HD</option>
+              </select>
+              <label class="field-label" for="fps">影格率</label
+              ><select id="fps" class="setting-select">
+                <option value="30">30 fps</option>
+                <option value="60">60 fps</option>
+              </select>
+              <div class="format-row">
+                <span>輸出格式</span><strong>MP4 <span>H.264 / AAC</span></strong>
+              </div>
+              <button id="export" class="export-button" type="button" disabled>↓ 匯出 MP4 ↗</button>
+              <progress id="progress" value="0" max="100" aria-label="匯出進度" hidden></progress
+              ><button id="cancel" class="text-button" type="button" hidden>取消匯出</button>
+              <p id="export-note" class="export-note">先選擇音樂，就能匯出影片。</p>
+            </div>
+          </aside>
+        </div>
+        <div id="message" class="message" role="status" hidden>
+          <span id="message-text"></span
+          ><button id="dismiss-message" aria-label="關閉訊息" type="button">×</button>
+        </div>
+        <footer>
+          <span>MADE FOR YOUR SOUND.</span><span>音樂上限 20 分鐘 / 150 MB · 圖片上限 30 MB</span>
+        </footer>
+        <noscript>請啟用 JavaScript 以在瀏覽器內處理音樂與匯出影片。</noscript>
+      </main>
+      <audio id="audio"></audio>
+    </div>
+  </body>
+</html>

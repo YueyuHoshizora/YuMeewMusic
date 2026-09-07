@@ -79,7 +79,7 @@ test("new animations respond to audio and reproduce the same frame when seeking"
             ? () => ({ addColorStop() {} })
             : (...args) => commands.push([key, ...args]),
         set: (_, key, value) => {
-          commands.push([key, value]);
+          commands.push([key, typeof value === "object" ? "gradient" : value]);
           return true;
         },
       },

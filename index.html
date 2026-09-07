@@ -186,6 +186,46 @@
               <input id="subtitleSize" type="range" min="100" max="250" step="5" value="100">
               </details>
             </div>
+            <details class="export-section screen-settings">
+              <summary><span aria-hidden="true">☷</span>畫面設定</summary>
+              <label class="field-label" for="spectrum-color">頻譜色彩</label>
+              <div class="color-picker">
+                <input id="spectrum-color" type="color" value="#c5fa75" aria-describedby="color-hint" />
+                <div><output id="color-value" for="spectrum-color">#C5FA75</output><span id="color-hint">點擊色塊開啟調色盤</span></div>
+              </div>
+              <label class="range-label" for="strength">動態強度<output id="strength-value">70%</output></label>
+              <input id="strength" type="range" min="0" max="100" value="70" />
+              <label class="range-label" for="darkness">背景暗度<output id="darkness-value">45%</output></label>
+              <input id="darkness" type="range" min="0" max="100" value="45" />
+              <div class="position-controls">
+                <label class="range-label" for="positionX">水平位置<output id="positionX-value">0%</output></label>
+                <input id="positionX" type="range" min="-50" max="50" step="1" value="0" aria-describedby="position-help">
+                <label class="range-label" for="positionY">垂直位置<output id="positionY-value">0%</output></label>
+                <input id="positionY" type="range" min="-50" max="50" step="1" value="0" aria-describedby="position-help">
+                <p id="position-help" class="position-help">水平：左 −／右 ＋ · 垂直：上 −／下 ＋<br>超出畫面的部分不會顯示。</p>
+                <button id="reset-position" type="button" class="text-button">重設位置</button>
+              </div>
+            </details>
+            <details class="export-section identity-settings">
+              <summary>個人識別</summary>
+              <label class="field-label" for="identityType">識別類型</label>
+              <select id="identityType"><option value="text">文字</option><option value="image">圖片</option></select>
+              <div id="identity-text-controls">
+                <label class="field-label" for="identityText">識別文字</label>
+                <input id="identityText" class="text-input" type="text" maxlength="80" placeholder="輸入名稱或品牌，留空不顯示">
+              </div>
+              <div id="identity-image-controls" hidden>
+                <button id="identity-drop" class="upload image-upload" type="button" aria-describedby="identity-error"><span aria-hidden="true">▧</span><strong id="identity-name">選擇識別圖片</strong><small>JPG · PNG · WebP</small><span id="identity-error" class="file-error" role="status" hidden></span></button>
+                <input id="identity-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+                <button id="remove-identity" class="text-button" type="button" hidden>移除識別圖片</button>
+                <label class="range-label" for="identityScale">圖片縮放<output id="identityScale-value">100%</output></label>
+                <input id="identityScale" type="range" min="10" max="300" step="5" value="100">
+              </div>
+              <label class="range-label" for="identityX">水平位置<output id="identityX-value">90%</output></label>
+              <input id="identityX" type="range" min="0" max="100" value="90">
+              <label class="range-label" for="identityY">垂直位置<output id="identityY-value">10%</output></label>
+              <input id="identityY" type="range" min="0" max="100" value="10">
+            </details>
           </aside>
           <section class="center" aria-label="預覽與頻譜風格">
             <div class="preview-dock">
@@ -238,56 +278,6 @@
             <div id="styles" class="styles" aria-label="頻譜風格"></div>
           </section>
           <aside class="panel settings">
-            <details class="screen-settings">
-            <summary><span aria-hidden="true">☷</span>畫面設定</summary>
-            <label class="field-label" for="spectrum-color">頻譜色彩</label>
-            <div class="color-picker">
-              <input
-                id="spectrum-color"
-                type="color"
-                value="#c5fa75"
-                aria-describedby="color-hint"
-              />
-              <div>
-                <output id="color-value" for="spectrum-color">#C5FA75</output
-                ><span id="color-hint">點擊色塊開啟調色盤</span>
-              </div>
-            </div>
-            <label class="range-label" for="strength"
-              >動態強度<output id="strength-value">70%</output></label
-            ><input id="strength" type="range" min="0" max="100" value="70" />
-            <label class="range-label" for="darkness"
-              >背景暗度<output id="darkness-value">45%</output></label
-            ><input id="darkness" type="range" min="0" max="100" value="45" />
-            <div class="position-controls">
-              <label class="range-label" for="positionX">水平位置<output id="positionX-value">0%</output></label>
-              <input id="positionX" type="range" min="-50" max="50" step="1" value="0" aria-describedby="position-help">
-              <label class="range-label" for="positionY">垂直位置<output id="positionY-value">0%</output></label>
-              <input id="positionY" type="range" min="-50" max="50" step="1" value="0" aria-describedby="position-help">
-              <p id="position-help" class="position-help">水平：左 −／右 ＋ · 垂直：上 −／下 ＋<br>超出畫面的部分不會顯示。</p>
-              <button id="reset-position" type="button" class="text-button">重設位置</button>
-            </div>
-            </details>
-            <details class="export-section identity-settings">
-              <summary>個人識別</summary>
-              <label class="field-label" for="identityType">識別類型</label>
-              <select id="identityType"><option value="text">文字</option><option value="image">圖片</option></select>
-              <div id="identity-text-controls">
-                <label class="field-label" for="identityText">識別文字</label>
-                <input id="identityText" class="text-input" type="text" maxlength="80" placeholder="輸入名稱或品牌，留空不顯示">
-              </div>
-              <div id="identity-image-controls" hidden>
-                <button id="identity-drop" class="upload image-upload" type="button" aria-describedby="identity-error"><span aria-hidden="true">▧</span><strong id="identity-name">選擇識別圖片</strong><small>JPG · PNG · WebP</small><span id="identity-error" class="file-error" role="status" hidden></span></button>
-                <input id="identity-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
-                <button id="remove-identity" class="text-button" type="button" hidden>移除識別圖片</button>
-                <label class="range-label" for="identityScale">圖片縮放<output id="identityScale-value">100%</output></label>
-                <input id="identityScale" type="range" min="10" max="300" step="5" value="100">
-              </div>
-              <label class="range-label" for="identityX">水平位置<output id="identityX-value">90%</output></label>
-              <input id="identityX" type="range" min="0" max="100" value="90">
-              <label class="range-label" for="identityY">垂直位置<output id="identityY-value">10%</output></label>
-              <input id="identityY" type="range" min="0" max="100" value="10">
-            </details>
             <div class="export-section">
               <div class="section-title">
                 <span>03</span>

@@ -86,6 +86,11 @@ export function draw(canvas, t, b, img, s) {
   // Keep circular and radial styles within the narrow side of portrait frames.
   c.translate(0, (h - Math.min(w, h)) / 2);
   h = Math.min(w, h);
+  if (s.style === 19) {
+    c.restore();
+    drawSongDetails(c, canvas.width, canvas.height, s, t);
+    return;
+  }
   const values = spectrum(b, t),
     gain = 0.35 + s.strength / 70;
   c.strokeStyle = s.color;

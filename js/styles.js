@@ -19,4 +19,5 @@ export const STYLES = Object.freeze([
   "軌道行星",
   "電流震盪",
   "黑膠唱片",
+  "無",
 ]);

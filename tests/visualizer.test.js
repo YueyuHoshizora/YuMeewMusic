@@ -93,6 +93,7 @@ test("new animations respond to audio and reproduce the same frame when seeking"
     return commands;
   }
   for (let style = 6; style < STYLES.length; style++) {
+    if (STYLES[style] === "無") continue;
     assert.deepEqual(render(style, tone), render(style, tone));
     assert.notDeepEqual(render(style, tone), render(style, silent));
   }
@@ -167,4 +168,18 @@ test("song text holds for chosen delay then fades over one second", () => {
     assert.equal(songTextOpacity(delay + 1, delay), 0);
     assert.equal(songTextOpacity(60, delay), 0);
   }
+});
+
+test("none style keeps background and song text without drawing animation", () => {
+  const calls = [];
+  const context = new Proxy({}, {
+    get: (_, key) => (...args) => calls.push([key, ...args]),
+    set: () => true,
+  });
+  draw({width:1280,height:720,getContext:()=>context}, 0, null, {width:100,height:100}, {
+    style:STYLES.indexOf("無"),songTitle:"歌曲",color:"#ffffff",darkness:45,
+  });
+  assert.ok(calls.some(([key])=>key === "drawImage"));
+  assert.ok(calls.some(([key,text])=>key === "fillText" && text === "歌曲"));
+  assert.ok(!calls.some(([key])=>["stroke","arc","lineTo"].includes(key)));
 });

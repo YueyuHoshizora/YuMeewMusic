@@ -191,14 +191,14 @@ h1 span {
   width: 100%;
   border: 1px dashed var(--border);
   border-radius: 10px;
-  min-height: 184px;
-  display: flex;
-  flex-direction: column;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
   align-items: center;
-  justify-content: center;
-  padding: 18px 12px;
+  padding: 10px;
+  text-align: left;
   background: var(--tint);
-  gap: 9px;
+  gap: 4px 6px;
 }
 .upload:hover {
   background: var(--hover);
@@ -219,19 +219,19 @@ h1 span {
 .upload-icon {
   color: var(--primary);
   background: var(--tint);
-  padding: 10px;
-  border-radius: 50%;
-  margin-bottom: 3px;
+  padding: 0;
+  border-radius: 0;
+  margin-bottom: 0;
 }
 .filetype {
   font-size: 10px;
   letter-spacing: 0.4px;
   color: var(--muted);
-  margin-top: 5px;
+  margin-top: 0;
 }
 .image-upload {
   background: var(--surface);
-  min-height: 137px;
+  min-height: 0;
   border-color: var(--border);
   color: var(--muted);
 }
@@ -513,10 +513,10 @@ input:focus-visible {
   color: var(--muted);
 }
 .upload-icon {
-  font-size: 24px;
+  font-size: 16px;
 }
-.image-upload > span {
-  font-size: 26px;
+.image-upload > span[aria-hidden] {
+  font-size: 14px;
 }
 .heading p {
   max-width: 650px;
@@ -722,3 +722,7 @@ header { flex-wrap: nowrap; }
   outline-offset: 4px;
   border-radius: 4px;
 }
+
+.upload strong { min-width: 0; }
+.upload small, .upload .filetype, .upload .file-error { grid-column: 1 / -1; }
+.upload small { line-height: 1.4; }

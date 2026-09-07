@@ -2,7 +2,7 @@ const clone = value => typeof structuredClone === 'function'
   ? structuredClone(value)
   : JSON.parse(JSON.stringify(value));
 
-export function createUndoHistory(limit = 5) {
+export function createUndoHistory(limit = 10) {
   const maximum = Math.max(1, Math.floor(limit));
   const past = [], future = [];
   const keepLatest = stack => { while (stack.length > maximum) stack.shift(); };

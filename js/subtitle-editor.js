@@ -7,7 +7,7 @@ import { createUndoHistory } from './undo-history.js';
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
 const state = { cues: [], selected: -1, duration: 60, subtitleName: 'edited-subtitles.srt', dirty: false, audioUrl: '', waveformBuffer: null };
-const editHistory = createUndoHistory(5);
+const editHistory = createUndoHistory(10);
 let textHistoryCue = null;
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);

@@ -1,3 +1,4 @@
+import { subtitleAt } from "./subtitles.js";
 export function spectrum(b, t) {
   const out = new Float32Array(64);
   if (!b) {
@@ -89,6 +90,7 @@ export function draw(canvas, t, b, img, s) {
   if (s.style === 19) {
     c.restore();
     drawSongDetails(c, canvas.width, canvas.height, s, t);
+    drawSubtitles(c, canvas.width, canvas.height, s, t);
     return;
   }
   const values = spectrum(b, t),
@@ -152,6 +154,7 @@ export function draw(canvas, t, b, img, s) {
   c.shadowBlur = 0;
   c.restore();
   drawSongDetails(c, canvas.width, canvas.height, s, t);
+    drawSubtitles(c, canvas.width, canvas.height, s, t);
 }
 
 export function songTextOpacity(time, fadeAfter = 5) {
@@ -465,5 +468,35 @@ function drawVinyl(c, w, h, time, values, gain, image, color, recordImage) {
   c.globalAlpha = .3 + Math.min(.7, energy * gain);
   c.lineWidth = h * (.001 + energy * gain * .003);
   c.strokeRect(sleeveX, sleeveY, size, size);
+  c.restore();
+}
+
+function drawSubtitles(c, width, height, settings, time) {
+  const text = subtitleAt(settings.subtitles, time + (settings.trimStart || 0), settings.originalBuffer?.duration || settings.buffer?.duration || 0);
+  if (!text) return;
+  c.save();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalAlpha = 1;
+  const size = Math.min(width, height) * .035;
+  c.font = `600 ${size}px sans-serif`;
+  c.textAlign = "center";
+  c.textBaseline = "middle";
+  const lines = [];
+  for (const paragraph of text.split("\n")) {
+    let line = "";
+    for (const character of paragraph) {
+      if (line && c.measureText(line + character).width > width * .86) { lines.push(line); line = ""; }
+      line += character;
+    }
+    lines.push(line);
+  }
+  const lineHeight = size * 1.4;
+  const bottom = height * .95;
+  c.fillStyle = "#000000b3";
+  c.fillRect(width * .05, bottom - lines.length * lineHeight, width * .9, lines.length * lineHeight + size * .3);
+  c.fillStyle = "#ffffff";
+  c.shadowColor = "#000000";
+  c.shadowBlur = size * .15;
+  lines.forEach((line,i)=>c.fillText(line,width/2,bottom-(lines.length-1-i)*lineHeight-lineHeight/2));
   c.restore();
 }

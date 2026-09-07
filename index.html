@@ -138,6 +138,17 @@
               <p class="position-help">三行文字一起調整。水平由左至右，垂直由上至下；超出畫面的部分會裁切。</p>
 
             </details>
+            <div class="song-details">
+              <span class="field-label">上傳字幕檔 <span>選填</span></span>
+              <button id="subtitle-drop" class="upload" type="button" aria-describedby="subtitle-error">
+                <span aria-hidden="true">CC</span><strong id="subtitle-name">選擇字幕檔</strong>
+                <small>SRT · ASS · TXT · 5 MB 以內</small>
+                <span id="subtitle-error" class="file-error" role="status" hidden></span>
+              </button>
+              <input id="subtitle-input" type="file" accept=".srt,.ass,.txt" hidden>
+              <button id="remove-subtitle" class="text-button" type="button" hidden>移除字幕</button>
+              <p class="position-help">字幕時間以原始音樂為準；TXT 每行平均分配時間。ASS 僅讀取文字與時間，不套用特效或排版。請使用 UTF-8 編碼。</p>
+            </div>
           </aside>
           <section class="center" aria-label="預覽與頻譜風格">
             <div class="preview-dock">

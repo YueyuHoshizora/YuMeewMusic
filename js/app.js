@@ -15,6 +15,8 @@ const state = {
   ...restored,
   buffer: null,
   originalBuffer: null,
+  subtitles: null,
+  subtitleName: "",
   trimStart: 0,
   image: null,
   sleeve: null,
@@ -117,11 +119,13 @@ function update() {
   }
   $("textFadeAfter-value").textContent = `${state.textFadeAfter} 秒`;
   $("trim-empty").hidden = Boolean(state.originalBuffer);
+  $("subtitle-name").textContent = state.subtitleName || "選擇字幕檔";
+  $("remove-subtitle").hidden = !state.subtitles;
   const locked = state.busy || state.loading || state.imageLoading;
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -703,3 +707,30 @@ for (const mode of ["start", "body", "end"]) {
     setTrimRange(...moveTrimRange(start, end, (event.key === "ArrowRight" ? 1 : -1) * (event.shiftKey ? 1 : .1), state.originalBuffer.duration, mode));
   });
 }
+
+bindFile("subtitle", async file => {
+  if (!file || state.busy || state.loading || state.imageLoading) return;
+  state.imageLoading = true;
+  fileError("subtitle");
+  update();
+  try {
+    if (file.size > 5 * 1024 * 1024) throw Error("字幕檔請小於 5 MB。");
+    const extension = file.name.split(".").pop().toLowerCase();
+    if (!["srt", "ass", "txt"].includes(extension)) throw Error("請選擇 SRT、ASS 或 TXT 字幕檔。");
+    const bytes = await file.arrayBuffer();
+    let text;
+    try { text = new TextDecoder("utf-8", {fatal:true}).decode(bytes); }
+    catch { throw Error("無法讀取文字編碼，請將字幕另存為 UTF-8。"); }
+    const {parseSubtitles} = await import("./subtitles.js");
+    state.subtitles = parseSubtitles(text, extension);
+    state.subtitleName = file.name;
+  } catch (error) { fileError("subtitle", error.message || "無法讀取字幕檔。"); }
+  finally { state.imageLoading = false; update(); }
+});
+$("remove-subtitle").addEventListener("click", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.subtitles = null;
+  state.subtitleName = "";
+  fileError("subtitle");
+  update();
+});

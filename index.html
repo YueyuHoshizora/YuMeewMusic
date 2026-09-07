@@ -53,6 +53,14 @@
               <span>01</span>
               <h2>創作素材</h2>
             </div>
+            <div class="aspect-control">
+              <label class="field-label" for="aspect-ratio">畫面比例</label>
+              <select id="aspect-ratio" class="setting-select">
+                <option value="16:9">16:9 · 橫式</option>
+                <option value="9:16">9:16 · 直式</option>
+              </select>
+              <p class="position-help">背景圖片置中裁切，填滿畫面。</p>
+            </div>
             <span class="field-label">音樂</span>
             <button id="audio-drop" aria-describedby="audio-error" class="upload" type="button">
               <span class="upload-icon" aria-hidden="true">♫</span
@@ -142,14 +150,6 @@
             <label class="range-label" for="darkness"
               >背景暗度<output id="darkness-value">45%</output></label
             ><input id="darkness" type="range" min="0" max="100" value="45" />
-            <div class="aspect-control">
-              <label class="field-label" for="aspect-ratio">畫面比例</label>
-              <select id="aspect-ratio" class="setting-select">
-                <option value="16:9">16:9 · 橫式</option>
-                <option value="9:16">9:16 · 直式</option>
-              </select>
-              <p class="position-help">背景圖片置中裁切，填滿畫面。</p>
-            </div>
             <div class="position-controls">
               <label class="range-label" for="positionX">水平位置<output id="positionX-value">0%</output></label>
               <input id="positionX" type="range" min="-50" max="50" step="1" value="0" aria-describedby="position-help">

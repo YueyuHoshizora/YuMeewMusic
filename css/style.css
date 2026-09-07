@@ -758,5 +758,7 @@ header {
 .position-controls { grid-column: 1; min-width: 0; }
 .position-help { color: var(--muted); font-size: 12px; line-height: 1.7; margin: 12px 0 0; }
 
-.aspect-control { grid-column: 1; min-width: 0; }
+.aspect-control { grid-column: 1 / -1; min-width: 0; }
 .canvas-wrap.portrait { aspect-ratio: 9 / 16; width: min(100%, 360px); margin-inline: auto; }
+
+.assets > .aspect-control { padding-bottom: 8px; border-bottom: 1px solid var(--border); }

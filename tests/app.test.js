@@ -26,6 +26,8 @@ test("editor initializes, switches formats and reaches download for every format
       disabled: false,
       hidden: false,
       currentTime: 0,
+      paused: true,
+      volume: 1,
       style: {},
       dataset: {},
       children: [],
@@ -42,7 +44,8 @@ test("editor initializes, switches formats and reaches download for every format
       addEventListener(type, handler) {
         this.listeners[type] = handler;
       },
-      pause() {},
+      pause() { this.paused = true; this.listeners.pause?.(); },
+      async play() { this.paused = false; this.listeners.play?.(); },
       click() {
         if (this.download) downloads.push(this.download);
       },
@@ -68,9 +71,13 @@ test("editor initializes, switches formats and reaches download for every format
     AbortController,
     URL: { createObjectURL: () => "blob:local-test", revokeObjectURL() {} },
     AudioContext: class {
+      constructor() { this.destination = {}; this.state = "suspended"; }
       async decodeAudioData() {
         return buffer;
       }
+      createMediaElementSource() { return { connect() {} }; }
+      createGain() { return { gain: { value: 1 }, connect() {} }; }
+      async resume() { this.state = "running"; }
       async close() {}
     },
     videoDimensions,
@@ -105,6 +112,12 @@ test("editor initializes, switches formats and reaches download for every format
   );
   assert.equal(elements.get("duration").textContent, "01:05");
   assert.match(elements.get("audio-info").textContent, /01:05/);
+  elements.get("exportVolume").value = "200";
+  elements.get("exportVolume").listeners.input();
+  await elements.get("play").listeners.click();
+  assert.equal(vm.runInContext("previewGain.gain.value", context), 2);
+  assert.equal(elements.get("audio").volume, 1);
+  elements.get("play").listeners.click();
   elements.get("songTitle").value = "測試歌曲";
   elements.get("lyricist").value = "測試作詞";
   elements.get("composer").value = "測試作曲";

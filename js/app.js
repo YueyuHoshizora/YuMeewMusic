@@ -11,6 +11,8 @@ import { DEFAULT_SETTINGS, loadSettings, saveSettings, clearSettings } from "./s
 
 const $ = (id) => document.getElementById(id);
 const audio = $("audio");
+let previewAudioContext = null;
+let previewGain = null;
 const restored = loadSettings();
 const state = {
   ...restored,
@@ -451,10 +453,30 @@ $("remove-image").addEventListener("click", () => {
   update();
 });
 $("dismiss-message").addEventListener("click", () => message());
+async function applyPreviewVolume(startingPlayback = false) {
+  const gain = Math.max(1, Math.min(200, state.exportVolume)) / 100;
+  if (!previewGain && startingPlayback) {
+    const context = new AudioContext();
+    if (typeof context.createMediaElementSource === "function" && typeof context.createGain === "function") {
+      const source = context.createMediaElementSource(audio);
+      previewGain = context.createGain();
+      source.connect(previewGain);
+      previewGain.connect(context.destination);
+      previewAudioContext = context;
+      audio.volume = 1;
+    } else {
+      await context.close().catch(() => {});
+    }
+  }
+  if (previewGain) previewGain.gain.value = gain;
+  else audio.volume = Math.min(1, gain);
+  if (startingPlayback && previewAudioContext?.state === "suspended") await previewAudioContext.resume();
+}
 $("play").addEventListener("click", async () => {
   try {
     if (audio.paused) {
       if (audio.currentTime < state.trimStart || audio.currentTime >= state.trimStart + state.buffer.duration) audio.currentTime = state.trimStart;
+      await applyPreviewVolume(true);
       await audio.play();
     }
     else audio.pause();
@@ -514,6 +536,7 @@ $("profile").addEventListener("change", persistSettings);
 $("exportVolume").addEventListener("input", () => {
   if (state.busy || state.loading || state.imageLoading) return;
   state.exportVolume = Number($("exportVolume").value);
+  void applyPreviewVolume();
   update();
 });
 $("format").addEventListener("change", update);

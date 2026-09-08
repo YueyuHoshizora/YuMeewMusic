@@ -27,6 +27,15 @@ export function converterFilename(name, format) {
   return `${base}-converted.${format}`;
 }
 
+export function conversionVideoOptions({ sourceCodec, targetCodec, quality, hardwareAcceleration }) {
+  if (sourceCodec === targetCodec) return { codec: targetCodec };
+  return {
+    codec: targetCodec,
+    quality,
+    hardwareAcceleration,
+  };
+}
+
 export async function inspectMediaFile(file) {
   const m = await import('../vendor/mediabunny.min.mjs');
   const input = new m.Input({ source: new m.BlobSource(file), formats: m.ALL_FORMATS });
@@ -98,14 +107,12 @@ export async function convertMediaFile({ file, format, inputKind, hasAudio = tru
           signal,
           type.videoCodec,
         );
-        videoOptions = {
-          codec: type.videoCodec,
-          width: dimensions.width,
-          height: dimensions.height,
-          fit: 'fill',
+        videoOptions = conversionVideoOptions({
+          sourceCodec,
+          targetCodec: type.videoCodec,
           quality: m.QUALITY_HIGH,
           hardwareAcceleration,
-        };
+        });
       }
     }
     conversion = await m.Conversion.init({

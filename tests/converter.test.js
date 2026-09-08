@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { CONVERTER_FORMAT_LABELS, converterFilename, converterFormats } from '../js/converter-core.js';
+import {
+  CONVERTER_FORMAT_LABELS,
+  conversionVideoOptions,
+  converterFilename,
+  converterFormats,
+} from '../js/converter-core.js';
 
 test('converter page exposes only formats valid for each input kind', () => {
   assert.deepEqual(converterFormats('audio'), ['mp3', 'm4a', 'flac', 'wav']);
@@ -12,6 +17,26 @@ test('converter page exposes only formats valid for each input kind', () => {
   assert.equal(converterFilename('movie.mov', 'mp4'), 'movie-converted.mp4');
   assert.throws(() => converterFilename('file', 'exe'));
   for (const format of converterFormats('video')) assert.ok(CONVERTER_FORMAT_LABELS[format]);
+});
+
+test('converter preserves source dimensions without passing resize options', () => {
+  const quality = { value: 'high' };
+  assert.deepEqual(conversionVideoOptions({
+    sourceCodec: 'avc',
+    targetCodec: 'vp9',
+    quality,
+    hardwareAcceleration: 'no-preference',
+  }), {
+    codec: 'vp9',
+    quality,
+    hardwareAcceleration: 'no-preference',
+  });
+  assert.deepEqual(conversionVideoOptions({
+    sourceCodec: 'vp9',
+    targetCodec: 'vp9',
+    quality,
+    hardwareAcceleration: 'prefer-hardware',
+  }), { codec: 'vp9' });
 });
 
 test('converter page has every referenced control and only local assets', () => {
@@ -31,6 +56,6 @@ test('converter page has every referenced control and only local assets', () => 
   assert.doesNotMatch(mainHtml, /href="\.\/converter\.html"[^>]*target="_blank"/);
   assert.match(readFileSync('scripts/serve.js', 'utf8'), /"converter\.html"/);
   assert.match(core, /chooseVideoAcceleration\(/);
-  assert.match(core, /fit:\s*['"]fill['"]/);
+  assert.doesNotMatch(core, /videoOptions\s*=\s*\{[^}]*\b(?:width|height|fit)\b/s);
   assert.doesNotMatch(core, /hardwareAcceleration:\s*['"]prefer-hardware['"]/);
 });

@@ -31,5 +31,6 @@ test('converter page has every referenced control and only local assets', () => 
   assert.doesNotMatch(mainHtml, /href="\.\/converter\.html"[^>]*target="_blank"/);
   assert.match(readFileSync('scripts/serve.js', 'utf8'), /"converter\.html"/);
   assert.match(core, /chooseVideoAcceleration\(/);
+  assert.match(core, /fit:\s*['"]fill['"]/);
   assert.doesNotMatch(core, /hardwareAcceleration:\s*['"]prefer-hardware['"]/);
 });

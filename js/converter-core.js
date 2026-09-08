@@ -102,6 +102,7 @@ export async function convertMediaFile({ file, format, inputKind, hasAudio = tru
           codec: type.videoCodec,
           width: dimensions.width,
           height: dimensions.height,
+          fit: 'fill',
           quality: m.QUALITY_HIGH,
           hardwareAcceleration,
         };

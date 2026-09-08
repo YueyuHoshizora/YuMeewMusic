@@ -20,6 +20,10 @@ test('standalone subtitle editor has every referenced control and only local ass
   assert.match(html, /id="redo-edit"[^>]*>↷ 恢復<\/button>/);
   assert.match(html, /id="add-cue"[^>]*>＋<\/button>/);
   assert.match(html, /id="delete-cue"[^>]*>−<\/button>/);
+  assert.match(html, /確定不保存修改直接返回主畫面？/);
+  assert.ok(ids.includes('return-dialog'));
+  assert.ok(ids.includes('return-dialog-cancel'));
+  assert.ok(ids.includes('return-dialog-confirm'));
   assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);
   assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);
   for (const delta of ['0.5', '0.1', '-0.5', '-0.1']) assert.match(html, new RegExp(`data-time-delta="${delta}"`));

@@ -14,7 +14,7 @@
     <header class="editor-header">
       <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SUBTITLE EDITOR</span></a>
       <span class="local"><i></i>音樂與字幕只在瀏覽器內處理</span>
-      <a class="reset-settings editor-back" href="./">← 返回主畫面</a>
+      <button id="return-to-main" class="reset-settings editor-back" type="button">← 返回主畫面</button>
     </header>
     <main class="subtitle-editor-main">
       <section class="editor-heading">
@@ -111,5 +111,12 @@
         </div>
       </footer>
     </main>
+    <dialog id="return-dialog" class="reset-dialog" aria-labelledby="return-dialog-title">
+      <h2 id="return-dialog-title">確定不保存修改直接返回主畫面？</h2>
+      <div class="dialog-actions">
+        <button id="return-dialog-cancel" class="reset-settings" type="button" autofocus>取消</button>
+        <button id="return-dialog-confirm" class="reset-confirm" type="button">不保存並返回</button>
+      </div>
+    </dialog>
   </body>
 </html>

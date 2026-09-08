@@ -413,6 +413,16 @@ $('undo-edit').addEventListener('click', undoEdit);
 $('redo-edit').addEventListener('click', redoEdit);
 $('download-subtitles').addEventListener('click', downloadSrt);
 $('save-subtitles').addEventListener('click', saveAndReturn);
+$('return-to-main').addEventListener('click', () => {
+  if (!$('return-dialog').open) $('return-dialog').showModal();
+});
+$('return-dialog-cancel').addEventListener('click', () => $('return-dialog').close());
+$('return-dialog').addEventListener('close', () => $('return-to-main').focus());
+$('return-dialog-confirm').addEventListener('click', () => {
+  if (!$('return-dialog').open) return;
+  state.dirty = false;
+  location.href = './';
+});
 document.addEventListener('keydown', event => {
   if (!(event.ctrlKey || event.metaKey) || !['z', 'y'].includes(event.key.toLowerCase())) return;
   if (event.target?.matches?.('input, textarea, [contenteditable="true"]')) return;

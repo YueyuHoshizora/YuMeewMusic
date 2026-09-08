@@ -77,6 +77,7 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(html, /拖曳色帶或兩端 · 放開自動套用/);
   assert.match(html, /id="export-project"[^>]*>↓ 匯出影片<\/button>/);
   for (const id of ["enter-effect", "enter-duration", "exit-effect", "exit-duration"]) assert.ok(ids.includes(id), id);
+  assert.equal((html.match(/id="(?:enter|exit)-duration"[^>]*value="0\.5"/g) || []).length, 2);
   assert.equal((html.match(/<option value="rgb-glitch">RGB 色差故障<\/option>/g) || []).length, 2);
   assert.equal((html.match(/<option value="none">無<\/option>/g) || []).length, 2);
   assert.equal((html.match(/data-confirm-return/g) || []).length, 2);

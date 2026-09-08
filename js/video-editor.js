@@ -265,7 +265,7 @@ function renderInspector() {
   for (const phase of ["enter", "exit"]) {
     const effect = layer[`${phase}Effect`] || "none";
     $(`${phase}-effect`).value = effect;
-    $(`${phase}-duration`).value = Number(layer[`${phase}Duration`] || 1).toFixed(1);
+    $(`${phase}-duration`).value = Number(layer[`${phase}Duration`] || .5).toFixed(1);
     $(`${phase}-duration`).disabled = effect === "none";
   }
   const index = state.layers.indexOf(layer);
@@ -320,10 +320,10 @@ async function addFiles(files, type) {
       if (type === "video") {
         const { url, video } = await loadVideo(file);
         const duration = Math.max(0.1, Number.isFinite(video.duration) ? video.duration : 5);
-        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: video, start, end: start + duration, mediaDuration: duration, audio: false, enterEffect: "none", exitEffect: "none", enterDuration: 1, exitDuration: 1 });
+        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: video, start, end: start + duration, mediaDuration: duration, audio: false, enterEffect: "none", exitEffect: "none", enterDuration: .5, exitDuration: .5 });
       } else {
         const { url, image } = await loadImage(file);
-        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: image, start, duration: 5, enterEffect: "none", exitEffect: "none", enterDuration: 1, exitDuration: 1 });
+        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: image, start, duration: 5, enterEffect: "none", exitEffect: "none", enterDuration: .5, exitDuration: .5 });
       }
       state.selectedId = state.layers.at(-1).id;
       status(`已加入${type === "video" ? "影片" : "圖片"}：${file.name}`, "success");

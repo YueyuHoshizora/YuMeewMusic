@@ -17,7 +17,7 @@ test("a layer has one independent entrance and exit effect", () => {
 });
 
 test("effect durations stay within the supported numeric range", () => {
-  assert.equal(effectDuration(undefined), 1);
+  assert.equal(effectDuration(undefined), .5);
   assert.equal(effectDuration(0), .1);
   assert.equal(effectDuration(.01), .1);
   assert.equal(effectDuration(99), 10);

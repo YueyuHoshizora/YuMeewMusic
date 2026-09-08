@@ -22,7 +22,7 @@ const buffers = new WeakMap();
 const clamp01 = value => Math.max(0, Math.min(1, value));
 
 export function effectDuration(value) {
-  return Math.max(.1, Math.min(10, finiteTime(value, 1)));
+  return Math.max(.1, Math.min(10, finiteTime(value, .5)));
 }
 
 export function layerEffectState(layer, time) {

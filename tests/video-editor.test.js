@@ -76,6 +76,9 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   for (const id of ["trim-start", "trim-end", "trim-selection", "trim-drag-start", "trim-drag-body", "trim-drag-end", "trim-apply", "trim-reset"]) assert.ok(ids.includes(id), id);
   assert.match(html, /拖曳色帶或兩端 · 放開自動套用/);
   assert.match(html, /id="export-project"[^>]*>↓ 匯出影片<\/button>/);
+  for (const id of ["enter-effect", "enter-duration", "exit-effect", "exit-duration"]) assert.ok(ids.includes(id), id);
+  assert.equal((html.match(/<option value="rgb-glitch">RGB 色差故障<\/option>/g) || []).length, 2);
+  assert.equal((html.match(/<option value="none">無<\/option>/g) || []).length, 2);
   assert.equal((html.match(/data-confirm-return/g) || []).length, 2);
   assert.match(script, /window\.confirm\("返回主畫面則不會保留所有修改結果，是否確定？"\)/);
   assert.match(script, /loadStoredMedia\("subtitle"\)/);
@@ -89,6 +92,7 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(script, /const sourceTime = range\.start \+ time/);
   assert.match(script, /mixProjectAudio\(state\.layers, range, signal\)/);
   assert.match(script, /drawSubtitles/);
+  assert.match(script, /drawLayerWithEffect/);
   assert.match(script, /originalBuffer: state\.base\.audioBuffer \|\| \{ duration: timelineDuration\(\) \}/);
   assert.match(script, /drawIdentity/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);

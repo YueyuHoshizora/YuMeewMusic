@@ -70,6 +70,11 @@ body.video-editor-body { min-width: 1320px; }
 .time-nudges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 7px; }
 .time-nudges button { padding: 6px 2px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--muted); font-size: 10px; }
 .time-nudges button:hover { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
+.layer-effects { display: grid; gap: 14px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+.layer-effect-group { padding: 11px; border-radius: 8px; background: var(--surface); }
+.layer-effect-group .field-label:first-child { margin-top: 0; }
+.layer-effect-group .setting-select { width: 100%; }
+.layer-effect-group .text-input { width: 100%; box-sizing: border-box; }
 .layer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
 .danger-button { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); }
 .export-box { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }

@@ -6,11 +6,11 @@ import { draw, drawIdentity, drawSubtitles } from "./visualizer.js";
 import { audioEncodingOptions, scalePcmSamples } from "./export.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
+import { drawLayerWithEffect } from "./video-effects.js";
 import { moveTrimRange } from "./trim-range.js";
 import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import {
   clampLayerTiming,
-  coverRect,
   formatEditorTime,
   isLayerActive,
   layerEnd,
@@ -56,11 +56,6 @@ function setCanvasSize() {
   canvas.width = portrait ? 720 : 1280;
   canvas.height = portrait ? 1280 : 720;
   $("preview-size").textContent = settings.aspectRatio;
-}
-
-function drawCover(context, source, sourceWidth, sourceHeight) {
-  const { x, y, width, height } = coverRect(sourceWidth, sourceHeight, context.canvas.width, context.canvas.height);
-  context.drawImage(source, x, y, width, height);
 }
 
 function drawOverlays(context, time) {
@@ -176,12 +171,12 @@ function renderPreview() {
   for (const layer of state.layers) {
     if (!isLayerActive(layer, state.time)) continue;
     if (layer.type === "image") {
-      drawCover(context, layer.element, layer.element.naturalWidth, layer.element.naturalHeight);
+      drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, state.time);
     } else {
       const localTime = state.time - layer.start;
       if (localTime >= layer.mediaDuration || layer.element.readyState < 2) continue;
       if (!state.playing && Math.abs(layer.element.currentTime - localTime) > 0.035) layer.element.currentTime = localTime;
-      drawCover(context, layer.element, layer.element.videoWidth, layer.element.videoHeight);
+      drawLayerWithEffect(context, layer, layer.element, layer.element.videoWidth, layer.element.videoHeight, state.time);
     }
   }
   drawOverlays(context, state.time);
@@ -267,6 +262,12 @@ function renderInspector() {
     $("layer-end").value = layer.end.toFixed(1);
     $("layer-audio").checked = layer.audio;
   } else $("layer-duration").value = layer.duration.toFixed(1);
+  for (const phase of ["enter", "exit"]) {
+    const effect = layer[`${phase}Effect`] || "none";
+    $(`${phase}-effect`).value = effect;
+    $(`${phase}-duration`).value = Number(layer[`${phase}Duration`] || 1).toFixed(1);
+    $(`${phase}-duration`).disabled = effect === "none";
+  }
   const index = state.layers.indexOf(layer);
   $("move-layer-down").disabled = index === 0;
   $("move-layer-up").disabled = index === state.layers.length - 1;
@@ -319,10 +320,10 @@ async function addFiles(files, type) {
       if (type === "video") {
         const { url, video } = await loadVideo(file);
         const duration = Math.max(0.1, Number.isFinite(video.duration) ? video.duration : 5);
-        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: video, start, end: start + duration, mediaDuration: duration, audio: false });
+        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: video, start, end: start + duration, mediaDuration: duration, audio: false, enterEffect: "none", exitEffect: "none", enterDuration: 1, exitDuration: 1 });
       } else {
         const { url, image } = await loadImage(file);
-        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: image, start, duration: 5 });
+        state.layers.push({ id: nextId++, type, name: file.name, file, url, element: image, start, duration: 5, enterEffect: "none", exitEffect: "none", enterDuration: 1, exitDuration: 1 });
       }
       state.selectedId = state.layers.at(-1).id;
       status(`已加入${type === "video" ? "影片" : "圖片"}：${file.name}`, "success");
@@ -552,12 +553,11 @@ async function exportProject() {
       drawBase(canvas, sourceTime);
       for (const layer of state.layers) {
         if (!isLayerActive(layer, sourceTime)) continue;
-        if (layer.type === "image") drawCover(context, layer.element, layer.element.naturalWidth, layer.element.naturalHeight);
+        if (layer.type === "image") drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, sourceTime);
         else if (sourceTime - layer.start < layer.mediaDuration) {
           const { value: sample } = await iterators.get(layer.id).next();
           if (sample) {
-            const rect = coverRect(sample.displayWidth, sample.displayHeight, canvas.width, canvas.height);
-            sample.draw(context, rect.x, rect.y, rect.width, rect.height);
+            drawLayerWithEffect(context, layer, sample, sample.displayWidth, sample.displayHeight, sourceTime);
             sample.close();
           }
         }
@@ -614,6 +614,10 @@ $("layer-start").addEventListener("input", event => patchSelected({ start: event
 $("layer-end").addEventListener("input", event => patchSelected({ end: event.target.value }));
 $("layer-duration").addEventListener("input", event => patchSelected({ duration: event.target.value }));
 $("layer-audio").addEventListener("change", event => patchSelected({ audio: event.target.checked }));
+for (const phase of ["enter", "exit"]) {
+  $(`${phase}-effect`).addEventListener("change", event => patchSelected({ [`${phase}Effect`]: event.target.value }));
+  $(`${phase}-duration`).addEventListener("input", event => patchSelected({ [`${phase}Duration`]: event.target.value }));
+}
 for (const button of document.querySelectorAll("[data-time-field][data-delta]")) {
   button.addEventListener("click", () => nudgeSelectedTime(button.dataset.timeField, button.dataset.delta));
 }

@@ -5,8 +5,8 @@ import { CONVERTER_FORMAT_LABELS, converterFilename, converterFormats } from '..
 
 test('converter page exposes only formats valid for each input kind', () => {
   assert.deepEqual(converterFormats('audio'), ['mp3', 'm4a', 'flac', 'wav']);
-  assert.deepEqual(converterFormats('video'), ['mp4', 'mov', 'mp3', 'm4a', 'flac', 'wav']);
-  assert.deepEqual(converterFormats('video', false), ['mp4', 'mov']);
+  assert.deepEqual(converterFormats('video'), ['mp4', 'mov', 'webm', 'mp3', 'm4a', 'flac', 'wav']);
+  assert.deepEqual(converterFormats('video', false), ['mp4', 'mov', 'webm']);
   assert.deepEqual(converterFormats('unknown'), []);
   assert.equal(converterFilename('music.flac', 'wav'), 'music-converted.wav');
   assert.equal(converterFilename('movie.mov', 'mp4'), 'movie-converted.mp4');

@@ -4,6 +4,7 @@ import { registerAudioEncoder } from "./export.js";
 export const CONVERTER_FORMAT_LABELS = Object.freeze({
   mp4: "MP4 · 影片",
   mov: "MOV · 影片",
+  webm: "WebM · 影片",
   mp3: "MP3 · 純音訊",
   m4a: "M4A · 純音訊",
   flac: "FLAC · 純音訊",
@@ -82,10 +83,10 @@ export async function convertMediaFile({ file, format, inputKind, hasAudio = tru
       output,
       tracks: 'primary',
       video: type.video
-        ? { codec: 'avc', hardwareAcceleration: 'prefer-hardware' }
+        ? { codec: type.videoCodec, hardwareAcceleration: 'prefer-hardware' }
         : { discard: true },
       audio: type.video
-        ? hasAudio ? { codec: 'aac', bitrate: 192_000 } : { discard: true }
+        ? hasAudio ? { codec: type.codec, bitrate: 192_000 } : { discard: true }
         : {
             codec: type.codec,
             ...(['aac', 'mp3'].includes(type.codec) ? { bitrate: 192_000 } : {}),

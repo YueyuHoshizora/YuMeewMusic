@@ -79,6 +79,19 @@ export async function encodeMedia({
       checkCanceled();
     }
   } else if (type.codec === "flac") await registerAudioEncoder("flac");
+  if (type.codec === "opus" && (buffer.sampleRate !== 48000 || buffer.numberOfChannels > 2)) {
+    const context = new OfflineAudioContext(
+      Math.min(2, buffer.numberOfChannels),
+      Math.ceil(buffer.duration * 48000),
+      48000,
+    );
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    source.connect(context.destination);
+    source.start();
+    buffer = await context.startRendering();
+    checkCanceled();
+  }
   if (
     !(await m.canEncodeAudio(type.codec, {
       numberOfChannels: buffer.numberOfChannels,
@@ -91,9 +104,9 @@ export async function encodeMedia({
   }
   checkCanceled();
   const bitrate = height === 1080 ? 8_000_000 : height === 720 ? 4_000_000 : 2_000_000;
-  const profileOptions = type.video ? videoProfileConfig(settings?.profile ?? "auto", dimensions, rate) : {};
+  const profileOptions = type.videoCodec === "avc" ? videoProfileConfig(settings?.profile ?? "auto", dimensions, rate) : {};
   const hardwareAcceleration = type.video
-    ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate, ...profileOptions}, signal)
+    ? await chooseVideoAcceleration(m.canEncodeVideo, {...dimensions, bitrate, framerate:rate, ...profileOptions}, signal, type.videoCodec)
     : null;
   if (type.video) onEncodingMode(hardwareAcceleration);
   checkCanceled();
@@ -107,7 +120,7 @@ export async function encodeMedia({
   try {
     const video = type.video
       ? new m.CanvasSource(canvas, {
-          codec: "avc",
+          codec: type.videoCodec,
           ...profileOptions,
           bitrate,
           hardwareAcceleration,

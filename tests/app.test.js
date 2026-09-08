@@ -160,6 +160,7 @@ test("editor initializes, switches formats and reaches download for every format
     assert.equal(elements.get("export").textContent, `↓ 匯出 ${format.toUpperCase()} ↗`);
     assert.equal(elements.get("export").disabled, false);
     assert.equal(elements.get("video-export-settings").hidden, !type.video);
+    assert.equal(elements.get("profile-export-settings").hidden, type.videoCodec !== "avc");
     assert.equal(elements.get("resolution").disabled, false);
     assert.equal(elements.get("fps").disabled, false);
     await elements.get("export").listeners.click();

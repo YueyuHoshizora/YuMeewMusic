@@ -227,6 +227,7 @@ function update() {
   const format = $("format").value;
   const type = getFormat(format);
   $("video-export-settings").hidden = !type.video;
+  $("profile-export-settings").hidden = type.videoCodec !== "avc";
   $("profile").disabled = $("resolution").disabled = $("fps").disabled = locked;
   $("format-description").textContent = type.description + (type.video ? "" : " · 不包含頻譜畫面");
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;

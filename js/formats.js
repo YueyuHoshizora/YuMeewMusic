@@ -1,6 +1,7 @@
 export const FORMATS = Object.freeze({
   mp4: {
     video: true,
+    videoCodec: "avc",
     codec: "aac",
     container: "Mp4OutputFormat",
     mime: "video/mp4",
@@ -8,10 +9,19 @@ export const FORMATS = Object.freeze({
   },
   mov: {
     video: true,
+    videoCodec: "avc",
     codec: "aac",
     container: "MovOutputFormat",
     mime: "video/quicktime",
     description: "影片 · H.264 / AAC",
+  },
+  webm: {
+    video: true,
+    videoCodec: "vp9",
+    codec: "opus",
+    container: "WebMOutputFormat",
+    mime: "video/webm",
+    description: "影片 · VP9 / Opus",
   },
   mp3: {
     video: false,

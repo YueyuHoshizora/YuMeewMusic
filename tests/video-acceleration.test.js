@@ -6,6 +6,7 @@ test('video export probes exact dimensions and prefers hardware',async()=>{
  assert.equal(await chooseVideoAcceleration(async(codec,config)=>{
    assert.equal(codec,'avc');assert.deepEqual(config,{...options,hardwareAcceleration:'prefer-hardware'});return true;
  },options),'prefer-hardware');
+ assert.equal(await chooseVideoAcceleration(async(codec)=>codec==='vp9',options,undefined,'vp9'),'prefer-hardware');
 });
 test('unsupported or rejected hardware falls back to browser choice then software',async()=>{
  const modes=[];

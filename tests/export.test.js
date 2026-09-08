@@ -31,6 +31,8 @@ test("format definitions use real containers and appropriate file names", () => 
   }
   assert.throws(() => getFormat("exe"));
   assert.equal(new m.MovOutputFormat().mimeType, "video/quicktime");
+  assert.equal(getFormat("webm").videoCodec, "vp9");
+  assert.equal(getFormat("webm").codec, "opus");
 });
 
 test("export volume scales PCM from 10–200 percent and clips safely", () => {

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="音樂、圖片與檔案匯出全程在瀏覽器處理，檔案不上傳伺服器。提供 19 種音樂視覺動畫，包含黑膠唱片效果；支援 16:9、9:16、480p、720p、1080p 與 30、60 fps，可匯出 MP4、MOV 影片及 MP3、M4A、FLAC、WAV 音訊。"
+      content="音樂、圖片與檔案匯出全程在瀏覽器處理，檔案不上傳伺服器。提供 19 種音樂視覺動畫，包含黑膠唱片效果；支援 16:9、9:16、480p、720p、1080p 與 30、60 fps，可匯出 MP4、MOV、WebM 影片及 MP3、M4A、FLAC、WAV 音訊。"
     />
     <title>YuMeew · 音樂視覺工作室</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -331,6 +331,7 @@
               <select id="format" class="setting-select">
                 <option value="mp4">MP4 · 影片</option>
                 <option value="mov">MOV · 影片</option>
+                <option value="webm">WebM · 影片</option>
                 <option value="mp3">MP3 · 純音訊</option>
                 <option value="m4a">M4A · 純音訊</option>
                 <option value="flac">FLAC · 純音訊</option>
@@ -338,8 +339,10 @@
               </select>
               <p id="format-description" class="export-note">影片 · H.264 / AAC</p>
               <div id="video-export-settings">
-                <label class="field-label" for="profile">H.264 Profile</label>
-                <select id="profile" class="setting-select"><option value="auto" selected>自動</option><option value="baseline">Baseline</option><option value="main">Main</option><option value="high">High</option></select>
+                <div id="profile-export-settings">
+                  <label class="field-label" for="profile">H.264 Profile</label>
+                  <select id="profile" class="setting-select"><option value="auto" selected>自動</option><option value="baseline">Baseline</option><option value="main">Main</option><option value="high">High</option></select>
+                </div>
                 <label class="field-label" for="resolution">解析度</label
                 ><select id="resolution" class="setting-select">
                   <option value="480">480p · SD</option>

@@ -57,7 +57,13 @@ function drawCover(context, source, sourceWidth, sourceHeight) {
 }
 
 function drawOverlays(context, time) {
-  const overlaySettings = { ...settings, subtitles: state.subtitles, identityImage: state.identityImage };
+  const overlaySettings = {
+    ...settings,
+    subtitles: state.subtitles,
+    identityImage: state.identityImage,
+    originalBuffer: state.base.audioBuffer || { duration: timelineDuration() },
+    buffer: state.base.audioBuffer || { duration: timelineDuration() },
+  };
   drawSubtitles(context, context.canvas.width, context.canvas.height, overlaySettings, time);
   drawIdentity(context, context.canvas.width, context.canvas.height, overlaySettings);
 }

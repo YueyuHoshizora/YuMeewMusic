@@ -75,6 +75,7 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(script, /addEventListener\("pointermove"/);
   assert.match(script, /setPointerCapture/);
   assert.match(script, /drawSubtitles/);
+  assert.match(script, /originalBuffer: state\.base\.audioBuffer \|\| \{ duration: timelineDuration\(\) \}/);
   assert.match(script, /drawIdentity/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/converter\.html">任意轉<\/a>\s*<a class="tool-link" href="\.\/video-editor\.html">語喵影片<\/a>/);

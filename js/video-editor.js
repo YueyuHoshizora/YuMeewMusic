@@ -6,6 +6,8 @@ import { draw, drawIdentity, drawSubtitles } from "./visualizer.js";
 import { audioEncodingOptions, scalePcmSamples } from "./export.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
+import { moveTrimRange } from "./trim-range.js";
+import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import {
   clampLayerTiming,
   coverRect,
@@ -13,6 +15,7 @@ import {
   isLayerActive,
   layerEnd,
   projectDuration,
+  projectTrimRange,
   nudgeLayerTime,
 } from "./video-editor-core.js";
 
@@ -30,6 +33,10 @@ const state = {
   identityImage: null,
   exporting: false,
   exportController: null,
+  trimStart: 0,
+  trimEnd: null,
+  trimInputsReady: false,
+  trimInputsFollowDuration: true,
   base: { audioBuffer: null, audioElement: null, audioUrl: "", image: null, imageUrl: "", duration: 0 },
 };
 let nextId = 1;
@@ -72,6 +79,82 @@ function timelineDuration() {
   return projectDuration(state.layers, state.base.duration);
 }
 
+function activeProjectRange() {
+  return projectTrimRange(timelineDuration(), state.trimStart, state.trimEnd);
+}
+
+function hasProject() {
+  return state.layers.length > 0 || Boolean(state.base.audioBuffer);
+}
+
+function setTrimInputs(start, end) {
+  state.trimInputsReady = true;
+  state.trimInputsFollowDuration = false;
+  for (const [edge, value] of [["start", start], ["end", end]]) {
+    $(`trim-${edge}`).value = formatTrimTime(value);
+    $(`trim-${edge}-range`).value = value;
+  }
+  updateTrimMarkers();
+  $("trim-info").textContent = `選取 ${formatTrimTime(end - start)}，放開後自動套用`;
+}
+
+function updateTrimMarkers() {
+  const duration = timelineDuration();
+  const start = parseTrimTime($("trim-start").value);
+  const end = parseTrimTime($("trim-end").value);
+  const valid = hasProject() && Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end > start && end <= duration + .005;
+  $("trim-markers").hidden = !valid;
+  if (!valid) return;
+  $("trim-selection").style.left = `${start / duration * 100}%`;
+  $("trim-selection").style.width = `${(Math.min(end, duration) - start) / duration * 100}%`;
+  $("trim-selection-duration").textContent = formatTrimTime(Math.min(end, duration) - start);
+  $("trim-drag-body").setAttribute("aria-label", `拖曳平移裁剪範圍，長度 ${formatTrimTime(Math.min(end, duration) - start)}`);
+  $("trim-start-label").textContent = `開始 ${formatTrimTime(start)}`;
+  $("trim-end-label").textContent = `結束 ${formatTrimTime(end)}`;
+}
+
+function updateTrimControls() {
+  const available = hasProject();
+  const duration = timelineDuration();
+  $("trim-empty").hidden = available;
+  for (const edge of ["start", "end"]) {
+    $(`trim-${edge}-range`).max = duration;
+    for (const suffix of ["", "-range"]) $(`trim-${edge}${suffix}`).disabled = !available || state.exporting;
+  }
+  $("trim-apply").disabled = !available || state.exporting;
+  $("trim-reset").disabled = !available || state.exporting;
+  for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = !available || state.exporting;
+  if (available && (!state.trimInputsReady || state.trimInputsFollowDuration)) {
+    state.trimInputsReady = true;
+    state.trimInputsFollowDuration = true;
+    $("trim-start").value = formatTrimTime(0);
+    $("trim-start-range").value = 0;
+    $("trim-end").value = formatTrimTime(duration);
+    $("trim-end-range").value = duration;
+    if (!$("trim-info").textContent) $("trim-info").textContent = `完整影片：${formatTrimTime(duration)}`;
+  }
+  updateTrimMarkers();
+}
+
+function applyProjectTrim() {
+  if (!hasProject() || state.exporting) return false;
+  const duration = timelineDuration();
+  const start = parseTrimTime($("trim-start").value);
+  let end = parseTrimTime($("trim-end").value);
+  if ($("trim-end").value === formatTrimTime(duration)) end = duration;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start || end > duration + .005) {
+    $("trim-info").textContent = "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間且不可超過影片長度";
+    return false;
+  }
+  pauseProject();
+  state.trimStart = start;
+  state.trimEnd = start <= .005 && Math.abs(end - duration) <= .005 ? null : end;
+  state.time = start;
+  $("trim-info").textContent = `已套用：${formatTrimTime(end - start)}`;
+  update();
+  return true;
+}
+
 function drawBase(canvas, time) {
   if (!state.base.audioBuffer) return;
   draw(canvas, time, state.base.audioBuffer, state.base.image, {
@@ -106,11 +189,13 @@ function renderPreview() {
 
 function updatePlayer() {
   const duration = timelineDuration();
-  state.time = Math.min(state.time, duration);
-  $("project-seek").max = duration;
+  const range = activeProjectRange();
+  state.time = Math.max(range.start, Math.min(state.time, range.end));
+  $("project-seek").min = range.start;
+  $("project-seek").max = range.end;
   $("project-seek").value = state.time;
   $("current-time").textContent = formatEditorTime(state.time);
-  $("total-time").textContent = formatEditorTime(duration);
+  $("total-time").textContent = formatEditorTime(range.end);
   $("playhead").style.left = `calc(78px + (100% - 84px) * ${state.time / duration})`;
   const usable = (state.layers.length > 0 || state.base.audioBuffer) && !state.exporting;
   $("play-project").disabled = !usable;
@@ -191,6 +276,7 @@ function update() {
   renderLayerList();
   renderInspector();
   renderTimeline();
+  updateTrimControls();
   updatePlayer();
   renderPreview();
 }
@@ -273,7 +359,8 @@ function seekFromTimeline(event) {
 }
 
 function setProjectTime(time) {
-  state.time = Math.max(0, Math.min(timelineDuration(), Number(time) || 0));
+  const range = activeProjectRange();
+  state.time = Math.max(range.start, Math.min(range.end, Number(time) || 0));
   if (state.base.audioElement) {
     state.base.audioElement.pause();
     state.base.audioElement.currentTime = Math.min(state.time, state.base.duration);
@@ -313,9 +400,10 @@ function syncPreviewVideos() {
 
 function animationFrame(now) {
   if (state.playing) {
-    state.time = (now - state.clockStart) / 1000;
-    if (state.time >= timelineDuration()) {
-      state.time = timelineDuration();
+    const range = activeProjectRange();
+    state.time = range.start + (now - state.clockStart) / 1000;
+    if (state.time >= range.end) {
+      state.time = range.end;
       pauseProject();
     } else syncPreviewVideos();
     updatePlayer();
@@ -373,7 +461,8 @@ async function createVideoDecoders(m, layers) {
   return decoders;
 }
 
-async function mixProjectAudio(layers, duration, signal) {
+async function mixProjectAudio(layers, range, signal) {
+  const duration = range.duration;
   const audible = layers.filter(layer => layer.type === "video" && layer.audio);
   if (!audible.length && !state.base.audioBuffer) return null;
   const sampleRate = 48000;
@@ -384,7 +473,8 @@ async function mixProjectAudio(layers, duration, signal) {
       const baseSource = context.createBufferSource();
       baseSource.buffer = state.base.audioBuffer;
       baseSource.connect(context.destination);
-      baseSource.start(0, 0, Math.min(state.base.duration, duration));
+      const available = Math.max(0, Math.min(state.base.duration, range.end) - range.start);
+      if (available > 0) baseSource.start(0, range.start, available);
     }
     for (const layer of audible) {
       if (signal.aborted) throw Error("已取消匯出。");
@@ -394,7 +484,9 @@ async function mixProjectAudio(layers, duration, signal) {
       const source = context.createBufferSource();
       source.buffer = decoded;
       source.connect(context.destination);
-      source.start(layer.start, 0, Math.min(decoded.duration, layerEnd(layer) - layer.start));
+      const overlapStart = Math.max(range.start, layer.start);
+      const overlapEnd = Math.min(range.end, layerEnd(layer), layer.start + decoded.duration);
+      if (overlapEnd > overlapStart) source.start(overlapStart - range.start, overlapStart - layer.start, overlapEnd - overlapStart);
     }
   } finally {
     await decoder.close();
@@ -419,7 +511,8 @@ async function exportProject() {
     const format = $("editor-format").value;
     const fps = Number($("editor-fps").value);
     const dimensions = videoDimensions($("editor-resolution").value, settings.aspectRatio);
-    const duration = timelineDuration();
+    const range = activeProjectRange();
+    const duration = range.duration;
     const count = Math.ceil(duration * fps);
     const bitrate = dimensions.height >= 1080 || dimensions.width >= 1080 ? 8_000_000 : dimensions.height >= 720 || dimensions.width >= 720 ? 4_000_000 : 2_000_000;
     const codec = format === "webm" ? "vp9" : "avc";
@@ -433,7 +526,7 @@ async function exportProject() {
     output = new m.Output({ format: format === "webm" ? new m.WebMOutputFormat() : new m.Mp4OutputFormat(), target });
     const videoSource = new m.CanvasSource(canvas, { codec, bitrate, hardwareAcceleration });
     output.addVideoTrack(videoSource, { frameRate: fps });
-    const mixedAudio = await mixProjectAudio(state.layers, duration, signal);
+    const mixedAudio = await mixProjectAudio(state.layers, range, signal);
     const audioSource = mixedAudio ? new m.AudioBufferSource({ codec: audioCodec, ...audioEncodingOptions(audioCodec, m.Quality) }) : null;
     if (audioSource) output.addAudioTrack(audioSource);
     const created = await createVideoDecoders(m, state.layers);
@@ -442,8 +535,9 @@ async function exportProject() {
     for (const layer of state.layers.filter(layer => layer.type === "video")) {
       const timestamps = [];
       for (let index = 0; index < count; index++) {
-        const local = index / fps - layer.start;
-        if (local >= 0 && index / fps < layerEnd(layer) && local < layer.mediaDuration) timestamps.push(local);
+        const sourceTime = range.start + index / fps;
+        const local = sourceTime - layer.start;
+        if (local >= 0 && sourceTime < layerEnd(layer) && local < layer.mediaDuration) timestamps.push(local);
       }
       iterators.set(layer.id, decoders.get(layer.id).sink.samplesAtTimestamps(timestamps)[Symbol.asyncIterator]());
     }
@@ -452,13 +546,14 @@ async function exportProject() {
     for (let index = 0; index < count; index++) {
       if (signal.aborted) throw Error("已取消匯出。");
       const time = index / fps;
+      const sourceTime = range.start + time;
       context.fillStyle = "#080a0c";
       context.fillRect(0, 0, canvas.width, canvas.height);
-      drawBase(canvas, time);
+      drawBase(canvas, sourceTime);
       for (const layer of state.layers) {
-        if (!isLayerActive(layer, time)) continue;
+        if (!isLayerActive(layer, sourceTime)) continue;
         if (layer.type === "image") drawCover(context, layer.element, layer.element.naturalWidth, layer.element.naturalHeight);
-        else if (time - layer.start < layer.mediaDuration) {
+        else if (sourceTime - layer.start < layer.mediaDuration) {
           const { value: sample } = await iterators.get(layer.id).next();
           if (sample) {
             const rect = coverRect(sample.displayWidth, sample.displayHeight, canvas.width, canvas.height);
@@ -467,7 +562,7 @@ async function exportProject() {
           }
         }
       }
-      drawOverlays(context, time);
+      drawOverlays(context, sourceTime);
       await videoSource.add(time, Math.min(1 / fps, duration - time));
       if (audioSource && (index % fps === 0 || index === count - 1)) {
         const length = Math.min(mixedAudio.sampleRate, mixedAudio.length - audioOffset);
@@ -538,6 +633,76 @@ for (const [id, direction] of [["move-layer-up", 1], ["move-layer-down", -1]]) $
   [state.layers[index], state.layers[target]] = [state.layers[target], state.layers[index]];
   update();
 });
+for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
+  $(`trim-${edge}${suffix}`).addEventListener("input", () => {
+    state.trimInputsReady = true;
+    state.trimInputsFollowDuration = false;
+    const value = $(`trim-${edge}${suffix}`).value;
+    if (suffix) $(`trim-${edge}`).value = formatTrimTime(Number(value));
+    else if (Number.isFinite(parseTrimTime(value))) $(`trim-${edge}-range`).value = parseTrimTime(value);
+    updateTrimMarkers();
+    const length = parseTrimTime($("trim-end").value) - parseTrimTime($("trim-start").value);
+    $("trim-info").textContent = length > 0
+      ? `選取 ${formatTrimTime(length)}，按「套用裁剪」生效`
+      : "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間";
+  });
+  $(`trim-${edge}${suffix}`).addEventListener("change", applyProjectTrim);
+}
+$("trim-apply").addEventListener("click", applyProjectTrim);
+$("trim-reset").addEventListener("click", () => {
+  if (!hasProject() || state.exporting) return;
+  pauseProject();
+  state.trimStart = 0;
+  state.trimEnd = null;
+  state.time = 0;
+  state.trimInputsFollowDuration = false;
+  $("trim-info").textContent = `已恢復完整影片：${formatTrimTime(timelineDuration())}，裁剪時間已保留`;
+  update();
+});
+for (const mode of ["start", "body", "end"]) {
+  const handle = $(`trim-drag-${mode}`);
+  let drag = null;
+  const locked = () => !hasProject() || state.exporting;
+  handle.addEventListener("pointerdown", event => {
+    if (locked() || event.button !== 0) return;
+    const start = parseTrimTime($("trim-start").value);
+    const end = Math.min(timelineDuration(), parseTrimTime($("trim-end").value));
+    const width = $("trim-track").getBoundingClientRect().width;
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || width <= 0) return;
+    event.preventDefault();
+    drag = { id: event.pointerId, x: event.clientX, start, end, width, duration: timelineDuration() };
+    handle.setPointerCapture(event.pointerId);
+  });
+  handle.addEventListener("pointermove", event => {
+    if (!drag || drag.id !== event.pointerId || locked()) return;
+    const delta = (event.clientX - drag.x) / drag.width * drag.duration;
+    setTrimInputs(...moveTrimRange(drag.start, drag.end, delta, drag.duration, mode));
+  });
+  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) handle.addEventListener(type, event => {
+    if (!drag || drag.id !== event.pointerId) return;
+    const completed = type === "pointerup";
+    drag = null;
+    if (completed && !locked()) applyProjectTrim();
+    if (handle.hasPointerCapture(event.pointerId)) handle.releasePointerCapture(event.pointerId);
+  });
+  let keyboardChanged = false;
+  handle.addEventListener("keyup", event => {
+    if (keyboardChanged && ["ArrowLeft", "ArrowRight"].includes(event.key)) {
+      keyboardChanged = false;
+      applyProjectTrim();
+    }
+  });
+  handle.addEventListener("keydown", event => {
+    if (locked() || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+    event.preventDefault();
+    const start = parseTrimTime($("trim-start").value);
+    const end = Math.min(timelineDuration(), parseTrimTime($("trim-end").value));
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
+    keyboardChanged = true;
+    const delta = (event.key === "ArrowRight" ? 1 : -1) * (event.shiftKey ? 1 : .1);
+    setTrimInputs(...moveTrimRange(start, end, delta, timelineDuration(), mode));
+  });
+}
 $("project-seek").addEventListener("input", event => { pauseProject(); setProjectTime(event.target.value); });
 $("timeline").addEventListener("pointerdown", event => {
   if (event.button !== 0 || event.target.closest(".timeline-band")) return;
@@ -552,12 +717,13 @@ for (const type of ["pointerup", "pointercancel"]) $("timeline").addEventListene
   if ($("timeline").hasPointerCapture(event.pointerId)) $("timeline").releasePointerCapture(event.pointerId);
   $("timeline").classList.remove("dragging");
 });
-$("restart-project").addEventListener("click", () => { pauseProject(); setProjectTime(0); });
+$("restart-project").addEventListener("click", () => { pauseProject(); setProjectTime(activeProjectRange().start); });
 $("play-project").addEventListener("click", () => {
   if (state.playing) { pauseProject(); return; }
-  if (state.time >= timelineDuration()) state.time = 0;
+  const range = activeProjectRange();
+  if (state.time >= range.end) state.time = range.start;
   state.playing = true;
-  state.clockStart = performance.now() - state.time * 1000;
+  state.clockStart = performance.now() - (state.time - range.start) * 1000;
   syncPreviewVideos();
   updatePlayer();
 });

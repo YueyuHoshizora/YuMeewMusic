@@ -12,6 +12,15 @@ export function projectDuration(layers, baseDuration = 0) {
   return Math.max(1, finiteTime(baseDuration), ...layers.map(layerEnd));
 }
 
+export function projectTrimRange(duration, start = 0, end = null) {
+  const fullDuration = Math.max(.01, finiteTime(duration, 1));
+  const safeStart = Math.min(finiteTime(start), Math.max(0, fullDuration - .01));
+  const safeEnd = end === null
+    ? fullDuration
+    : Math.min(fullDuration, Math.max(safeStart + .01, finiteTime(end, fullDuration)));
+  return { start: safeStart, end: safeEnd, duration: safeEnd - safeStart };
+}
+
 export function isLayerActive(layer, time) {
   const start = finiteTime(layer.start);
   return time >= start && time < layerEnd(layer);

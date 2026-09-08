@@ -39,6 +39,13 @@ body.video-editor-body { min-width: 1320px; }
 .canvas-frame:fullscreen #video-preview { width: 100%; height: 100%; object-fit: contain; }
 .editor-player { display: grid; grid-template-columns: 38px 64px minmax(100px, 1fr) 64px 38px; align-items: center; gap: 9px; margin-top: 12px; color: var(--muted); font: 12px monospace; }
 .player-button { width: 36px; height: 32px; border: 0; border-radius: 7px; background: var(--primary); color: var(--on-primary); }
+.project-trim { margin-top: 12px; border-top: 1px solid var(--border); }
+.project-trim summary { padding: 12px 2px 0; color: var(--foreground); font-size: 13px; font-weight: 700; cursor: pointer; }
+.project-trim-controls { padding: 2px 4px 4px; }
+.project-trim-controls .field-label { margin-top: 12px; }
+.project-trim-controls input[type="range"] { width: 100%; }
+.project-trim-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.project-trim .trim-markers { margin-top: 12px; }
 .timeline-panel { padding: 14px; }
 .timeline { position: relative; margin-top: 10px; padding: 24px 6px 7px 78px; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--background) 70%, var(--card)); }
 .timeline-ruler { position: absolute; top: 0; right: 6px; left: 78px; height: 23px; color: var(--muted); font: 10px monospace; }

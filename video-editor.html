@@ -52,6 +52,29 @@
               <span id="total-time">00:01.0</span>
               <button id="restart-project" class="icon-button" type="button" aria-label="回到最前端">|◀</button>
             </div>
+            <details id="trim-panel" class="project-trim">
+              <summary>✂ 影片裁剪</summary>
+              <div class="project-trim-controls">
+                <p id="trim-empty" class="position-help">請先加入主畫面作品、影片或圖片，即可設定裁剪範圍。</p>
+                <label class="field-label" for="trim-start">開始時間（分：秒）</label>
+                <input id="trim-start" class="text-input" type="text" placeholder="00:00.00" value="00:00.00" />
+                <input id="trim-start-range" aria-label="裁剪開始時間" type="range" min="0" step="0.01" value="0" />
+                <label class="field-label" for="trim-end">結束時間（分：秒）</label>
+                <input id="trim-end" class="text-input" type="text" placeholder="01:30.00" value="00:01.00" />
+                <input id="trim-end-range" aria-label="裁剪結束時間" type="range" min="0" step="0.01" value="1" />
+                <p id="trim-info" class="position-help" role="status"></p>
+                <div class="project-trim-actions"><button id="trim-apply" class="text-button" type="button">套用裁剪</button><button id="trim-reset" class="text-button" type="button">恢復完整影片</button></div>
+                <div id="trim-markers" class="trim-markers" hidden>
+                  <div id="trim-track" class="trim-track"><div id="trim-selection">
+                    <button id="trim-drag-start" class="trim-handle start" type="button" aria-label="拖曳調整裁剪開始時間" title="拖曳調整開始時間"></button>
+                    <button id="trim-drag-body" class="trim-drag-body" type="button" aria-label="拖曳平移裁剪範圍" title="拖曳平移範圍；方向鍵微調"><span id="trim-selection-duration"></span></button>
+                    <button id="trim-drag-end" class="trim-handle end" type="button" aria-label="拖曳調整裁剪結束時間" title="拖曳調整結束時間"></button>
+                  </div></div>
+                  <p class="trim-drag-hint">拖曳色帶或兩端 · 放開自動套用</p>
+                  <div class="trim-marker-labels"><span id="trim-start-label"></span><span id="trim-end-label"></span></div>
+                </div>
+              </div>
+            </details>
           </div>
 
           <div class="panel timeline-panel">

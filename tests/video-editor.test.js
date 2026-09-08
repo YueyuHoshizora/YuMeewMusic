@@ -9,6 +9,7 @@ import {
   layerEnd,
   nudgeLayerTime,
   projectDuration,
+  projectTrimRange,
 } from "../js/video-editor-core.js";
 
 test("video and image layers produce stable timeline ranges", () => {
@@ -22,6 +23,12 @@ test("video and image layers produce stable timeline ranges", () => {
   assert.equal(isLayerActive(video, 8), false);
   assert.equal(isLayerActive(image, 11.9), true);
   assert.equal(formatEditorTime(62.35), "01:02.4");
+});
+
+test("project trimming clamps a valid export range and preserves a full-range sentinel", () => {
+  assert.deepEqual(projectTrimRange(20, 5, 12), { start: 5, end: 12, duration: 7 });
+  assert.deepEqual(projectTrimRange(20, 0, null), { start: 0, end: 20, duration: 20 });
+  assert.deepEqual(projectTrimRange(20, 19.999, 25), { start: 19.99, end: 20, duration: .010000000000001563 });
 });
 
 test("nudging a start moves the whole layer while nudging an end changes only the end", () => {
@@ -66,6 +73,8 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);
   for (const delta of ["0.5", "0.1", "-0.5", "-0.1"]) assert.equal((html.match(new RegExp(`data-delta="${delta.replace("-", "\\-")}"`, "g")) || []).length, 2);
   assert.match(html, /id="timeline"[^>]*aria-label="可拖曳播放時間軸"/);
+  for (const id of ["trim-start", "trim-end", "trim-selection", "trim-drag-start", "trim-drag-body", "trim-drag-end", "trim-apply", "trim-reset"]) assert.ok(ids.includes(id), id);
+  assert.match(html, /拖曳色帶或兩端 · 放開自動套用/);
   assert.match(html, /id="export-project"[^>]*>↓ 匯出影片<\/button>/);
   assert.equal((html.match(/data-confirm-return/g) || []).length, 2);
   assert.match(script, /window\.confirm\("返回主畫面則不會保留所有修改結果，是否確定？"\)/);
@@ -77,6 +86,8 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(script, /addEventListener\("pointerdown"/);
   assert.match(script, /addEventListener\("pointermove"/);
   assert.match(script, /setPointerCapture/);
+  assert.match(script, /const sourceTime = range\.start \+ time/);
+  assert.match(script, /mixProjectAudio\(state\.layers, range, signal\)/);
   assert.match(script, /drawSubtitles/);
   assert.match(script, /originalBuffer: state\.base\.audioBuffer \|\| \{ duration: timelineDuration\(\) \}/);
   assert.match(script, /drawIdentity/);

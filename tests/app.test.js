@@ -159,8 +159,9 @@ test("editor initializes, switches formats and reaches download for every format
     elements.get("format").listeners.change();
     assert.equal(elements.get("export").textContent, `↓ 匯出 ${format.toUpperCase()} ↗`);
     assert.equal(elements.get("export").disabled, false);
-    assert.equal(elements.get("resolution").disabled, !type.video);
-    assert.equal(elements.get("fps").disabled, !type.video);
+    assert.equal(elements.get("video-export-settings").hidden, !type.video);
+    assert.equal(elements.get("resolution").disabled, false);
+    assert.equal(elements.get("fps").disabled, false);
     await elements.get("export").listeners.click();
     assert.equal(encoded.at(-1), format);
     assert.equal(downloads.at(-1), exportFilename("song.wav", format, "1080", "60"));

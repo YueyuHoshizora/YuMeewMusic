@@ -226,7 +226,8 @@ function update() {
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
   const format = $("format").value;
   const type = getFormat(format);
-  $("profile").disabled = $("resolution").disabled = $("fps").disabled = locked || !type.video;
+  $("video-export-settings").hidden = !type.video;
+  $("profile").disabled = $("resolution").disabled = $("fps").disabled = locked;
   $("format-description").textContent = type.description + (type.video ? "" : " · 不包含頻譜畫面");
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;
   $("audio-name").textContent = state.loading ? "正在讀取音樂…" : state.name || "選擇本機音樂";

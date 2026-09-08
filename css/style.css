@@ -859,3 +859,5 @@ header { flex-wrap: nowrap; }
 .github-link { flex-shrink: 0; color: var(--muted); font-size: 14px; text-decoration: none; padding: 8px 0; }
 .github-link:hover { color: var(--primary-text); text-decoration: underline; }
 .github-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 3px; }
+.tool-link { flex-shrink: 0; border: 1px solid var(--primary); border-radius: 8px; background: var(--tint); color: var(--primary-text); padding: 8px 13px; font-size: 14px; font-weight: 650; text-decoration: none; }
+.tool-link:hover { background: var(--hover); }

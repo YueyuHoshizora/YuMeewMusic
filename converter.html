@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在瀏覽器內轉換影片與音樂格式，檔案不會上傳伺服器。" />
+    <title>任意轉 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/converter.css" />
+    <script type="module" src="./js/converter.js"></script>
+  </head>
+  <body class="converter-body">
+    <header class="converter-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">ANY CONVERTER</span></a>
+      <span class="local"><i></i>影片與音樂只在瀏覽器內處理</span>
+      <a class="reset-settings converter-back" href="./">← 返回主畫面</a>
+    </header>
+    <main class="converter-main">
+      <section class="converter-heading">
+        <div>
+          <div class="eyebrow">LOCAL MEDIA CONVERTER</div>
+          <h1>任意轉<span>。</span></h1>
+          <p>加入影片或音樂，選擇格式後直接下載。原始檔案與轉換內容都不會離開你的瀏覽器。</p>
+        </div>
+        <span id="converter-status" class="converter-status" role="status">等待選擇檔案</span>
+      </section>
+
+      <section class="converter-workspace">
+        <div class="panel converter-source">
+          <div class="section-title"><span>01</span><h2>輸入檔案</h2></div>
+          <button id="converter-drop" class="converter-drop" type="button" aria-describedby="converter-error">
+            <span class="converter-drop-icon" aria-hidden="true">＋</span>
+            <span><strong id="converter-file-name">選擇影片或音樂</strong><small id="converter-file-help">拖放檔案或點擊選擇</small></span>
+          </button>
+          <input id="converter-input" type="file" accept="video/*,audio/*" hidden />
+          <p id="converter-error" class="converter-error" role="alert" hidden></p>
+          <div id="converter-file-info" class="converter-file-info" hidden>
+            <span id="converter-kind" class="converter-kind"></span>
+            <dl>
+              <div><dt>容器</dt><dd id="converter-container">—</dd></div>
+              <div><dt>內容</dt><dd id="converter-tracks">—</dd></div>
+              <div><dt>長度</dt><dd id="converter-duration">—</dd></div>
+              <div><dt>大小</dt><dd id="converter-size">—</dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="converter-arrow" aria-hidden="true">→</div>
+
+        <div class="panel converter-output">
+          <div class="section-title"><span>02</span><h2>選擇輸出</h2></div>
+          <label class="field-label" for="converter-format">輸出格式</label>
+          <select id="converter-format" class="setting-select" disabled>
+            <option value="">請先選擇檔案</option>
+          </select>
+          <p id="converter-format-description" class="converter-format-description">辨識檔案後會顯示可用格式。</p>
+          <button id="converter-start" class="export-button converter-start" type="button" disabled>開始轉換</button>
+          <progress id="converter-progress" value="0" max="100" aria-label="轉換進度" hidden></progress>
+          <div class="converter-progress-row">
+            <span id="converter-progress-text" hidden>正在準備…</span>
+            <button id="converter-cancel" class="text-button" type="button" hidden>取消轉換</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="converter-rules panel">
+        <div><strong>影片輸入</strong><span>可輸出 MP4、MOV；含有音軌時也可輸出 MP3、M4A、FLAC、WAV。</span></div>
+        <div><strong>音樂輸入</strong><span>可輸出 MP3、M4A、FLAC、WAV。</span></div>
+        <div><strong>本機完成</strong><span>輸入、解碼、轉碼與下載都在目前分頁處理。</span></div>
+      </section>
+    </main>
+  </body>
+</html>

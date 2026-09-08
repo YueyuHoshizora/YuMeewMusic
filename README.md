@@ -4,6 +4,8 @@
 
 **線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
 
+主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入可轉成 MP4、MOV、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
+
 ## 隱私與檔案限制
 
 所有媒體讀取、解碼、裁剪、繪製與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器與 WASM 隨網站提供，不依賴 CDN。
@@ -135,13 +137,16 @@ MP4／MOV 匯出會針對輸出尺寸、位元率與影格率偵測編碼能力�
 | --- | --- |
 | `index.html` | 頁面與原生表單控制項 |
 | `subtitle-editor.html` | 獨立字幕編輯器與時間軸介面 |
+| `converter.html` | 獨立影片／音樂格式轉換頁面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
 | `css/subtitle-editor.css` | 字幕編輯器、音訊波形與字幕色帶樣式 |
+| `css/converter.css` | 任意轉頁面配置與狀態樣式 |
 | `js/app.js` | 本機讀檔、播放、互動與狀態管理 |
 | `js/subtitle-editor.js` | 字幕清單、色帶拖曳、SRT 下載與覆寫保存 |
 | `js/visualizer.js` | FFT、動畫、歌曲資訊與字幕繪製 |
 | `js/styles.js` | 穩定的動畫編號與名稱 |
 | `js/export.js` | 客戶端音訊／影片編碼 |
+| `js/converter.js`、`js/converter-core.js` | 任意轉介面、媒體辨識與轉碼流程 |
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |
 | `js/trim.js`、`js/trim-time.js`、`js/trim-range.js` | 音訊裁剪、時間解析與拖曳範圍計算 |
 | `js/subtitles.js` | 字幕解析與時間對應 |

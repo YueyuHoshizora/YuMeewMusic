@@ -5,7 +5,7 @@ import { draw } from "./visualizer.js";
 import { getFormat } from "./formats.js";
 
 const registrations = new Map();
-async function registerAudioEncoder(codec) {
+export async function registerAudioEncoder(codec) {
   if (!registrations.has(codec)) {
     const task =
       codec === "mp3"

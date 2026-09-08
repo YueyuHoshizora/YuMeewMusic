@@ -564,6 +564,11 @@ $("play-project").addEventListener("click", () => {
 $("fullscreen-preview").addEventListener("click", () => document.fullscreenElement ? document.exitFullscreen() : $("canvas-frame").requestFullscreen());
 $("export-project").addEventListener("click", () => void exportProject());
 $("cancel-export").addEventListener("click", () => state.exportController?.abort());
+for (const link of document.querySelectorAll("[data-confirm-return]")) {
+  link.addEventListener("click", event => {
+    if (!window.confirm("返回主畫面則不會保留所有修改結果，是否確定？")) event.preventDefault();
+  });
+}
 window.addEventListener("beforeunload", () => {
   for (const layer of state.layers) URL.revokeObjectURL(layer.url);
   if (state.base.audioUrl) URL.revokeObjectURL(state.base.audioUrl);

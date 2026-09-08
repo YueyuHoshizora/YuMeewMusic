@@ -48,6 +48,9 @@ body.video-editor-body { min-width: 1320px; }
 .timeline-band { position: absolute; top: 3px; height: 24px; min-width: 3px; padding: 0 7px; overflow: hidden; border: 1px solid var(--tint-border); border-radius: 5px; background: var(--primary); color: var(--on-primary); font-size: 10px; line-height: 22px; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .timeline-band.selected { box-shadow: 0 0 0 2px var(--foreground); }
 #playhead { position: absolute; z-index: 4; top: 21px; bottom: 0; left: 78px; width: 2px; border-radius: 0; background: var(--error); pointer-events: none; }
+#playhead::before { content: ""; position: absolute; top: -5px; left: -5px; width: 12px; height: 12px; border-radius: 50%; background: var(--error); }
+#timeline.dragging { cursor: grabbing; }
+#timeline:not(.dragging) { cursor: ew-resize; }
 .empty-inspector { margin-top: 28px; color: var(--muted); font-size: 13px; line-height: 1.7; }
 .selected-file { display: flex; min-width: 0; flex-direction: column; gap: 5px; margin-top: 22px; padding: 11px; border-radius: 8px; background: var(--surface); }
 .selected-file span { color: var(--primary-text); font-size: 11px; }
@@ -57,6 +60,9 @@ body.video-editor-body { min-width: 1320px; }
 .check-row span, .check-row strong, .check-row small { display: block; }
 .check-row strong { font-size: 13px; }
 .check-row small { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.time-nudges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 7px; }
+.time-nudges button { padding: 6px 2px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--muted); font-size: 10px; }
+.time-nudges button:hover { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
 .layer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
 .danger-button { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); }
 .export-box { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }

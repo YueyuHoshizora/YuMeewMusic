@@ -56,7 +56,7 @@
 
           <div class="panel timeline-panel">
             <div class="timeline-heading"><strong>時間軸</strong><span>點擊色帶可選取圖層</span></div>
-            <div id="timeline" class="timeline"><div id="timeline-ruler" class="timeline-ruler"></div><div id="timeline-tracks"></div><i id="playhead"></i></div>
+            <div id="timeline" class="timeline" aria-label="可拖曳播放時間軸"><div id="timeline-ruler" class="timeline-ruler"></div><div id="timeline-tracks"></div><i id="playhead" aria-hidden="true"></i></div>
           </div>
         </section>
 
@@ -67,9 +67,21 @@
             <div class="selected-file"><span id="selected-kind"></span><strong id="selected-name"></strong></div>
             <label class="field-label" for="layer-start">開始時間（秒）</label>
             <input id="layer-start" class="text-input" type="number" min="0" step="0.1" />
+            <div class="time-nudges" aria-label="微調開始時間">
+              <button type="button" data-time-field="start" data-delta="0.5">+0.5 秒</button>
+              <button type="button" data-time-field="start" data-delta="0.1">+0.1 秒</button>
+              <button type="button" data-time-field="start" data-delta="-0.5">−0.5 秒</button>
+              <button type="button" data-time-field="start" data-delta="-0.1">−0.1 秒</button>
+            </div>
             <div id="video-time-controls">
               <label class="field-label" for="layer-end">結束時間（秒）</label>
               <input id="layer-end" class="text-input" type="number" min="0.1" step="0.1" />
+              <div class="time-nudges" aria-label="微調結束時間">
+                <button type="button" data-time-field="end" data-delta="0.5">+0.5 秒</button>
+                <button type="button" data-time-field="end" data-delta="0.1">+0.1 秒</button>
+                <button type="button" data-time-field="end" data-delta="-0.5">−0.5 秒</button>
+                <button type="button" data-time-field="end" data-delta="-0.1">−0.1 秒</button>
+              </div>
               <label class="check-row"><input id="layer-audio" type="checkbox" /><span><strong>包含這段影片的音訊</strong><small>預設關閉</small></span></label>
             </div>
             <div id="image-time-controls" hidden>

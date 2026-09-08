@@ -249,6 +249,21 @@ function patchSelected(patch) {
   update();
 }
 
+function nudgeSelectedTime(field, delta) {
+  const layer = selectedLayer();
+  if (!layer || (field === "end" && layer.type !== "video")) return;
+  patchSelected({ [field]: Math.round((Number(layer[field]) + Number(delta)) * 10) / 10 });
+}
+
+function seekFromTimeline(event) {
+  const timeline = $("timeline");
+  const rect = timeline.getBoundingClientRect();
+  const left = rect.left + 78;
+  const width = Math.max(1, rect.width - 84);
+  pauseProject();
+  setProjectTime((event.clientX - left) / width * timelineDuration());
+}
+
 function setProjectTime(time) {
   state.time = Math.max(0, Math.min(timelineDuration(), Number(time) || 0));
   if (state.base.audioElement) {
@@ -496,6 +511,9 @@ $("layer-start").addEventListener("input", event => patchSelected({ start: event
 $("layer-end").addEventListener("input", event => patchSelected({ end: event.target.value }));
 $("layer-duration").addEventListener("input", event => patchSelected({ duration: event.target.value }));
 $("layer-audio").addEventListener("change", event => patchSelected({ audio: event.target.checked }));
+for (const button of document.querySelectorAll("[data-time-field][data-delta]")) {
+  button.addEventListener("click", () => nudgeSelectedTime(button.dataset.timeField, button.dataset.delta));
+}
 $("remove-layer").addEventListener("click", () => {
   const index = state.layers.findIndex(layer => layer.id === state.selectedId);
   if (index < 0) return;
@@ -513,6 +531,19 @@ for (const [id, direction] of [["move-layer-up", 1], ["move-layer-down", -1]]) $
   update();
 });
 $("project-seek").addEventListener("input", event => { pauseProject(); setProjectTime(event.target.value); });
+$("timeline").addEventListener("pointerdown", event => {
+  if (event.button !== 0 || event.target.closest(".timeline-band")) return;
+  $("timeline").setPointerCapture(event.pointerId);
+  $("timeline").classList.add("dragging");
+  seekFromTimeline(event);
+});
+$("timeline").addEventListener("pointermove", event => {
+  if ($("timeline").hasPointerCapture(event.pointerId)) seekFromTimeline(event);
+});
+for (const type of ["pointerup", "pointercancel"]) $("timeline").addEventListener(type, event => {
+  if ($("timeline").hasPointerCapture(event.pointerId)) $("timeline").releasePointerCapture(event.pointerId);
+  $("timeline").classList.remove("dragging");
+});
 $("restart-project").addEventListener("click", () => { pauseProject(); setProjectTime(0); });
 $("play-project").addEventListener("click", () => {
   if (state.playing) { pauseProject(); return; }

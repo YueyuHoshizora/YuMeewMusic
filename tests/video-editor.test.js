@@ -52,11 +52,18 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(html, /id="base-layer"[^>]*>.*主畫面影片本體.*基礎鎖定/s);
   assert.match(html, /id="layer-audio"[^>]*type="checkbox"/);
   assert.doesNotMatch(html, /id="layer-audio"[^>]*checked/);
+  assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);
+  assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);
+  for (const delta of ["0.5", "0.1", "-0.5", "-0.1"]) assert.equal((html.match(new RegExp(`data-delta="${delta.replace("-", "\\-")}"`, "g")) || []).length, 2);
+  assert.match(html, /id="timeline"[^>]*aria-label="可拖曳播放時間軸"/);
   assert.match(script, /loadStoredMedia\("subtitle"\)/);
   assert.match(script, /loadStoredMedia\("audio"\)/);
   assert.match(script, /loadStoredMedia\("image"\)/);
   assert.match(script, /drawBase\(canvas, time\)/);
   assert.match(script, /!state\.layers\.length && !state\.base\.audioBuffer/);
+  assert.match(script, /addEventListener\("pointerdown"/);
+  assert.match(script, /addEventListener\("pointermove"/);
+  assert.match(script, /setPointerCapture/);
   assert.match(script, /drawSubtitles/);
   assert.match(script, /drawIdentity/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);

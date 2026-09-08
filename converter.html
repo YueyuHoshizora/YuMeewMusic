@@ -31,9 +31,9 @@
           <div class="section-title"><span>01</span><h2>輸入檔案</h2></div>
           <button id="converter-drop" class="converter-drop" type="button" aria-describedby="converter-error">
             <span class="converter-drop-icon" aria-hidden="true">＋</span>
-            <span><strong id="converter-file-name">選擇影片或音樂</strong><small id="converter-file-help">拖放檔案或點擊選擇</small></span>
+            <span><strong id="converter-file-name">選擇影片或音樂</strong><small id="converter-file-help">MP4 · MOV · WebM · MP3 · M4A · FLAC · WAV</small></span>
           </button>
-          <input id="converter-input" type="file" accept="video/*,audio/*" hidden />
+          <input id="converter-input" type="file" accept="video/webm,.webm,video/*,audio/*" hidden />
           <p id="converter-error" class="converter-error" role="alert" hidden></p>
           <div id="converter-file-info" class="converter-file-info" hidden>
             <span id="converter-kind" class="converter-kind"></span>
@@ -65,7 +65,7 @@
       </section>
 
       <section class="converter-rules panel">
-        <div><strong>影片輸入</strong><span>可輸出 MP4、MOV、WebM；含有音軌時也可輸出 MP3、M4A、FLAC、WAV。</span></div>
+        <div><strong>影片輸入</strong><span>支援 MP4、MOV、WebM 等瀏覽器可讀格式；可輸出 MP4、MOV、WebM，含音軌時也可轉成音訊。</span></div>
         <div><strong>音樂輸入</strong><span>可輸出 MP3、M4A、FLAC、WAV。</span></div>
         <div><strong>本機完成</strong><span>輸入、解碼、轉碼與下載都在目前分頁處理。</span></div>
       </section>

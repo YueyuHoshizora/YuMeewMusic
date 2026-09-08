@@ -103,7 +103,7 @@ async function loadFile(file) {
     populateFormats();
     status(`已辨識為${info.kind === 'video' ? '影片' : '音樂'}，請選擇輸出格式。`, 'success');
   } catch (cause) {
-    $('converter-file-help').textContent = '拖放檔案或點擊重新選擇';
+    $('converter-file-help').textContent = 'MP4 · MOV · WebM · MP3 · M4A · FLAC · WAV';
     error(cause.message || '無法讀取這個檔案，請確認格式是否受瀏覽器支援。');
   } finally {
     $('converter-drop').disabled = false;

@@ -4,7 +4,7 @@
 
 **線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
 
-主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入可轉成 MP4、MOV、WebM、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
+主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入明確支援 WebM，以及 MP4、MOV 等瀏覽器可讀格式，可轉成 MP4、MOV、WebM、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
 
 ## 隱私與檔案限制
 

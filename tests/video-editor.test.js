@@ -66,6 +66,7 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);
   for (const delta of ["0.5", "0.1", "-0.5", "-0.1"]) assert.equal((html.match(new RegExp(`data-delta="${delta.replace("-", "\\-")}"`, "g")) || []).length, 2);
   assert.match(html, /id="timeline"[^>]*aria-label="可拖曳播放時間軸"/);
+  assert.match(html, /id="export-project"[^>]*>↓ 匯出影片<\/button>/);
   assert.equal((html.match(/data-confirm-return/g) || []).length, 2);
   assert.match(script, /window\.confirm\("返回主畫面則不會保留所有修改結果，是否確定？"\)/);
   assert.match(script, /loadStoredMedia\("subtitle"\)/);

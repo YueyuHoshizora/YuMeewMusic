@@ -34,8 +34,12 @@ export function scalePcmSamples(source, volumePercent = 100) {
   return output;
 }
 
-export function audioEncodingOptions(codec) {
-  return ["aac", "mp3", "opus"].includes(codec) ? { bitrate: 192_000 } : {};
+export function audioEncodingOptions(codec, Quality = null) {
+  if (codec === "opus") {
+    if (!Quality) throw new Error("Opus encoding requires a Quality constructor.");
+    return { quality: new Quality({ bitrate: 192_000 }) };
+  }
+  return ["aac", "mp3"].includes(codec) ? { bitrate: 192_000 } : {};
 }
 
 /** Local WebCodecs encoding; no upload or remote encoding fallback. */
@@ -132,7 +136,7 @@ export async function encodeMedia({
       : null;
     const audio = new m.AudioBufferSource({
       codec: type.codec,
-      ...audioEncodingOptions(type.codec),
+      ...audioEncodingOptions(type.codec, m.Quality),
     });
     if (video) output.addVideoTrack(video, { frameRate: rate });
     output.addAudioTrack(audio);

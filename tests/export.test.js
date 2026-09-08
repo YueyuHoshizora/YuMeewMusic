@@ -45,11 +45,15 @@ test("export volume scales PCM from 10–200 percent and clips safely", () => {
 });
 
 test("every compressed main-export audio codec receives its required rate control", () => {
-  for (const codec of ["aac", "mp3", "opus"]) {
+  for (const codec of ["aac", "mp3"]) {
     const options = audioEncodingOptions(codec);
     assert.deepEqual(options, { bitrate: 192_000 });
     assert.doesNotThrow(() => new m.AudioBufferSource({ codec, ...options }));
   }
+
+  const opusOptions = audioEncodingOptions("opus", m.Quality);
+  assert.ok(opusOptions.quality instanceof m.Quality);
+  assert.doesNotThrow(() => new m.AudioBufferSource({ codec: "opus", ...opusOptions }));
   assert.deepEqual(audioEncodingOptions("flac"), {});
   assert.deepEqual(audioEncodingOptions("pcm-s16"), {});
 });

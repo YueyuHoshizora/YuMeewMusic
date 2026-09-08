@@ -25,6 +25,8 @@ test('converter page has every referenced control and only local assets', () => 
   assert.match(html, /影片與音樂只在瀏覽器內處理/);
   assert.match(html, /id="converter-input"[^>]*accept="[^"]*video\/webm[^"]*\.webm/);
   assert.match(html, /支援 MP4、MOV、WebM/);
-  assert.match(readFileSync('index.html', 'utf8'), /href="\.\/converter\.html"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*>任意轉 ↗<\/a>/);
+  const mainHtml = readFileSync('index.html', 'utf8');
+  assert.match(mainHtml, /href="\.\/converter\.html"[^>]*>任意轉<\/a>/);
+  assert.doesNotMatch(mainHtml, /href="\.\/converter\.html"[^>]*target="_blank"/);
   assert.match(readFileSync('scripts/serve.js', 'utf8'), /"converter\.html"/);
 });

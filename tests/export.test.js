@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { encodeMedia, scalePcmSamples } from "../js/export.js";
+import { audioEncodingOptions, encodeMedia, scalePcmSamples } from "../js/export.js";
 import { FORMATS, getFormat, exportFilename } from "../js/formats.js";
 import * as m from "../vendor/mediabunny.min.mjs";
 
@@ -42,6 +42,16 @@ test("export volume scales PCM from 10–200 percent and clips safely", () => {
   assert.ok(Math.abs(quiet[1] - .05) < 1e-8);
   assert.deepEqual([...scalePcmSamples(Float32Array.from([-.5, .5]), 1)], [...quiet]);
   assert.deepEqual([...scalePcmSamples(Float32Array.from([-.5, .5]))], [-.5, .5]);
+});
+
+test("every compressed main-export audio codec receives its required rate control", () => {
+  for (const codec of ["aac", "mp3", "opus"]) {
+    const options = audioEncodingOptions(codec);
+    assert.deepEqual(options, { bitrate: 192_000 });
+    assert.doesNotThrow(() => new m.AudioBufferSource({ codec, ...options }));
+  }
+  assert.deepEqual(audioEncodingOptions("flac"), {});
+  assert.deepEqual(audioEncodingOptions("pcm-s16"), {});
 });
 
 test(

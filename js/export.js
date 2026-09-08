@@ -115,7 +115,7 @@ export async function encodeMedia({
       : null;
     const audio = new m.AudioBufferSource({
       codec: type.codec,
-      ...(type.codec === "flac" ? {} : { bitrate: 192_000 }),
+      ...(["aac", "mp3"].includes(type.codec) ? { bitrate: 192_000 } : {}),
     });
     if (video) output.addVideoTrack(video, { frameRate: rate });
     output.addAudioTrack(audio);

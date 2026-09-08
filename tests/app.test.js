@@ -205,7 +205,7 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(elements.get("appearance-mode").value, "dark");
   assert.equal(elements.get("export").disabled, false);
   assert.match(elements.get("audio-info").textContent, /01:05/);
-  assert.equal(downloads.length, 7);
+  assert.equal(downloads.length, Object.keys(FORMATS).length + 2);
   elements.get("trim-start").value = "00:10.00";
   elements.get("trim-end").value = "00:30.00";
   elements.get("trim-start-range").value = "10";

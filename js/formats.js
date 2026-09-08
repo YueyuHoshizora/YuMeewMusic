@@ -34,6 +34,13 @@ export const FORMATS = Object.freeze({
     mime: "audio/flac",
     description: "純音訊 · FLAC 無損編碼",
   },
+  wav: {
+    video: false,
+    codec: "pcm-s16",
+    container: "WavOutputFormat",
+    mime: "audio/wav",
+    description: "純音訊 · WAV 16-bit PCM",
+  },
 });
 export function getFormat(format) {
   if (!Object.hasOwn(FORMATS, format)) throw Error("不支援的輸出格式。");

@@ -43,7 +43,7 @@ test("export volume scales PCM from 10–200 percent and clips safely", () => {
 });
 
 test(
-  "MP3 and FLAC encode actual stereo audio with correct containers and duration",
+  "MP3, FLAC and WAV encode actual stereo audio with correct containers and duration",
   { timeout: 30000 },
   async () => {
     const original = globalThis.AudioBuffer;
@@ -53,7 +53,7 @@ test(
       for (let c = 0; c < 2; c++)
         for (let i = 0; i < buffer.length; i++)
           buffer.data[c][i] = 0.2 * Math.sin(((i * (440 + c * 220)) / 48000) * 2 * Math.PI);
-      for (const format of ["mp3", "flac"]) {
+      for (const format of ["mp3", "flac", "wav"]) {
         let progress = 0;
         const blob = await encodeMedia({
           format,
@@ -68,10 +68,11 @@ test(
         assert.equal(progress, 100);
         const data = new Uint8Array(await blob.arrayBuffer());
         if (format === "flac") assert.equal(new TextDecoder().decode(data.slice(0, 4)), "fLaC");
+        if (format === "wav") assert.equal(new TextDecoder().decode(data.slice(0, 4)), "RIFF");
         const input = new m.Input({ source: new m.BufferSource(data), formats: m.ALL_FORMATS });
         try {
           const track = await input.getPrimaryAudioTrack();
-          assert.equal(track.codec, format);
+          assert.equal(track.codec, format === "wav" ? "pcm-s16" : format);
           assert.equal(await track.getNumberOfChannels(), 2);
           assert.ok(Math.abs((await input.computeDuration()) - buffer.duration) < 0.1);
           assert.equal((await input.getVideoTracks()).length, 0);

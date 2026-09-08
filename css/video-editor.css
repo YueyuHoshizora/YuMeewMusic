@@ -1,0 +1,64 @@
+body.video-editor-body { min-width: 1320px; }
+.video-editor-header { justify-content: space-between; }
+.video-editor-back { text-decoration: none; }
+.video-editor-main { max-width: 1660px; padding-top: 30px; }
+.video-editor-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 24px; }
+.video-editor-heading p { max-width: 780px; margin: 0; color: var(--muted); font-size: 14px; }
+.editor-status { max-width: 360px; color: var(--muted); font-size: 13px; text-align: right; line-height: 1.5; }
+.editor-status.success { color: var(--primary-text); }
+.editor-status.error { color: var(--error-text); }
+.video-editor-grid { display: grid; grid-template-columns: 270px minmax(600px, 1fr) 290px; gap: 18px; align-items: start; }
+.layer-library, .layer-inspector { min-height: 720px; }
+.layer-add { display: flex; width: 100%; align-items: center; justify-content: space-between; margin-top: 14px; padding: 13px; border: 1px dashed var(--border); border-radius: 9px; background: var(--tint); color: var(--foreground); }
+.layer-add:hover { border-color: var(--primary); background: var(--hover); }
+.layer-add small { color: var(--muted); }
+.layer-heading { display: flex; justify-content: space-between; margin: 26px 0 10px; font-size: 13px; }
+.layer-heading small { color: var(--muted); }
+.layer-list { display: flex; flex-direction: column-reverse; gap: 7px; }
+.layer-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 9px; width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); text-align: left; }
+.layer-row:hover, .layer-row.selected { border-color: var(--primary); background: var(--tint); }
+.layer-row > span, .fixed-layer > span { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 7px; background: var(--tint); color: var(--primary-text); font-size: 12px; }
+.layer-row div, .fixed-layer div { min-width: 0; }
+.layer-row strong, .layer-row small, .fixed-layer strong, .fixed-layer small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer-row strong, .fixed-layer strong { font-size: 13px; }
+.layer-row small, .fixed-layer small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.layer-row b, .fixed-layer b { color: var(--muted); font-size: 10px; font-weight: 500; }
+.fixed-layers { display: flex; flex-direction: column-reverse; gap: 7px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.fixed-layer { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 9px; border: 1px solid var(--tint-border); border-radius: 8px; background: var(--tint); }
+.fixed-layer.inactive { opacity: .5; }
+.editor-stage { display: grid; gap: 18px; }
+.preview-panel { padding: 14px; }
+.preview-heading, .timeline-heading { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }
+.preview-heading div { display: flex; gap: 10px; align-items: center; }
+.preview-heading span, .timeline-heading strong { font-size: 13px; }
+.preview-heading small, .timeline-heading span { color: var(--muted); font-size: 11px; }
+.canvas-frame { display: grid; height: 480px; margin-top: 8px; place-items: center; overflow: hidden; border-radius: 9px; background: #050607; }
+#video-preview { display: block; max-width: 100%; max-height: 100%; box-shadow: 0 12px 45px #0008; }
+.canvas-frame:fullscreen { width: 100vw; height: 100vh; border-radius: 0; background: #000; }
+.canvas-frame:fullscreen #video-preview { width: 100%; height: 100%; object-fit: contain; }
+.editor-player { display: grid; grid-template-columns: 38px 64px minmax(100px, 1fr) 64px 38px; align-items: center; gap: 9px; margin-top: 12px; color: var(--muted); font: 12px monospace; }
+.player-button { width: 36px; height: 32px; border: 0; border-radius: 7px; background: var(--primary); color: var(--on-primary); }
+.timeline-panel { padding: 14px; }
+.timeline { position: relative; margin-top: 10px; padding: 24px 6px 7px 78px; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in srgb, var(--background) 70%, var(--card)); }
+.timeline-ruler { position: absolute; top: 0; right: 6px; left: 78px; height: 23px; color: var(--muted); font: 10px monospace; }
+.timeline-tick { position: absolute; top: 4px; transform: translateX(-50%); }
+.timeline-track { position: relative; height: 30px; margin-bottom: 5px; border-radius: 5px; background: var(--surface); }
+.timeline-track::before { content: attr(data-label); position: absolute; right: calc(100% + 8px); width: 64px; overflow: hidden; color: var(--muted); font-size: 10px; line-height: 30px; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-band { position: absolute; top: 3px; height: 24px; min-width: 3px; padding: 0 7px; overflow: hidden; border: 1px solid var(--tint-border); border-radius: 5px; background: var(--primary); color: var(--on-primary); font-size: 10px; line-height: 22px; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.timeline-band.selected { box-shadow: 0 0 0 2px var(--foreground); }
+#playhead { position: absolute; z-index: 4; top: 21px; bottom: 0; left: 78px; width: 2px; border-radius: 0; background: var(--error); pointer-events: none; }
+.empty-inspector { margin-top: 28px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.selected-file { display: flex; min-width: 0; flex-direction: column; gap: 5px; margin-top: 22px; padding: 11px; border-radius: 8px; background: var(--surface); }
+.selected-file span { color: var(--primary-text); font-size: 11px; }
+.selected-file strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.check-row { display: flex; gap: 10px; margin-top: 22px; color: var(--foreground); }
+.check-row input { margin-top: 3px; }
+.check-row span, .check-row strong, .check-row small { display: block; }
+.check-row strong { font-size: 13px; }
+.check-row small { margin-top: 4px; color: var(--muted); font-size: 11px; }
+.layer-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+.danger-button { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); }
+.export-box { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+.export-box .field-label { margin-top: 15px; margin-bottom: 7px; }
+.export-box .export-button { margin-top: 18px; }
+#editor-progress { width: 100%; margin-top: 12px; }

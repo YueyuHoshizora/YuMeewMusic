@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="語喵影片是在瀏覽器內完成的影片與圖片圖層編輯器。" />
+    <title>語喵影片 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/video-editor.css" />
+    <script type="module" src="./js/video-editor.js"></script>
+  </head>
+  <body class="video-editor-body">
+    <header class="video-editor-header">
+      <a class="brand" href="./" aria-label="回到 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">▶</span>語喵影片<span class="brand-sub">VIDEO LAYERS</span></a>
+      <span class="local"><i></i>影片、圖片與匯出只在瀏覽器內處理</span>
+      <a class="text-button video-editor-back" href="./">← 返回主畫面</a>
+    </header>
+
+    <main class="video-editor-main">
+      <section class="video-editor-heading">
+        <div><div class="eyebrow">YUMEOW VIDEO</div><h1>把畫面放進時間裡<span>。</span></h1><p>加入影片與圖片，設定它們在時間軸上的位置；字幕與個人識別會自動置於最上層。</p></div>
+        <div id="editor-status" class="editor-status" role="status">請加入第一個影片或圖片。</div>
+      </section>
+
+      <section class="video-editor-grid">
+        <aside class="panel layer-library">
+          <div class="section-title"><span>01</span><h2>加入素材</h2></div>
+          <button id="add-video" class="layer-add" type="button"><strong>＋ 影片</strong><small>MP4 · MOV · WebM</small></button>
+          <input id="video-input" type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" multiple hidden />
+          <button id="add-image" class="layer-add" type="button"><strong>＋ 圖片</strong><small>JPG · PNG · WebP</small></button>
+          <input id="image-input" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden />
+          <p id="file-error" class="file-error" role="alert" hidden></p>
+
+          <div class="layer-heading"><span>圖層</span><small>上方會蓋住下方</small></div>
+          <div id="layer-list" class="layer-list" aria-label="影片圖層清單"></div>
+          <div class="fixed-layers" aria-label="固定最高圖層">
+            <div id="subtitle-layer" class="fixed-layer"><span>CC</span><div><strong>字幕</strong><small>固定最高圖層</small></div><b>鎖定</b></div>
+            <div id="identity-layer" class="fixed-layer"><span>◎</span><div><strong>個人識別</strong><small>固定最高圖層</small></div><b>鎖定</b></div>
+          </div>
+        </aside>
+
+        <section class="editor-stage">
+          <div class="panel preview-panel">
+            <div class="preview-heading"><div><span>即時預覽</span><small id="preview-size">16:9</small></div><button id="fullscreen-preview" class="icon-button" type="button" aria-label="全螢幕預覽">⛶</button></div>
+            <div id="canvas-frame" class="canvas-frame"><canvas id="video-preview" width="1280" height="720" aria-label="語喵影片預覽"></canvas></div>
+            <div class="editor-player">
+              <button id="play-project" class="player-button" type="button" disabled aria-label="播放">▶</button>
+              <span id="current-time">00:00.0</span>
+              <input id="project-seek" type="range" min="0" max="1" step="0.01" value="0" disabled aria-label="專案播放進度" />
+              <span id="total-time">00:01.0</span>
+              <button id="restart-project" class="icon-button" type="button" aria-label="回到最前端">|◀</button>
+            </div>
+          </div>
+
+          <div class="panel timeline-panel">
+            <div class="timeline-heading"><strong>時間軸</strong><span>點擊色帶可選取圖層</span></div>
+            <div id="timeline" class="timeline"><div id="timeline-ruler" class="timeline-ruler"></div><div id="timeline-tracks"></div><i id="playhead"></i></div>
+          </div>
+        </section>
+
+        <aside class="panel layer-inspector">
+          <div class="section-title"><span>02</span><h2>圖層設定</h2></div>
+          <div id="empty-inspector" class="empty-inspector">從左側加入並選取影片或圖片。</div>
+          <div id="layer-controls" hidden>
+            <div class="selected-file"><span id="selected-kind"></span><strong id="selected-name"></strong></div>
+            <label class="field-label" for="layer-start">開始時間（秒）</label>
+            <input id="layer-start" class="text-input" type="number" min="0" step="0.1" />
+            <div id="video-time-controls">
+              <label class="field-label" for="layer-end">結束時間（秒）</label>
+              <input id="layer-end" class="text-input" type="number" min="0.1" step="0.1" />
+              <label class="check-row"><input id="layer-audio" type="checkbox" /><span><strong>包含這段影片的音訊</strong><small>預設關閉</small></span></label>
+            </div>
+            <div id="image-time-controls" hidden>
+              <label class="field-label" for="layer-duration">持續時間（秒）</label>
+              <input id="layer-duration" class="text-input" type="number" min="0.1" step="0.1" />
+            </div>
+            <div class="layer-actions"><button id="move-layer-up" class="text-button" type="button">上移圖層</button><button id="move-layer-down" class="text-button" type="button">下移圖層</button></div>
+            <button id="remove-layer" class="danger-button" type="button">－ 刪除這個圖層</button>
+          </div>
+
+          <div class="export-box">
+            <div class="section-title"><span>03</span><h2>匯出影片</h2></div>
+            <label class="field-label" for="editor-format">格式</label><select id="editor-format" class="setting-select"><option value="mp4">MP4 · H.264 / AAC</option><option value="webm">WebM · VP9 / Opus</option></select>
+            <label class="field-label" for="editor-resolution">解析度</label><select id="editor-resolution" class="setting-select"><option value="480">480p</option><option value="720">720p</option><option value="1080" selected>1080p</option></select>
+            <label class="field-label" for="editor-fps">影格率</label><select id="editor-fps" class="setting-select"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select>
+            <button id="export-project" class="export-button" type="button" disabled>↓ 匯出語喵影片</button>
+            <progress id="editor-progress" max="100" value="0" hidden></progress>
+            <button id="cancel-export" class="text-button" type="button" hidden>取消匯出</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

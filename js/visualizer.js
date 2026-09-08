@@ -474,7 +474,7 @@ function drawVinyl(c, w, h, time, values, gain, image, color, recordImage) {
   c.restore();
 }
 
-function drawSubtitles(c, width, height, settings, time) {
+export function drawSubtitles(c, width, height, settings, time) {
   const text = subtitleAt(settings.subtitles, time + (settings.trimStart || 0), settings.originalBuffer?.duration || settings.buffer?.duration || 0, settings.subtitleTypewriter);
   if (!text) return;
   c.save();
@@ -528,7 +528,7 @@ function drawSubtitles(c, width, height, settings, time) {
   c.restore();
 }
 
-function drawIdentity(c, width, height, settings) {
+export function drawIdentity(c, width, height, settings) {
   const image = settings.identityType === "image" ? settings.identityImage : null;
   const text = settings.identityType !== "image" ? settings.identityText?.trim() : "";
   if (!image && !text) return;

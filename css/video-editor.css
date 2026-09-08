@@ -23,9 +23,10 @@ body.video-editor-body { min-width: 1320px; }
 .layer-row strong, .fixed-layer strong { font-size: 13px; }
 .layer-row small, .fixed-layer small { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .layer-row b, .fixed-layer b { color: var(--muted); font-size: 10px; font-weight: 500; }
-.fixed-layers { display: flex; flex-direction: column-reverse; gap: 7px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.fixed-layers { display: flex; flex-direction: column-reverse; gap: 7px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .fixed-layer { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 9px; border: 1px solid var(--tint-border); border-radius: 8px; background: var(--tint); }
 .fixed-layer.inactive { opacity: .5; }
+.base-layer { margin-top: 12px; border-color: var(--border); background: var(--surface); }
 .editor-stage { display: grid; gap: 18px; }
 .preview-panel { padding: 14px; }
 .preview-heading, .timeline-heading { display: flex; align-items: center; justify-content: space-between; min-height: 32px; }

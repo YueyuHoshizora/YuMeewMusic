@@ -2,7 +2,7 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { parseSubtitles } from "./subtitles.js";
-import { drawIdentity, drawSubtitles } from "./visualizer.js";
+import { draw, drawIdentity, drawSubtitles } from "./visualizer.js";
 import { audioEncodingOptions, scalePcmSamples } from "./export.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
@@ -29,6 +29,7 @@ const state = {
   identityImage: null,
   exporting: false,
   exportController: null,
+  base: { audioBuffer: null, audioElement: null, audioUrl: "", image: null, imageUrl: "", duration: 0 },
 };
 let nextId = 1;
 
@@ -60,11 +61,28 @@ function drawOverlays(context, time) {
   drawIdentity(context, context.canvas.width, context.canvas.height, overlaySettings);
 }
 
+function timelineDuration() {
+  return projectDuration(state.layers, state.base.duration);
+}
+
+function drawBase(canvas, time) {
+  if (!state.base.audioBuffer) return;
+  draw(canvas, time, state.base.audioBuffer, state.base.image, {
+    ...settings,
+    subtitles: null,
+    identityText: "",
+    identityImage: null,
+    originalBuffer: state.base.audioBuffer,
+    buffer: state.base.audioBuffer,
+  });
+}
+
 function renderPreview() {
   const canvas = $("video-preview");
   const context = canvas.getContext("2d");
   context.fillStyle = "#080a0c";
   context.fillRect(0, 0, canvas.width, canvas.height);
+  drawBase(canvas, state.time);
   for (const layer of state.layers) {
     if (!isLayerActive(layer, state.time)) continue;
     if (layer.type === "image") {
@@ -80,14 +98,14 @@ function renderPreview() {
 }
 
 function updatePlayer() {
-  const duration = projectDuration(state.layers);
+  const duration = timelineDuration();
   state.time = Math.min(state.time, duration);
   $("project-seek").max = duration;
   $("project-seek").value = state.time;
   $("current-time").textContent = formatEditorTime(state.time);
   $("total-time").textContent = formatEditorTime(duration);
   $("playhead").style.left = `calc(78px + (100% - 84px) * ${state.time / duration})`;
-  const usable = state.layers.length > 0 && !state.exporting;
+  const usable = (state.layers.length > 0 || state.base.audioBuffer) && !state.exporting;
   $("play-project").disabled = !usable;
   $("project-seek").disabled = !usable;
   $("export-project").disabled = !usable;
@@ -95,7 +113,7 @@ function updatePlayer() {
 }
 
 function renderTimeline() {
-  const duration = projectDuration(state.layers);
+  const duration = timelineDuration();
   const ruler = $("timeline-ruler");
   ruler.replaceChildren();
   const ticks = Math.min(6, Math.max(2, Math.ceil(duration / 5)));
@@ -137,6 +155,10 @@ function renderLayerList() {
   $("subtitle-layer").classList.toggle("inactive", !state.subtitles);
   const hasIdentity = settings.identityType === "image" ? Boolean(state.identityImage) : Boolean(settings.identityText);
   $("identity-layer").classList.toggle("inactive", !hasIdentity);
+  $("base-layer").classList.toggle("inactive", !state.base.audioBuffer);
+  $("base-layer-detail").textContent = state.base.audioBuffer
+    ? `${formatEditorTime(state.base.duration)} · 固定最底層`
+    : "回主畫面選擇音樂後自動帶入";
 }
 
 function renderInspector() {
@@ -228,7 +250,11 @@ function patchSelected(patch) {
 }
 
 function setProjectTime(time) {
-  state.time = Math.max(0, Math.min(projectDuration(state.layers), Number(time) || 0));
+  state.time = Math.max(0, Math.min(timelineDuration(), Number(time) || 0));
+  if (state.base.audioElement) {
+    state.base.audioElement.pause();
+    state.base.audioElement.currentTime = Math.min(state.time, state.base.duration);
+  }
   for (const layer of state.layers.filter(layer => layer.type === "video")) {
     layer.element.pause();
     const local = state.time - layer.start;
@@ -240,11 +266,18 @@ function setProjectTime(time) {
 
 function pauseProject() {
   state.playing = false;
+  state.base.audioElement?.pause();
   for (const layer of state.layers.filter(layer => layer.type === "video")) layer.element.pause();
   updatePlayer();
 }
 
 function syncPreviewVideos() {
+  if (state.base.audioElement) {
+    if (state.time < state.base.duration) {
+      if (Math.abs(state.base.audioElement.currentTime - state.time) > .2) state.base.audioElement.currentTime = state.time;
+      if (state.base.audioElement.paused) void state.base.audioElement.play().catch(() => {});
+    } else state.base.audioElement.pause();
+  }
   for (const layer of state.layers.filter(layer => layer.type === "video")) {
     const local = state.time - layer.start;
     const active = isLayerActive(layer, state.time) && local < layer.mediaDuration;
@@ -258,8 +291,8 @@ function syncPreviewVideos() {
 function animationFrame(now) {
   if (state.playing) {
     state.time = (now - state.clockStart) / 1000;
-    if (state.time >= projectDuration(state.layers)) {
-      state.time = projectDuration(state.layers);
+    if (state.time >= timelineDuration()) {
+      state.time = timelineDuration();
       pauseProject();
     } else syncPreviewVideos();
     updatePlayer();
@@ -284,6 +317,25 @@ async function restoreFixedLayers() {
       state.identityImage = image;
     } catch { status("個人識別圖片無法帶入。", "error"); }
   }
+  try {
+    const [storedAudio, storedImage] = await Promise.all([loadStoredMedia("audio"), loadStoredMedia("image")]);
+    if (storedAudio) {
+      const file = unpackStoredMedia(storedAudio);
+      const decoder = new AudioContext();
+      try { state.base.audioBuffer = await decoder.decodeAudioData(await file.arrayBuffer()); }
+      finally { await decoder.close(); }
+      state.base.duration = state.base.audioBuffer.duration;
+      state.base.audioUrl = URL.createObjectURL(file);
+      state.base.audioElement = new Audio(state.base.audioUrl);
+      state.base.audioElement.preload = "auto";
+    }
+    if (storedImage) {
+      const file = unpackStoredMedia(storedImage);
+      const loaded = await loadImage(file);
+      state.base.image = loaded.image;
+      state.base.imageUrl = loaded.url;
+    }
+  } catch (error) { status(`主畫面影片本體無法帶入：${error.message}`, "error"); }
   update();
 }
 
@@ -300,11 +352,17 @@ async function createVideoDecoders(m, layers) {
 
 async function mixProjectAudio(layers, duration, signal) {
   const audible = layers.filter(layer => layer.type === "video" && layer.audio);
-  if (!audible.length) return null;
+  if (!audible.length && !state.base.audioBuffer) return null;
   const sampleRate = 48000;
   const context = new OfflineAudioContext(2, Math.ceil(duration * sampleRate), sampleRate);
   const decoder = new AudioContext();
   try {
+    if (state.base.audioBuffer) {
+      const baseSource = context.createBufferSource();
+      baseSource.buffer = state.base.audioBuffer;
+      baseSource.connect(context.destination);
+      baseSource.start(0, 0, Math.min(state.base.duration, duration));
+    }
     for (const layer of audible) {
       if (signal.aborted) throw Error("已取消匯出。");
       let decoded;
@@ -322,7 +380,7 @@ async function mixProjectAudio(layers, duration, signal) {
 }
 
 async function exportProject() {
-  if (!state.layers.length || state.exporting) return;
+  if ((!state.layers.length && !state.base.audioBuffer) || state.exporting) return;
   pauseProject();
   state.exporting = true;
   state.exportController = new AbortController();
@@ -338,7 +396,7 @@ async function exportProject() {
     const format = $("editor-format").value;
     const fps = Number($("editor-fps").value);
     const dimensions = videoDimensions($("editor-resolution").value, settings.aspectRatio);
-    const duration = projectDuration(state.layers);
+    const duration = timelineDuration();
     const count = Math.ceil(duration * fps);
     const bitrate = dimensions.height >= 1080 || dimensions.width >= 1080 ? 8_000_000 : dimensions.height >= 720 || dimensions.width >= 720 ? 4_000_000 : 2_000_000;
     const codec = format === "webm" ? "vp9" : "avc";
@@ -373,6 +431,7 @@ async function exportProject() {
       const time = index / fps;
       context.fillStyle = "#080a0c";
       context.fillRect(0, 0, canvas.width, canvas.height);
+      drawBase(canvas, time);
       for (const layer of state.layers) {
         if (!isLayerActive(layer, time)) continue;
         if (layer.type === "image") drawCover(context, layer.element, layer.element.naturalWidth, layer.element.naturalHeight);
@@ -457,7 +516,7 @@ $("project-seek").addEventListener("input", event => { pauseProject(); setProjec
 $("restart-project").addEventListener("click", () => { pauseProject(); setProjectTime(0); });
 $("play-project").addEventListener("click", () => {
   if (state.playing) { pauseProject(); return; }
-  if (state.time >= projectDuration(state.layers)) state.time = 0;
+  if (state.time >= timelineDuration()) state.time = 0;
   state.playing = true;
   state.clockStart = performance.now() - state.time * 1000;
   syncPreviewVideos();
@@ -468,6 +527,8 @@ $("export-project").addEventListener("click", () => void exportProject());
 $("cancel-export").addEventListener("click", () => state.exportController?.abort());
 window.addEventListener("beforeunload", () => {
   for (const layer of state.layers) URL.revokeObjectURL(layer.url);
+  if (state.base.audioUrl) URL.revokeObjectURL(state.base.audioUrl);
+  if (state.base.imageUrl) URL.revokeObjectURL(state.base.imageUrl);
   state.exportController?.abort();
 });
 

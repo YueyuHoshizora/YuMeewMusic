@@ -8,8 +8,8 @@ export function layerEnd(layer) {
   return Math.max(finiteTime(layer.start), finiteTime(layer.end));
 }
 
-export function projectDuration(layers) {
-  return Math.max(1, ...layers.map(layerEnd));
+export function projectDuration(layers, baseDuration = 0) {
+  return Math.max(1, finiteTime(baseDuration), ...layers.map(layerEnd));
 }
 
 export function isLayerActive(layer, time) {

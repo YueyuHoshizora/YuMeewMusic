@@ -16,6 +16,7 @@ test("video and image layers produce stable timeline ranges", () => {
   assert.equal(layerEnd(video), 8);
   assert.equal(layerEnd(image), 12);
   assert.equal(projectDuration([video, image]), 12);
+  assert.equal(projectDuration([video], 20), 20);
   assert.equal(isLayerActive(video, 2), true);
   assert.equal(isLayerActive(video, 8), false);
   assert.equal(isLayerActive(image, 11.9), true);
@@ -48,9 +49,14 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /字幕與個人識別會自動置於最上層/);
+  assert.match(html, /id="base-layer"[^>]*>.*主畫面影片本體.*基礎鎖定/s);
   assert.match(html, /id="layer-audio"[^>]*type="checkbox"/);
   assert.doesNotMatch(html, /id="layer-audio"[^>]*checked/);
   assert.match(script, /loadStoredMedia\("subtitle"\)/);
+  assert.match(script, /loadStoredMedia\("audio"\)/);
+  assert.match(script, /loadStoredMedia\("image"\)/);
+  assert.match(script, /drawBase\(canvas, time\)/);
+  assert.match(script, /!state\.layers\.length && !state\.base\.audioBuffer/);
   assert.match(script, /drawSubtitles/);
   assert.match(script, /drawIdentity/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);

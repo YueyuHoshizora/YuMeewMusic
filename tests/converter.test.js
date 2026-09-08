@@ -17,6 +17,7 @@ test('converter page exposes only formats valid for each input kind', () => {
 test('converter page has every referenced control and only local assets', () => {
   const html = readFileSync('converter.html', 'utf8');
   const script = readFileSync('js/converter.js', 'utf8');
+  const core = readFileSync('js/converter-core.js', 'utf8');
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\(['"]([^'"]+)['"]\)/g)) assert.ok(ids.includes(id), id);
@@ -29,4 +30,6 @@ test('converter page has every referenced control and only local assets', () => 
   assert.match(mainHtml, /href="\.\/converter\.html"[^>]*>任意轉<\/a>/);
   assert.doesNotMatch(mainHtml, /href="\.\/converter\.html"[^>]*target="_blank"/);
   assert.match(readFileSync('scripts/serve.js', 'utf8'), /"converter\.html"/);
+  assert.match(core, /chooseVideoAcceleration\(/);
+  assert.doesNotMatch(core, /hardwareAcceleration:\s*['"]prefer-hardware['"]/);
 });

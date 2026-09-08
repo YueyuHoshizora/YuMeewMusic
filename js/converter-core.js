@@ -1,5 +1,6 @@
 import { FORMATS, getFormat } from "./formats.js";
 import { registerAudioEncoder } from "./export.js";
+import { chooseVideoAcceleration } from './video-acceleration.js';
 
 export const CONVERTER_FORMAT_LABELS = Object.freeze({
   mp4: "MP4 · 影片",
@@ -78,13 +79,39 @@ export async function convertMediaFile({ file, format, inputKind, hasAudio = tru
   const cancel = () => { if (conversion) void conversion.cancel(); };
   signal?.addEventListener('abort', cancel);
   try {
+    let videoOptions = { discard: true };
+    if (type.video) {
+      const videoTrack = await input.getPrimaryVideoTrack();
+      if (!videoTrack) throw Error('檔案中找不到可用的影片軌。');
+      const sourceCodec = await videoTrack.getCodec();
+      if (sourceCodec === type.videoCodec) {
+        videoOptions = { codec: type.videoCodec };
+      } else {
+        const dimensions = {
+          width: Math.max(2, Math.round((await videoTrack.getDisplayWidth()) / 2) * 2),
+          height: Math.max(2, Math.round((await videoTrack.getDisplayHeight()) / 2) * 2),
+          quality: m.QUALITY_HIGH,
+        };
+        const hardwareAcceleration = await chooseVideoAcceleration(
+          m.canEncodeVideo,
+          dimensions,
+          signal,
+          type.videoCodec,
+        );
+        videoOptions = {
+          codec: type.videoCodec,
+          width: dimensions.width,
+          height: dimensions.height,
+          quality: m.QUALITY_HIGH,
+          hardwareAcceleration,
+        };
+      }
+    }
     conversion = await m.Conversion.init({
       input,
       output,
       tracks: 'primary',
-      video: type.video
-        ? { codec: type.videoCodec, hardwareAcceleration: 'prefer-hardware' }
-        : { discard: true },
+      video: videoOptions,
       audio: type.video
         ? hasAudio ? { codec: type.codec, bitrate: 192_000 } : { discard: true }
         : {

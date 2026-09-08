@@ -366,6 +366,9 @@ h1 span {
   border: 0;
   color: var(--muted);
 }
+.loop-button { width: 32px; height: 32px; border: 1px solid transparent; border-radius: 7px; font-size: 18px; }
+.loop-button:hover { border-color: var(--border); background: var(--surface); }
+.loop-button.active { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
 .styles-heading {
   display: flex;
   align-items: center;

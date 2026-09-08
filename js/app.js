@@ -116,6 +116,7 @@ function persistSettings() {
     format: $("format").value,
     profile: $("profile").value,
     exportVolume: state.exportVolume,
+    loopPlayback: state.loopPlayback,
     mode: state.mode,
     theme: state.theme,
   });
@@ -209,13 +210,17 @@ function update() {
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
   $("exportVolume").value = state.exportVolume;
   $("exportVolume-value").textContent = `${state.exportVolume}%`;
+  $("loop-playback").classList.toggle("active", state.loopPlayback);
+  $("loop-playback").setAttribute("aria-pressed", String(state.loopPlayback));
+  $("loop-playback").setAttribute("aria-label", state.loopPlayback ? "關閉循環播放" : "開啟循環播放");
+  $("loop-playback").title = `循環播放：${state.loopPlayback ? "開啟" : "關閉"}`;
   $("subtitle-name").textContent = state.subtitleName || "選擇字幕檔";
   $("remove-subtitle").hidden = !state.subtitles;
   const locked = state.busy || state.loading || state.imageLoading;
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#exportVolume, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityOpacity, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#exportVolume, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityOpacity, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #loop-playback, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -558,6 +563,12 @@ $("seek").addEventListener("input", () => {
 $("restart").addEventListener("click", () => {
   audio.currentTime = state.trimStart;
 });
+$("loop-playback").addEventListener("click", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state.loopPlayback = !state.loopPlayback;
+  persistSettings();
+  update();
+});
 for (const id of ["strength", "darkness", "positionX", "positionY", "textX", "textY", "textSize", "textFadeAfter"])
   $(id).addEventListener("input", () => {
     state[id] = Number($(id).value);
@@ -781,11 +792,19 @@ $("trim-reset").addEventListener("click", () => {
 });
 function enforceTrimEnd() {
   if (state.buffer && !audio.paused && audio.currentTime >= state.trimStart + state.buffer.duration) {
-    audio.pause();
-    audio.currentTime = state.trimStart + state.buffer.duration;
+    if (state.loopPlayback) audio.currentTime = state.trimStart;
+    else {
+      audio.pause();
+      audio.currentTime = state.trimStart + state.buffer.duration;
+    }
   }
 }
 audio.addEventListener("timeupdate", enforceTrimEnd);
+audio.addEventListener("ended", () => {
+  if (!state.buffer || !state.loopPlayback) return;
+  audio.currentTime = state.trimStart;
+  void audio.play().catch(() => message("循環播放失敗，請重新按下播放。"));
+});
 
 function updateTrimMarkers() {
   const duration = state.originalBuffer?.duration || 0;

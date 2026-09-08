@@ -50,6 +50,7 @@ test("settings survive another load and exclude all media-related data", () => {
     format: "flac",
     profile: "high",
     exportVolume: 175,
+    loopPlayback: true,
     mode: "light",
     theme: "ocean",
   };

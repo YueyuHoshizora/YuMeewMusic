@@ -131,6 +131,16 @@ test("editor initializes, switches formats and reaches download for every format
   );
   assert.equal(elements.get("duration").textContent, "01:05");
   assert.match(elements.get("audio-info").textContent, /01:05/);
+  elements.get("loop-playback").listeners.click();
+  assert.equal(vm.runInContext("state.loopPlayback", context), true);
+  elements.get("audio").paused = false;
+  elements.get("audio").currentTime = 65;
+  vm.runInContext("enforceTrimEnd()", context);
+  assert.equal(elements.get("audio").currentTime, 0);
+  assert.equal(elements.get("audio").paused, false);
+  elements.get("loop-playback").listeners.click();
+  assert.equal(vm.runInContext("state.loopPlayback", context), false);
+  elements.get("audio").pause();
   elements.get("exportVolume").value = "10";
   elements.get("exportVolume").listeners.input();
   assert.equal(elements.get("audio").volume, .1);

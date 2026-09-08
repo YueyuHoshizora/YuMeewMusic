@@ -43,6 +43,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   format: "mp4",
   profile: "auto",
   exportVolume: 100,
+  loopPlayback: false,
   mode: "dark",
   theme: "lime",
 });
@@ -94,6 +95,7 @@ export function validateSettings(value) {
   if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
   if (Number.isFinite(source.exportVolume) && source.exportVolume >= 10 && source.exportVolume <= 200)
     result.exportVolume = source.exportVolume;
+  if (typeof source.loopPlayback === "boolean") result.loopPlayback = source.loopPlayback;
   if (typeof source.subtitleFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.subtitleFont)) result.subtitleFont = source.subtitleFont;
   if (["text", "image"].includes(source.identityType)) result.identityType = source.identityType;
   if (typeof source.identityText === "string") result.identityText = source.identityText.slice(0, 80);

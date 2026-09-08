@@ -63,6 +63,7 @@ test("every statically referenced UI element exists and public assets are local"
     assert.ok(existsSync(path), path);
   assert.match(html, /<aside class="panel settings">[\s\S]*id="styles"[\s\S]*id="format"/);
   assert.match(html, /<details class="right-rhythm-section">[\s\S]*<summary class="styles-heading">/);
+  assert.match(html, /選一種節奏<\/h2>\s*<span class="collapse-chevron"/);
   assert.doesNotMatch(html, /<details class="right-rhythm-section"\s+open/);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
 });

@@ -777,9 +777,11 @@ header {
     width: min(100%, 360px, calc(max(80px, min(55dvh, 100dvh - 360px)) * 9 / 16));
   }
   .preview-dock .transport { margin-bottom: 0; }
-  .right-rhythm-section > summary { margin: 0; cursor: pointer; }
+  .right-rhythm-section > summary { margin: 0; cursor: pointer; list-style: none; }
+  .right-rhythm-section > summary::-webkit-details-marker { display: none; }
   .right-rhythm-section[open] > summary { margin-bottom: 12px; }
-  .right-rhythm-section > summary::marker { color: var(--primary-text); }
+  .right-rhythm-section .collapse-chevron { display: inline-block; margin-left: -3px; color: var(--primary-text); font-size: 20px; line-height: 1; transform: translateY(-2px); transition: transform .18s ease; }
+  .right-rhythm-section[open] .collapse-chevron { transform: translateY(2px) rotate(180deg); }
   .right-rhythm-section > summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 4px; }
   .settings .styles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .settings .style-card { width: 100%; height: 68px; padding: 4px 2px; gap: 2px; }

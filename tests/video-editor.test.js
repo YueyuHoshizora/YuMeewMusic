@@ -7,6 +7,7 @@ import {
   formatEditorTime,
   isLayerActive,
   layerEnd,
+  nudgeLayerTime,
   projectDuration,
 } from "../js/video-editor-core.js";
 
@@ -21,6 +22,15 @@ test("video and image layers produce stable timeline ranges", () => {
   assert.equal(isLayerActive(video, 8), false);
   assert.equal(isLayerActive(image, 11.9), true);
   assert.equal(formatEditorTime(62.35), "01:02.4");
+});
+
+test("nudging a start moves the whole layer while nudging an end changes only the end", () => {
+  const video = { type: "video", start: 2, end: 8, audio: false };
+  assert.deepEqual(nudgeLayerTime(video, "start", .5), { ...video, start: 2.5, end: 8.5 });
+  assert.deepEqual(nudgeLayerTime(video, "end", -.5), { ...video, end: 7.5 });
+  assert.deepEqual(nudgeLayerTime({ ...video, start: .2 }, "start", -.5), { ...video, start: 0, end: 7.8 });
+  const image = { type: "image", start: 1, duration: 5 };
+  assert.deepEqual(nudgeLayerTime(image, "start", .5), { ...image, start: 1.5 });
 });
 
 test("layer timing cannot become negative or zero length", () => {

@@ -28,6 +28,21 @@ export function clampLayerTiming(layer, patch) {
   return next;
 }
 
+export function nudgeLayerTime(layer, field, delta) {
+  const amount = Number(delta) || 0;
+  if (field === "start") {
+    const start = Math.max(0, Math.round((finiteTime(layer.start) + amount) * 10) / 10);
+    const shift = start - finiteTime(layer.start);
+    const patch = { start };
+    if (layer.type === "video") patch.end = Math.round((finiteTime(layer.end) + shift) * 10) / 10;
+    return clampLayerTiming(layer, patch);
+  }
+  if (field === "end" && layer.type === "video") {
+    return clampLayerTiming(layer, { end: Math.round((finiteTime(layer.end) + amount) * 10) / 10 });
+  }
+  return layer;
+}
+
 export function coverRect(sourceWidth, sourceHeight, targetWidth, targetHeight) {
   const scale = Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight);
   const width = sourceWidth * scale;

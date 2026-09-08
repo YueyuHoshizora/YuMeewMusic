@@ -13,6 +13,7 @@ import {
   isLayerActive,
   layerEnd,
   projectDuration,
+  nudgeLayerTime,
 } from "./video-editor-core.js";
 
 const $ = id => document.getElementById(id);
@@ -250,9 +251,10 @@ function patchSelected(patch) {
 }
 
 function nudgeSelectedTime(field, delta) {
-  const layer = selectedLayer();
-  if (!layer || (field === "end" && layer.type !== "video")) return;
-  patchSelected({ [field]: Math.round((Number(layer[field]) + Number(delta)) * 10) / 10 });
+  const index = state.layers.findIndex(layer => layer.id === state.selectedId);
+  if (index < 0) return;
+  state.layers[index] = nudgeLayerTime(state.layers[index], field, delta);
+  update();
 }
 
 function seekFromTimeline(event) {

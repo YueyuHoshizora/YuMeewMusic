@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="在瀏覽器內將多張圖片製作成保留透明通道與進退場特效的 MOV 影片。" />
+    <meta name="description" content="在瀏覽器內將多張圖片製作成透明 MOV 或小檔案 MP4 影片。" />
     <title>圖轉影片 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -20,7 +20,7 @@
 
     <main class="video-editor-main">
       <section class="video-editor-heading">
-        <div><div class="eyebrow">IMAGE SEQUENCE</div><h1>讓圖片開始流動<span>。</span></h1><p>加入多張圖片，安排順序、停留時間與進退場特效，再匯出保留透明通道的 MOV，或直接設為主畫面背景素材。</p></div>
+        <div><div class="eyebrow">IMAGE SEQUENCE</div><h1>讓圖片開始流動<span>。</span></h1><p>加入多張圖片，安排順序、停留時間與進退場特效，再依需求匯出透明 MOV 或小檔案 MP4，也能直接設為主畫面背景素材。</p></div>
         <div id="image-video-status" class="editor-status" role="status">請加入第一張圖片。</div>
       </section>
 
@@ -89,15 +89,16 @@
           </div>
 
           <div class="export-box">
-            <div class="section-title"><span>03</span><h2>匯出 MOV</h2></div>
+            <div class="section-title"><span>03</span><h2 id="image-video-export-title">匯出 MOV</h2></div>
             <p id="image-video-aspect" class="image-video-aspect"></p>
+            <label class="field-label" for="image-video-transparency">透明背景</label><select id="image-video-transparency" class="setting-select"><option value="enabled">啟用 · MOV</option><option value="disabled">停用 · MP4</option></select>
             <label class="field-label" for="image-video-resolution">解析度</label><select id="image-video-resolution" class="setting-select"><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select>
             <label class="field-label" for="image-video-fps">影格率</label><select id="image-video-fps" class="setting-select"><option value="30">30 fps</option><option value="60">60 fps</option></select>
             <div class="image-video-export-actions">
               <button id="export-image-video" class="export-button" type="button" disabled>↓ 匯出影片</button>
               <button id="export-image-video-to-main" class="text-button export-to-main" type="button" disabled>匯出到主畫面 →</button>
             </div>
-            <p class="position-help">使用 PNG 影格保留透明通道；靜止畫面會自動合併影格以縮小檔案，含大量特效時仍會比一般影片大。</p>
+            <p id="image-video-format-help" class="position-help">使用 PNG 影格保留透明通道；靜止畫面會自動合併影格以縮小檔案，含大量特效時仍會比一般影片大。</p>
             <progress id="image-video-progress" max="100" value="0" hidden></progress>
             <button id="cancel-image-video-export" class="text-button" type="button" hidden>取消匯出</button>
           </div>

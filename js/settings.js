@@ -42,6 +42,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   fps: "60",
   format: "mp4",
   profile: "auto",
+  imageVideoTransparency: true,
   exportVolume: 100,
   loopPlayback: false,
   mode: "dark",
@@ -93,6 +94,7 @@ export function validateSettings(value) {
     if (typeof source[key] === "string" && /^#[0-9a-f]{6}$/i.test(source[key])) result[key] = source[key].toLowerCase();
   }
   if (["auto", "baseline", "main", "high"].includes(source.profile)) result.profile = source.profile;
+  if (typeof source.imageVideoTransparency === "boolean") result.imageVideoTransparency = source.imageVideoTransparency;
   if (Number.isFinite(source.exportVolume) && source.exportVolume >= 10 && source.exportVolume <= 200)
     result.exportVolume = source.exportVolume;
   if (typeof source.loopPlayback === "boolean") result.loopPlayback = source.loopPlayback;

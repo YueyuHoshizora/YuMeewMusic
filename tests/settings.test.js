@@ -49,6 +49,7 @@ test("settings survive another load and exclude all media-related data", () => {
     fps: "60",
     format: "flac",
     profile: "high",
+    imageVideoTransparency: false,
     exportVolume: 175,
     loopPlayback: true,
     mode: "light",

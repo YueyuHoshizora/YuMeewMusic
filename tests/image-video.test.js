@@ -54,10 +54,13 @@ test("圖轉影片 page exposes multiple images, MOV settings and both export pa
   assert.match(html, /id="images-input"[^>]*multiple/);
   assert.match(html, /id="export-image-video"/);
   assert.match(html, /id="export-image-video-to-main"/);
+  assert.match(html, /id="image-video-transparency"/);
   assert.match(html, /PNG 影格保留透明通道/);
   assert.doesNotMatch(html, /輸出格式|<select[^>]*format/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredValue\("image-video-project", project\)/);
+  assert.match(script, /new m\.Mp4OutputFormat\(\)/);
+  assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   assert.match(script, /window\.confirm\("返回主畫面將不會保留目前的圖片與設定，是否確定？"\)/);
   assert.match(script, /settings\.resolution/);
   assert.match(script, /settings\.fps/);

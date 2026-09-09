@@ -1,11 +1,12 @@
 import { applyTheme } from "./themes.js";
-import { loadSettings } from "./settings.js";
+import { loadSettings, saveSettings } from "./settings.js";
 import { videoDimensions } from "./dimensions.js";
+import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { drawLayerWithEffect, effectDuration, layerEffectState, VIDEO_EFFECTS } from "./video-effects.js";
 import { formatEditorTime } from "./video-editor-core.js";
 import { createPngMov } from "./png-mov.js";
 import { imageSequenceAt, imageSequenceDuration, serializeImageSequence } from "./image-sequence.js";
-import { saveStoredMedia, saveStoredValue } from "./media-store.js";
+import { deleteStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
 
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
@@ -34,6 +35,23 @@ function error(text = "") {
 
 function duration() {
   return state.slides.length ? imageSequenceDuration(state.slides) : 0;
+}
+
+function transparentOutput() {
+  return $("image-video-transparency").value === "enabled";
+}
+
+function renderExportMode() {
+  const transparent = transparentOutput();
+  const format = transparent ? "MOV" : "MP4";
+  $("image-video-export-title").textContent = `匯出 ${format}`;
+  $("image-video-aspect").textContent = transparent
+    ? `MOV · PNG 透明影格 · ${settings.aspectRatio}（畫面比例從主畫面帶入）`
+    : `MP4 · H.264 · 黑色背景 · ${settings.aspectRatio}（畫面比例從主畫面帶入）`;
+  $("export-image-video").textContent = `↓ 匯出 ${format}`;
+  $("image-video-format-help").textContent = transparent
+    ? "使用 PNG 影格保留透明通道；靜止畫面會自動合併影格以縮小檔案，含大量特效時仍會比一般影片大。"
+    : "透明區域會填入黑色並使用 H.264 編碼，檔案會比透明 MOV 小很多。";
 }
 
 function selected() {
@@ -68,13 +86,16 @@ function setCanvasSize() {
   canvas.width = dimensions.width;
   canvas.height = dimensions.height;
   $("image-video-preview-size").textContent = `${settings.aspectRatio} · ${$("image-video-resolution").value}p`;
-  $("image-video-aspect").textContent = `MOV · PNG 透明影格 · ${settings.aspectRatio}（畫面比例從主畫面帶入）`;
 }
 
 function renderFrame(time = state.time) {
   const canvas = $("image-video-preview");
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, canvas.width, canvas.height);
+  if (!transparentOutput()) {
+    context.fillStyle = "#000";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
   if (!state.slides.length) return;
   const total = duration();
   const active = imageSequenceAt(state.slides, Math.min(Math.max(0, time), Math.max(0, total - .0001)));
@@ -198,10 +219,12 @@ function updatePlayer() {
   $("image-video-seek").disabled = !ready;
   $("export-image-video").disabled = !ready;
   $("export-image-video-to-main").disabled = !ready;
+  for (const id of ["image-video-transparency", "image-video-resolution", "image-video-fps"]) $(id).disabled = state.exporting;
 }
 
 function update() {
   setCanvasSize();
+  renderExportMode();
   renderList();
   renderInspector();
   renderTimeline();
@@ -277,7 +300,40 @@ function canvasPng(canvas) {
   return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error("PNG 影格編碼失敗。")), "image/png"));
 }
 
-async function encodeMovie(toMain) {
+async function encodeMp4(canvas, dimensions, fps, total, signal) {
+  const m = await import("../vendor/mediabunny.min.mjs");
+  const resolution = Number($("image-video-resolution").value);
+  const bitrate = resolution >= 1080 ? 8_000_000 : resolution >= 720 ? 4_000_000 : 2_000_000;
+  const hardwareAcceleration = await chooseVideoAcceleration(m.canEncodeVideo, { ...dimensions, bitrate, framerate: fps }, signal, "avc");
+  const target = new m.BufferTarget();
+  const output = new m.Output({ format: new m.Mp4OutputFormat(), target });
+  const video = new m.CanvasSource(canvas, { codec: "avc", bitrate, hardwareAcceleration });
+  output.addVideoTrack(video, { frameRate: fps });
+  try {
+    await output.start();
+    const count = Math.ceil(total * fps);
+    for (let index = 0; index < count; index++) {
+      if (signal.aborted) throw Error("已取消匯出。");
+      const time = index / fps;
+      renderFrame(time);
+      await video.add(time, Math.min(1 / fps, total - time));
+      if (index % 5 === 0 || index === count - 1) {
+        const progress = Math.round((index + 1) / count * 98);
+        $("image-video-progress").value = progress;
+        status(`正在建立 MP4 ${progress}% · ${hardwareAcceleration === "prefer-hardware" ? "硬體編碼優先" : "瀏覽器編碼"}`);
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    video.close();
+    await output.finalize();
+    return new Blob([target.buffer], { type: "video/mp4" });
+  } catch (reason) {
+    if (!["finalized", "canceled"].includes(output.state)) await output.cancel().catch(() => {});
+    throw reason;
+  }
+}
+
+async function encodeVideo(toMain) {
   if (!state.slides.length || state.exporting) return;
   pause();
   state.exporting = true;
@@ -294,35 +350,47 @@ async function encodeMovie(toMain) {
     const total = duration();
     const count = Math.ceil(total * fps);
     const canvas = $("image-video-preview");
-    const frames = [];
-    const stillFrames = new Map();
-    for (let index = 0; index < count; index++) {
-      if (signal.aborted) throw Error("已取消匯出。");
-      const frameTime = index / fps;
-      const active = imageSequenceAt(state.slides, Math.min(frameTime, Math.max(0, total - .0001)));
-      const effect = active ? layerEffectState({ ...active.slide, start: active.start }, frameTime) : null;
-      let frame = effect?.effect === "none" ? stillFrames.get(active.slide.id) : null;
-      if (!frame) {
-        renderFrame(frameTime);
-        frame = await canvasPng(canvas);
-        if (effect?.effect === "none") stillFrames.set(active.slide.id, frame);
+    const transparent = transparentOutput();
+    let blob;
+    if (transparent) {
+      const frames = [];
+      const stillFrames = new Map();
+      for (let index = 0; index < count; index++) {
+        if (signal.aborted) throw Error("已取消匯出。");
+        const frameTime = index / fps;
+        const active = imageSequenceAt(state.slides, Math.min(frameTime, Math.max(0, total - .0001)));
+        const effect = active ? layerEffectState({ ...active.slide, start: active.start }, frameTime) : null;
+        let frame = effect?.effect === "none" ? stillFrames.get(active.slide.id) : null;
+        if (!frame) {
+          renderFrame(frameTime);
+          frame = await canvasPng(canvas);
+          if (effect?.effect === "none") stillFrames.set(active.slide.id, frame);
+        }
+        frames.push(frame);
+        if (index % 3 === 0 || index === count - 1) {
+          const progress = Math.round((index + 1) / count * 94);
+          $("image-video-progress").value = progress;
+          status(`正在建立透明 MOV ${progress}% · ${index + 1}/${count} 影格`);
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
       }
-      frames.push(frame);
-      if (index % 3 === 0 || index === count - 1) {
-        const progress = Math.round((index + 1) / count * 94);
-        $("image-video-progress").value = progress;
-        status(`正在建立透明 MOV ${progress}% · ${index + 1}/${count} 影格`);
-        await new Promise(resolve => setTimeout(resolve, 0));
-      }
+      blob = createPngMov(frames, dimensions.width, dimensions.height, fps);
+    } else {
+      blob = await encodeMp4(canvas, dimensions, fps, total, signal);
     }
-    const blob = createPngMov(frames, dimensions.width, dimensions.height, fps);
-    const outputName = `yumeew-image-video-${resolution}p-${fps}fps.mov`;
-    const file = new File([blob], outputName, { type: "video/quicktime", lastModified: Date.now() });
+    const extension = transparent ? "mov" : "mp4";
+    const mime = transparent ? "video/quicktime" : "video/mp4";
+    const outputName = `yumeew-image-video-${resolution}p-${fps}fps.${extension}`;
+    const file = new File([blob], outputName, { type: mime, lastModified: Date.now() });
     if (toMain) {
-      if (file.size > 1024 ** 3) throw Error("這個 MOV 超過主畫面背景素材的 1 GB 上限，請降低解析度、FPS 或縮短圖片時間。");
-      const project = serializeImageSequence(state.slides, { outputName, ...dimensions, aspectRatio: settings.aspectRatio, fps });
+      if (file.size > 1024 ** 3) throw Error("這個影片超過主畫面背景素材的 1 GB 上限，請降低解析度、FPS 或縮短圖片時間。");
       status("正在保存背景素材到瀏覽器…");
-      await saveStoredValue("image-video-project", project);
+      if (transparent) {
+        const project = serializeImageSequence(state.slides, { outputName, ...dimensions, aspectRatio: settings.aspectRatio, fps });
+        await saveStoredValue("image-video-project", project);
+      } else {
+        await deleteStoredValue("image-video-project");
+      }
       await saveStoredMedia("image", file);
       void navigator.storage?.persist?.().catch(() => false);
       $("image-video-progress").value = 100;
@@ -338,9 +406,9 @@ async function encodeMovie(toMain) {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     $("image-video-progress").value = 100;
-    status("透明 MOV 已完成，下載已開始。", "success");
+    status(`${transparent ? "透明 MOV" : "MP4"} 已完成，下載已開始。`, "success");
   } catch (reason) {
-    status(reason.message || "MOV 匯出失敗。", "error");
+    status(reason.message || "影片匯出失敗。", "error");
   } finally {
     state.exporting = false;
     state.controller = null;
@@ -385,9 +453,14 @@ $("restart-image-video").addEventListener("click", () => { pause(); state.time =
 $("image-video-seek").addEventListener("input", event => { pause(); state.time = Number(event.target.value); updatePlayer(); renderFrame(); });
 $("image-video-resolution").addEventListener("change", update);
 $("image-video-fps").addEventListener("change", updatePlayer);
+$("image-video-transparency").addEventListener("change", () => {
+  settings.imageVideoTransparency = transparentOutput();
+  saveSettings(settings);
+  update();
+});
 $("fullscreen-image-video").addEventListener("click", () => document.fullscreenElement ? document.exitFullscreen() : $("image-video-frame").requestFullscreen());
-$("export-image-video").addEventListener("click", () => void encodeMovie(false));
-$("export-image-video-to-main").addEventListener("click", () => void encodeMovie(true));
+$("export-image-video").addEventListener("click", () => void encodeVideo(false));
+$("export-image-video-to-main").addEventListener("click", () => void encodeVideo(true));
 $("cancel-image-video-export").addEventListener("click", () => state.controller?.abort());
 for (const link of document.querySelectorAll("[data-confirm-return]")) link.addEventListener("click", event => {
   if (!state.slides.length || window.confirm("返回主畫面將不會保留目前的圖片與設定，是否確定？")) return;
@@ -400,5 +473,6 @@ window.addEventListener("pagehide", () => {
 
 $("image-video-resolution").value = settings.resolution;
 $("image-video-fps").value = settings.fps;
+$("image-video-transparency").value = settings.imageVideoTransparency ? "enabled" : "disabled";
 update();
 requestAnimationFrame(animate);

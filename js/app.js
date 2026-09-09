@@ -120,6 +120,7 @@ function persistSettings() {
     fps: $("fps").value,
     format: $("format").value,
     profile: $("profile").value,
+    imageVideoTransparency: state.imageVideoTransparency,
     exportVolume: state.exportVolume,
     loopPlayback: state.loopPlayback,
     mode: state.mode,

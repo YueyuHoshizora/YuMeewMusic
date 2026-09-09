@@ -12,8 +12,12 @@ body.image-video-body { min-width: 1320px; }
 .image-sequence-order b { color: var(--muted); font-size: 10px; line-height: 20px; text-align: center; }
 .image-order-button { width: 24px; padding: 0; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--foreground); font-size: 14px; }
 .image-order-button:hover:not(:disabled) { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
-#image-video-playhead { position: absolute; z-index: 4; top: 21px; bottom: 0; left: 78px; width: 2px; background: var(--error); pointer-events: none; }
-#image-video-playhead::before { content: ""; position: absolute; top: -5px; left: -5px; width: 12px; height: 12px; border-radius: 50%; background: var(--error); }
+#image-video-timeline { touch-action: none; cursor: ew-resize; }
+#image-video-timeline.seeking { cursor: grabbing; }
+#image-video-playhead { position: absolute; z-index: 4; top: 21px; bottom: 0; left: 78px; width: 20px; padding: 0; transform: translateX(-10px); border: 0; background: transparent; cursor: grab; touch-action: none; }
+#image-video-playhead::before { content: ""; position: absolute; top: -5px; left: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--error); }
+#image-video-playhead::after { content: ""; position: absolute; top: 0; bottom: 0; left: 9px; width: 2px; background: var(--error); }
+#image-video-timeline.seeking #image-video-playhead { cursor: grabbing; }
 .image-video-aspect { margin: 14px 0 0; padding: 9px 10px; border-radius: 7px; background: var(--surface); color: var(--muted); font-size: 12px; line-height: 1.5; }
 .image-video-export-actions { display: grid; gap: 8px; margin-top: 18px; }
 .image-video-export-actions .export-button { margin-top: 0; }

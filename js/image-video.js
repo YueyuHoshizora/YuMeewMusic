@@ -204,6 +204,21 @@ function renderTimeline() {
   }));
 }
 
+function setPlaybackTime(time) {
+  state.time = Math.max(0, Math.min(duration(), Number(time) || 0));
+  updatePlayer();
+  renderFrame();
+}
+
+function seekFromTimeline(event) {
+  const timeline = $("image-video-timeline");
+  const rect = timeline.getBoundingClientRect();
+  const left = rect.left + 78;
+  const width = Math.max(1, rect.width - 84);
+  pause();
+  setPlaybackTime((event.clientX - left) / width * duration());
+}
+
 function updatePlayer() {
   const total = duration();
   const scaleDuration = Math.max(.1, total);
@@ -213,6 +228,7 @@ function updatePlayer() {
   $("image-video-current").textContent = formatEditorTime(state.time);
   $("image-video-total").textContent = formatEditorTime(total);
   $("image-video-playhead").style.left = `calc(78px + (100% - 84px) * ${state.time / scaleDuration})`;
+  $("image-video-playhead").setAttribute("aria-label", `播放位置 ${formatEditorTime(state.time)}，可左右拖曳`);
   $("play-image-video").textContent = state.playing ? "❚❚" : "▶";
   const ready = state.slides.length > 0 && !state.exporting;
   $("play-image-video").disabled = !ready;
@@ -449,8 +465,31 @@ $("play-image-video").addEventListener("click", () => {
   state.playing = true;
   updatePlayer();
 });
-$("restart-image-video").addEventListener("click", () => { pause(); state.time = 0; updatePlayer(); renderFrame(); });
-$("image-video-seek").addEventListener("input", event => { pause(); state.time = Number(event.target.value); updatePlayer(); renderFrame(); });
+$("restart-image-video").addEventListener("click", () => { pause(); setPlaybackTime(0); });
+$("image-video-seek").addEventListener("input", event => { pause(); setPlaybackTime(event.target.value); });
+$("image-video-timeline").addEventListener("pointerdown", event => {
+  if (!state.slides.length || state.exporting || event.button !== 0 || event.target.closest(".timeline-band")) return;
+  const timeline = $("image-video-timeline");
+  event.preventDefault();
+  timeline.setPointerCapture(event.pointerId);
+  timeline.classList.add("seeking");
+  seekFromTimeline(event);
+});
+$("image-video-timeline").addEventListener("pointermove", event => {
+  if ($("image-video-timeline").hasPointerCapture(event.pointerId)) seekFromTimeline(event);
+});
+for (const type of ["pointerup", "pointercancel"]) $("image-video-timeline").addEventListener(type, event => {
+  const timeline = $("image-video-timeline");
+  if (timeline.hasPointerCapture(event.pointerId)) timeline.releasePointerCapture(event.pointerId);
+  timeline.classList.remove("seeking");
+});
+$("image-video-timeline").addEventListener("lostpointercapture", () => $("image-video-timeline").classList.remove("seeking"));
+$("image-video-playhead").addEventListener("keydown", event => {
+  if (!state.slides.length || state.exporting || !["ArrowLeft", "ArrowRight"].includes(event.key)) return;
+  event.preventDefault();
+  pause();
+  setPlaybackTime(state.time + (event.key === "ArrowRight" ? 1 : -1) * (event.shiftKey ? 1 : .1));
+});
 $("image-video-resolution").addEventListener("change", update);
 $("image-video-fps").addEventListener("change", updatePlayer);
 $("image-video-transparency").addEventListener("change", () => {

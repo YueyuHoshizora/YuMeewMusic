@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="音樂、圖片與檔案匯出全程在瀏覽器處理，檔案不上傳伺服器。提供 19 種音樂視覺動畫，包含黑膠唱片效果；支援 16:9、9:16、480p、720p、1080p 與 30、60 fps，可匯出 MP4、MOV、WebM 影片及 MP3、M4A、FLAC、WAV 音訊。"
+      content="音樂、背景素材與檔案匯出全程在瀏覽器處理，檔案不上傳伺服器。提供 19 種音樂視覺動畫，包含黑膠唱片效果；支援 16:9、9:16、480p、720p、1080p 與 30、60 fps，可匯出 MP4、MOV、WebM 影片及 MP3、M4A、FLAC、WAV 音訊。"
     />
     <title>YuMeew · 音樂視覺工作室</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
@@ -47,7 +47,7 @@
           <div>
             <div class="eyebrow">A LITTLE SOUND. A LOT OF FEELING.</div>
             <h1>你的音樂，視覺化<span>。</span></h1>
-            <p>音樂、圖片與檔案匯出全程在你的瀏覽器處理，檔案不會上傳至伺服器。</p>
+            <p>音樂、背景素材與檔案匯出全程在你的瀏覽器處理，檔案不會上傳至伺服器。</p>
           </div>
           <div class="step">01 素材 <span>／</span> 02 風格 <span>／</span> 03 匯出</div>
         </div>
@@ -63,7 +63,7 @@
                 <option value="16:9">16:9 · 橫式</option>
                 <option value="9:16">9:16 · 直式</option>
               </select>
-              <p class="position-help">背景圖片置中裁切，填滿畫面。</p>
+              <p class="position-help">背景圖片或影片會置中裁切並填滿畫面；影片將靜音循環播放。</p>
             </div>
             <span class="field-label">音樂</span>
             <button id="audio-drop" aria-describedby="audio-error" class="upload" type="button">
@@ -92,19 +92,19 @@
               <button id="trim-reset" class="text-button" type="button">恢復完整音樂</button>
               <p class="position-help">套用後可播放試聽，匯出僅包含選取片段。原始檔案不會修改。</p>
             </details>
-            <span class="field-label">背景圖片 <span>選填</span></span>
+            <span class="field-label">背景素材 <span>選填</span></span>
             <button
               id="image-drop"
               aria-describedby="image-error"
               class="upload image-upload"
               type="button"
             >
-              <span aria-hidden="true">▧ ＋</span><strong id="image-name">加入背景圖片</strong
-              ><small>JPG · PNG · WebP</small
+              <span aria-hidden="true">▧ ＋</span><strong id="image-name">加入背景素材</strong
+              ><small>JPG · PNG · WebP · MP4 · MOV · WebM</small
               ><span id="image-error" class="file-error" role="status" hidden></span>
             </button>
-            <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden />
-            <button id="remove-image" class="text-button" hidden type="button">移除圖片</button>
+            <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" hidden />
+            <button id="remove-image" class="text-button" hidden type="button">移除背景素材</button>
 <div id="vinyl-assets" class="song-details" hidden>
 <span class="field-label">黑膠封套 <span>選填</span></span>
 <button id="sleeve-drop" aria-describedby="sleeve-error" class="upload image-upload" type="button">
@@ -368,7 +368,7 @@
           ><button id="dismiss-message" aria-label="關閉訊息" type="button">×</button>
         </div>
         <footer>
-          <span>MADE FOR YOUR SOUND.</span><span>音樂上限 20 分鐘 / 300 MB · 圖片上限 30 MB</span>
+          <span>MADE FOR YOUR SOUND.</span><span>音樂上限 20 分鐘 / 300 MB · 圖片上限 30 MB · 背景影片上限 1 GB</span>
         </footer>
         <noscript>請啟用 JavaScript 以在瀏覽器內處理音樂與匯出影片。</noscript>
       </main>

@@ -50,14 +50,13 @@ export function draw(canvas, t, b, img, s) {
   c.fillStyle = "#0c1112";
   c.fillRect(0, 0, w, h);
   if (img) {
-    const scale = Math.max(w / img.width, h / img.height);
-    c.drawImage(
-      img,
-      (w - img.width * scale) / 2,
-      (h - img.height * scale) / 2,
-      img.width * scale,
-      img.height * scale,
-    );
+    const sourceWidth = img.videoWidth || img.naturalWidth || img.displayWidth || img.width;
+    const sourceHeight = img.videoHeight || img.naturalHeight || img.displayHeight || img.height;
+    const scale = Math.max(w / sourceWidth, h / sourceHeight);
+    const x = (w - sourceWidth * scale) / 2;
+    const y = (h - sourceHeight * scale) / 2;
+    if (typeof img.draw === "function") img.draw(c, x, y, sourceWidth * scale, sourceHeight * scale);
+    else c.drawImage(img, x, y, sourceWidth * scale, sourceHeight * scale);
   } else {
     const g = c.createRadialGradient(w * 0.5, h * 0.45, 0, w * 0.5, h * 0.5, w * 0.65);
     g.addColorStop(0, "#26302b");
@@ -448,8 +447,13 @@ function drawVinyl(c, w, h, time, values, gain, image, color, recordImage) {
   c.fillRect(sleeveX, sleeveY, size, size);
   c.shadowBlur = 0;
   if (image) {
-    const crop = Math.min(image.width, image.height);
-    c.drawImage(image, (image.width - crop) / 2, (image.height - crop) / 2, crop, crop, sleeveX, sleeveY, size, size);
+    const imageWidth = image.videoWidth || image.naturalWidth || image.displayWidth || image.width;
+    const imageHeight = image.videoHeight || image.naturalHeight || image.displayHeight || image.height;
+    if (typeof image.draw === "function") image.draw(c, sleeveX, sleeveY, size, size);
+    else {
+      const crop = Math.min(imageWidth, imageHeight);
+      c.drawImage(image, (imageWidth - crop) / 2, (imageHeight - crop) / 2, crop, crop, sleeveX, sleeveY, size, size);
+    }
   } else {
     c.fillStyle = color;
     c.globalAlpha = .18;

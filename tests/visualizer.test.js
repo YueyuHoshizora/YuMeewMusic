@@ -66,6 +66,24 @@ test("every statically referenced UI element exists and public assets are local"
   assert.match(html, /選一種節奏<\/h2>\s*<span class="collapse-chevron"/);
   assert.doesNotMatch(html, /<details class="right-rhythm-section"\s+open/);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
+  assert.match(html, /背景素材 <span>選填<\/span>/);
+  assert.match(html, /id="image-input"[^>]*accept="[^"]*video\/mp4[^"]*video\/webm/);
+  assert.match(app, /video\.muted = true/);
+  assert.match(app, /backgroundFile: state\.backgroundFile/);
+});
+
+test("video frames can be painted as a cover background", () => {
+  const calls = [];
+  const context = new Proxy({}, {
+    get: (_, key) => key === "createRadialGradient" ? () => ({ addColorStop() {} }) : (...args) => calls.push([key, ...args]),
+    set: () => true,
+  });
+  const video = { videoWidth: 1920, videoHeight: 1080 };
+  draw({ width: 720, height: 1280, getContext: () => context }, 0, null, video, { style: 19, darkness: 0 });
+  const [, source, x, y, width, height] = calls.find(([key]) => key === "drawImage");
+  assert.equal(source, video);
+  assert.equal(height, 1280);
+  assert.ok(x < 0 && y === 0 && width > 720);
 });
 
 test("new animations respond to audio and reproduce the same frame when seeking", () => {

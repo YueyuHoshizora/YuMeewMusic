@@ -3,6 +3,7 @@ import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
 import { draw } from "./visualizer.js";
 import { getFormat } from "./formats.js";
+import { createLoopingVideoDecoder, getLoopingVideoSample } from "./background-video.js";
 
 const registrations = new Map();
 export async function registerAudioEncoder(codec) {
@@ -47,6 +48,7 @@ export async function encodeMedia({
   format = "mp4",
   buffer,
   image,
+  backgroundFile = null,
   settings,
   resolution,
   aspectRatio = "16:9",
@@ -125,7 +127,9 @@ export async function encodeMedia({
   }
   const target = new m.BufferTarget();
   const output = new m.Output({ format: new m[type.container](), target });
+  let backgroundDecoder = null;
   try {
+    if (type.video && backgroundFile) backgroundDecoder = await createLoopingVideoDecoder(m, backgroundFile);
     const video = type.video
       ? new m.CanvasSource(canvas, {
           codec: type.videoCodec,
@@ -149,7 +153,12 @@ export async function encodeMedia({
       checkCanceled();
       if (video) {
         const frame = frameTiming(i, rate, buffer.duration);
-        draw(canvas, frame.timestamp, buffer, image, settings);
+        const backgroundSample = await getLoopingVideoSample(backgroundDecoder, frame.timestamp);
+        try {
+          draw(canvas, frame.timestamp, buffer, backgroundSample || image, settings);
+        } finally {
+          backgroundSample?.close();
+        }
         await video.add(frame.timestamp, frame.duration);
       }
       // Feed small audio blocks alongside video to bound muxer buffering and allow cancellation.
@@ -190,5 +199,7 @@ export async function encodeMedia({
     if (output.state !== "finalized" && output.state !== "canceled")
       await output.cancel().catch(() => {});
     throw error;
+  } finally {
+    backgroundDecoder?.input.dispose();
   }
 }

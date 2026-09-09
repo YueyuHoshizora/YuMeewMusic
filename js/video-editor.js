@@ -7,6 +7,7 @@ import { audioEncodingOptions, scalePcmSamples } from "./export.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
 import { drawLayerWithEffect } from "./video-effects.js";
+import { createLoopingVideoDecoder, getLoopingVideoSample, isBackgroundVideo, loopingVideoTimestamp } from "./background-video.js";
 import { moveTrimRange } from "./trim-range.js";
 import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import {
@@ -37,7 +38,7 @@ const state = {
   trimEnd: null,
   trimInputsReady: false,
   trimInputsFollowDuration: true,
-  base: { audioBuffer: null, audioElement: null, audioUrl: "", image: null, imageUrl: "", duration: 0 },
+  base: { audioBuffer: null, audioElement: null, audioUrl: "", image: null, imageUrl: "", backgroundFile: null, backgroundKind: "", duration: 0 },
 };
 let nextId = 1;
 
@@ -150,9 +151,9 @@ function applyProjectTrim() {
   return true;
 }
 
-function drawBase(canvas, time) {
+function drawBase(canvas, time, background = state.base.image) {
   if (!state.base.audioBuffer) return;
-  draw(canvas, time, state.base.audioBuffer, state.base.image, {
+  draw(canvas, time, state.base.audioBuffer, background, {
     ...settings,
     subtitles: null,
     identityText: "",
@@ -366,6 +367,10 @@ function setProjectTime(time) {
     state.base.audioElement.pause();
     state.base.audioElement.currentTime = Math.min(state.time, state.base.duration);
   }
+  if (state.base.backgroundKind === "video" && state.base.image?.duration) {
+    state.base.image.pause();
+    state.base.image.currentTime = loopingVideoTimestamp(state.time, state.base.image.duration);
+  }
   for (const layer of state.layers.filter(layer => layer.type === "video")) {
     layer.element.pause();
     const local = state.time - layer.start;
@@ -378,6 +383,7 @@ function setProjectTime(time) {
 function pauseProject() {
   state.playing = false;
   state.base.audioElement?.pause();
+  if (state.base.backgroundKind === "video") state.base.image?.pause();
   for (const layer of state.layers.filter(layer => layer.type === "video")) layer.element.pause();
   updatePlayer();
 }
@@ -388,6 +394,13 @@ function syncPreviewVideos() {
       if (Math.abs(state.base.audioElement.currentTime - state.time) > .2) state.base.audioElement.currentTime = state.time;
       if (state.base.audioElement.paused) void state.base.audioElement.play().catch(() => {});
     } else state.base.audioElement.pause();
+  }
+  if (state.base.backgroundKind === "video" && state.base.image?.duration) {
+    const target = loopingVideoTimestamp(state.time, state.base.image.duration);
+    const distance = Math.abs(state.base.image.currentTime - target);
+    const wrappedDistance = Math.abs(distance - state.base.image.duration);
+    if (Math.min(distance, wrappedDistance) > .2) state.base.image.currentTime = target;
+    if (state.base.image.paused) void state.base.image.play().catch(() => {});
   }
   for (const layer of state.layers.filter(layer => layer.type === "video")) {
     const local = state.time - layer.start;
@@ -443,9 +456,20 @@ async function restoreFixedLayers() {
     }
     if (storedImage) {
       const file = unpackStoredMedia(storedImage);
-      const loaded = await loadImage(file);
-      state.base.image = loaded.image;
-      state.base.imageUrl = loaded.url;
+      if (isBackgroundVideo(file)) {
+        const loaded = await loadVideo(file);
+        loaded.video.loop = true;
+        loaded.video.muted = true;
+        state.base.image = loaded.video;
+        state.base.imageUrl = loaded.url;
+        state.base.backgroundFile = file;
+        state.base.backgroundKind = "video";
+      } else {
+        const loaded = await loadImage(file);
+        state.base.image = loaded.image;
+        state.base.imageUrl = loaded.url;
+        state.base.backgroundKind = "image";
+      }
     }
   } catch (error) { status(`主畫面影片本體無法帶入：${error.message}`, "error"); }
   update();
@@ -506,6 +530,7 @@ async function exportProject() {
   $("editor-progress").value = 0;
   updatePlayer();
   const decoders = new Map();
+  let baseBackgroundDecoder = null;
   let output;
   try {
     const m = await import("../vendor/mediabunny.min.mjs");
@@ -530,6 +555,7 @@ async function exportProject() {
     const mixedAudio = await mixProjectAudio(state.layers, range, signal);
     const audioSource = mixedAudio ? new m.AudioBufferSource({ codec: audioCodec, ...audioEncodingOptions(audioCodec, m.Quality) }) : null;
     if (audioSource) output.addAudioTrack(audioSource);
+    if (state.base.backgroundFile) baseBackgroundDecoder = await createLoopingVideoDecoder(m, state.base.backgroundFile);
     const created = await createVideoDecoders(m, state.layers);
     for (const [id, value] of created) decoders.set(id, value);
     const iterators = new Map();
@@ -550,7 +576,12 @@ async function exportProject() {
       const sourceTime = range.start + time;
       context.fillStyle = "#080a0c";
       context.fillRect(0, 0, canvas.width, canvas.height);
-      drawBase(canvas, sourceTime);
+      const baseBackgroundSample = await getLoopingVideoSample(baseBackgroundDecoder, sourceTime);
+      try {
+        drawBase(canvas, sourceTime, baseBackgroundSample || state.base.image);
+      } finally {
+        baseBackgroundSample?.close();
+      }
       for (const layer of state.layers) {
         if (!isLayerActive(layer, sourceTime)) continue;
         if (layer.type === "image") drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, sourceTime);
@@ -599,6 +630,7 @@ async function exportProject() {
     status(error.message || "影片匯出失敗。", "error");
   } finally {
     for (const { input } of decoders.values()) input.dispose();
+    baseBackgroundDecoder?.input.dispose();
     state.exporting = false;
     state.exportController = null;
     $("cancel-export").hidden = true;

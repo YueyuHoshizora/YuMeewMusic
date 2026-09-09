@@ -85,7 +85,9 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(script, /loadStoredMedia\("subtitle"\)/);
   assert.match(script, /loadStoredMedia\("audio"\)/);
   assert.match(script, /loadStoredMedia\("image"\)/);
-  assert.match(script, /drawBase\(canvas, time\)/);
+  assert.match(script, /isBackgroundVideo\(file\)/);
+  assert.match(script, /createLoopingVideoDecoder\(m, state\.base\.backgroundFile\)/);
+  assert.match(script, /function drawBase\(canvas, time, background = state\.base\.image\)/);
   assert.match(script, /!state\.layers\.length && !state\.base\.audioBuffer/);
   assert.match(script, /addEventListener\("pointerdown"/);
   assert.match(script, /addEventListener\("pointermove"/);

@@ -9,6 +9,7 @@ import { draw } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
 import { deleteStoredMedia, loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, clearSettings } from "./settings.js";
+import { isBackgroundVideo, loopingVideoTimestamp } from "./background-video.js";
 
 const $ = (id) => document.getElementById(id);
 const audio = $("audio");
@@ -24,6 +25,9 @@ const state = {
   trimStart: 0,
   trimDirty: false,
   image: null,
+  backgroundFile: null,
+  backgroundKind: "",
+  backgroundUrl: "",
   identityImage: null,
   sleeve: null,
   record: null,
@@ -236,8 +240,8 @@ function update() {
     ? `${formatTime(state.buffer.duration)} · 點擊更換`
     : "拖放檔案或點擊選擇";
   $("image-name").textContent = state.imageLoading
-    ? "正在讀取圖片…"
-    : state.imageName || "加入背景圖片";
+    ? "正在讀取背景素材…"
+    : state.imageName || "加入背景素材";
   $("remove-image").hidden = !state.image;
   $("duration").textContent = formatTime(state.originalBuffer?.duration || 0);
   $("seek").max = state.originalBuffer?.duration || 1;
@@ -422,7 +426,7 @@ async function persistMediaFile(kind, file) {
     await saveStoredMedia(kind, file);
     void navigator.storage?.persist?.().catch(() => false);
   } catch (error) {
-    message(`${kind === "audio" ? "音樂" : kind === "image" ? "背景圖片" : "字幕"}已載入，但無法保存到瀏覽器：${error.message}`);
+    message(`${kind === "audio" ? "音樂" : kind === "image" ? "背景素材" : "字幕"}已載入，但無法保存到瀏覽器：${error.message}`);
   }
 }
 
@@ -489,6 +493,67 @@ async function loadImage(file, kind = "image", persist = true) {
     update();
   }
 }
+function releaseBackgroundVideo() {
+  if (state.backgroundKind === "video") state.image?.pause?.();
+  if (state.backgroundUrl) URL.revokeObjectURL(state.backgroundUrl);
+  state.backgroundUrl = "";
+}
+async function loadBackground(file, persist = true) {
+  if (!file || state.busy || state.loading || state.imageLoading) return;
+  state.imageLoading = true;
+  fileError("image");
+  update();
+  message();
+  let url = "";
+  try {
+    const videoFile = isBackgroundVideo(file);
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const imageFile = ["image/png", "image/jpeg", "image/webp"].includes(file.type)
+      || ["jpg", "jpeg", "png", "webp"].includes(extension);
+    if (videoFile && file.size > 1024 ** 3) throw Error("背景影片請小於 1 GB。");
+    if (!videoFile && file.size > 30 * 1024 * 1024) throw Error("背景圖片請小於 30 MB。");
+    if (!videoFile && !imageFile) throw Error("請選擇 JPG、PNG、WebP、MP4、MOV 或 WebM。");
+    url = URL.createObjectURL(file);
+    let media;
+    if (videoFile) {
+      const video = document.createElement("video");
+      video.preload = "auto";
+      video.playsInline = true;
+      video.loop = true;
+      video.muted = true;
+      video.src = url;
+      await new Promise((resolve, reject) => {
+        video.onloadeddata = () => video.videoWidth && video.videoHeight ? resolve() : reject(Error("背景影片沒有可顯示的畫面。"));
+        video.onerror = () => reject(Error("背景影片無法載入。"));
+      });
+      media = video;
+    } else {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      media = image;
+    }
+    releaseBackgroundVideo();
+    state.image = media;
+    state.imageName = file.name;
+    state.backgroundKind = videoFile ? "video" : "image";
+    state.backgroundFile = videoFile ? file : null;
+    if (videoFile) {
+      state.backgroundUrl = url;
+      url = "";
+    }
+    if (persist) await persistMediaFile("image", file);
+    return true;
+  } catch (error) {
+    fileError("image", error.message || "請選擇可讀取的背景素材。");
+    message(`無法讀取背景素材：${error.message}`);
+    return false;
+  } finally {
+    if (url) URL.revokeObjectURL(url);
+    state.imageLoading = false;
+    update();
+  }
+}
 function bindFile(kind, load) {
   const input = $(`${kind}-input`),
     drop = $(`${kind}-drop`);
@@ -504,7 +569,7 @@ function bindFile(kind, load) {
   });
 }
 bindFile("audio", loadAudio);
-bindFile("image", loadImage);
+bindFile("image", loadBackground);
 for (const kind of ["sleeve", "record"]) {
   bindFile(kind, file => loadImage(file, kind));
   $(`remove-${kind}`).addEventListener("click", () => {
@@ -516,11 +581,14 @@ for (const kind of ["sleeve", "record"]) {
   });
 }
 $("remove-image").addEventListener("click", () => {
+  releaseBackgroundVideo();
   state.image = null;
   state.imageName = "";
+  state.backgroundFile = null;
+  state.backgroundKind = "";
   fileError("image");
   update();
-  void deleteStoredMedia("image").catch(error => message(`背景圖片已移除，但無法清除瀏覽器副本：${error.message}`));
+  void deleteStoredMedia("image").catch(error => message(`背景素材已移除，但無法清除瀏覽器副本：${error.message}`));
 });
 $("dismiss-message").addEventListener("click", () => message());
 async function applyPreviewVolume(startingPlayback = false) {
@@ -638,6 +706,7 @@ $("export").addEventListener("click", async () => {
       format,
       buffer: state.buffer,
       image: state.image,
+      backgroundFile: state.backgroundFile,
       settings: { ...state, profile: $("profile").value },
       resolution,
       aspectRatio: $("aspect-ratio").value,
@@ -671,9 +740,21 @@ $("export").addEventListener("click", async () => {
   }
 });
 
+function syncBackgroundVideo(time) {
+  if (state.backgroundKind !== "video" || !state.image?.duration) return;
+  const target = loopingVideoTimestamp(time, state.image.duration);
+  const distance = Math.abs(state.image.currentTime - target);
+  const wrappedDistance = Math.abs(distance - state.image.duration);
+  if (Math.min(distance, wrappedDistance) > .15) state.image.currentTime = target;
+  if (audio.paused) {
+    if (!state.image.paused) state.image.pause();
+  } else if (state.image.paused) void state.image.play().catch(() => {});
+}
+
 function animate() {
   enforceTrimEnd();
   const time = Math.max(0, (audio.currentTime || 0) - state.trimStart);
+  syncBackgroundVideo(time);
   if (!state.busy) draw($("preview"), time, state.buffer, state.image, state);
   $("time").textContent = formatTime(audio.currentTime || 0);
   $("seek").value = audio.currentTime || 0;
@@ -1008,14 +1089,14 @@ async function restoreIdentityImage() {
 async function restoreSavedMedia() {
   for (const [kind, loader] of [
     ["audio", file => loadAudio(file, false)],
-    ["image", file => loadImage(file, "image", false)],
+    ["image", file => loadBackground(file, false)],
     ["subtitle", file => loadSubtitle(file, false)],
   ]) {
     try {
       const record = await loadStoredMedia(kind);
       if (record) await loader(unpackStoredMedia(record));
     } catch (error) {
-      message(`無法還原保存的${kind === "audio" ? "音樂" : kind === "image" ? "背景圖片" : "字幕"}：${error.message}`);
+      message(`無法還原保存的${kind === "audio" ? "音樂" : kind === "image" ? "背景素材" : "字幕"}：${error.message}`);
     }
   }
 }

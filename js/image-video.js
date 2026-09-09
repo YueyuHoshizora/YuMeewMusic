@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { videoDimensions } from "./dimensions.js";
-import { drawLayerWithEffect, effectDuration, VIDEO_EFFECTS } from "./video-effects.js";
+import { drawLayerWithEffect, effectDuration, layerEffectState, VIDEO_EFFECTS } from "./video-effects.js";
 import { formatEditorTime } from "./video-editor-core.js";
 import { createPngMov } from "./png-mov.js";
 import { imageSequenceAt, imageSequenceDuration, serializeImageSequence } from "./image-sequence.js";
@@ -295,10 +295,19 @@ async function encodeMovie(toMain) {
     const count = Math.ceil(total * fps);
     const canvas = $("image-video-preview");
     const frames = [];
+    const stillFrames = new Map();
     for (let index = 0; index < count; index++) {
       if (signal.aborted) throw Error("已取消匯出。");
-      renderFrame(index / fps);
-      frames.push(await canvasPng(canvas));
+      const frameTime = index / fps;
+      const active = imageSequenceAt(state.slides, Math.min(frameTime, Math.max(0, total - .0001)));
+      const effect = active ? layerEffectState({ ...active.slide, start: active.start }, frameTime) : null;
+      let frame = effect?.effect === "none" ? stillFrames.get(active.slide.id) : null;
+      if (!frame) {
+        renderFrame(frameTime);
+        frame = await canvasPng(canvas);
+        if (effect?.effect === "none") stillFrames.set(active.slide.id, frame);
+      }
+      frames.push(frame);
       if (index % 3 === 0 || index === count - 1) {
         const progress = Math.round((index + 1) / count * 94);
         $("image-video-progress").value = progress;

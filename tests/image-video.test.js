@@ -27,7 +27,7 @@ test("stored image sequence contains blobs and editable timing without DOM objec
   assert.equal("url" in project.slides[0], false);
 });
 
-test("PNG MOV contains a QuickTime container, PNG sample entry and every frame", async () => {
+test("PNG MOV holds repeated still frames with one sample duration", async () => {
   const png = new Blob([Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10])], { type: "image/png" });
   const blob = createPngMov([png, png, png], 1280, 720, 30);
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -36,7 +36,12 @@ test("PNG MOV contains a QuickTime container, PNG sample entry and every frame",
   assert.match(text, /ftypqt  /);
   assert.match(text, /moov/);
   assert.match(text, /png /);
-  assert.equal([...bytes].filter((value, index) => value === 137 && bytes[index + 1] === 80 && bytes[index + 2] === 78 && bytes[index + 3] === 71).length, 3);
+  assert.equal([...bytes].filter((value, index) => value === 137 && bytes[index + 1] === 80 && bytes[index + 2] === 78 && bytes[index + 3] === 71).length, 1);
+  const stts = text.indexOf("stts");
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  assert.equal(view.getUint32(stts + 8), 1);
+  assert.equal(view.getUint32(stts + 12), 1);
+  assert.equal(view.getUint32(stts + 16), 3);
 });
 
 test("圖轉影片 page exposes multiple images, MOV settings and both export paths", () => {

@@ -69,10 +69,21 @@ function pngSampleEntry(width, height) {
   );
 }
 
-function sampleTable(width, height, sizes, offsets) {
+function timeToSample(durations) {
+  const entries = [];
+  for (const duration of durations) {
+    const last = entries.at(-1);
+    if (last?.duration === duration) last.count += 1;
+    else entries.push({ count: 1, duration });
+  }
+  return entries;
+}
+
+function sampleTable(width, height, sizes, offsets, durations) {
   const count = sizes.length;
   const stsd = atom("stsd", fullBox(), numbers(4, [1]), pngSampleEntry(width, height));
-  const stts = atom("stts", fullBox(), numbers(4, [1, count, 1]));
+  const timing = timeToSample(durations);
+  const stts = atom("stts", fullBox(), numbers(4, [timing.length, ...timing.flatMap(entry => [entry.count, entry.duration])]));
   const stsc = atom("stsc", fullBox(), numbers(4, [1, 1, 1, 1]));
   const stsz = atom("stsz", fullBox(), numbers(4, [0, count, ...sizes]));
   const stco = atom("stco", fullBox(), numbers(4, [count, ...offsets]));
@@ -80,19 +91,27 @@ function sampleTable(width, height, sizes, offsets) {
   return atom("stbl", stsd, stts, stsc, stsz, stco, stss);
 }
 
-function mediaInfo(width, height, sizes, offsets) {
+function mediaInfo(width, height, sizes, offsets, durations) {
   const vmhd = atom("vmhd", fullBox(1), numbers(2, [0, 0, 0, 0]));
   const url = atom("url ", fullBox(1));
   const dref = atom("dref", fullBox(), numbers(4, [1]), url);
   const dinf = atom("dinf", dref);
-  return atom("minf", vmhd, dinf, sampleTable(width, height, sizes, offsets));
+  return atom("minf", vmhd, dinf, sampleTable(width, height, sizes, offsets, durations));
 }
 
 export function createPngMov(frameBlobs, width, height, fps) {
   if (!Array.isArray(frameBlobs) || !frameBlobs.length) throw Error("MOV 至少需要一個影格。");
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) throw Error("MOV 畫面尺寸無效。");
   if (![30, 60].includes(Number(fps))) throw Error("MOV 影格率必須是 30 或 60 fps。");
-  const sizes = frameBlobs.map(frame => frame.size);
+  const samples = [];
+  for (const frame of frameBlobs) {
+    const previous = samples.at(-1);
+    if (previous?.blob === frame) previous.duration += 1;
+    else samples.push({ blob: frame, duration: 1 });
+  }
+  const sampleBlobs = samples.map(sample => sample.blob);
+  const sizes = sampleBlobs.map(frame => frame.size);
+  const durations = samples.map(sample => sample.duration);
   const ftyp = atom("ftyp", ascii("qt  ", 4), numbers(4, [0x200]), ascii("qt  ", 4));
   const mdatSize = 8 + sizes.reduce((sum, size) => sum + size, 0);
   if (ftyp.byteLength + mdatSize > 0xffffffff) throw Error("MOV 超過 4 GB，請縮短影片或降低解析度。");
@@ -103,8 +122,8 @@ export function createPngMov(frameBlobs, width, height, fps) {
     offset += size;
   }
   const duration = frameBlobs.length;
-  const mdia = atom("mdia", mediaHeader(Number(fps), duration), handler("vide", "VideoHandler"), mediaInfo(width, height, sizes, offsets));
+  const mdia = atom("mdia", mediaHeader(Number(fps), duration), handler("vide", "VideoHandler"), mediaInfo(width, height, sizes, offsets, durations));
   const moov = atom("moov", movieHeader(Number(fps), duration), atom("trak", trackHeader(width, height, duration), mdia));
   const mdatHeader = join([numbers(4, [mdatSize]), ascii("mdat", 4)]);
-  return new Blob([ftyp, mdatHeader, ...frameBlobs, moov], { type: "video/quicktime" });
+  return new Blob([ftyp, mdatHeader, ...sampleBlobs, moov], { type: "video/quicktime" });
 }

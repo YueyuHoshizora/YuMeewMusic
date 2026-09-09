@@ -9,7 +9,7 @@ const types = {
   ".mjs": "text/javascript",
   ".svg": "image/svg+xml",
 };
-const allowed = new Set(["index.html", "subtitle-editor.html", "converter.html", "video-editor.html", "favicon.svg"]);
+const allowed = new Set(["index.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "favicon.svg"]);
 createServer(async (req, res) => {
   try {
     if (req.method !== "GET" && req.method !== "HEAD") {

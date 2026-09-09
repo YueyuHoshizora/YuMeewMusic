@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在瀏覽器內將多張圖片製作成保留透明通道與進退場特效的 MOV 影片。" />
+    <title>圖轉影片 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/video-editor.css" />
+    <link rel="stylesheet" href="./css/image-video.css" />
+    <script type="module" src="./js/image-video.js"></script>
+  </head>
+  <body class="video-editor-body image-video-body">
+    <header class="video-editor-header">
+      <a class="brand" href="./" data-confirm-return aria-label="回到 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">▧</span>圖轉影片<span class="brand-sub">IMAGE TO VIDEO</span></a>
+      <span class="local"><i></i>圖片與影片只在瀏覽器內處理</span>
+      <a class="text-button video-editor-back" href="./" data-confirm-return>← 返回主畫面</a>
+    </header>
+
+    <main class="video-editor-main">
+      <section class="video-editor-heading">
+        <div><div class="eyebrow">IMAGE SEQUENCE</div><h1>讓圖片開始流動<span>。</span></h1><p>加入多張圖片，安排順序、停留時間與進退場特效，再匯出保留透明通道的 MOV，或直接設為主畫面背景素材。</p></div>
+        <div id="image-video-status" class="editor-status" role="status">請加入第一張圖片。</div>
+      </section>
+
+      <section class="video-editor-grid image-video-grid">
+        <aside class="panel layer-library">
+          <div class="section-title"><span>01</span><h2>加入圖片</h2></div>
+          <button id="add-images" class="layer-add" type="button"><strong>＋ 選擇多張圖片</strong><small>JPG · PNG · WebP</small></button>
+          <input id="images-input" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden />
+          <p id="image-video-error" class="file-error" role="alert" hidden></p>
+          <div class="layer-heading"><span>播放順序</span><small id="image-count">0 張</small></div>
+          <div id="image-list" class="layer-list image-sequence-list" aria-label="圖片播放順序"></div>
+          <p id="empty-images" class="empty-inspector">圖片會按照清單順序依序播放。</p>
+        </aside>
+
+        <section class="editor-stage">
+          <div class="panel preview-panel">
+            <div class="preview-heading"><div><span>即時預覽</span><small id="image-video-preview-size">16:9</small></div><button id="fullscreen-image-video" class="icon-button" type="button" aria-label="全螢幕預覽">⛶</button></div>
+            <div id="image-video-frame" class="canvas-frame"><canvas id="image-video-preview" width="1280" height="720" aria-label="圖轉影片預覽"></canvas></div>
+            <div class="editor-player">
+              <button id="play-image-video" class="player-button" type="button" disabled aria-label="播放">▶</button>
+              <span id="image-video-current">00:00.0</span>
+              <input id="image-video-seek" type="range" min="0" max="1" step="0.01" value="0" disabled aria-label="影片播放進度" />
+              <span id="image-video-total">00:00.0</span>
+              <button id="restart-image-video" class="icon-button" type="button" aria-label="回到最前端">|◀</button>
+            </div>
+          </div>
+          <div class="panel timeline-panel">
+            <div class="timeline-heading"><strong>圖片時間軸</strong><span>點擊色帶選取圖片</span></div>
+            <div id="image-video-timeline" class="timeline" aria-label="圖片影片時間軸"><div id="image-video-ruler" class="timeline-ruler"></div><div id="image-video-tracks"></div><i id="image-video-playhead" aria-hidden="true"></i></div>
+          </div>
+        </section>
+
+        <aside class="panel layer-inspector">
+          <div class="section-title"><span>02</span><h2>圖片設定</h2></div>
+          <div id="empty-image-inspector" class="empty-inspector">從左側加入並選取一張圖片。</div>
+          <div id="image-controls" hidden>
+            <div class="selected-file"><span>圖片</span><strong id="selected-image-name"></strong></div>
+            <label class="field-label" for="image-duration">持續時間（秒）</label>
+            <input id="image-duration" class="text-input" type="number" min="0.1" max="3600" step="0.1" value="5" />
+            <div class="layer-effects">
+              <div class="layer-effect-group">
+                <label class="field-label" for="image-enter-effect">進場特效</label>
+                <select id="image-enter-effect" class="setting-select">
+                  <option value="none">無</option><option value="fade">淡入淡出</option><option value="dissolve">交叉溶解</option>
+                  <option value="slide-left">向左滑動</option><option value="slide-right">向右滑動</option><option value="slide-up">向上滑動</option><option value="slide-down">向下滑動</option>
+                  <option value="zoom">放大進入</option><option value="blur">模糊轉場</option><option value="flash-white">閃白</option><option value="flash-black">閃黑</option>
+                  <option value="circle">圓形揭露</option><option value="blinds">百葉窗</option><option value="pixelate">像素化</option><option value="rgb-glitch">RGB 色差故障</option>
+                </select>
+                <label class="field-label" for="image-enter-duration">進場持續時間（秒）</label>
+                <input id="image-enter-duration" class="text-input" type="number" min="0.1" max="10" step="0.1" value="0.5" />
+              </div>
+              <div class="layer-effect-group">
+                <label class="field-label" for="image-exit-effect">退場特效</label>
+                <select id="image-exit-effect" class="setting-select">
+                  <option value="none">無</option><option value="fade">淡入淡出</option><option value="dissolve">交叉溶解</option>
+                  <option value="slide-left">向左滑動</option><option value="slide-right">向右滑動</option><option value="slide-up">向上滑動</option><option value="slide-down">向下滑動</option>
+                  <option value="zoom">縮小離開</option><option value="blur">模糊轉場</option><option value="flash-white">閃白</option><option value="flash-black">閃黑</option>
+                  <option value="circle">圓形收合</option><option value="blinds">百葉窗</option><option value="pixelate">像素化</option><option value="rgb-glitch">RGB 色差故障</option>
+                </select>
+                <label class="field-label" for="image-exit-duration">退場持續時間（秒）</label>
+                <input id="image-exit-duration" class="text-input" type="number" min="0.1" max="10" step="0.1" value="0.5" />
+              </div>
+            </div>
+            <div class="layer-actions"><button id="move-image-up" class="text-button" type="button">往前</button><button id="move-image-down" class="text-button" type="button">往後</button></div>
+            <button id="remove-image-video-item" class="danger-button" type="button">－ 刪除這張圖片</button>
+          </div>
+
+          <div class="export-box">
+            <div class="section-title"><span>03</span><h2>匯出 MOV</h2></div>
+            <p id="image-video-aspect" class="image-video-aspect"></p>
+            <label class="field-label" for="image-video-resolution">解析度</label><select id="image-video-resolution" class="setting-select"><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option></select>
+            <label class="field-label" for="image-video-fps">影格率</label><select id="image-video-fps" class="setting-select"><option value="30">30 fps</option><option value="60">60 fps</option></select>
+            <div class="image-video-export-actions">
+              <button id="export-image-video" class="export-button" type="button" disabled>↓ 匯出影片</button>
+              <button id="export-image-video-to-main" class="text-button export-to-main" type="button" disabled>匯出到主畫面 →</button>
+            </div>
+            <p class="position-help">使用 PNG 影格保留透明通道，檔案通常會比一般影片大。</p>
+            <progress id="image-video-progress" max="100" value="0" hidden></progress>
+            <button id="cancel-image-video-export" class="text-button" type="button" hidden>取消匯出</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

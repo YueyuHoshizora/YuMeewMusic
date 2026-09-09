@@ -2,9 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   deleteStoredMedia,
+  deleteStoredValue,
   loadStoredMedia,
+  loadStoredValue,
   packStoredMedia,
   saveStoredMedia,
+  saveStoredValue,
   unpackStoredMedia,
 } from "../js/media-store.js";
 
@@ -90,4 +93,14 @@ test("IndexedDB media store saves, loads, replaces and deletes each supported fi
   await deleteStoredMedia("audio", database);
   assert.equal(await loadStoredMedia("audio", database), null);
   await assert.rejects(saveStoredMedia("identity", first, database), /不支援/);
+});
+
+test("image-to-video project data can be stored beside the rendered background file", async () => {
+  const database = memoryIndexedDb();
+  const project = { version: 1, slides: [{ blob: new Blob(["image"]), duration: 5 }] };
+  await saveStoredValue("image-video-project", project, database);
+  assert.deepEqual(await loadStoredValue("image-video-project", database), project);
+  await deleteStoredValue("image-video-project", database);
+  assert.equal(await loadStoredValue("image-video-project", database), null);
+  await assert.rejects(saveStoredValue("other", project, database), /不支援/);
 });

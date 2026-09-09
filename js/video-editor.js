@@ -1,6 +1,6 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { loadStoredMedia, unpackStoredMedia } from "./media-store.js";
+import { loadStoredMedia, loadStoredValue, unpackStoredMedia } from "./media-store.js";
 import { parseSubtitles } from "./subtitles.js";
 import { draw, drawIdentity, drawSubtitles } from "./visualizer.js";
 import { audioEncodingOptions, scalePcmSamples } from "./export.js";
@@ -8,6 +8,7 @@ import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
 import { drawLayerWithEffect } from "./video-effects.js";
 import { createLoopingVideoDecoder, getLoopingVideoSample, isBackgroundVideo, loopingVideoTimestamp } from "./background-video.js";
+import { createImageSequenceRenderer } from "./image-sequence.js";
 import { moveTrimRange } from "./trim-range.js";
 import { formatTrimTime, parseTrimTime } from "./trim-time.js";
 import {
@@ -153,6 +154,7 @@ function applyProjectTrim() {
 
 function drawBase(canvas, time, background = state.base.image) {
   if (!state.base.audioBuffer) return;
+  background?.setTime?.(time);
   draw(canvas, time, state.base.audioBuffer, background, {
     ...settings,
     subtitles: null,
@@ -443,7 +445,7 @@ async function restoreFixedLayers() {
     } catch { status("個人識別圖片無法帶入。", "error"); }
   }
   try {
-    const [storedAudio, storedImage] = await Promise.all([loadStoredMedia("audio"), loadStoredMedia("image")]);
+    const [storedAudio, storedImage, imageVideoProject] = await Promise.all([loadStoredMedia("audio"), loadStoredMedia("image"), loadStoredValue("image-video-project")]);
     if (storedAudio) {
       const file = unpackStoredMedia(storedAudio);
       const decoder = new AudioContext();
@@ -456,7 +458,10 @@ async function restoreFixedLayers() {
     }
     if (storedImage) {
       const file = unpackStoredMedia(storedImage);
-      if (isBackgroundVideo(file)) {
+      if (imageVideoProject?.outputName === file.name) {
+        state.base.image = await createImageSequenceRenderer(imageVideoProject, true);
+        state.base.backgroundKind = "sequence";
+      } else if (isBackgroundVideo(file)) {
         const loaded = await loadVideo(file);
         loaded.video.loop = true;
         loaded.video.muted = true;

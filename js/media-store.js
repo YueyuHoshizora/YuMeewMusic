@@ -1,9 +1,10 @@
 const DATABASE = "yumeew-media-v1";
 const STORE = "files";
 const ALLOWED_KINDS = new Set(["audio", "image", "subtitle"]);
+const ALLOWED_VALUE_KINDS = new Set(["image-video-project"]);
 
-function requireKind(kind) {
-  if (!ALLOWED_KINDS.has(kind)) throw Error("不支援的本機媒體類型。");
+function requireKind(kind, values = false) {
+  if (!(values ? ALLOWED_VALUE_KINDS : ALLOWED_KINDS).has(kind)) throw Error("不支援的本機媒體類型。");
 }
 
 export function packStoredMedia(file) {
@@ -36,8 +37,8 @@ function openDatabase(factory = globalThis.indexedDB) {
   });
 }
 
-async function transact(kind, mode, operation, factory) {
-  requireKind(kind);
+async function transact(kind, mode, operation, factory, values = false) {
+  requireKind(kind, values);
   const database = await openDatabase(factory);
   try {
     return await new Promise((resolve, reject) => {
@@ -62,4 +63,16 @@ export function loadStoredMedia(kind, factory) {
 
 export function deleteStoredMedia(kind, factory) {
   return transact(kind, "readwrite", store => store.delete(kind), factory);
+}
+
+export function saveStoredValue(kind, value, factory) {
+  return transact(kind, "readwrite", store => store.put(value, kind), factory, true);
+}
+
+export function loadStoredValue(kind, factory) {
+  return transact(kind, "readonly", store => store.get(kind), factory, true);
+}
+
+export function deleteStoredValue(kind, factory) {
+  return transact(kind, "readwrite", store => store.delete(kind), factory, true);
 }

@@ -155,6 +155,7 @@ export async function encodeMedia({
         const frame = frameTiming(i, rate, buffer.duration);
         const backgroundSample = await getLoopingVideoSample(backgroundDecoder, frame.timestamp);
         try {
+          image?.setTime?.(frame.timestamp);
           draw(canvas, frame.timestamp, buffer, backgroundSample || image, settings);
         } finally {
           backgroundSample?.close();

@@ -59,7 +59,9 @@ test("editor initializes, switches formats and reaches download for every format
     trimAudio: (source, start, end) => realTrimAudio(source, start, end, options => ({...options, duration:options.length/options.sampleRate, getChannelData:()=>new Float32Array(options.length)})),
     saveStoredMedia: async () => {},
     loadStoredMedia: async () => null,
+    loadStoredValue: async () => null,
     deleteStoredMedia: async () => {},
+    deleteStoredValue: async () => {},
     unpackStoredMedia: record => record,
     navigator: { storage: { persist: async () => true } },
     document: {
@@ -100,6 +102,7 @@ test("editor initializes, switches formats and reaches download for every format
     saveSettings() {},
     applyTheme() {},
     draw() {},
+    createImageSequenceRenderer: async () => null,
     encodeMedia: async (options) => {
       encoded.push(options.format);
       durations.push(options.buffer.duration);

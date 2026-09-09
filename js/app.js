@@ -7,9 +7,10 @@ import { applyTheme } from "./themes.js";
 import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
-import { deleteStoredMedia, loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
+import { deleteStoredMedia, deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings, clearSettings } from "./settings.js";
 import { isBackgroundVideo, loopingVideoTimestamp } from "./background-video.js";
+import { createImageSequenceRenderer } from "./image-sequence.js";
 
 const $ = (id) => document.getElementById(id);
 const audio = $("audio");
@@ -495,10 +496,11 @@ async function loadImage(file, kind = "image", persist = true) {
 }
 function releaseBackgroundVideo() {
   if (state.backgroundKind === "video") state.image?.pause?.();
+  state.image?.dispose?.();
   if (state.backgroundUrl) URL.revokeObjectURL(state.backgroundUrl);
   state.backgroundUrl = "";
 }
-async function loadBackground(file, persist = true) {
+async function loadBackground(file, persist = true, project = null) {
   if (!file || state.busy || state.loading || state.imageLoading) return;
   state.imageLoading = true;
   fileError("image");
@@ -513,9 +515,12 @@ async function loadBackground(file, persist = true) {
     if (videoFile && file.size > 1024 ** 3) throw Error("背景影片請小於 1 GB。");
     if (!videoFile && file.size > 30 * 1024 * 1024) throw Error("背景圖片請小於 30 MB。");
     if (!videoFile && !imageFile) throw Error("請選擇 JPG、PNG、WebP、MP4、MOV 或 WebM。");
-    url = URL.createObjectURL(file);
     let media;
-    if (videoFile) {
+    const sequence = project?.outputName === file.name;
+    if (sequence) {
+      media = await createImageSequenceRenderer(project, true);
+    } else if (videoFile) {
+      url = URL.createObjectURL(file);
       const video = document.createElement("video");
       video.preload = "auto";
       video.playsInline = true;
@@ -528,6 +533,7 @@ async function loadBackground(file, persist = true) {
       });
       media = video;
     } else {
+      url = URL.createObjectURL(file);
       const image = new Image();
       image.src = url;
       await image.decode();
@@ -536,13 +542,16 @@ async function loadBackground(file, persist = true) {
     releaseBackgroundVideo();
     state.image = media;
     state.imageName = file.name;
-    state.backgroundKind = videoFile ? "video" : "image";
-    state.backgroundFile = videoFile ? file : null;
-    if (videoFile) {
+    state.backgroundKind = sequence ? "sequence" : videoFile ? "video" : "image";
+    state.backgroundFile = videoFile && !sequence ? file : null;
+    if (videoFile && !sequence) {
       state.backgroundUrl = url;
       url = "";
     }
-    if (persist) await persistMediaFile("image", file);
+    if (persist) {
+      await persistMediaFile("image", file);
+      await deleteStoredValue("image-video-project").catch(() => {});
+    }
     return true;
   } catch (error) {
     fileError("image", error.message || "請選擇可讀取的背景素材。");
@@ -589,6 +598,7 @@ $("remove-image").addEventListener("click", () => {
   fileError("image");
   update();
   void deleteStoredMedia("image").catch(error => message(`背景素材已移除，但無法清除瀏覽器副本：${error.message}`));
+  void deleteStoredValue("image-video-project").catch(() => {});
 });
 $("dismiss-message").addEventListener("click", () => message());
 async function applyPreviewVolume(startingPlayback = false) {
@@ -741,6 +751,10 @@ $("export").addEventListener("click", async () => {
 });
 
 function syncBackgroundVideo(time) {
+  if (state.backgroundKind === "sequence") {
+    state.image?.setTime?.(time);
+    return;
+  }
   if (state.backgroundKind !== "video" || !state.image?.duration) return;
   const target = loopingVideoTimestamp(time, state.image.duration);
   const distance = Math.abs(state.image.currentTime - target);
@@ -1087,9 +1101,12 @@ async function restoreIdentityImage() {
   finally { state.imageLoading = false; update(); }
 }
 async function restoreSavedMedia() {
+  let imageVideoProject = null;
+  try { imageVideoProject = await loadStoredValue("image-video-project"); }
+  catch (error) { message(`無法還原圖轉影片背景：${error.message}`); }
   for (const [kind, loader] of [
     ["audio", file => loadAudio(file, false)],
-    ["image", file => loadBackground(file, false)],
+    ["image", file => loadBackground(file, false, imageVideoProject)],
     ["subtitle", file => loadSubtitle(file, false)],
   ]) {
     try {

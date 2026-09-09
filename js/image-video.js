@@ -49,6 +49,19 @@ function slideStart(target) {
   return 0;
 }
 
+function moveSlide(id, direction) {
+  if (state.exporting) return;
+  const index = state.slides.findIndex(slide => slide.id === id);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= state.slides.length) return;
+  pause();
+  [state.slides[index], state.slides[target]] = [state.slides[target], state.slides[index]];
+  state.selectedId = id;
+  state.time = slideStart(selected());
+  status(`已將 ${selected().name}${direction < 0 ? "上移" : "下移"}。`, "success");
+  update();
+}
+
 function setCanvasSize() {
   const dimensions = videoDimensions($("image-video-resolution").value, settings.aspectRatio);
   const canvas = $("image-video-preview");
@@ -78,9 +91,11 @@ function renderFrame(time = state.time) {
 
 function renderList() {
   $("image-list").replaceChildren(...state.slides.map((slide, index) => {
-    const row = document.createElement("button");
-    row.type = "button";
+    const row = document.createElement("div");
     row.className = `layer-row image-sequence-row${slide.id === state.selectedId ? " selected" : ""}`;
+    const select = document.createElement("button");
+    select.type = "button";
+    select.className = "image-sequence-select";
     const image = document.createElement("img");
     image.src = slide.url;
     image.alt = "";
@@ -90,10 +105,30 @@ function renderList() {
     const timing = document.createElement("small");
     timing.textContent = `${formatEditorTime(slideStart(slide))}–${formatEditorTime(slideStart(slide) + slide.duration)} · ${slide.duration.toFixed(1)} 秒`;
     detail.append(name, timing);
+    select.append(image, detail);
+    select.addEventListener("click", () => { state.selectedId = slide.id; state.time = slideStart(slide); update(); });
+    const controls = document.createElement("div");
+    controls.className = "image-sequence-order";
     const order = document.createElement("b");
     order.textContent = String(index + 1);
-    row.append(image, detail, order);
-    row.addEventListener("click", () => { state.selectedId = slide.id; state.time = slideStart(slide); update(); });
+    const up = document.createElement("button");
+    up.type = "button";
+    up.className = "image-order-button";
+    up.textContent = "↑";
+    up.title = "上移圖片";
+    up.setAttribute("aria-label", `上移 ${slide.name}`);
+    up.disabled = index === 0 || state.exporting;
+    up.addEventListener("click", () => moveSlide(slide.id, -1));
+    const down = document.createElement("button");
+    down.type = "button";
+    down.className = "image-order-button";
+    down.textContent = "↓";
+    down.title = "下移圖片";
+    down.setAttribute("aria-label", `下移 ${slide.name}`);
+    down.disabled = index === state.slides.length - 1 || state.exporting;
+    down.addEventListener("click", () => moveSlide(slide.id, 1));
+    controls.append(order, up, down);
+    row.append(select, controls);
     return row;
   }));
   $("image-count").textContent = `${state.slides.length} 張`;
@@ -320,14 +355,7 @@ for (const phase of ["enter", "exit"]) {
     if (event.target.value !== "") patchSelected({ [`${phase}Duration`]: event.target.value });
   });
 }
-for (const [id, direction] of [["move-image-up", -1], ["move-image-down", 1]]) $(id).addEventListener("click", () => {
-  const index = state.slides.findIndex(slide => slide.id === state.selectedId);
-  const target = index + direction;
-  if (index < 0 || target < 0 || target >= state.slides.length) return;
-  [state.slides[index], state.slides[target]] = [state.slides[target], state.slides[index]];
-  state.time = slideStart(selected());
-  update();
-});
+for (const [id, direction] of [["move-image-up", -1], ["move-image-down", 1]]) $(id).addEventListener("click", () => moveSlide(state.selectedId, direction));
 $("remove-image-video-item").addEventListener("click", () => {
   const index = state.slides.findIndex(slide => slide.id === state.selectedId);
   if (index < 0) return;

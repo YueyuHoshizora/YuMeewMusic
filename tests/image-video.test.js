@@ -17,14 +17,28 @@ test("stored image sequence contains blobs and editable timing without DOM objec
   file.name = "透明.png";
   file.lastModified = 123;
   const project = serializeImageSequence([{
-    file, name: file.name, element: {}, url: "blob:temporary", duration: 4,
+    type: "image", file, name: file.name, element: {}, url: "blob:temporary", duration: 4,
     enterEffect: "fade", enterDuration: .5, exitEffect: "zoom", exitDuration: .5,
   }], { outputName: "result.mov", width: 1280, height: 720, aspectRatio: "16:9", fps: 30 });
   assert.equal(project.outputName, "result.mov");
   assert.equal(project.slides[0].blob, file);
   assert.equal(project.slides[0].duration, 4);
+  assert.equal(project.slides[0].kind, "image");
   assert.equal("element" in project.slides[0], false);
   assert.equal("url" in project.slides[0], false);
+});
+
+test("stored sequence preserves silent one-shot video material", () => {
+  const file = new Blob(["video"], { type: "video/mp4" });
+  file.name = "clip.mp4";
+  file.lastModified = 456;
+  const project = serializeImageSequence([{
+    type: "video", file, name: file.name, element: {}, url: "blob:video", duration: 6.25,
+    enterEffect: "fade", enterDuration: .5, exitEffect: "fade", exitDuration: .5,
+  }], { outputName: "result.mov", width: 1280, height: 720, aspectRatio: "16:9", fps: 30 });
+  assert.equal(project.slides[0].kind, "video");
+  assert.equal(project.slides[0].duration, 6.25);
+  assert.equal(project.slides[0].blob, file);
 });
 
 test("PNG MOV holds repeated still frames with one sample duration", async () => {
@@ -52,6 +66,7 @@ test("圖轉影片 page exposes multiple images, MOV settings and both export pa
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /id="images-input"[^>]*multiple/);
+  assert.match(html, /id="images-input"[^>]*video\/mp4[^>]*video\/quicktime[^>]*video\/webm/);
   assert.match(html, /id="export-image-video"/);
   assert.match(html, /id="export-image-video-to-main"/);
   assert.match(html, /id="image-video-transparency"/);
@@ -63,6 +78,10 @@ test("圖轉影片 page exposes multiple images, MOV settings and both export pa
   assert.match(script, /saveStoredValue\("image-video-project", project\)/);
   assert.match(script, /new m\.Mp4OutputFormat\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
+  assert.match(script, /isBackgroundVideo\(file\)/);
+  assert.match(script, /new m\.VideoSampleSink/);
+  assert.match(script, /video\.muted = true/);
+  assert.match(script, /video\.loop = false/);
   assert.match(script, /image-video-timeline"\)\.addEventListener\("pointerdown"/);
   assert.match(script, /image-video-timeline"\)\.addEventListener\("pointermove"/);
   assert.match(script, /setPointerCapture/);

@@ -7,6 +7,7 @@ import { formatEditorTime } from "./video-editor-core.js";
 import { createPngMov } from "./png-mov.js";
 import { imageSequenceAt, imageSequenceDuration, serializeImageSequence } from "./image-sequence.js";
 import { deleteStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
+import { isBackgroundVideo } from "./background-video.js";
 
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
@@ -88,7 +89,7 @@ function setCanvasSize() {
   $("image-video-preview-size").textContent = `${settings.aspectRatio} · ${$("image-video-resolution").value}p`;
 }
 
-function renderFrame(time = state.time) {
+function renderFrame(time = state.time, sourceOverride = null) {
   const canvas = $("image-video-preview");
   const context = canvas.getContext("2d");
   context.clearRect(0, 0, canvas.width, canvas.height);
@@ -100,12 +101,15 @@ function renderFrame(time = state.time) {
   const total = duration();
   const active = imageSequenceAt(state.slides, Math.min(Math.max(0, time), Math.max(0, total - .0001)));
   if (!active) return;
+  const source = sourceOverride || active.slide.element;
+  const sourceWidth = source.displayWidth || source.videoWidth || source.naturalWidth;
+  const sourceHeight = source.displayHeight || source.videoHeight || source.naturalHeight;
   drawLayerWithEffect(
     context,
-    { ...active.slide, type: "image", start: active.start },
-    active.slide.element,
-    active.slide.element.naturalWidth,
-    active.slide.element.naturalHeight,
+    { ...active.slide, start: active.start },
+    source,
+    sourceWidth,
+    sourceHeight,
     active.time,
   );
 }
@@ -117,17 +121,21 @@ function renderList() {
     const select = document.createElement("button");
     select.type = "button";
     select.className = "image-sequence-select";
-    const image = document.createElement("img");
-    image.src = slide.url;
-    image.alt = "";
+    const thumbnail = document.createElement(slide.type === "video" ? "video" : "img");
+    thumbnail.src = slide.url;
+    if (slide.type === "video") {
+      thumbnail.muted = true;
+      thumbnail.playsInline = true;
+      thumbnail.preload = "metadata";
+    } else thumbnail.alt = "";
     const detail = document.createElement("div");
     const name = document.createElement("strong");
     name.textContent = slide.name;
     const timing = document.createElement("small");
     timing.textContent = `${formatEditorTime(slideStart(slide))}–${formatEditorTime(slideStart(slide) + slide.duration)} · ${slide.duration.toFixed(1)} 秒`;
     detail.append(name, timing);
-    select.append(image, detail);
-    select.addEventListener("click", () => { state.selectedId = slide.id; state.time = slideStart(slide); update(); });
+    select.append(thumbnail, detail);
+    select.addEventListener("click", () => { state.selectedId = slide.id; pause(); setPlaybackTime(slideStart(slide)); update(); });
     const controls = document.createElement("div");
     controls.className = "image-sequence-order";
     const order = document.createElement("b");
@@ -136,7 +144,7 @@ function renderList() {
     up.type = "button";
     up.className = "image-order-button";
     up.textContent = "↑";
-    up.title = "上移圖片";
+    up.title = "上移素材";
     up.setAttribute("aria-label", `上移 ${slide.name}`);
     up.disabled = index === 0 || state.exporting;
     up.addEventListener("click", () => moveSlide(slide.id, -1));
@@ -144,7 +152,7 @@ function renderList() {
     down.type = "button";
     down.className = "image-order-button";
     down.textContent = "↓";
-    down.title = "下移圖片";
+    down.title = "下移素材";
     down.setAttribute("aria-label", `下移 ${slide.name}`);
     down.disabled = index === state.slides.length - 1 || state.exporting;
     down.addEventListener("click", () => moveSlide(slide.id, 1));
@@ -152,7 +160,7 @@ function renderList() {
     row.append(select, controls);
     return row;
   }));
-  $("image-count").textContent = `${state.slides.length} 張`;
+  $("image-count").textContent = `${state.slides.length} 個`;
   $("empty-images").hidden = Boolean(state.slides.length);
 }
 
@@ -161,8 +169,13 @@ function renderInspector() {
   $("empty-image-inspector").hidden = Boolean(slide);
   $("image-controls").hidden = !slide;
   if (!slide) return;
+  const video = slide.type === "video";
+  $("selected-media-kind").textContent = video ? "影片 · 靜音 · 不循環" : "圖片";
   $("selected-image-name").textContent = slide.name;
   $("image-duration").value = slide.duration;
+  $("image-duration").disabled = video || state.exporting;
+  $("image-duration-label").textContent = video ? "影片原始長度（秒）" : "持續時間（秒）";
+  $("image-duration-help").hidden = !video;
   for (const phase of ["enter", "exit"]) {
     $(`image-${phase}-effect`).value = slide[`${phase}Effect`];
     $(`image-${phase}-duration`).value = slide[`${phase}Duration`];
@@ -197,7 +210,7 @@ function renderTimeline() {
     band.style.width = `${slide.duration / scaleDuration * 100}%`;
     band.textContent = `${slide.duration.toFixed(1)} 秒`;
     const seek = start;
-    band.addEventListener("click", () => { state.selectedId = slide.id; state.time = seek; update(); });
+    band.addEventListener("click", () => { state.selectedId = slide.id; pause(); setPlaybackTime(seek); update(); });
     track.append(band);
     start += slide.duration;
     return track;
@@ -206,6 +219,7 @@ function renderTimeline() {
 
 function setPlaybackTime(time) {
   state.time = Math.max(0, Math.min(duration(), Number(time) || 0));
+  syncPreviewVideos(false);
   updatePlayer();
   renderFrame();
 }
@@ -258,38 +272,68 @@ function loadImage(file) {
   });
 }
 
+function loadVideo(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "auto";
+    video.playsInline = true;
+    video.muted = true;
+    video.defaultMuted = true;
+    video.loop = false;
+    video.onloadeddata = () => {
+      if (!Number.isFinite(video.duration) || !(video.duration > 0) || !video.videoWidth || !video.videoHeight) {
+        URL.revokeObjectURL(url);
+        reject(Error(`${file.name} 沒有可播放的影片畫面。`));
+        return;
+      }
+      video.addEventListener("seeked", () => { if (!state.playing && !state.exporting) renderFrame(); });
+      resolve({ video, url });
+    };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(Error(`${file.name} 無法載入或影片編碼不受支援。`)); };
+    video.src = url;
+  });
+}
+
 async function addImages(files) {
   if (state.exporting) return;
   error();
   const added = [];
   try {
     for (const file of files) {
+      const video = isBackgroundVideo(file);
       const extension = file.name.split(".").pop()?.toLowerCase();
-      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) && !["jpg", "jpeg", "png", "webp"].includes(extension)) throw Error(`${file.name} 不是支援的圖片格式。`);
-      if (file.size > 30 * 1024 * 1024) throw Error(`${file.name} 超過 30 MB。`);
-      const loaded = await loadImage(file);
+      const image = ["image/jpeg", "image/png", "image/webp"].includes(file.type) || ["jpg", "jpeg", "png", "webp"].includes(extension);
+      if (!image && !video) throw Error(`${file.name} 不是支援的圖片或影片格式。`);
+      if (file.size > (video ? 1024 ** 3 : 30 * 1024 * 1024)) throw Error(`${file.name} 超過 ${video ? "1 GB" : "30 MB"}。`);
+      const loaded = video ? await loadVideo(file) : await loadImage(file);
       added.push({
-        id: nextId++, type: "image", file, name: file.name, element: loaded.image, url: loaded.url,
-        duration: 5, enterEffect: "none", enterDuration: .5, exitEffect: "none", exitDuration: .5,
+        id: nextId++, type: video ? "video" : "image", file, name: file.name,
+        element: video ? loaded.video : loaded.image, url: loaded.url,
+        duration: video ? loaded.video.duration : 5,
+        enterEffect: "none", enterDuration: .5, exitEffect: "none", exitDuration: .5,
       });
     }
     state.slides.push(...added);
     state.selectedId = added[0]?.id || state.selectedId;
     state.time = added[0] ? slideStart(added[0]) : state.time;
-    status(`已加入 ${added.length} 張圖片。`, "success");
+    status(`已加入 ${added.length} 個素材；影片會靜音播放一次且不循環。`, "success");
     update();
   } catch (reason) {
-    for (const slide of added) URL.revokeObjectURL(slide.url);
-    error(reason.message || "圖片無法載入。");
-    status("部分或全部圖片無法加入。", "error");
+    for (const slide of added) { if (slide.type === "video") slide.element.pause(); URL.revokeObjectURL(slide.url); }
+    error(reason.message || "素材無法載入。");
+    status("部分或全部素材無法加入。", "error");
   }
 }
 
 function patchSelected(patch) {
   const slide = selected();
   if (!slide || state.exporting) return;
+  if (slide.type === "video") delete patch.duration;
   Object.assign(slide, patch);
-  slide.duration = Math.max(.1, Math.min(3600, Number(slide.duration) || 5));
+  slide.duration = slide.type === "video"
+    ? Math.max(.1, Number(slide.duration) || .1)
+    : Math.max(.1, Math.min(3600, Number(slide.duration) || 5));
   slide.enterEffect = Object.hasOwn(VIDEO_EFFECTS, slide.enterEffect) ? slide.enterEffect : "none";
   slide.exitEffect = Object.hasOwn(VIDEO_EFFECTS, slide.exitEffect) ? slide.exitEffect : "none";
   slide.enterDuration = effectDuration(slide.enterDuration);
@@ -299,13 +343,33 @@ function patchSelected(patch) {
 
 function pause() {
   state.playing = false;
+  for (const slide of state.slides) if (slide.type === "video") slide.element.pause();
   updatePlayer();
+}
+
+function syncPreviewVideos(play = state.playing) {
+  const active = state.slides.length ? imageSequenceAt(state.slides, Math.min(state.time, Math.max(0, duration() - .0001))) : null;
+  for (const slide of state.slides) {
+    if (slide.type !== "video") continue;
+    const current = active?.slide === slide;
+    if (!current) {
+      slide.element.pause();
+      continue;
+    }
+    const local = Math.max(0, Math.min(slide.duration - .001, state.time - active.start));
+    if (Math.abs(slide.element.currentTime - local) > .2) slide.element.currentTime = local;
+    slide.element.muted = true;
+    slide.element.loop = false;
+    if (play && slide.element.paused) void slide.element.play().catch(() => {});
+    else if (!play) slide.element.pause();
+  }
 }
 
 function animate(timestamp) {
   if (state.playing) {
     state.time = (timestamp - state.clockStart) / 1000;
     if (state.time >= duration()) { state.time = duration(); pause(); }
+    else syncPreviewVideos(true);
     updatePlayer();
     renderFrame();
   }
@@ -316,7 +380,53 @@ function canvasPng(canvas) {
   return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error("PNG 影格編碼失敗。")), "image/png"));
 }
 
-async function encodeMp4(canvas, dimensions, fps, total, signal) {
+async function createExportVideoSources(fps, total, signal) {
+  const slides = state.slides.filter(slide => slide.type === "video");
+  const sources = new Map();
+  if (!slides.length) return sources;
+  const m = await import("../vendor/mediabunny.min.mjs");
+  try {
+    for (const slide of slides) {
+      if (signal.aborted) throw Error("已取消匯出。");
+      const input = new m.Input({ source: new m.BlobSource(slide.file), formats: m.ALL_FORMATS });
+      const track = await input.getPrimaryVideoTrack();
+      if (!track || !(await track.canDecode())) {
+        input.dispose();
+        throw Error(`${slide.name} 的影片編碼無法解碼。`);
+      }
+      sources.set(slide.id, { input, sink: new m.VideoSampleSink(track, { hardwareAcceleration: "no-preference" }) });
+    }
+    const timestamps = new Map(slides.map(slide => [slide.id, []]));
+    const count = Math.ceil(total * fps);
+    for (let index = 0; index < count; index++) {
+      const time = index / fps;
+      const active = imageSequenceAt(state.slides, Math.min(time, Math.max(0, total - .0001)));
+      if (active?.slide.type === "video") timestamps.get(active.slide.id).push(Math.max(0, time - active.start));
+    }
+    for (const slide of slides) {
+      const source = sources.get(slide.id);
+      source.iterator = source.sink.samplesAtTimestamps(timestamps.get(slide.id))[Symbol.asyncIterator]();
+    }
+    return sources;
+  } catch (reason) {
+    for (const source of sources.values()) source.input.dispose();
+    throw reason;
+  }
+}
+
+async function renderExportFrame(time, total, videoSources) {
+  const active = imageSequenceAt(state.slides, Math.min(time, Math.max(0, total - .0001)));
+  if (active?.slide.type !== "video") {
+    renderFrame(time);
+    return null;
+  }
+  const { value: sample } = await videoSources.get(active.slide.id).iterator.next();
+  if (!sample) throw Error(`${active.slide.name} 無法讀取 ${formatEditorTime(time)} 的影片畫面。`);
+  renderFrame(time, sample);
+  return sample;
+}
+
+async function encodeMp4(canvas, dimensions, fps, total, signal, videoSources) {
   const m = await import("../vendor/mediabunny.min.mjs");
   const resolution = Number($("image-video-resolution").value);
   const bitrate = resolution >= 1080 ? 8_000_000 : resolution >= 720 ? 4_000_000 : 2_000_000;
@@ -331,8 +441,12 @@ async function encodeMp4(canvas, dimensions, fps, total, signal) {
     for (let index = 0; index < count; index++) {
       if (signal.aborted) throw Error("已取消匯出。");
       const time = index / fps;
-      renderFrame(time);
-      await video.add(time, Math.min(1 / fps, total - time));
+      const sample = await renderExportFrame(time, total, videoSources);
+      try {
+        await video.add(time, Math.min(1 / fps, total - time));
+      } finally {
+        sample?.close();
+      }
       if (index % 5 === 0 || index === count - 1) {
         const progress = Math.round((index + 1) / count * 98);
         $("image-video-progress").value = progress;
@@ -359,6 +473,7 @@ async function encodeVideo(toMain) {
   $("cancel-image-video-export").hidden = false;
   $("image-video-progress").value = 0;
   updatePlayer();
+  let videoSources = new Map();
   try {
     const fps = Number($("image-video-fps").value);
     const resolution = $("image-video-resolution").value;
@@ -367,6 +482,7 @@ async function encodeVideo(toMain) {
     const count = Math.ceil(total * fps);
     const canvas = $("image-video-preview");
     const transparent = transparentOutput();
+    videoSources = await createExportVideoSources(fps, total, signal);
     let blob;
     if (transparent) {
       const frames = [];
@@ -376,11 +492,15 @@ async function encodeVideo(toMain) {
         const frameTime = index / fps;
         const active = imageSequenceAt(state.slides, Math.min(frameTime, Math.max(0, total - .0001)));
         const effect = active ? layerEffectState({ ...active.slide, start: active.start }, frameTime) : null;
-        let frame = effect?.effect === "none" ? stillFrames.get(active.slide.id) : null;
+        let frame = active?.slide.type === "image" && effect?.effect === "none" ? stillFrames.get(active.slide.id) : null;
         if (!frame) {
-          renderFrame(frameTime);
-          frame = await canvasPng(canvas);
-          if (effect?.effect === "none") stillFrames.set(active.slide.id, frame);
+          const sample = await renderExportFrame(frameTime, total, videoSources);
+          try {
+            frame = await canvasPng(canvas);
+          } finally {
+            sample?.close();
+          }
+          if (active?.slide.type === "image" && effect?.effect === "none") stillFrames.set(active.slide.id, frame);
         }
         frames.push(frame);
         if (index % 3 === 0 || index === count - 1) {
@@ -392,7 +512,7 @@ async function encodeVideo(toMain) {
       }
       blob = createPngMov(frames, dimensions.width, dimensions.height, fps);
     } else {
-      blob = await encodeMp4(canvas, dimensions, fps, total, signal);
+      blob = await encodeMp4(canvas, dimensions, fps, total, signal, videoSources);
     }
     const extension = transparent ? "mov" : "mp4";
     const mime = transparent ? "video/quicktime" : "video/mp4";
@@ -426,6 +546,7 @@ async function encodeVideo(toMain) {
   } catch (reason) {
     status(reason.message || "影片匯出失敗。", "error");
   } finally {
+    for (const source of videoSources.values()) source.input.dispose();
     state.exporting = false;
     state.controller = null;
     $("cancel-image-video-export").hidden = true;
@@ -453,6 +574,7 @@ $("remove-image-video-item").addEventListener("click", () => {
   const index = state.slides.findIndex(slide => slide.id === state.selectedId);
   if (index < 0) return;
   const [removed] = state.slides.splice(index, 1);
+  if (removed.type === "video") removed.element.pause();
   URL.revokeObjectURL(removed.url);
   state.selectedId = state.slides[Math.min(index, state.slides.length - 1)]?.id || null;
   state.time = 0;
@@ -507,7 +629,7 @@ for (const link of document.querySelectorAll("[data-confirm-return]")) link.addE
 });
 window.addEventListener("pagehide", () => {
   state.controller?.abort();
-  for (const slide of state.slides) URL.revokeObjectURL(slide.url);
+  for (const slide of state.slides) { if (slide.type === "video") slide.element.pause(); URL.revokeObjectURL(slide.url); }
 });
 
 $("image-video-resolution").value = settings.resolution;

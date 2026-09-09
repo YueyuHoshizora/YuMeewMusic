@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="在瀏覽器內將多張圖片製作成透明 MOV 或小檔案 MP4 影片。" />
+    <meta name="description" content="在瀏覽器內將圖片與靜音影片製作成透明 MOV 或小檔案 MP4。" />
     <title>圖轉影片 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -20,19 +20,19 @@
 
     <main class="video-editor-main">
       <section class="video-editor-heading">
-        <div><div class="eyebrow">IMAGE SEQUENCE</div><h1>讓圖片開始流動<span>。</span></h1><p>加入多張圖片，安排順序、停留時間與進退場特效，再依需求匯出透明 MOV 或小檔案 MP4，也能直接設為主畫面背景素材。</p></div>
-        <div id="image-video-status" class="editor-status" role="status">請加入第一張圖片。</div>
+        <div><div class="eyebrow">MEDIA SEQUENCE</div><h1>讓素材開始流動<span>。</span></h1><p>混合加入圖片與影片，安排順序、停留時間與進退場特效；影片會靜音播放一次、不循環，再依需求匯出透明 MOV 或小檔案 MP4。</p></div>
+        <div id="image-video-status" class="editor-status" role="status">請加入第一個圖片或影片素材。</div>
       </section>
 
       <section class="video-editor-grid image-video-grid">
         <aside class="panel layer-library">
-          <div class="section-title"><span>01</span><h2>加入圖片</h2></div>
-          <button id="add-images" class="layer-add" type="button"><strong>＋ 選擇多張圖片</strong><small>JPG · PNG · WebP</small></button>
-          <input id="images-input" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden />
+          <div class="section-title"><span>01</span><h2>加入素材</h2></div>
+          <button id="add-images" class="layer-add" type="button"><strong>＋ 選擇圖片或影片</strong><small>JPG · PNG · WebP · MP4 · MOV · WebM</small></button>
+          <input id="images-input" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.mov,.webm" multiple hidden />
           <p id="image-video-error" class="file-error" role="alert" hidden></p>
-          <div class="layer-heading"><span>播放順序</span><small id="image-count">0 張</small></div>
-          <div id="image-list" class="layer-list image-sequence-list" aria-label="圖片播放順序"></div>
-          <p id="empty-images" class="empty-inspector">圖片會按照清單順序依序播放。</p>
+          <div class="layer-heading"><span>播放順序</span><small id="image-count">0 個</small></div>
+          <div id="image-list" class="layer-list image-sequence-list" aria-label="素材播放順序"></div>
+          <p id="empty-images" class="empty-inspector">圖片與影片會按照清單順序依序播放。</p>
         </aside>
 
         <section class="editor-stage">
@@ -48,18 +48,19 @@
             </div>
           </div>
           <div class="panel timeline-panel">
-            <div class="timeline-heading"><strong>圖片時間軸</strong><span>拖曳紅點調整播放位置 · 點擊色帶選取圖片</span></div>
+            <div class="timeline-heading"><strong>素材時間軸</strong><span>拖曳紅點調整播放位置 · 點擊色帶選取素材</span></div>
             <div id="image-video-timeline" class="timeline" aria-label="可拖曳播放時間軸"><div id="image-video-ruler" class="timeline-ruler"></div><div id="image-video-tracks"></div><button id="image-video-playhead" type="button" aria-label="拖曳播放位置" title="拖曳播放位置"></button></div>
           </div>
         </section>
 
         <aside class="panel layer-inspector">
-          <div class="section-title"><span>02</span><h2>圖片設定</h2></div>
-          <div id="empty-image-inspector" class="empty-inspector">從左側加入並選取一張圖片。</div>
+          <div class="section-title"><span>02</span><h2>素材設定</h2></div>
+          <div id="empty-image-inspector" class="empty-inspector">從左側加入並選取一個素材。</div>
           <div id="image-controls" hidden>
-            <div class="selected-file"><span>圖片</span><strong id="selected-image-name"></strong></div>
-            <label class="field-label" for="image-duration">持續時間（秒）</label>
+            <div class="selected-file"><span id="selected-media-kind">圖片</span><strong id="selected-image-name"></strong></div>
+            <label id="image-duration-label" class="field-label" for="image-duration">持續時間（秒）</label>
             <input id="image-duration" class="text-input" type="number" min="0.1" max="3600" step="0.1" value="5" />
+            <p id="image-duration-help" class="position-help" hidden>影片使用原始長度，靜音播放一次且不循環。</p>
             <div class="layer-effects">
               <div class="layer-effect-group">
                 <label class="field-label" for="image-enter-effect">進場特效</label>
@@ -85,7 +86,7 @@
               </div>
             </div>
             <div class="layer-actions"><button id="move-image-up" class="text-button" type="button">↑ 上移</button><button id="move-image-down" class="text-button" type="button">↓ 下移</button></div>
-            <button id="remove-image-video-item" class="danger-button" type="button">－ 刪除這張圖片</button>
+            <button id="remove-image-video-item" class="danger-button" type="button">－ 刪除這個素材</button>
           </div>
 
           <div class="export-box">

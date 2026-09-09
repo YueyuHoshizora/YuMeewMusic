@@ -583,6 +583,7 @@ async function exportProject() {
       context.fillRect(0, 0, canvas.width, canvas.height);
       const baseBackgroundSample = await getLoopingVideoSample(baseBackgroundDecoder, sourceTime);
       try {
+        if (!baseBackgroundSample && state.base.image?.seekTime) await state.base.image.seekTime(sourceTime);
         drawBase(canvas, sourceTime, baseBackgroundSample || state.base.image);
       } finally {
         baseBackgroundSample?.close();

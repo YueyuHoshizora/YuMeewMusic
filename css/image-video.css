@@ -7,7 +7,8 @@ body.image-video-body { min-width: 1320px; }
 .image-sequence-list { flex-direction: column; }
 .image-sequence-row { grid-template-columns: minmax(0, 1fr) 26px; gap: 5px; padding: 6px; }
 .image-sequence-select { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 9px; min-width: 0; padding: 3px; border: 0; background: transparent; color: var(--foreground); text-align: left; }
-.image-sequence-row img { width: 52px; height: 38px; border-radius: 5px; object-fit: cover; background: #050607; }
+.image-sequence-row img,
+.image-sequence-row video { width: 52px; height: 38px; border-radius: 5px; object-fit: cover; background: #050607; }
 .image-sequence-order { display: grid; grid-template-rows: 20px 24px 24px; gap: 3px; }
 .image-sequence-order b { color: var(--muted); font-size: 10px; line-height: 20px; text-align: center; }
 .image-order-button { width: 24px; padding: 0; border: 1px solid var(--border); border-radius: 5px; background: var(--surface); color: var(--foreground); font-size: 14px; }

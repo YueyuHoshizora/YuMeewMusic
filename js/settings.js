@@ -44,6 +44,9 @@ export const DEFAULT_SETTINGS = Object.freeze({
   profile: "auto",
   imageVideoTransparency: true,
   exportVolume: 100,
+  eqBass: 0,
+  eqMid: 0,
+  eqTreble: 0,
   loopPlayback: false,
   mode: "dark",
   theme: "lime",
@@ -97,6 +100,9 @@ export function validateSettings(value) {
   if (typeof source.imageVideoTransparency === "boolean") result.imageVideoTransparency = source.imageVideoTransparency;
   if (Number.isFinite(source.exportVolume) && source.exportVolume >= 10 && source.exportVolume <= 200)
     result.exportVolume = source.exportVolume;
+  for (const key of ["eqBass", "eqMid", "eqTreble"]) {
+    if (Number.isFinite(source[key]) && source[key] >= -10 && source[key] <= 10) result[key] = source[key];
+  }
   if (typeof source.loopPlayback === "boolean") result.loopPlayback = source.loopPlayback;
   if (typeof source.subtitleFont === "string" && Object.hasOwn(SUBTITLE_FONTS, source.subtitleFont)) result.subtitleFont = source.subtitleFont;
   if (["text", "image"].includes(source.identityType)) result.identityType = source.identityType;

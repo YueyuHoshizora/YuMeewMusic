@@ -88,6 +88,9 @@ test("editor initializes, switches formats and reaches download for every format
       }
       createMediaElementSource() { return { connect() {} }; }
       createGain() { return { gain: { value: 1 }, connect() {} }; }
+      createBiquadFilter() {
+        return { type: "", frequency: { value: 0 }, Q: { value: 0 }, gain: { value: 0 }, connect() {} };
+      }
       async resume() { this.state = "running"; }
       async close() {}
     },
@@ -109,6 +112,9 @@ test("editor initializes, switches formats and reaches download for every format
       assert.equal(options.settings.songTitle, "測試歌曲");
       assert.equal(options.settings.lyricist, "測試作詞");
       assert.equal(options.settings.composer, "測試作曲");
+      assert.equal(options.settings.eqBass, 6.5);
+      assert.equal(options.settings.eqMid, -2.5);
+      assert.equal(options.settings.eqTreble, 3.1);
       return new Blob(["test"]);
     },
   });
@@ -153,6 +159,14 @@ test("editor initializes, switches formats and reaches download for every format
   elements.get("exportVolume").listeners.input();
   assert.equal(vm.runInContext("previewGain.gain.value", context), 2);
   assert.equal(elements.get("audio").volume, 1);
+  for (const [id, value] of [["eqBass", 6.5], ["eqMid", -2.5], ["eqTreble", 3.1]]) {
+    elements.get(id).value = String(value);
+    elements.get(id).listeners.input();
+    assert.equal(vm.runInContext(`state.${id}`, context), value);
+  }
+  assert.equal(vm.runInContext("previewFilters.bass.gain.value", context), 6.5);
+  assert.equal(vm.runInContext("previewFilters.mid.gain.value", context), -2.5);
+  assert.equal(vm.runInContext("previewFilters.treble.gain.value", context), 3.1);
   elements.get("play").listeners.click();
   elements.get("songTitle").value = "測試歌曲";
   elements.get("lyricist").value = "測試作詞";

@@ -79,6 +79,16 @@
               <label class="range-label" for="exportVolume">播放與輸出音量<output id="exportVolume-value">100%</output></label>
               <input id="exportVolume" type="range" min="10" max="200" step="1" value="100" />
             </div>
+            <details class="song-details song-settings audio-effects-settings">
+              <summary>音效處理</summary>
+              <label class="range-label" for="eqBass">低音<output id="eqBass-value">0.0 dB</output></label>
+              <input id="eqBass" type="range" min="-10" max="10" step="0.1" value="0">
+              <label class="range-label" for="eqMid">中音<output id="eqMid-value">0.0 dB</output></label>
+              <input id="eqMid" type="range" min="-10" max="10" step="0.1" value="0">
+              <label class="range-label" for="eqTreble">高音<output id="eqTreble-value">0.0 dB</output></label>
+              <input id="eqTreble" type="range" min="-10" max="10" step="0.1" value="0">
+              <p class="position-help">低音 200 Hz · 中音 1 kHz · 高音 4 kHz；試聽與匯出都會套用。</p>
+            </details>
             <details id="trim-panel" class="song-details song-settings">
               <summary>✂ 音樂裁剪</summary>
               <p id="trim-empty" class="position-help">請先在上方選擇音樂，即可設定裁剪範圍。</p>

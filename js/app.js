@@ -16,6 +16,8 @@ const $ = (id) => document.getElementById(id);
 const audio = $("audio");
 let previewAudioContext = null;
 let previewGain = null;
+let previewFilters = null;
+const EQ_IDS = ["eqBass", "eqMid", "eqTreble"];
 const restored = loadSettings();
 const state = {
   ...restored,
@@ -122,6 +124,9 @@ function persistSettings() {
     profile: $("profile").value,
     imageVideoTransparency: state.imageVideoTransparency,
     exportVolume: state.exportVolume,
+    eqBass: state.eqBass,
+    eqMid: state.eqMid,
+    eqTreble: state.eqTreble,
     loopPlayback: state.loopPlayback,
     mode: state.mode,
     theme: state.theme,
@@ -216,6 +221,10 @@ function update() {
   $("subtitle-margin-controls").hidden = state.subtitlePosition === "center";
   $("exportVolume").value = state.exportVolume;
   $("exportVolume-value").textContent = `${state.exportVolume}%`;
+  for (const id of EQ_IDS) {
+    $(id).value = state[id];
+    $(`${id}-value`).textContent = `${state[id] > 0 ? "+" : ""}${Number(state[id]).toFixed(1)} dB`;
+  }
   $("loop-playback").classList.toggle("active", state.loopPlayback);
   $("loop-playback").setAttribute("aria-pressed", String(state.loopPlayback));
   $("loop-playback").setAttribute("aria-label", state.loopPlayback ? "關閉循環播放" : "開啟循環播放");
@@ -226,7 +235,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#exportVolume, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityOpacity, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #loop-playback, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#exportVolume, #eqBass, #eqMid, #eqTreble, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityOpacity, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #loop-playback, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -602,6 +611,12 @@ $("remove-image").addEventListener("click", () => {
   void deleteStoredValue("image-video-project").catch(() => {});
 });
 $("dismiss-message").addEventListener("click", () => message());
+function applyPreviewEqualizer() {
+  if (!previewFilters) return;
+  previewFilters.bass.gain.value = state.eqBass;
+  previewFilters.mid.gain.value = state.eqMid;
+  previewFilters.treble.gain.value = state.eqTreble;
+}
 async function applyPreviewVolume(startingPlayback = false) {
   const gain = Math.max(10, Math.min(200, state.exportVolume)) / 100;
   if (!previewGain && startingPlayback) {
@@ -609,7 +624,17 @@ async function applyPreviewVolume(startingPlayback = false) {
     if (typeof context.createMediaElementSource === "function" && typeof context.createGain === "function") {
       const source = context.createMediaElementSource(audio);
       previewGain = context.createGain();
-      source.connect(previewGain);
+      if (typeof context.createBiquadFilter === "function") {
+        const bass = context.createBiquadFilter();
+        const mid = context.createBiquadFilter();
+        const treble = context.createBiquadFilter();
+        bass.type = "lowshelf"; bass.frequency.value = 200;
+        mid.type = "peaking"; mid.frequency.value = 1000; mid.Q.value = 1;
+        treble.type = "highshelf"; treble.frequency.value = 4000;
+        source.connect(bass); bass.connect(mid); mid.connect(treble); treble.connect(previewGain);
+        previewFilters = { bass, mid, treble };
+        applyPreviewEqualizer();
+      } else source.connect(previewGain);
       previewGain.connect(context.destination);
       previewAudioContext = context;
       audio.volume = 1;
@@ -667,7 +692,7 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   Object.assign(state, DEFAULT_SETTINGS);
   state.identityImage = null;
   fileError("identity");
-  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile", "exportVolume"]) {
+  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile", "exportVolume", ...EQ_IDS]) {
     $(id).value = state[id];
   }
   $("spectrum-color").value = state.color;
@@ -675,6 +700,7 @@ $("reset-dialog-confirm").addEventListener("click", () => {
   $("appearance-mode").value = state.mode;
   $("appearance-theme").value = state.theme;
   applyTheme(state.mode, state.theme);
+  applyPreviewEqualizer();
   update();
   const cleared = clearSettings();
   message(cleared ? "所有設定已恢復預設值。" : "本次設定已重置，但瀏覽器無法清除儲存的設定。");
@@ -692,6 +718,12 @@ $("exportVolume").addEventListener("input", () => {
   if (state.busy || state.loading || state.imageLoading) return;
   state.exportVolume = Number($("exportVolume").value);
   void applyPreviewVolume();
+  update();
+});
+for (const id of EQ_IDS) $(id).addEventListener("input", () => {
+  if (state.busy || state.loading || state.imageLoading) return;
+  state[id] = Number($(id).value);
+  applyPreviewEqualizer();
   update();
 });
 $("format").addEventListener("change", update);

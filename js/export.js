@@ -4,6 +4,7 @@ import { videoDimensions } from "./dimensions.js";
 import { draw } from "./visualizer.js";
 import { getFormat } from "./formats.js";
 import { createLoopingVideoDecoder, getLoopingVideoSample } from "./background-video.js";
+import { createAudioEqualizer } from "./audio-eq.js";
 
 const registrations = new Map();
 export async function registerAudioEncoder(codec) {
@@ -113,6 +114,7 @@ export async function encodeMedia({
     );
   }
   checkCanceled();
+  const equalizer = createAudioEqualizer(settings, buffer.sampleRate, buffer.numberOfChannels);
   const bitrate = height === 1080 ? 8_000_000 : height === 720 ? 4_000_000 : 2_000_000;
   const profileOptions = type.videoCodec === "avc" ? videoProfileConfig(settings?.profile ?? "auto", dimensions, rate) : {};
   const hardwareAcceleration = type.video
@@ -175,7 +177,10 @@ export async function encodeMedia({
           for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
             part.copyToChannel(
               scalePcmSamples(
-                buffer.getChannelData(channel).subarray(audioOffset, audioOffset + length),
+                equalizer.process(
+                  buffer.getChannelData(channel).subarray(audioOffset, audioOffset + length),
+                  channel,
+                ),
                 exportVolume,
               ),
               channel,

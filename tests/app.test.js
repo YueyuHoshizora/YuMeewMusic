@@ -167,6 +167,16 @@ test("editor initializes, switches formats and reaches download for every format
   assert.equal(vm.runInContext("previewFilters.bass.gain.value", context), 6.5);
   assert.equal(vm.runInContext("previewFilters.mid.gain.value", context), -2.5);
   assert.equal(vm.runInContext("previewFilters.treble.gain.value", context), 3.1);
+  elements.get("reset-equalizer").listeners.click();
+  for (const id of ["eqBass", "eqMid", "eqTreble"]) {
+    assert.equal(vm.runInContext(`state.${id}`, context), 0);
+    assert.equal(elements.get(`${id}-value`).textContent, "0.0 dB");
+  }
+  assert.equal(vm.runInContext("previewFilters.bass.gain.value", context), 0);
+  for (const [id, value] of [["eqBass", 6.5], ["eqMid", -2.5], ["eqTreble", 3.1]]) {
+    elements.get(id).value = String(value);
+    elements.get(id).listeners.input();
+  }
   elements.get("play").listeners.click();
   elements.get("songTitle").value = "測試歌曲";
   elements.get("lyricist").value = "測試作詞";

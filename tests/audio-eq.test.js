@@ -29,3 +29,16 @@ test("equalizer clamps gains and preserves PCM when all bands are neutral", () =
   assert.equal(neutral.process(samples, 0), samples);
   assert.deepEqual(createAudioEqualizer({ eqBass: 99, eqMid: -99 }, 48000, 1).gains, [10, -10, 0]);
 });
+
+test('separator EQ supports stronger broad bands without changing main-page limits', async () => {
+  const { SEPARATOR_EQ_PROFILE } = await import('../js/audio-eq.js');
+  for (const [key, frequency] of [['eqBass', 80], ['eqMid', 1000], ['eqTreble', 8000]]) {
+    const samples = sine(frequency);
+    const low = createAudioEqualizer({ [key]: -24 }, 48000, 1, SEPARATOR_EQ_PROFILE).process(samples, 0);
+    const high = createAudioEqualizer({ [key]: 24 }, 48000, 1, SEPARATOR_EQ_PROFILE).process(samples, 0);
+    const difference = 20 * Math.log10(rms(high.subarray(2400)) / rms(low.subarray(2400)));
+    assert.ok(difference > 40, `${key}: ${difference} dB`);
+  }
+  assert.deepEqual(createAudioEqualizer({eqBass: 99, eqMid: -99}, 48000, 1, SEPARATOR_EQ_PROFILE).gains, [24, -24, 0]);
+  assert.deepEqual(createAudioEqualizer({eqBass: 99}, 48000, 1).gains, [10, 0, 0]);
+});

@@ -1,3 +1,4 @@
+import { SEPARATOR_EQ_PROFILE } from "./audio-eq.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
@@ -45,7 +46,7 @@ function loadTrackSettings() {
       volume: Number.isFinite(volume) ? Math.min(10, Math.max(-10, volume)) : 0,
       ...Object.fromEntries(EQ_BANDS.map(band => {
         const value = Number(saved?.[track]?.[band]);
-        return [band, Number.isFinite(value) ? Math.min(10, Math.max(-10, value)) : 0];
+        return [band, Number.isFinite(value) ? Math.min(SEPARATOR_EQ_PROFILE.gainLimit, Math.max(-SEPARATOR_EQ_PROFILE.gainLimit, value)) : 0];
       })),
     }];
   }));
@@ -107,12 +108,12 @@ async function ensureTrackAudio(track) {
     const output = trackAudioContext.createGain();
     const analyser = trackAudioContext.createAnalyser();
     bass.type = "lowshelf";
-    bass.frequency.value = 200;
+    bass.frequency.value = SEPARATOR_EQ_PROFILE.bass;
     mid.type = "peaking";
-    mid.frequency.value = 1000;
-    mid.Q.value = 1;
+    mid.frequency.value = SEPARATOR_EQ_PROFILE.mid;
+    mid.Q.value = SEPARATOR_EQ_PROFILE.midQ;
     treble.type = "highshelf";
-    treble.frequency.value = 4000;
+    treble.frequency.value = SEPARATOR_EQ_PROFILE.treble;
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.78;
     source.connect(bass).connect(mid).connect(treble).connect(output).connect(analyser).connect(trackAudioContext.destination);

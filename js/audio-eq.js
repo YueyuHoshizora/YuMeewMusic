@@ -1,12 +1,13 @@
-const clampGain = value => Math.max(-10, Math.min(10, Number(value) || 0));
+export const SEPARATOR_EQ_PROFILE = Object.freeze({ gainLimit: 24, bass: 300, mid: 1000, treble: 3000, midQ: 0.5 });
+const clampGain = (value, limit) => Math.max(-limit, Math.min(limit, Number(value) || 0));
 
-function coefficients(type, frequency, gain, sampleRate) {
+function coefficients(type, frequency, gain, sampleRate, q = 1) {
   const A = 10 ** (gain / 40);
   const omega = 2 * Math.PI * Math.min(frequency, sampleRate * 0.45) / sampleRate;
   const cosine = Math.cos(omega), sine = Math.sin(omega);
   let b0, b1, b2, a0, a1, a2;
   if (type === "peaking") {
-    const alpha = sine / 2;
+    const alpha = sine / (2 * q);
     b0 = 1 + alpha * A; b1 = -2 * cosine; b2 = 1 - alpha * A;
     a0 = 1 + alpha / A; a1 = -2 * cosine; a2 = 1 - alpha / A;
   } else {
@@ -42,15 +43,16 @@ function createBiquad(config) {
   };
 }
 
-export function createAudioEqualizer(settings = {}, sampleRate, numberOfChannels) {
+export function createAudioEqualizer(settings = {}, sampleRate, numberOfChannels, profile = {}) {
+  const limit = profile.gainLimit || 10;
   const bands = [
-    ["lowshelf", 200, clampGain(settings.eqBass)],
-    ["peaking", 1000, clampGain(settings.eqMid)],
-    ["highshelf", 4000, clampGain(settings.eqTreble)],
+    ["lowshelf", profile.bass || 200, clampGain(settings.eqBass, limit)],
+    ["peaking", profile.mid || 1000, clampGain(settings.eqMid, limit)],
+    ["highshelf", profile.treble || 4000, clampGain(settings.eqTreble, limit)],
   ];
   const active = bands.filter(([, , gain]) => gain !== 0);
   const filters = Array.from({ length: numberOfChannels }, () =>
-    active.map(([type, frequency, gain]) => createBiquad(coefficients(type, frequency, gain, sampleRate))),
+    active.map(([type, frequency, gain]) => createBiquad(coefficients(type, frequency, gain, sampleRate, profile.midQ || 1))),
   );
   return {
     gains: bands.map(([, , gain]) => gain),

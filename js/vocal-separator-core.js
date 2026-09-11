@@ -1,4 +1,4 @@
-import { createAudioEqualizer } from "./audio-eq.js";
+import { createAudioEqualizer, SEPARATOR_EQ_PROFILE } from "./audio-eq.js";
 
 export const SEPARATOR_SAMPLE_RATE = 44100;
 export const SEPARATOR_CHUNK_SIZE = 131072;
@@ -60,7 +60,7 @@ function trackEqualizer(settings) {
     eqBass: settings?.bass,
     eqMid: settings?.mid,
     eqTreble: settings?.treble,
-  }, SEPARATOR_SAMPLE_RATE, 2);
+  }, SEPARATOR_SAMPLE_RATE, 2, SEPARATOR_EQ_PROFILE);
 }
 
 async function readStereoChunk(blob, startFrame, frameCount) {

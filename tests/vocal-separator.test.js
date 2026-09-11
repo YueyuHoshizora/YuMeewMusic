@@ -35,7 +35,7 @@ test("vocal separator page exposes its complete local workflow", () => {
     assert.match(html, new RegExp(`id="mute-${track}"[^>]*>MUTE<`));
     assert.match(html, new RegExp(`id="${track}-volume"[^>]*min="-10"[^>]*max="10"[^>]*step="0\\.3"`));
     for (const band of ["bass", "mid", "treble"]) {
-      assert.match(html, new RegExp(`id="${track}-${band}"[^>]*min="-10"[^>]*max="10"[^>]*step="0\\.1"`));
+      assert.match(html, new RegExp(`id="${track}-${band}"[^>]*min="-24"[^>]*max="24"[^>]*step="0\\.1"`));
     }
   }
   assert.match(script, /createBiquadFilter/);

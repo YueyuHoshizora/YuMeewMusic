@@ -54,12 +54,21 @@ async function generateImage() {
   status("圖片生成中…");
   setBusy(true);
   try {
-    const url = new URL(WORKER_URL);
-    url.searchParams.set("p", prompt);
-    const response = await fetch(url, { headers: { Accept: "image/jpeg,image/*" }, cache: "no-store" });
+    const response = await fetch(WORKER_URL, {
+      method: "POST",
+      headers: {
+        Accept: "image/jpeg,image/*",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ prompt }),
+      cache: "no-store",
+    });
     if (!response.ok) {
       let detail = "";
-      try { detail = (await response.json())?.error || ""; } catch {}
+      try {
+        const errorBody = await response.json();
+        detail = errorBody?.error || errorBody?.message || "";
+      } catch {}
       if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `圖片服務回傳 ${response.status}`);
     }

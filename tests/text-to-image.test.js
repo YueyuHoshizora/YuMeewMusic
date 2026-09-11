@@ -20,7 +20,10 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(script, /flux-klein-worker\.yustellar\.idv\.tw/);
-  assert.match(script, /url\.searchParams\.set\("p", prompt\)/);
+  assert.match(script, /method:\s*"POST"/);
+  assert.match(script, /"Content-Type":\s*"application\/json"/);
+  assert.match(script, /body:\s*JSON\.stringify\(\{ prompt \}\)/);
+  assert.doesNotMatch(script, /searchParams\.set\("p"/);
   assert.match(script, /statusCode === 429/);
   assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);
   assert.match(script, /saveStoredMedia\("image", file\)/);

@@ -1,3 +1,5 @@
+import { createAudioEqualizer } from "./audio-eq.js";
+
 export const SEPARATOR_SAMPLE_RATE = 44100;
 export const SEPARATOR_CHUNK_SIZE = 131072;
 export const SEPARATOR_STEP = SEPARATOR_CHUNK_SIZE / 2;
@@ -11,8 +13,98 @@ const FEATURE_SIZE = N_FREQ * 2 * 2;
 
 export function separatorFilename(name, stem) {
   const base = String(name || "audio").replace(/\.[^.]+$/, "").replace(/[\\/:*?"<>|]+/g, "-") || "audio";
-  if (!["vocals", "instrumental"].includes(stem)) throw Error("無效的分離音軌。");
+  if (!["vocals", "instrumental", "mixed"].includes(stem)) throw Error("無效的分離音軌。");
   return `${base}-${stem}.wav`;
+}
+
+function wavHeader(frameCount, sampleRate = SEPARATOR_SAMPLE_RATE) {
+  const data = new ArrayBuffer(44), view = new DataView(data);
+  const text = (offset, value) => {
+    for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
+  };
+  text(0, "RIFF"); view.setUint32(4, 36 + frameCount * 4, true); text(8, "WAVE"); text(12, "fmt ");
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 2, true);
+  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 4, true);
+  view.setUint16(32, 4, true); view.setUint16(34, 16, true); text(36, "data");
+  view.setUint32(40, frameCount * 4, true);
+  return data;
+}
+
+function trackEqualizer(settings) {
+  return createAudioEqualizer({
+    eqBass: settings?.bass,
+    eqMid: settings?.mid,
+    eqTreble: settings?.treble,
+  }, SEPARATOR_SAMPLE_RATE, 2);
+}
+
+async function readStereoChunk(blob, startFrame, frameCount) {
+  const data = await blob.slice(44 + startFrame * 4, 44 + (startFrame + frameCount) * 4).arrayBuffer();
+  const view = new DataView(data), left = new Float32Array(frameCount), right = new Float32Array(frameCount);
+  for (let i = 0, offset = 0; i < frameCount; i++, offset += 4) {
+    left[i] = view.getInt16(offset, true) / 32768;
+    right[i] = view.getInt16(offset + 2, true) / 32768;
+  }
+  return { left, right };
+}
+
+function mixChunk(vocals, instrumental, settings, equalizers) {
+  const output = [new Float32Array(vocals.left.length), new Float32Array(vocals.left.length)];
+  const sources = [vocals, instrumental];
+  for (let trackIndex = 0; trackIndex < sources.length; trackIndex++) {
+    const track = trackIndex === 0 ? "vocals" : "instrumental";
+    if (settings[track]?.muted) continue;
+    for (let channel = 0; channel < 2; channel++) {
+      const source = channel === 0 ? sources[trackIndex].left : sources[trackIndex].right;
+      const processed = equalizers[track].process(source, channel);
+      for (let i = 0; i < processed.length; i++) output[channel][i] += processed[i];
+    }
+  }
+  return output;
+}
+
+export async function mixSeparatedWav(vocalsBlob, instrumentalBlob, settings = {}, onProgress = () => {}) {
+  if (!(vocalsBlob instanceof Blob) || !(instrumentalBlob instanceof Blob) || vocalsBlob.size < 44 || vocalsBlob.size !== instrumentalBlob.size)
+    throw Error("分離音軌資料不完整，請重新執行人聲分離。");
+  const frameCount = (vocalsBlob.size - 44) / 4;
+  if (!Number.isInteger(frameCount)) throw Error("分離音軌格式不正確。");
+  const blockSize = SEPARATOR_SAMPLE_RATE;
+
+  const processPass = async (write, scale = 1) => {
+    const equalizers = {
+      vocals: trackEqualizer(settings.vocals),
+      instrumental: trackEqualizer(settings.instrumental),
+    };
+    const chunks = [], totalBlocks = Math.ceil(frameCount / blockSize);
+    let peak = 0;
+    for (let block = 0, start = 0; start < frameCount; block++, start += blockSize) {
+      const length = Math.min(blockSize, frameCount - start);
+      const [vocals, instrumental] = await Promise.all([
+        readStereoChunk(vocalsBlob, start, length),
+        readStereoChunk(instrumentalBlob, start, length),
+      ]);
+      const mixed = mixChunk(vocals, instrumental, settings, equalizers);
+      if (write) {
+        const pcm = new ArrayBuffer(length * 4), view = new DataView(pcm);
+        for (let i = 0, offset = 0; i < length; i++, offset += 4) {
+          const left = Math.max(-1, Math.min(1, mixed[0][i] * scale));
+          const right = Math.max(-1, Math.min(1, mixed[1][i] * scale));
+          view.setInt16(offset, left < 0 ? left * 32768 : left * 32767, true);
+          view.setInt16(offset + 2, right < 0 ? right * 32768 : right * 32767, true);
+        }
+        chunks.push(pcm);
+      } else {
+        for (let channel = 0; channel < 2; channel++) for (const sample of mixed[channel]) peak = Math.max(peak, Math.abs(sample));
+      }
+      onProgress((block + 1) / totalBlocks, write ? 1 : 0);
+    }
+    return write ? chunks : peak;
+  };
+
+  const peak = await processPass(false);
+  const scale = peak > 0.99 ? 0.99 / peak : 1;
+  const chunks = await processPass(true, scale);
+  return new Blob([wavHeader(frameCount), ...chunks], { type: "audio/wav" });
 }
 
 export function encodeStereoWav(left, right, sampleRate = SEPARATOR_SAMPLE_RATE) {

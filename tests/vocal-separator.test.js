@@ -5,6 +5,7 @@ import {
   SEPARATOR_MAX_DURATION,
   encodeStereoWav,
   hannWindow,
+  mixSeparatedWav,
   prepareSeparatorInput,
   reconstructVocals,
   separatorFilename,
@@ -20,6 +21,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /音樂只在瀏覽器內處理/);
   assert.match(html, /WebGPU/);
   assert.match(html, /下載人聲 WAV/);
+  assert.match(html, /id="download-mix"[^>]*>下載混合後 WAV</);
   assert.match(html, /單次最長 8 分鐘、150 MB/);
   assert.match(script, /150 \* 1024 \* 1024/);
   for (const track of ["vocals", "instrumental"]) {
@@ -56,8 +58,30 @@ test("separator WAV output is valid stereo PCM with safe file names", async () =
   assert.equal(new DataView(bytes.buffer).getUint32(24, true), 44100);
   assert.equal(blob.size, 44 + left.length * 4);
   assert.equal(separatorFilename("我的/歌曲.mp3", "vocals"), "我的-歌曲-vocals.wav");
+  assert.equal(separatorFilename("我的/歌曲.mp3", "mixed"), "我的-歌曲-mixed.wav");
   assert.throws(() => separatorFilename("song.mp3", "drums"));
   assert.equal(SEPARATOR_MAX_DURATION, 480);
+});
+
+test("separated tracks remix with mute, EQ processing and peak protection", async () => {
+  const samples = 4096;
+  const vocals = encodeStereoWav(new Float32Array(samples).fill(0.8), new Float32Array(samples).fill(0.4));
+  const instrumental = encodeStereoWav(new Float32Array(samples).fill(0.8), new Float32Array(samples).fill(0.2));
+  const mixed = await mixSeparatedWav(vocals, instrumental, {
+    vocals: { bass: 0, mid: 0, treble: 0, muted: false },
+    instrumental: { bass: 0, mid: 0, treble: 0, muted: false },
+  });
+  const mixedView = new DataView(await mixed.arrayBuffer());
+  assert.ok(Math.abs(mixedView.getInt16(44, true) / 32767 - 0.99) < 0.001);
+  assert.ok(Math.abs(mixedView.getInt16(46, true) / 32767 - 0.37125) < 0.002);
+
+  const vocalsOnly = await mixSeparatedWav(vocals, instrumental, {
+    vocals: { bass: 0, mid: 0, treble: 0, muted: false },
+    instrumental: { bass: 10, mid: 10, treble: 10, muted: true },
+  });
+  const vocalsView = new DataView(await vocalsOnly.arrayBuffer());
+  assert.ok(Math.abs(vocalsView.getInt16(44, true) / 32767 - 0.8) < 0.001);
+  assert.equal(vocalsOnly.size, vocals.size);
 });
 
 test("STFT and inverse STFT preserve the interior signal with an identity mask", () => {

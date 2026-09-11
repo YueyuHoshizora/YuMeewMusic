@@ -5,6 +5,7 @@ import {
   SEPARATOR_MODEL_SIZE_MB,
   SEPARATOR_SAMPLE_RATE,
   encodeStereoWav,
+  mixSeparatedWav,
   separatorFilename,
 } from "./vocal-separator-core.js";
 
@@ -314,6 +315,26 @@ function download(blob, stem) {
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
+async function downloadMix() {
+  if (!vocalsBlob || !instrumentalBlob || !sourceFile) return;
+  const button = $("download-mix");
+  button.disabled = true;
+  button.textContent = "正在混合 0%";
+  try {
+    const blob = await mixSeparatedWav(vocalsBlob, instrumentalBlob, trackSettings, (fraction, pass) => {
+      const progress = Math.round((pass * 0.5 + fraction * 0.5) * 100);
+      button.textContent = `正在混合 ${progress}%`;
+    });
+    download(blob, "mixed");
+    $("separator-status").textContent = "已套用 MUTE 與 EQ，並完成混合 WAV。";
+  } catch (error) {
+    showError(error?.message || "無法建立混合 WAV。");
+  } finally {
+    button.disabled = false;
+    button.textContent = "下載混合後 WAV";
+  }
+}
+
 $("separator-drop").addEventListener("click", () => {
   $("separator-input").value = "";
   $("separator-input").click();
@@ -334,6 +355,7 @@ $("separator-start").addEventListener("click", startSeparation);
 $("separator-cancel").addEventListener("click", cancel);
 $("download-vocals").addEventListener("click", () => download(vocalsBlob, "vocals"));
 $("download-instrumental").addEventListener("click", () => download(instrumentalBlob, "instrumental"));
+$("download-mix").addEventListener("click", downloadMix);
 for (const track of TRACK_NAMES) {
   applyTrackSettings(track);
   const audio = $(`separator-${track}`);

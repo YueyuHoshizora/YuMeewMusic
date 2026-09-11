@@ -192,6 +192,7 @@ async function toggleSeparatedPlayback() {
   const button = $("separated-play");
   button.disabled = true;
   try {
+    $("separator-original").pause();
     await Promise.all(TRACK_NAMES.map(ensureTrackAudio));
     let time = Number($("separated-position").value) || 0;
     if (time >= separatedDuration - 0.02) time = 0;
@@ -515,6 +516,7 @@ $("download-instrumental").addEventListener("click", () => download(instrumental
 $("download-mix").addEventListener("click", downloadMix);
 $("apply-mix-main").addEventListener("click", applyMixToMain);
 $("separated-play").addEventListener("click", toggleSeparatedPlayback);
+$("separator-original").addEventListener("play", pauseSeparatedPlayback);
 $("separated-position").addEventListener("input", event => {
   const time = Number(event.target.value) || 0;
   for (const track of TRACK_NAMES) $(`separator-${track}`).currentTime = time;

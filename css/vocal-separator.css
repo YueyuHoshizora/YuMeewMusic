@@ -61,3 +61,4 @@ body.separator-body { min-width: 1000px; }
 .separator-process > label, #separator-speed-group > label { display: block; margin: 12px 0 6px; font-size: 13px; color: var(--muted); }
 .separator-process select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--background); }
 #separator-model-help { margin: 8px 0 12px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.separator-original-label { color: var(--muted); font-size: 12px; margin: 12px 0 6px; }

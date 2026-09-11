@@ -20,6 +20,7 @@ let sourceFile = null;
 let decodedBuffer = null;
 let worker = null;
 let working = false;
+let modelReady = false;
 let originalUrl = "";
 let vocalsBlob = null;
 let instrumentalBlob = null;
@@ -186,7 +187,9 @@ async function loadFile(file) {
     originalUrl = URL.createObjectURL(file);
     $("separator-original").src = originalUrl;
     $("separator-start").disabled = false;
-    $("separator-status").textContent = `準備完成；開始後將下載約 ${SEPARATOR_MODEL_SIZE_MB} MB 的模型。`;
+    $("separator-status").textContent = modelReady
+      ? "準備完成；AI 模型仍在記憶體中，可直接開始分離。"
+      : `準備完成；開始後將下載約 ${SEPARATOR_MODEL_SIZE_MB} MB 的模型。`;
     $("separator-engine").textContent = navigator.gpu ? "WebGPU 可用" : "WASM CPU 模式";
   } catch (error) {
     $("separator-file-help").textContent = "MP3 · WAV · M4A · FLAC · 150 MB 以內";
@@ -204,15 +207,19 @@ async function startSeparation() {
   $("separator-progress").hidden = false;
   $("separator-progress").value = 1;
   $("separator-start").textContent = "正在準備…";
-  $("separator-status").textContent = `正在準備音訊與約 ${SEPARATOR_MODEL_SIZE_MB} MB 的 AI 模型…`;
+  $("separator-status").textContent = modelReady
+    ? "正在準備音訊並沿用已載入的 AI 模型…"
+    : `正在準備音訊與約 ${SEPARATOR_MODEL_SIZE_MB} MB 的 AI 模型…`;
   try {
     if (!decodedBuffer) decodedBuffer = await decodeFile(sourceFile);
     const left = Float32Array.from(decodedBuffer.getChannelData(0));
     const right = Float32Array.from(decodedBuffer.numberOfChannels > 1 ? decodedBuffer.getChannelData(1) : decodedBuffer.getChannelData(0));
     decodedBuffer = null;
-    worker = new Worker(new URL("./vocal-separator-worker.js", import.meta.url), { type: "module" });
-    worker.addEventListener("message", handleWorkerMessage);
-    worker.addEventListener("error", event => finishWithError(event.message || "人聲分離處理程序發生錯誤。"));
+    if (!worker) {
+      worker = new Worker(new URL("./vocal-separator-worker.js", import.meta.url), { type: "module" });
+      worker.addEventListener("message", handleWorkerMessage);
+      worker.addEventListener("error", event => finishWithError(event.message || "人聲分離處理程序發生錯誤。"));
+    }
     worker.postMessage({ type: "separate", left: left.buffer, right: right.buffer }, [left.buffer, right.buffer]);
   } catch (error) {
     finishWithError(error?.message || "無法開始人聲分離。");
@@ -227,6 +234,7 @@ function handleWorkerMessage(event) {
     return;
   }
   if (data.type === "progress") {
+    modelReady = true;
     $("separator-progress").value = data.value;
     $("separator-start").textContent = `正在分離 ${data.value}%`;
     $("separator-status").textContent = data.text;
@@ -237,6 +245,7 @@ function handleWorkerMessage(event) {
     return;
   }
   if (data.type !== "complete") return;
+  modelReady = true;
   $("separator-status").textContent = "分離完成，正在建立 WAV 檔案…";
   $("separator-progress").value = 99;
   setTimeout(() => {
@@ -258,8 +267,6 @@ function handleWorkerMessage(event) {
 }
 
 function finish() {
-  worker?.terminate();
-  worker = null;
   setBusy(false);
   $("separator-start").textContent = "重新分離";
 }
@@ -267,6 +274,7 @@ function finish() {
 function finishWithError(text) {
   worker?.terminate();
   worker = null;
+  modelReady = false;
   setBusy(false);
   $("separator-progress").hidden = true;
   $("separator-start").textContent = "重新嘗試";
@@ -277,6 +285,7 @@ function cancel() {
   if (!working) return;
   worker?.terminate();
   worker = null;
+  modelReady = false;
   decodedBuffer = null;
   setBusy(false);
   $("separator-progress").hidden = true;

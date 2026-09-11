@@ -24,6 +24,9 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /下載人聲 WAV/);
   assert.match(html, /id="download-mix"[^>]*>下載混合後 WAV</);
   assert.match(html, /id="apply-mix-main"[^>]*>套用到主畫面</);
+  assert.match(html, /id="separated-play"[^>]*>▶ 同步播放</);
+  assert.match(html, /id="vocals-spectrum"[^>]*aria-label="人聲即時頻譜"/);
+  assert.match(html, /id="instrumental-spectrum"[^>]*aria-label="伴奏即時頻譜"/);
   assert.match(html, /單次最長 8 分鐘、150 MB/);
   assert.match(script, /150 \* 1024 \* 1024/);
   for (const track of ["vocals", "instrumental"]) {
@@ -34,6 +37,9 @@ test("vocal separator page exposes its complete local workflow", () => {
     }
   }
   assert.match(script, /createBiquadFilter/);
+  assert.match(script, /createAnalyser/);
+  assert.match(script, /Promise\.all\(audios\.map\(audio => audio\.play\(\)\)\)/);
+  assert.match(script, /companion\.currentTime - master\.currentTime/);
   assert.match(script, /localStorage\.setItem\(TRACK_SETTINGS_KEY/);
   assert.match(script, /saveStoredMedia\("audio", file\)/);
   assert.match(script, /loadStoredMedia\("audio"\)/);

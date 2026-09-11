@@ -26,6 +26,10 @@ body.separator-body { min-width: 1000px; }
 .separator-process .export-button { margin-top: 0; }
 .separator-progress-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 54px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .separator-results { margin-top: 22px; }
+.separator-transport { display: grid; grid-template-columns: auto minmax(180px, 1fr) auto; align-items: center; gap: 16px; margin-top: 20px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 11px; background: var(--tint); }
+.separator-transport .export-button { width: auto; min-width: 140px; margin: 0; }
+.separator-transport input { width: 100%; }
+.separator-transport output { min-width: 92px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
 .separator-tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
 .separator-tracks article { padding: 18px; border: 1px solid var(--border); border-radius: 11px; background: var(--tint); }
 .separator-track-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
@@ -35,6 +39,8 @@ body.separator-body { min-width: 1000px; }
 .track-mute { flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; }
 .track-mute:hover { border-color: var(--primary); color: var(--foreground); }
 .track-mute.active { border-color: var(--error); background: var(--error-surface); color: var(--error-text); }
+.separator-track audio { display: none; }
+.track-spectrum { display: block; width: 100%; height: 104px; border: 1px solid var(--border); border-radius: 9px; background: color-mix(in srgb, var(--background) 78%, transparent); }
 .track-eq { display: grid; grid-template-columns: auto minmax(90px, 1fr); align-items: center; gap: 9px 12px; margin-top: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 9px; }
 .track-eq label { display: flex; min-width: 104px; align-items: center; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 13px; }
 .track-eq output { color: var(--foreground); font-variant-numeric: tabular-nums; }

@@ -30,6 +30,8 @@ let instrumentalBlob = null;
 const resultUrls = { vocals: "", instrumental: "" };
 let trackAudioContext = null;
 const trackAudioNodes = {};
+let spectrumFrame = 0;
+let separatedDuration = 0;
 
 function loadTrackSettings() {
   let saved = {};
@@ -103,6 +105,7 @@ async function ensureTrackAudio(track) {
     const mid = trackAudioContext.createBiquadFilter();
     const treble = trackAudioContext.createBiquadFilter();
     const output = trackAudioContext.createGain();
+    const analyser = trackAudioContext.createAnalyser();
     bass.type = "lowshelf";
     bass.frequency.value = 200;
     mid.type = "peaking";
@@ -110,8 +113,10 @@ async function ensureTrackAudio(track) {
     mid.Q.value = 1;
     treble.type = "highshelf";
     treble.frequency.value = 4000;
-    source.connect(bass).connect(mid).connect(treble).connect(output).connect(trackAudioContext.destination);
-    trackAudioNodes[track] = { source, bass, mid, treble, output };
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.78;
+    source.connect(bass).connect(mid).connect(treble).connect(output).connect(analyser).connect(trackAudioContext.destination);
+    trackAudioNodes[track] = { source, bass, mid, treble, output, analyser };
     applyTrackSettings(track);
   }
 }
@@ -129,6 +134,87 @@ function formatBytes(bytes) {
 function formatTime(seconds) {
   const total = Math.max(0, Math.round(seconds || 0));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function updateSeparatedTime(time = 0) {
+  $("separated-time").textContent = `${formatTime(time)} / ${formatTime(separatedDuration)}`;
+}
+
+function drawTrackSpectrum(track) {
+  const canvas = $(`${track}-spectrum`), context = canvas.getContext("2d");
+  const analyser = trackAudioNodes[track]?.analyser;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--primary").trim() || "#c5fa75";
+  if (!analyser) {
+    context.fillStyle = accent;
+    context.globalAlpha = 0.35;
+    context.fillRect(0, canvas.height / 2, canvas.width, 1);
+    context.globalAlpha = 1;
+    return;
+  }
+  const frequencies = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(frequencies);
+  const bars = 64, gap = 2, width = (canvas.width - gap * (bars - 1)) / bars;
+  context.fillStyle = accent;
+  for (let index = 0; index < bars; index++) {
+    const start = Math.floor(index * frequencies.length / bars);
+    const end = Math.max(start + 1, Math.floor((index + 1) * frequencies.length / bars));
+    let level = 0;
+    for (let i = start; i < end; i++) level = Math.max(level, frequencies[i]);
+    const height = Math.max(2, level / 255 * (canvas.height - 12));
+    context.fillRect(index * (width + gap), (canvas.height - height) / 2, width, height);
+  }
+}
+
+function pauseSeparatedPlayback() {
+  for (const track of TRACK_NAMES) $(`separator-${track}`).pause();
+  $("separated-play").textContent = "▶ 同步播放";
+}
+
+function renderSeparatedPlayback() {
+  const master = $("separator-vocals"), companion = $("separator-instrumental");
+  if (!master.paused) {
+    if (Math.abs(companion.currentTime - master.currentTime) > 0.08) companion.currentTime = master.currentTime;
+    $("separated-position").value = String(master.currentTime);
+    updateSeparatedTime(master.currentTime);
+  }
+  for (const track of TRACK_NAMES) drawTrackSpectrum(track);
+  if (!master.paused || !companion.paused) spectrumFrame = requestAnimationFrame(renderSeparatedPlayback);
+  else spectrumFrame = 0;
+}
+
+async function toggleSeparatedPlayback() {
+  const audios = TRACK_NAMES.map(track => $(`separator-${track}`));
+  if (audios.some(audio => !audio.paused)) {
+    pauseSeparatedPlayback();
+    return;
+  }
+  const button = $("separated-play");
+  button.disabled = true;
+  try {
+    await Promise.all(TRACK_NAMES.map(ensureTrackAudio));
+    let time = Number($("separated-position").value) || 0;
+    if (time >= separatedDuration - 0.02) time = 0;
+    for (const audio of audios) audio.currentTime = time;
+    await Promise.all(audios.map(audio => audio.play()));
+    button.textContent = "Ⅱ 同步暫停";
+    if (!spectrumFrame) spectrumFrame = requestAnimationFrame(renderSeparatedPlayback);
+  } catch (error) {
+    pauseSeparatedPlayback();
+    $("separator-status").textContent = error?.message || "目前瀏覽器無法同步播放兩條音軌。";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function setupSeparatedPlayback(duration) {
+  separatedDuration = Math.max(0, duration);
+  const position = $("separated-position");
+  position.max = String(separatedDuration);
+  position.value = "0";
+  updateSeparatedTime();
+  pauseSeparatedPlayback();
+  for (const track of TRACK_NAMES) drawTrackSpectrum(track);
 }
 
 function showError(text = "") {
@@ -150,6 +236,9 @@ function setBusy(value) {
 }
 
 function clearResults() {
+  if (spectrumFrame) cancelAnimationFrame(spectrumFrame);
+  spectrumFrame = 0;
+  separatedDuration = 0;
   for (const key of Object.keys(resultUrls)) {
     if (resultUrls[key]) URL.revokeObjectURL(resultUrls[key]);
     resultUrls[key] = "";
@@ -284,9 +373,10 @@ function handleWorkerMessage(event) {
       resultUrls.instrumental = URL.createObjectURL(instrumentalBlob);
       $("separator-vocals").src = resultUrls.vocals;
       $("separator-instrumental").src = resultUrls.instrumental;
+      setupSeparatedPlayback(data.vocalsLeft.length / SEPARATOR_SAMPLE_RATE);
       $("separator-results").hidden = false;
       $("separator-progress").value = 100;
-      $("separator-status").textContent = "人聲與伴奏已完成，可分別試聽或下載。";
+      $("separator-status").textContent = "人聲與伴奏已完成，可同步播放頻譜或分別下載。";
       finish();
     } catch (error) {
       finishWithError(error?.message || "建立輸出檔案時記憶體不足。");
@@ -407,9 +497,16 @@ $("download-vocals").addEventListener("click", () => download(vocalsBlob, "vocal
 $("download-instrumental").addEventListener("click", () => download(instrumentalBlob, "instrumental"));
 $("download-mix").addEventListener("click", downloadMix);
 $("apply-mix-main").addEventListener("click", applyMixToMain);
+$("separated-play").addEventListener("click", toggleSeparatedPlayback);
+$("separated-position").addEventListener("input", event => {
+  const time = Number(event.target.value) || 0;
+  for (const track of TRACK_NAMES) $(`separator-${track}`).currentTime = time;
+  updateSeparatedTime(time);
+});
 for (const track of TRACK_NAMES) {
   applyTrackSettings(track);
   const audio = $(`separator-${track}`);
+  audio.addEventListener("ended", pauseSeparatedPlayback);
   audio.addEventListener("pointerdown", () => {
     if (hasTrackProcessing(track)) activateTrackAudio(track);
   });

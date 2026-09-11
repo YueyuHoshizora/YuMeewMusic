@@ -44,7 +44,8 @@ body.separator-body { min-width: 1000px; }
 .separator-mix > div { display: flex; flex-direction: column; gap: 6px; }
 .separator-mix strong { font-size: 15px; }
 .separator-mix span { color: var(--muted); font-size: 13px; line-height: 1.5; }
-.separator-mix .export-button { width: auto; min-width: 190px; margin: 0; white-space: nowrap; }
+.separator-mix-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; }
+.separator-mix-actions .text-button, .separator-mix-actions .export-button { width: auto; min-width: 160px; margin: 0; white-space: nowrap; }
 .separator-notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 22px; padding: 0; overflow: hidden; }
 .separator-notes > div { display: flex; min-height: 112px; flex-direction: column; gap: 9px; padding: 22px; border-left: 1px solid var(--border); }
 .separator-notes > div:first-child { border-left: 0; }

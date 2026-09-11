@@ -22,6 +22,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /WebGPU/);
   assert.match(html, /下載人聲 WAV/);
   assert.match(html, /id="download-mix"[^>]*>下載混合後 WAV</);
+  assert.match(html, /id="apply-mix-main"[^>]*>套用到主畫面</);
   assert.match(html, /單次最長 8 分鐘、150 MB/);
   assert.match(script, /150 \* 1024 \* 1024/);
   for (const track of ["vocals", "instrumental"]) {
@@ -33,6 +34,11 @@ test("vocal separator page exposes its complete local workflow", () => {
   }
   assert.match(script, /createBiquadFilter/);
   assert.match(script, /localStorage\.setItem\(TRACK_SETTINGS_KEY/);
+  assert.match(script, /saveStoredMedia\("audio", file\)/);
+  assert.match(script, /loadStoredMedia\("audio"\)/);
+  assert.match(script, /loadFile\(unpackStoredMedia\(record\)\)/);
+  assert.match(script, /void restoreMainAudio\(\)/);
+  assert.match(script, /location\.href = "\.\/index\.html"/);
   assert.match(script, /trackAudioContext\.state === "suspended"[\s\S]*?await trackAudioContext\.resume\(\)[\s\S]*?createMediaElementSource/);
   assert.doesNotMatch(script, /addEventListener\("play", \(\) => void ensureTrackAudio/);
   const workerScript = readFileSync("js/vocal-separator-worker.js", "utf8");

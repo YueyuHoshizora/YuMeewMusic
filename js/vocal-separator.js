@@ -1,5 +1,6 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
+import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import {
   SEPARATOR_MAX_DURATION,
   SEPARATOR_MODEL_SIZE_MB,
@@ -21,6 +22,7 @@ let sourceFile = null;
 let decodedBuffer = null;
 let worker = null;
 let working = false;
+let mixing = false;
 let modelReady = false;
 let originalUrl = "";
 let vocalsBlob = null;
@@ -216,6 +218,15 @@ async function loadFile(file) {
   }
 }
 
+async function restoreMainAudio() {
+  try {
+    const record = await loadStoredMedia("audio");
+    if (record) await loadFile(unpackStoredMedia(record));
+  } catch (error) {
+    $("separator-status").textContent = `無法帶入主畫面音樂：${error.message}`;
+  }
+}
+
 async function startSeparation() {
   if (!sourceFile || working) return;
   clearResults();
@@ -322,22 +333,55 @@ function download(blob, stem) {
 }
 
 async function downloadMix() {
-  if (!vocalsBlob || !instrumentalBlob || !sourceFile) return;
-  const button = $("download-mix");
-  button.disabled = true;
-  button.textContent = "正在混合 0%";
+  if (!vocalsBlob || !instrumentalBlob || !sourceFile || mixing) return;
+  setMixBusy(true);
   try {
-    const blob = await mixSeparatedWav(vocalsBlob, instrumentalBlob, trackSettings, (fraction, pass) => {
-      const progress = Math.round((pass * 0.5 + fraction * 0.5) * 100);
-      button.textContent = `正在混合 ${progress}%`;
-    });
+    const blob = await createAdjustedMix();
     download(blob, "mixed");
-    $("separator-status").textContent = "已套用 MUTE 與 EQ，並完成混合 WAV。";
+    $("separator-status").textContent = "已套用 MUTE、音量與 EQ，並完成混合 WAV。";
   } catch (error) {
     showError(error?.message || "無法建立混合 WAV。");
   } finally {
-    button.disabled = false;
-    button.textContent = "下載混合後 WAV";
+    setMixBusy(false);
+  }
+}
+
+function setMixBusy(value) {
+  mixing = value;
+  $("download-mix").disabled = value;
+  $("apply-mix-main").disabled = value;
+  if (!value) {
+    $("download-mix").textContent = "下載混合後 WAV";
+    $("apply-mix-main").textContent = "套用到主畫面";
+  }
+}
+
+function createAdjustedMix() {
+  return mixSeparatedWav(vocalsBlob, instrumentalBlob, trackSettings, (fraction, pass) => {
+    const progress = Math.round((pass * 0.5 + fraction * 0.5) * 100);
+    $("download-mix").textContent = `正在混合 ${progress}%`;
+    $("apply-mix-main").textContent = `正在混合 ${progress}%`;
+  });
+}
+
+async function applyMixToMain() {
+  if (!vocalsBlob || !instrumentalBlob || !sourceFile || mixing) return;
+  setMixBusy(true);
+  try {
+    const blob = await createAdjustedMix();
+    $("apply-mix-main").textContent = "正在保存…";
+    const file = new File([blob], separatorFilename(sourceFile.name, "mixed"), {
+      type: "audio/wav",
+      lastModified: Date.now(),
+    });
+    await saveStoredMedia("audio", file);
+    void navigator.storage?.persist?.().catch(() => false);
+    $("separator-status").textContent = "混合音軌已保存，正在返回主畫面…";
+    mixing = false;
+    location.href = "./index.html";
+  } catch (error) {
+    showError(error?.message || "無法將混合音軌保存到主畫面。");
+    setMixBusy(false);
   }
 }
 
@@ -362,6 +406,7 @@ $("separator-cancel").addEventListener("click", cancel);
 $("download-vocals").addEventListener("click", () => download(vocalsBlob, "vocals"));
 $("download-instrumental").addEventListener("click", () => download(instrumentalBlob, "instrumental"));
 $("download-mix").addEventListener("click", downloadMix);
+$("apply-mix-main").addEventListener("click", applyMixToMain);
 for (const track of TRACK_NAMES) {
   applyTrackSettings(track);
   const audio = $(`separator-${track}`);
@@ -390,7 +435,7 @@ for (const track of TRACK_NAMES) {
   });
 }
 window.addEventListener("beforeunload", event => {
-  if (!working) return;
+  if (!working && !mixing) return;
   event.preventDefault();
   event.returnValue = "";
 });
@@ -400,3 +445,4 @@ window.addEventListener("unload", () => {
   if (originalUrl) URL.revokeObjectURL(originalUrl);
   for (const url of Object.values(resultUrls)) if (url) URL.revokeObjectURL(url);
 });
+void restoreMainAudio();

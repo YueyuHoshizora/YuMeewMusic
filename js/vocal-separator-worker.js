@@ -2,6 +2,7 @@ import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 import {
   SEPARATOR_CHUNK_SIZE,
   SEPARATOR_STEP,
+  decodeFloat16,
   hannWindow,
   prepareSeparatorInput,
   reconstructVocals,
@@ -19,6 +20,22 @@ ort.env.wasm.numThreads = 1;
 
 const sendStatus = (text, provider = "") => self.postMessage({ type: "status", text, provider });
 let sessionPromise = null;
+
+function invalidOutput(message) {
+  const error = Error(message);
+  error.code = "INVALID_OUTPUT";
+  return error;
+}
+
+function tensorValues(tensor) {
+  const values = tensor.type === "float16" && tensor.data instanceof Uint16Array
+    ? decodeFloat16(tensor.data)
+    : tensor.data;
+  if (!values?.length) throw invalidOutput("AI 模型沒有產生音訊資料。");
+  for (const value of values) if (!Number.isFinite(value))
+    throw invalidOutput("AI 模型產生無效數值。");
+  return values;
+}
 
 async function loadModel(provider) {
   const url = MODEL_PATHS[provider];
@@ -48,8 +65,7 @@ async function loadModel(provider) {
   return new Uint8Array(await response.arrayBuffer());
 }
 
-async function createSession() {
-  const candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"];
+async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"]) {
   let lastError;
   for (const provider of candidates) {
     let session;
@@ -66,7 +82,8 @@ async function createSession() {
       session = await ort.InferenceSession.create(model, options);
       const frames = Math.floor((SEPARATOR_CHUNK_SIZE - 2048) / 512) + 1;
       const probe = new ort.Tensor("float32", new Float32Array(frames * 4100), separatorTensorShape(frames));
-      await session.run({ [session.inputNames[0]]: probe });
+      const probeResult = await session.run({ [session.inputNames[0]]: probe });
+      tensorValues(probeResult[session.outputNames[0]]);
       return { session, provider };
     } catch (error) {
       session?.release?.();
@@ -92,8 +109,7 @@ async function getSession() {
   }
 }
 
-async function separate(left, right) {
-  const { session, provider } = await getSession();
+async function separateWithSession(left, right, { session, provider }) {
   const total = left.length;
   const vocalsLeft = new Float32Array(total), vocalsRight = new Float32Array(total);
   const weights = new Float32Array(total), window = hannWindow();
@@ -111,10 +127,12 @@ async function separate(left, right) {
     const prepared = prepareSeparatorInput(chunkLeft, chunkRight, window);
     const tensor = new ort.Tensor("float32", prepared.input, separatorTensorShape(prepared.frames));
     const result = await session.run({ [session.inputNames[0]]: tensor });
-    const reconstructed = reconstructVocals(result[session.outputNames[0]].data, prepared, window, SEPARATOR_CHUNK_SIZE);
+    const reconstructed = reconstructVocals(tensorValues(result[session.outputNames[0]]), prepared, window, SEPARATOR_CHUNK_SIZE);
 
     for (let i = 0; i < validLength; i++) {
       const chunkIndex = chunkOffset + i, outputIndex = sourceStart + i;
+      if (!Number.isFinite(reconstructed.left[chunkIndex]) || !Number.isFinite(reconstructed.right[chunkIndex]))
+        throw invalidOutput("AI 模型產生無效音訊。");
       const weight = Math.sin(Math.PI * (chunkIndex + 0.5) / SEPARATOR_CHUNK_SIZE) ** 2;
       vocalsLeft[outputIndex] += reconstructed.left[chunkIndex] * weight;
       vocalsRight[outputIndex] += reconstructed.right[chunkIndex] * weight;
@@ -129,14 +147,22 @@ async function separate(left, right) {
       provider,
     });
   }
+  let inputPeak = 0, vocalsPeak = 0, instrumentalPeak = 0;
   for (let i = 0; i < total; i++) {
+    inputPeak = Math.max(inputPeak, Math.abs(left[i]), Math.abs(right[i]));
     if (weights[i] > 1e-8) {
       vocalsLeft[i] /= weights[i];
       vocalsRight[i] /= weights[i];
     }
     left[i] -= vocalsLeft[i];
     right[i] -= vocalsRight[i];
+    if (![vocalsLeft[i], vocalsRight[i], left[i], right[i]].every(Number.isFinite))
+      throw invalidOutput("AI 分離結果含有無效音訊。");
+    vocalsPeak = Math.max(vocalsPeak, Math.abs(vocalsLeft[i]), Math.abs(vocalsRight[i]));
+    instrumentalPeak = Math.max(instrumentalPeak, Math.abs(left[i]), Math.abs(right[i]));
   }
+  if (inputPeak > 1e-5 && vocalsPeak < 1e-7 && instrumentalPeak < 1e-7)
+    throw invalidOutput("AI 分離結果為靜音。");
   self.postMessage({
     type: "complete",
     provider,
@@ -145,6 +171,25 @@ async function separate(left, right) {
     instrumentalLeft: left,
     instrumentalRight: right,
   }, [vocalsLeft.buffer, vocalsRight.buffer, left.buffer, right.buffer]);
+}
+
+async function separate(left, right) {
+  let state = await getSession();
+  try {
+    return await separateWithSession(left, right, state);
+  } catch (error) {
+    if (state.provider !== "webgpu" || error?.code !== "INVALID_OUTPUT") throw error;
+    state.session.release?.();
+    sendStatus("GPU 分離結果無效，正在自動改用 CPU 重新處理…", "wasm");
+    sessionPromise = createSession(["wasm"]);
+    try {
+      state = await sessionPromise;
+      return await separateWithSession(left, right, state);
+    } catch (fallbackError) {
+      sessionPromise = null;
+      throw fallbackError;
+    }
+  }
 }
 
 self.addEventListener("message", event => {

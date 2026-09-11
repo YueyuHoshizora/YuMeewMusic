@@ -34,3 +34,9 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"text-to-image\.html"/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-image\.html"/);
 });
+
+test("GitHub Pages build preserves the official custom domain", () => {
+  assert.equal(readFileSync("CNAME", "utf8").trim(), "ezmusic.yustellar.idv.tw");
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"CNAME"/);
+  assert.match(readFileSync("README.md", "utf8"), /https:\/\/ezmusic\.yustellar\.idv\.tw\//);
+});

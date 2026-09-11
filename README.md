@@ -2,7 +2,7 @@
 
 使用純 HTML、CSS 與原生 JavaScript 製作的音樂視覺化工作室。載入音樂、圖片與字幕，製作頻譜或黑膠動畫，並在瀏覽器內匯出影片或音訊。
 
-**線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
+**線上使用：** [YuMeew Music Studio](https://ezmusic.yustellar.idv.tw/)
 
 主畫面頂部的「文生圖」會開啟獨立的 AI 圖片生成頁面。輸入場景描述後，頁面會以 POST JSON 的 `prompt` 參數呼叫 Cloudflare Workers AI，生成 1280 × 720 JPEG；生成期間會鎖定操作並顯示載入動畫。生成結果只暫存在目前分頁，可直接下載；只有使用者按下「套用主畫面背景」時，才會將圖片保存至 IndexedDB 並取代主畫面的背景素材。頁面會註明每日早上 8 點（台灣時間）重置額度；服務回傳額度不足或請求過多時，也會顯示對應提示。此功能會把文字提示詞傳送至 `flux-klein-worker.yustellar.idv.tw`，音樂、字幕、影片與其他本機檔案不會隨請求上傳。
 
@@ -194,7 +194,7 @@ npm run preview  # 預覽 dist/
 
 使用 ES modules，需透過 HTTP(S) 開啟，不能以 `file://` 直接開啟。建置會複製公開檔案並加入內容雜湊版本參數，避免瀏覽器混用舊版 CSS／JavaScript；沒有轉譯或打包步驟。
 
-[GitHub Pages 工作流程](.github/workflows/pages.yml) 在 `main` 更新時執行測試、建置並部署 `dist/`。只發布公開檔案，不發布 Git 資料或測試原始檔；相對資源路徑支援 `/YuMeewMusic/` 專案網址。
+[GitHub Pages 工作流程](.github/workflows/pages.yml) 在 `main` 更新時執行測試、建置並部署 `dist/`。只發布公開檔案，不發布 Git 資料或測試原始檔；正式網址為 `https://ezmusic.yustellar.idv.tw/`，相對資源路徑也能支援本機預覽。
 
 ## 驗證範圍
 

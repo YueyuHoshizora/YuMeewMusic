@@ -4,6 +4,8 @@
 
 **線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
 
+主畫面頂部的「文生圖」會開啟獨立的 AI 圖片生成頁面。輸入場景描述後，頁面會呼叫 Cloudflare Workers AI 生成 1280 × 720 JPEG；生成期間會鎖定操作並顯示載入動畫。完成後可下載圖片，或將圖片保存至 IndexedDB、直接取代主畫面的背景素材。此功能會把文字提示詞傳送至 `flux-klein-worker.yustellar.idv.tw`，音樂、字幕、影片與其他本機檔案不會隨請求上傳。
+
 主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，並預設從 IndexedDB 帶入主畫面目前保存的音樂；沒有保存音樂時仍可另外選擇檔案。工具可將最長 8 分鐘、150 MB 以內的音樂分離為人聲與伴奏。預設使用輕量 Spleeter 2-stems（兩個模型合計約 75 MB），另可選原本的 BS PolarFormer 高品質模型（約 201 MB）。輕量模型優先縮短處理時間，但可能殘留更多伴奏，約 11 kHz 以上頻段保留於伴奏。功能優先使用 FP32 WebGPU 模型，無法使用時自動改以 WASM CPU 執行；程式會轉換 FP16 模型輸出並攔截無效數值與全靜音結果，GPU 輸出無效時會自動改用 WASM CPU 重新處理。完成後會產生人聲與伴奏兩個同步動畫頻譜，使用共用的播放鍵與播放位置同時播放；每條音軌仍有獨立 MUTE、-10～+10 dB／0.3 dB 步進的音量，以及 −24～+24 dB 的低、中、高音三段 EQ（300 Hz 低頻棚架、1 kHz 寬中頻、3 kHz 高頻棚架），並透過 Web Audio 即時套用於聲音與頻譜。設定會保存在瀏覽器並套用於試聽。可下載未經調整的獨立人聲／伴奏，也可將目前 MUTE、音量與 EQ 套用到兩軌後重新混合，經整體峰值保護後下載 44.1 kHz、16-bit 立體聲 WAV。「套用到主畫面」會將同一份混合 WAV 保存到 IndexedDB、取代主畫面的音樂並自動返回，媒體不會上傳。第一次執行會從 Hugging Face 下載所選模型（Spleeter 使用 FP32；BS PolarFormer 的 CPU 回退使用 FP16），並以 Cache Storage 保存大型二進位模型；再次開啟頁面可直接從瀏覽器儲存讀取。同一頁面後續分離還會沿用已建立的 GPU／CPU 模型工作階段，避免再次載入與暖機。選擇的音樂、PCM 資料與分離結果都不會上傳。
 
 主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入明確支援 WebM，以及 MP4、MOV 等瀏覽器可讀格式，可轉成 MP4、MOV、WebM、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
@@ -18,7 +20,7 @@
 
 ## 隱私與檔案限制
 
-所有媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。人聲分離模型會由瀏覽器從 Hugging Face 下載並保存在 Cache Storage，但音樂不會傳送至該服務。
+所有媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。人聲分離模型會由瀏覽器從 Hugging Face 下載並保存在 Cache Storage，但音樂不會傳送至該服務。文生圖是唯一的雲端 AI 例外：只傳送使用者輸入的圖片描述，並接收生成的 JPEG，不傳送既有媒體檔案。
 
 | 素材 | 支援內容 | 限制 |
 | --- | --- | --- |
@@ -153,10 +155,12 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `converter.html` | 獨立影片／音樂格式轉換頁面 |
 | `video-editor.html` | 「語喵影片」影片與圖片圖層時間軸編輯器 |
 | `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
+| `text-to-image.html` | Cloudflare Workers AI 文生圖頁面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
 | `css/subtitle-editor.css` | 字幕編輯器、音訊波形與字幕色帶樣式 |
 | `css/converter.css` | 任意轉頁面配置與狀態樣式 |
 | `css/video-editor.css` | 語喵影片的預覽、圖層清單與時間軸樣式 |
+| `css/text-to-image.css` | 文生圖輸入、生成狀態與圖片預覽樣式 |
 | `js/app.js` | 本機讀檔、播放、互動與狀態管理 |
 | `js/subtitle-editor.js` | 字幕清單、色帶拖曳、SRT 下載與覆寫保存 |
 | `js/visualizer.js` | FFT、動畫、歌曲資訊與字幕繪製 |
@@ -165,6 +169,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `js/converter.js`、`js/converter-core.js` | 任意轉介面、媒體辨識與轉碼流程 |
 | `js/video-editor.js`、`js/video-editor-core.js` | 語喵影片的圖層、預覽、時間軸、音訊混合與匯出流程 |
 | `js/vocal-separator.js`、`js/vocal-separator-worker.js`、`js/vocal-separator-core.js` | 人聲分離介面、背景推論與音訊 DSP／WAV 輸出 |
+| `js/text-to-image.js` | Worker 呼叫、圖片下載與主畫面背景保存 |
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |
 | `js/trim.js`、`js/trim-time.js`、`js/trim-range.js` | 音訊裁剪、時間解析與拖曳範圍計算 |
 | `js/subtitles.js` | 字幕解析與時間對應 |

@@ -1,0 +1,28 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+
+test("text-to-image page exposes generation, download and background actions", () => {
+  const html = readFileSync("text-to-image.html", "utf8");
+  const script = readFileSync("js/text-to-image.js", "utf8");
+  const css = readFileSync("css/text-to-image.css", "utf8");
+  const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
+  for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
+  assert.match(html, /id="image-prompt"[^>]*maxlength="2048"/);
+  assert.match(html, /id="generated-image-frame"/);
+  assert.match(html, /1280 × 720/);
+  assert.match(html, /id="download-image"[^>]*disabled/);
+  assert.match(html, /id="apply-background"[^>]*disabled/);
+  assert.match(html, /id="generation-lock"[^>]*hidden/);
+  assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
+  assert.match(script, /flux-klein-worker\.yustellar\.idv\.tw/);
+  assert.match(script, /url\.searchParams\.set\("p", prompt\)/);
+  assert.match(script, /saveStoredMedia\("image", file\)/);
+  assert.match(script, /deleteStoredValue\("image-video-project"\)/);
+  const mainHtml = readFileSync("index.html", "utf8");
+  assert.match(mainHtml, /href="\.\/text-to-image\.html"[^>]*>文生圖<\/a>/);
+  assert.match(readFileSync("scripts/serve.js", "utf8"), /"text-to-image\.html"/);
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-image\.html"/);
+});

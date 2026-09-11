@@ -11,15 +11,29 @@ const HOP = 512;
 const N_FREQ = N_FFT / 2 + 1;
 const FEATURE_SIZE = N_FREQ * 2 * 2;
 
-export function decodeFloat16(input) {
-  return Float32Array.from(input, bits => {
+let float16Lookup = null;
+
+function getFloat16Lookup() {
+  if (float16Lookup) return float16Lookup;
+  float16Lookup = new Float32Array(65536);
+  for (let bits = 0; bits < float16Lookup.length; bits++) {
     const sign = bits & 0x8000 ? -1 : 1;
     const exponent = (bits >>> 10) & 0x1f;
     const fraction = bits & 0x03ff;
-    if (exponent === 0) return sign * 2 ** -14 * (fraction / 1024);
-    if (exponent === 0x1f) return fraction ? Number.NaN : sign * Number.POSITIVE_INFINITY;
-    return sign * 2 ** (exponent - 15) * (1 + fraction / 1024);
-  });
+    float16Lookup[bits] = exponent === 0
+      ? sign * 2 ** -14 * (fraction / 1024)
+      : exponent === 0x1f
+        ? (fraction ? Number.NaN : sign * Number.POSITIVE_INFINITY)
+        : sign * 2 ** (exponent - 15) * (1 + fraction / 1024);
+  }
+  return float16Lookup;
+}
+
+export function decodeFloat16(input) {
+  const lookup = getFloat16Lookup();
+  const output = new Float32Array(input.length);
+  for (let index = 0; index < input.length; index++) output[index] = lookup[input[index]];
+  return output;
 }
 
 export function separatorFilename(name, stem) {

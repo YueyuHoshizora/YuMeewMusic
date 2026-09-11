@@ -59,6 +59,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.doesNotMatch(script.match(/function finish\(\)[\s\S]*?\n}/)?.[0] || "", /terminate/);
   assert.match(workerScript, /GPU 分離結果無效，正在自動改用 CPU/);
   assert.match(workerScript, /vocalsPeak < 1e-7 && instrumentalPeak < 1e-7/);
+  assert.doesNotMatch(workerScript, /const probe = new ort\.Tensor/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"vocal-separator\.html"/);
   assert.doesNotMatch(script, /sendBeacon|XMLHttpRequest|WebSocket/);
@@ -69,6 +70,14 @@ test("float16 model output converts to numeric PCM values", () => {
   assert.deepEqual([...values], [0, 1, -2, 0.5]);
   assert.equal(decodeFloat16(Uint16Array.of(0x7c00))[0], Infinity);
   assert.ok(Number.isNaN(decodeFloat16(Uint16Array.of(0x7e00))[0]));
+});
+
+test("float16 conversion handles full model-sized output without per-value exponent work", () => {
+  const input = new Uint16Array(1_045_500).fill(0x3800);
+  const values = decodeFloat16(input);
+  assert.equal(values.length, input.length);
+  assert.equal(values[0], 0.5);
+  assert.equal(values.at(-1), 0.5);
 });
 
 test("separator WAV output is valid stereo PCM with safe file names", async () => {

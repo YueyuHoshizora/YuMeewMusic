@@ -80,10 +80,6 @@ async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : [
       const model = await loadModel(provider);
       sendStatus(provider === "webgpu" ? "正在建立 GPU 模型工作階段…" : "正在建立 CPU 模型工作階段…", provider);
       session = await ort.InferenceSession.create(model, options);
-      const frames = Math.floor((SEPARATOR_CHUNK_SIZE - 2048) / 512) + 1;
-      const probe = new ort.Tensor("float32", new Float32Array(frames * 4100), separatorTensorShape(frames));
-      const probeResult = await session.run({ [session.inputNames[0]]: probe });
-      tensorValues(probeResult[session.outputNames[0]]);
       return { session, provider };
     } catch (error) {
       session?.release?.();

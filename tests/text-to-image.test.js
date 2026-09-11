@@ -13,6 +13,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="image-prompt"[^>]*maxlength="2048"/);
   assert.match(html, /id="generated-image-frame"/);
   assert.match(html, /1280 × 720/);
+  assert.match(html, /每日早上 8 點（台灣時間）重置額度/);
   assert.match(html, /id="download-image"[^>]*disabled/);
   assert.match(html, /id="apply-background"[^>]*disabled/);
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
@@ -20,6 +21,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(script, /flux-klein-worker\.yustellar\.idv\.tw/);
   assert.match(script, /url\.searchParams\.set\("p", prompt\)/);
+  assert.match(script, /statusCode === 429/);
+  assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.doesNotMatch(script.slice(script.indexOf("async function generateImage"), script.indexOf('$("image-prompt")')), /saveStoredMedia/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);

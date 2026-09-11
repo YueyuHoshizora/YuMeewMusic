@@ -3,6 +3,7 @@ import { loadSettings } from "./settings.js";
 import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/";
+const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -42,6 +43,10 @@ function releaseImage() {
   generatedBlob = null;
 }
 
+function isQuotaError(statusCode, detail) {
+  return statusCode === 429 || /(?:quota|neuron|daily limit|rate limit|too many requests|limit exceeded|額度|用量上限)/i.test(detail);
+}
+
 async function generateImage() {
   const prompt = $("image-prompt").value.trim();
   if (!prompt || busy) return;
@@ -55,6 +60,7 @@ async function generateImage() {
     if (!response.ok) {
       let detail = "";
       try { detail = (await response.json())?.error || ""; } catch {}
+      if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `圖片服務回傳 ${response.status}`);
     }
     const blob = await response.blob();

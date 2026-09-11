@@ -33,6 +33,10 @@ test("vocal separator page exposes its complete local workflow", () => {
   const workerScript = readFileSync("js/vocal-separator-worker.js", "utf8");
   assert.match(workerScript, /let sessionPromise = null/);
   assert.match(workerScript, /沿用已載入的 AI 模型/);
+  assert.match(workerScript, /caches\.open\(MODEL_CACHE\)/);
+  assert.match(workerScript, /cache\.match\(url\)/);
+  assert.match(workerScript, /cache\.put\(url, response\.clone\(\)\)/);
+  assert.match(workerScript, /new Uint8Array\(await (?:stored|response)\.arrayBuffer\(\)\)/);
   assert.doesNotMatch(workerScript, /finally\s*{\s*session\.release/);
   assert.doesNotMatch(script.match(/function finish\(\)[\s\S]*?\n}/)?.[0] || "", /terminate/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);

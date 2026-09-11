@@ -13,11 +13,40 @@ const MODEL_PATHS = {
   webgpu: `${MODEL_BASE}/bs_polarformer_webgpu_fp16.onnx`,
   wasm: `${MODEL_BASE}/bs_polarformer_fp16.onnx`,
 };
+const MODEL_CACHE = "yumeew-vocal-models-v1";
 ort.env.wasm.wasmPaths = new URL("../vendor/onnxruntime-web/", import.meta.url).href;
 ort.env.wasm.numThreads = 1;
 
 const sendStatus = (text, provider = "") => self.postMessage({ type: "status", text, provider });
 let sessionPromise = null;
+
+async function loadModel(provider) {
+  const url = MODEL_PATHS[provider];
+  if (!("caches" in self)) return url;
+
+  let cache;
+  try {
+    cache = await caches.open(MODEL_CACHE);
+    const stored = await cache.match(url);
+    if (stored) {
+      sendStatus("正在從瀏覽器儲存讀取 AI 模型…", provider);
+      return new Uint8Array(await stored.arrayBuffer());
+    }
+  } catch {
+    sendStatus("瀏覽器模型儲存不可用，正在直接載入…", provider);
+    return url;
+  }
+
+  sendStatus("首次下載 AI 模型；完成後會保存在這個瀏覽器…", provider);
+  const response = await fetch(url);
+  if (!response.ok) throw Error(`AI 模型下載失敗（HTTP ${response.status}）。`);
+  try {
+    await cache.put(url, response.clone());
+  } catch {
+    sendStatus("模型已下載，但瀏覽器儲存空間不足，本次仍會繼續。", provider);
+  }
+  return new Uint8Array(await response.arrayBuffer());
+}
 
 async function createSession() {
   const candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"];
@@ -32,7 +61,9 @@ async function createSession() {
         const frames = Math.floor((SEPARATOR_CHUNK_SIZE - 2048) / 512) + 1;
         options.freeDimensionOverrides = { batch: 1, time_frames: frames };
       }
-      session = await ort.InferenceSession.create(MODEL_PATHS[provider], options);
+      const model = await loadModel(provider);
+      sendStatus(provider === "webgpu" ? "正在建立 GPU 模型工作階段…" : "正在建立 CPU 模型工作階段…", provider);
+      session = await ort.InferenceSession.create(model, options);
       const frames = Math.floor((SEPARATOR_CHUNK_SIZE - 2048) / 512) + 1;
       const probe = new ort.Tensor("float32", new Float32Array(frames * 4100), separatorTensorShape(frames));
       await session.run({ [session.inputNames[0]]: probe });

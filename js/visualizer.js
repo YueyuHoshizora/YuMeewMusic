@@ -82,7 +82,7 @@ export function drawBackground(canvas, img, darkness = 0) {
   c.fillRect(0, 0, w, h);
 }
 
-export function drawDynamic(canvas, t, b, img, s) {
+export function drawDynamic(canvas, t, b, img, s, includeSongDetails = true) {
   const c = canvas.getContext("2d");
   const w = canvas.width;
   let h = canvas.height;
@@ -95,7 +95,7 @@ export function drawDynamic(canvas, t, b, img, s) {
   h = Math.min(w, h);
   if (s.style === 19) {
     c.restore();
-    drawSongDetails(c, canvas.width, canvas.height, s, t);
+    if (includeSongDetails) drawSongDetails(c, canvas.width, canvas.height, s, t);
     return;
   }
   const values = spectrum(b, t),
@@ -158,7 +158,7 @@ export function drawDynamic(canvas, t, b, img, s) {
   }
   c.shadowBlur = 0;
   c.restore();
-  drawSongDetails(c, canvas.width, canvas.height, s, t);
+  if (includeSongDetails) drawSongDetails(c, canvas.width, canvas.height, s, t);
 }
 
 export function draw(canvas, t, b, img, s) {
@@ -174,7 +174,7 @@ export function songTextOpacity(time, fadeAfter = 5) {
   return Math.max(0, Math.min(1, 1 - (time - delay)));
 }
 
-function drawSongDetails(c, width, height, settings, time) {
+export function drawSongDetails(c, width, height, settings, time) {
   const lines = [
     [settings.songTitle, true],
     [settings.lyricist ? `作詞：${settings.lyricist}` : "", false],

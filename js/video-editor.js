@@ -1,8 +1,8 @@
 import { applyTheme } from "./themes.js";
-import { loadSettings } from "./settings.js";
+import { loadSettings, saveSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { parseSubtitles } from "./subtitles.js";
-import { drawBackground, drawDynamic, drawIdentity, drawSubtitles } from "./visualizer.js";
+import { drawBackground, drawDynamic, drawIdentity, drawSongDetails, drawSubtitles } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
@@ -26,9 +26,10 @@ const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 $("apply-resolution").textContent = `${settings.resolution}p`;
 $("apply-fps").textContent = `${settings.fps} fps`;
+const dynamicLayer = { id: "dynamic-effects", type: "dynamic", name: "動態特效" };
 
 const state = {
-  layers: [],
+  layers: [dynamicLayer],
   selectedId: null,
   time: 0,
   playing: false,
@@ -74,6 +75,7 @@ function drawOverlays(context, time) {
     originalBuffer: state.base.audioBuffer || { duration: timelineDuration() },
     buffer: state.base.audioBuffer || { duration: timelineDuration() },
   };
+  drawSongDetails(context, context.canvas.width, context.canvas.height, overlaySettings, time);
   drawSubtitles(context, context.canvas.width, context.canvas.height, overlaySettings, time);
   drawIdentity(context, context.canvas.width, context.canvas.height, overlaySettings);
 }
@@ -173,7 +175,7 @@ function drawDynamicLayer(canvas, time, background = state.base.image) {
     identityImage: null,
     originalBuffer: state.base.audioBuffer,
     buffer: state.base.audioBuffer,
-  });
+  }, false);
 }
 
 function renderPreview() {
@@ -182,8 +184,8 @@ function renderPreview() {
   context.fillStyle = "#080a0c";
   context.fillRect(0, 0, canvas.width, canvas.height);
   drawBase(canvas, state.time);
-  drawDynamicLayer(canvas, state.time);
   for (const layer of state.layers) {
+    if (layer.type === "dynamic") { drawDynamicLayer(canvas, state.time); continue; }
     if (!isLayerActive(layer, state.time)) continue;
     if (layer.type === "image") {
       drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, state.time);
@@ -234,9 +236,9 @@ function renderTimeline() {
     const band = document.createElement("button");
     band.type = "button";
     band.className = `timeline-band${layer.id === state.selectedId ? " selected" : ""}`;
-    band.style.left = `${layer.start / duration * 100}%`;
-    band.style.width = `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
-    band.textContent = layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
+    band.style.left = layer.type === "dynamic" ? "0%" : `${layer.start / duration * 100}%`;
+    band.style.width = layer.type === "dynamic" ? "100%" : `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
+    band.textContent = layer.type === "dynamic" ? "動態特效" : layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
     band.addEventListener("click", () => selectLayer(layer.id));
     track.append(band);
     return track;
@@ -248,16 +250,15 @@ function renderLayerList() {
     const row = document.createElement("button");
     row.type = "button";
     row.className = `layer-row${layer.id === state.selectedId ? " selected" : ""}`;
-    row.innerHTML = `<span>${layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
+    row.innerHTML = `<span>${layer.type === "dynamic" ? "✦" : layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
     row.querySelector("strong").textContent = layer.name;
-    row.querySelector("small").textContent = `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
+    row.querySelector("small").textContent = layer.type === "dynamic" ? "可調整順序 · 完整時間" : `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
     row.addEventListener("click", () => selectLayer(layer.id));
     return row;
   }));
   $("subtitle-layer").classList.toggle("inactive", !state.subtitles);
   const hasIdentity = settings.identityType === "image" ? Boolean(state.identityImage) : Boolean(settings.identityText);
   $("identity-layer").classList.toggle("inactive", !hasIdentity);
-  $("dynamic-layer").classList.toggle("inactive", !state.base.audioBuffer);
   $("base-layer").classList.toggle("inactive", !state.base.audioBuffer);
   $("base-layer-detail").textContent = state.base.audioBuffer
     ? `${formatEditorTime(state.base.duration)} · 固定最底層`
@@ -269,10 +270,18 @@ function renderInspector() {
   $("empty-inspector").hidden = Boolean(layer);
   $("layer-controls").hidden = !layer;
   if (!layer) return;
-  $("selected-kind").textContent = layer.type === "video" ? "影片圖層" : "圖片圖層";
+  const dynamic = layer.type === "dynamic";
+  $("selected-kind").textContent = dynamic ? "動態特效圖層" : layer.type === "video" ? "影片圖層" : "圖片圖層";
   $("selected-name").textContent = layer.name;
-  $("layer-media-controls").hidden = false;
-  $("remove-layer").hidden = false;
+  $("dynamic-layer-help").hidden = !dynamic;
+  $("layer-media-controls").hidden = dynamic;
+  $("remove-layer").hidden = dynamic;
+  if (dynamic) {
+    const index = state.layers.indexOf(layer);
+    $("move-layer-down").disabled = index === 0;
+    $("move-layer-up").disabled = index === state.layers.length - 1;
+    return;
+  }
   $("layer-start").value = layer.start.toFixed(1);
   $("video-time-controls").hidden = layer.type !== "video";
   $("image-time-controls").hidden = layer.type !== "image";
@@ -598,6 +607,7 @@ async function applyProjectToMain() {
         if (!baseBackgroundSample && state.base.image?.seekTime) await state.base.image.seekTime(sourceTime);
         drawBase(canvas, sourceTime, baseBackgroundSample || state.base.image);
         for (const layer of state.layers) {
+          if (layer.type === "dynamic") { drawDynamicLayer(canvas, sourceTime, baseBackgroundSample || state.base.image); continue; }
           if (!isLayerActive(layer, sourceTime)) continue;
           if (layer.type === "image") drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, sourceTime);
           else if (sourceTime - layer.start < layer.mediaDuration) {
@@ -643,6 +653,7 @@ async function applyProjectToMain() {
     await deleteStoredValue("image-video-project").catch(() => {});
     await saveStoredMedia("image", file);
     if (audioFile) await saveStoredMedia("audio", audioFile);
+    if (!saveSettings({ ...settings, style: 19 })) throw Error("影片已保存，但無法將主畫面特效改為「無」。");
     void navigator.storage?.persist?.().catch(() => false);
     $("editor-progress").value = 100;
     status("已套用到主畫面。", "success");

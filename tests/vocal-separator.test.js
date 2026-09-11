@@ -22,6 +22,14 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /下載人聲 WAV/);
   assert.match(html, /單次最長 8 分鐘、150 MB/);
   assert.match(script, /150 \* 1024 \* 1024/);
+  for (const track of ["vocals", "instrumental"]) {
+    assert.match(html, new RegExp(`id="mute-${track}"[^>]*>MUTE<`));
+    for (const band of ["bass", "mid", "treble"]) {
+      assert.match(html, new RegExp(`id="${track}-${band}"[^>]*min="-10"[^>]*max="10"[^>]*step="0\\.1"`));
+    }
+  }
+  assert.match(script, /createBiquadFilter/);
+  assert.match(script, /localStorage\.setItem\(TRACK_SETTINGS_KEY/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"vocal-separator\.html"/);
   assert.doesNotMatch(script, /sendBeacon|XMLHttpRequest|WebSocket/);

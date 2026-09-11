@@ -10,6 +10,9 @@ import {
 
 const $ = id => document.getElementById(id);
 const MAX_FILE_SIZE = 150 * 1024 * 1024;
+const TRACK_SETTINGS_KEY = "yumeew.separator.track-eq.v1";
+const TRACK_NAMES = ["vocals", "instrumental"];
+const EQ_BANDS = ["bass", "mid", "treble"];
 const restored = loadSettings();
 applyTheme(restored.mode, restored.theme);
 
@@ -21,6 +24,83 @@ let originalUrl = "";
 let vocalsBlob = null;
 let instrumentalBlob = null;
 const resultUrls = { vocals: "", instrumental: "" };
+let trackAudioContext = null;
+const trackAudioNodes = {};
+
+function loadTrackSettings() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(TRACK_SETTINGS_KEY) || "{}");
+  } catch {}
+  return Object.fromEntries(TRACK_NAMES.map(track => [track, {
+    muted: false,
+    ...Object.fromEntries(EQ_BANDS.map(band => {
+      const value = Number(saved?.[track]?.[band]);
+      return [band, Number.isFinite(value) ? Math.min(10, Math.max(-10, value)) : 0];
+    })),
+  }]));
+}
+
+const trackSettings = loadTrackSettings();
+
+function saveTrackSettings() {
+  try {
+    localStorage.setItem(TRACK_SETTINGS_KEY, JSON.stringify(Object.fromEntries(TRACK_NAMES.map(track => [
+      track,
+      Object.fromEntries(EQ_BANDS.map(band => [band, trackSettings[track][band]])),
+    ]))));
+  } catch {}
+}
+
+function formatDb(value) {
+  const numeric = Number(value) || 0;
+  return `${numeric > 0 ? "+" : ""}${numeric.toFixed(1)} dB`;
+}
+
+function applyTrackSettings(track) {
+  const settings = trackSettings[track];
+  const nodes = trackAudioNodes[track];
+  const audio = $(`separator-${track}`);
+  if (nodes) {
+    for (const band of EQ_BANDS) nodes[band].gain.value = settings[band];
+    nodes.output.gain.value = settings.muted ? 0 : 1;
+    audio.muted = false;
+  } else {
+    audio.muted = settings.muted;
+  }
+  const mute = $(`mute-${track}`);
+  mute.classList.toggle("active", settings.muted);
+  mute.setAttribute("aria-pressed", String(settings.muted));
+  mute.textContent = settings.muted ? "取消 MUTE" : "MUTE";
+  for (const band of EQ_BANDS) {
+    $(`${track}-${band}`).value = String(settings[band]);
+    $(`${track}-${band}-value`).textContent = formatDb(settings[band]);
+  }
+}
+
+async function ensureTrackAudio(track) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  trackAudioContext ||= new AudioContextClass();
+  if (!trackAudioNodes[track]) {
+    const source = trackAudioContext.createMediaElementSource($(`separator-${track}`));
+    const bass = trackAudioContext.createBiquadFilter();
+    const mid = trackAudioContext.createBiquadFilter();
+    const treble = trackAudioContext.createBiquadFilter();
+    const output = trackAudioContext.createGain();
+    bass.type = "lowshelf";
+    bass.frequency.value = 200;
+    mid.type = "peaking";
+    mid.frequency.value = 1000;
+    mid.Q.value = 1;
+    treble.type = "highshelf";
+    treble.frequency.value = 4000;
+    source.connect(bass).connect(mid).connect(treble).connect(output).connect(trackAudioContext.destination);
+    trackAudioNodes[track] = { source, bass, mid, treble, output };
+    applyTrackSettings(track);
+  }
+  if (trackAudioContext.state === "suspended") await trackAudioContext.resume();
+}
 
 function formatBytes(bytes) {
   return bytes < 1024 ** 2 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 ** 2).toFixed(1)} MB`;
@@ -55,8 +135,12 @@ function clearResults() {
     resultUrls[key] = "";
   }
   vocalsBlob = instrumentalBlob = null;
-  $("separator-vocals").removeAttribute("src");
-  $("separator-instrumental").removeAttribute("src");
+  for (const track of TRACK_NAMES) {
+    const audio = $(`separator-${track}`);
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+  }
   $("separator-results").hidden = true;
 }
 
@@ -231,8 +315,20 @@ $("separator-start").addEventListener("click", startSeparation);
 $("separator-cancel").addEventListener("click", cancel);
 $("download-vocals").addEventListener("click", () => download(vocalsBlob, "vocals"));
 $("download-instrumental").addEventListener("click", () => download(instrumentalBlob, "instrumental"));
-for (const [active, other] of [["separator-vocals", "separator-instrumental"], ["separator-instrumental", "separator-vocals"]]) {
-  $(active).addEventListener("play", () => $(other).pause());
+for (const track of TRACK_NAMES) {
+  applyTrackSettings(track);
+  $(`separator-${track}`).addEventListener("play", () => void ensureTrackAudio(track));
+  $(`mute-${track}`).addEventListener("click", () => {
+    trackSettings[track].muted = !trackSettings[track].muted;
+    applyTrackSettings(track);
+    void ensureTrackAudio(track);
+  });
+  for (const band of EQ_BANDS) $(`${track}-${band}`).addEventListener("input", event => {
+    trackSettings[track][band] = Number(event.target.value);
+    applyTrackSettings(track);
+    saveTrackSettings();
+    void ensureTrackAudio(track);
+  });
 }
 window.addEventListener("beforeunload", event => {
   if (!working) return;
@@ -241,6 +337,7 @@ window.addEventListener("beforeunload", event => {
 });
 window.addEventListener("unload", () => {
   worker?.terminate();
+  trackAudioContext?.close().catch(() => {});
   if (originalUrl) URL.revokeObjectURL(originalUrl);
   for (const url of Object.values(resultUrls)) if (url) URL.revokeObjectURL(url);
 });

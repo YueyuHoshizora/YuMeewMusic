@@ -61,14 +61,36 @@
       <section id="separator-results" class="panel separator-results" hidden>
         <div class="section-title"><span>03</span><h2>分離結果</h2></div>
         <div class="separator-tracks">
-          <article>
-            <div><strong>人聲</strong><span>AI 辨識出的歌聲</span></div>
+          <article class="separator-track">
+            <div class="separator-track-heading">
+              <button id="mute-vocals" class="track-mute" type="button" aria-pressed="false">MUTE</button>
+              <div><strong>人聲</strong><span>AI 辨識出的歌聲</span></div>
+            </div>
             <audio id="separator-vocals" controls></audio>
+            <div class="track-eq" role="group" aria-label="人聲 EQ">
+              <label for="vocals-bass">低音 <output id="vocals-bass-value">0.0 dB</output></label>
+              <input id="vocals-bass" type="range" min="-10" max="10" step="0.1" value="0" />
+              <label for="vocals-mid">中音 <output id="vocals-mid-value">0.0 dB</output></label>
+              <input id="vocals-mid" type="range" min="-10" max="10" step="0.1" value="0" />
+              <label for="vocals-treble">高音 <output id="vocals-treble-value">0.0 dB</output></label>
+              <input id="vocals-treble" type="range" min="-10" max="10" step="0.1" value="0" />
+            </div>
             <button id="download-vocals" class="text-button" type="button">下載人聲 WAV</button>
           </article>
-          <article>
-            <div><strong>伴奏</strong><span>原始音樂扣除辨識人聲</span></div>
+          <article class="separator-track">
+            <div class="separator-track-heading">
+              <button id="mute-instrumental" class="track-mute" type="button" aria-pressed="false">MUTE</button>
+              <div><strong>伴奏</strong><span>原始音樂扣除辨識人聲</span></div>
+            </div>
             <audio id="separator-instrumental" controls></audio>
+            <div class="track-eq" role="group" aria-label="伴奏 EQ">
+              <label for="instrumental-bass">低音 <output id="instrumental-bass-value">0.0 dB</output></label>
+              <input id="instrumental-bass" type="range" min="-10" max="10" step="0.1" value="0" />
+              <label for="instrumental-mid">中音 <output id="instrumental-mid-value">0.0 dB</output></label>
+              <input id="instrumental-mid" type="range" min="-10" max="10" step="0.1" value="0" />
+              <label for="instrumental-treble">高音 <output id="instrumental-treble-value">0.0 dB</output></label>
+              <input id="instrumental-treble" type="range" min="-10" max="10" step="0.1" value="0" />
+            </div>
             <button id="download-instrumental" class="text-button" type="button">下載伴奏 WAV</button>
           </article>
         </div>

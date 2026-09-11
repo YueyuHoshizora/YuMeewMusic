@@ -153,7 +153,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `index.html` | 頁面與原生表單控制項 |
 | `subtitle-editor.html` | 獨立字幕編輯器與時間軸介面 |
 | `converter.html` | 獨立影片／音樂格式轉換頁面 |
-| `video-editor.html` | 「影片編輯」影片與圖片圖層時間軸編輯器 |
+| `video-editor.html` | 「影片編輯」影片與圖片圖層時間軸編輯器；動態特效是可排序的獨立圖層，完成後可套用回主畫面 |
 | `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
 | `text-to-image.html` | Cloudflare Workers AI 文生圖頁面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
@@ -167,7 +167,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `js/styles.js` | 穩定的動畫編號與名稱 |
 | `js/export.js` | 客戶端音訊／影片編碼 |
 | `js/converter.js`、`js/converter-core.js` | 任意轉介面、媒體辨識與轉碼流程 |
-| `js/video-editor.js`、`js/video-editor-core.js` | 影片編輯的圖層、預覽、時間軸、音訊混合與匯出流程 |
+| `js/video-editor.js`、`js/video-editor-core.js` | 影片編輯的圖層、預覽、時間軸、音訊混合與套用主畫面流程 |
 | `js/vocal-separator.js`、`js/vocal-separator-worker.js`、`js/vocal-separator-core.js` | 人聲分離介面、背景推論與音訊 DSP／WAV 輸出 |
 | `js/text-to-image.js` | Worker 呼叫、圖片下載與主畫面背景保存 |
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |

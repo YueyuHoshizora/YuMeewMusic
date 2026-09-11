@@ -31,6 +31,7 @@ const state = {
   backgroundFile: null,
   backgroundKind: "",
   backgroundUrl: "",
+  backgroundComposited: false,
   identityImage: null,
   sleeve: null,
   record: null,
@@ -554,6 +555,7 @@ async function loadBackground(file, persist = true, project = null) {
     state.imageName = file.name;
     state.backgroundKind = sequence ? "sequence" : videoFile ? "video" : "image";
     state.backgroundFile = videoFile && !sequence ? file : null;
+    state.backgroundComposited = /^yumeow-edited-video-/i.test(file.name);
     if (videoFile && !sequence) {
       state.backgroundUrl = url;
       url = "";
@@ -605,6 +607,7 @@ $("remove-image").addEventListener("click", () => {
   state.imageName = "";
   state.backgroundFile = null;
   state.backgroundKind = "";
+  state.backgroundComposited = false;
   fileError("image");
   update();
   void deleteStoredMedia("image").catch(error => message(`背景素材已移除，但無法清除瀏覽器副本：${error.message}`));

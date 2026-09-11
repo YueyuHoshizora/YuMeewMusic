@@ -13,13 +13,13 @@
   <body class="video-editor-body">
     <header class="video-editor-header">
       <a class="brand" href="./" data-confirm-return aria-label="回到 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">▶</span>影片編輯<span class="brand-sub">VIDEO LAYERS</span></a>
-      <span class="local"><i></i>影片、圖片與匯出只在瀏覽器內處理</span>
+      <span class="local"><i></i>影片、圖片與套用流程只在瀏覽器內處理</span>
       <a class="text-button video-editor-back" href="./" data-confirm-return>← 返回主畫面</a>
     </header>
 
     <main class="video-editor-main">
       <section class="video-editor-heading">
-        <div><div class="eyebrow">YUMEOW VIDEO</div><h1>把畫面放進時間裡<span>。</span></h1><p>加入影片與圖片，設定它們在時間軸上的位置；字幕與個人識別會自動置於最上層。</p></div>
+        <div><div class="eyebrow">YUMEOW VIDEO</div><h1>把畫面放進時間裡<span>。</span></h1><p>加入影片與圖片，設定它們在時間軸上的位置；動態特效預設位於倒數第二層，字幕與個人識別固定在最上層。</p></div>
         <div id="editor-status" class="editor-status" role="status">請加入第一個影片或圖片。</div>
       </section>
 
@@ -88,6 +88,8 @@
           <div id="empty-inspector" class="empty-inspector">從左側加入並選取影片或圖片。</div>
           <div id="layer-controls" hidden>
             <div class="selected-file"><span id="selected-kind"></span><strong id="selected-name"></strong></div>
+            <p id="dynamic-layer-help" class="position-help" hidden>沿用主畫面的頻譜動畫與歌曲文字設定，可使用下方按鈕調整圖層順序。</p>
+            <div id="layer-media-controls">
             <label class="field-label" for="layer-start">開始時間（秒）</label>
             <input id="layer-start" class="text-input" type="number" min="0" step="0.1" />
             <div class="time-nudges" aria-label="微調開始時間">
@@ -135,16 +137,17 @@
                 <input id="exit-duration" class="text-input" type="number" min="0.1" max="10" step="0.1" value="0.5" />
               </div>
             </div>
+            </div>
             <div class="layer-actions"><button id="move-layer-up" class="text-button" type="button">上移圖層</button><button id="move-layer-down" class="text-button" type="button">下移圖層</button></div>
             <button id="remove-layer" class="danger-button" type="button">－ 刪除這個圖層</button>
           </div>
 
           <div class="export-box">
-            <div class="section-title"><span>03</span><h2>匯出影片</h2></div>
-            <label class="field-label" for="editor-format">格式</label><select id="editor-format" class="setting-select"><option value="mp4">MP4 · H.264 / AAC</option><option value="webm">WebM · VP9 / Opus</option></select>
+            <div class="section-title"><span>03</span><h2>套用到主畫面</h2></div>
+            <label class="field-label" for="editor-format">格式</label><select id="editor-format" class="setting-select"><option value="mp4">MP4 · H.264</option><option value="webm">WebM · VP9</option></select>
             <label class="field-label" for="editor-resolution">解析度</label><select id="editor-resolution" class="setting-select"><option value="480">480p</option><option value="720">720p</option><option value="1080" selected>1080p</option></select>
             <label class="field-label" for="editor-fps">影格率</label><select id="editor-fps" class="setting-select"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select>
-            <button id="export-project" class="export-button" type="button" disabled>↓ 匯出影片</button>
+            <button id="apply-project" class="export-button" type="button" disabled>套用到主畫面 →</button>
             <progress id="editor-progress" max="100" value="0" hidden></progress>
             <button id="cancel-export" class="text-button" type="button" hidden>取消匯出</button>
           </div>

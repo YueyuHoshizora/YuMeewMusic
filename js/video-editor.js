@@ -1,9 +1,9 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { loadStoredMedia, loadStoredValue, unpackStoredMedia } from "./media-store.js";
+import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { parseSubtitles } from "./subtitles.js";
-import { draw, drawIdentity, drawSubtitles } from "./visualizer.js";
-import { audioEncodingOptions, scalePcmSamples } from "./export.js";
+import { drawBackground, drawDynamic, drawIdentity, drawSubtitles } from "./visualizer.js";
+import { encodeMedia } from "./export.js";
 import { chooseVideoAcceleration } from "./video-acceleration.js";
 import { videoDimensions } from "./dimensions.js";
 import { drawLayerWithEffect } from "./video-effects.js";
@@ -24,9 +24,11 @@ import {
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
+const DYNAMIC_LAYER_ID = "dynamic-effects";
+const dynamicLayer = { id: DYNAMIC_LAYER_ID, type: "dynamic", name: "動態特效" };
 
 const state = {
-  layers: [],
+  layers: [dynamicLayer],
   selectedId: null,
   time: 0,
   playing: false,
@@ -52,6 +54,10 @@ function selectedLayer() {
   return state.layers.find(layer => layer.id === state.selectedId) || null;
 }
 
+function mediaLayers() {
+  return state.layers.filter(layer => layer.type === "video" || layer.type === "image");
+}
+
 function setCanvasSize() {
   const portrait = settings.aspectRatio === "9:16";
   const canvas = $("video-preview");
@@ -73,7 +79,7 @@ function drawOverlays(context, time) {
 }
 
 function timelineDuration() {
-  return projectDuration(state.layers, state.base.duration);
+  return projectDuration(mediaLayers(), state.base.duration);
 }
 
 function activeProjectRange() {
@@ -81,7 +87,7 @@ function activeProjectRange() {
 }
 
 function hasProject() {
-  return state.layers.length > 0 || Boolean(state.base.audioBuffer);
+  return mediaLayers().length > 0 || Boolean(state.base.audioBuffer);
 }
 
 function setTrimInputs(start, end) {
@@ -155,7 +161,12 @@ function applyProjectTrim() {
 function drawBase(canvas, time, background = state.base.image) {
   if (!state.base.audioBuffer) return;
   background?.setTime?.(time);
-  draw(canvas, time, state.base.audioBuffer, background, {
+  drawBackground(canvas, background, settings.darkness);
+}
+
+function drawDynamicLayer(canvas, time, background = state.base.image) {
+  if (!state.base.audioBuffer) return;
+  drawDynamic(canvas, time, state.base.audioBuffer, background, {
     ...settings,
     subtitles: null,
     identityText: "",
@@ -172,6 +183,7 @@ function renderPreview() {
   context.fillRect(0, 0, canvas.width, canvas.height);
   drawBase(canvas, state.time);
   for (const layer of state.layers) {
+    if (layer.type === "dynamic") { drawDynamicLayer(canvas, state.time); continue; }
     if (!isLayerActive(layer, state.time)) continue;
     if (layer.type === "image") {
       drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, state.time);
@@ -195,10 +207,10 @@ function updatePlayer() {
   $("current-time").textContent = formatEditorTime(state.time);
   $("total-time").textContent = formatEditorTime(range.end);
   $("playhead").style.left = `calc(78px + (100% - 84px) * ${state.time / duration})`;
-  const usable = (state.layers.length > 0 || state.base.audioBuffer) && !state.exporting;
+  const usable = hasProject() && !state.exporting;
   $("play-project").disabled = !usable;
   $("project-seek").disabled = !usable;
-  $("export-project").disabled = !usable;
+  $("apply-project").disabled = !usable;
   $("play-project").textContent = state.playing ? "❚❚" : "▶";
 }
 
@@ -222,9 +234,9 @@ function renderTimeline() {
     const band = document.createElement("button");
     band.type = "button";
     band.className = `timeline-band${layer.id === state.selectedId ? " selected" : ""}`;
-    band.style.left = `${layer.start / duration * 100}%`;
-    band.style.width = `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
-    band.textContent = layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
+    band.style.left = layer.type === "dynamic" ? "0%" : `${layer.start / duration * 100}%`;
+    band.style.width = layer.type === "dynamic" ? "100%" : `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
+    band.textContent = layer.type === "dynamic" ? "動態特效" : layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
     band.addEventListener("click", () => selectLayer(layer.id));
     track.append(band);
     return track;
@@ -236,9 +248,9 @@ function renderLayerList() {
     const row = document.createElement("button");
     row.type = "button";
     row.className = `layer-row${layer.id === state.selectedId ? " selected" : ""}`;
-    row.innerHTML = `<span>${layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
+    row.innerHTML = `<span>${layer.type === "dynamic" ? "✦" : layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
     row.querySelector("strong").textContent = layer.name;
-    row.querySelector("small").textContent = `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
+    row.querySelector("small").textContent = layer.type === "dynamic" ? "可調整順序 · 完整時間" : `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
     row.addEventListener("click", () => selectLayer(layer.id));
     return row;
   }));
@@ -256,8 +268,18 @@ function renderInspector() {
   $("empty-inspector").hidden = Boolean(layer);
   $("layer-controls").hidden = !layer;
   if (!layer) return;
-  $("selected-kind").textContent = layer.type === "video" ? "影片圖層" : "圖片圖層";
+  const dynamic = layer.type === "dynamic";
+  $("selected-kind").textContent = dynamic ? "動態特效圖層" : layer.type === "video" ? "影片圖層" : "圖片圖層";
   $("selected-name").textContent = layer.name;
+  $("dynamic-layer-help").hidden = !dynamic;
+  $("layer-media-controls").hidden = dynamic;
+  $("remove-layer").hidden = dynamic;
+  if (dynamic) {
+    const index = state.layers.indexOf(layer);
+    $("move-layer-down").disabled = index === 0;
+    $("move-layer-up").disabled = index === state.layers.length - 1;
+    return;
+  }
   $("layer-start").value = layer.start.toFixed(1);
   $("video-time-controls").hidden = layer.type !== "video";
   $("image-time-controls").hidden = layer.type !== "image";
@@ -524,8 +546,8 @@ async function mixProjectAudio(layers, range, signal) {
   return context.startRendering();
 }
 
-async function exportProject() {
-  if ((!state.layers.length && !state.base.audioBuffer) || state.exporting) return;
+async function applyProjectToMain() {
+  if (!hasProject() || state.exporting) return;
   pauseProject();
   state.exporting = true;
   state.exportController = new AbortController();
@@ -547,7 +569,6 @@ async function exportProject() {
     const count = Math.ceil(duration * fps);
     const bitrate = dimensions.height >= 1080 || dimensions.width >= 1080 ? 8_000_000 : dimensions.height >= 720 || dimensions.width >= 720 ? 4_000_000 : 2_000_000;
     const codec = format === "webm" ? "vp9" : "avc";
-    const audioCodec = format === "webm" ? "opus" : "aac";
     const hardwareAcceleration = await chooseVideoAcceleration(m.canEncodeVideo, { ...dimensions, bitrate, framerate: fps }, signal, codec);
     const canvas = document.createElement("canvas");
     canvas.width = dimensions.width;
@@ -557,9 +578,7 @@ async function exportProject() {
     output = new m.Output({ format: format === "webm" ? new m.WebMOutputFormat() : new m.Mp4OutputFormat(), target });
     const videoSource = new m.CanvasSource(canvas, { codec, bitrate, hardwareAcceleration });
     output.addVideoTrack(videoSource, { frameRate: fps });
-    const mixedAudio = await mixProjectAudio(state.layers, range, signal);
-    const audioSource = mixedAudio ? new m.AudioBufferSource({ codec: audioCodec, ...audioEncodingOptions(audioCodec, m.Quality) }) : null;
-    if (audioSource) output.addAudioTrack(audioSource);
+    const mixedAudio = await mixProjectAudio(mediaLayers(), range, signal);
     if (state.base.backgroundFile) baseBackgroundDecoder = await createLoopingVideoDecoder(m, state.base.backgroundFile);
     const created = await createVideoDecoders(m, state.layers);
     for (const [id, value] of created) decoders.set(id, value);
@@ -574,7 +593,6 @@ async function exportProject() {
       iterators.set(layer.id, decoders.get(layer.id).sink.samplesAtTimestamps(timestamps)[Symbol.asyncIterator]());
     }
     await output.start();
-    let audioOffset = 0;
     for (let index = 0; index < count; index++) {
       if (signal.aborted) throw Error("已取消匯出。");
       const time = index / fps;
@@ -585,55 +603,61 @@ async function exportProject() {
       try {
         if (!baseBackgroundSample && state.base.image?.seekTime) await state.base.image.seekTime(sourceTime);
         drawBase(canvas, sourceTime, baseBackgroundSample || state.base.image);
+        for (const layer of state.layers) {
+          if (layer.type === "dynamic") { drawDynamicLayer(canvas, sourceTime, baseBackgroundSample || state.base.image); continue; }
+          if (!isLayerActive(layer, sourceTime)) continue;
+          if (layer.type === "image") drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, sourceTime);
+          else if (sourceTime - layer.start < layer.mediaDuration) {
+            const { value: sample } = await iterators.get(layer.id).next();
+            if (sample) {
+              drawLayerWithEffect(context, layer, sample, sample.displayWidth, sample.displayHeight, sourceTime);
+              sample.close();
+            }
+          }
+        }
+        drawOverlays(context, sourceTime);
       } finally {
         baseBackgroundSample?.close();
       }
-      for (const layer of state.layers) {
-        if (!isLayerActive(layer, sourceTime)) continue;
-        if (layer.type === "image") drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, sourceTime);
-        else if (sourceTime - layer.start < layer.mediaDuration) {
-          const { value: sample } = await iterators.get(layer.id).next();
-          if (sample) {
-            drawLayerWithEffect(context, layer, sample, sample.displayWidth, sample.displayHeight, sourceTime);
-            sample.close();
-          }
-        }
-      }
-      drawOverlays(context, sourceTime);
       await videoSource.add(time, Math.min(1 / fps, duration - time));
-      if (audioSource && (index % fps === 0 || index === count - 1)) {
-        const length = Math.min(mixedAudio.sampleRate, mixedAudio.length - audioOffset);
-        if (length > 0) {
-          const part = new AudioBuffer({ length, numberOfChannels: mixedAudio.numberOfChannels, sampleRate: mixedAudio.sampleRate });
-          for (let channel = 0; channel < mixedAudio.numberOfChannels; channel++) part.copyToChannel(scalePcmSamples(mixedAudio.getChannelData(channel).subarray(audioOffset, audioOffset + length), 100), channel);
-          await audioSource.add(part);
-          audioOffset += length;
-        }
-      }
       if (index % 5 === 0) {
         const progress = Math.round(index / count * 98);
         $("editor-progress").value = progress;
-        status(`正在匯出 ${progress}% · ${hardwareAcceleration === "prefer-hardware" ? "硬體編碼優先" : "瀏覽器編碼"}`);
+        status(`正在套用 ${progress}% · ${hardwareAcceleration === "prefer-hardware" ? "硬體編碼優先" : "瀏覽器編碼"}`);
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
     videoSource.close();
-    audioSource?.close();
     await output.finalize();
     const blob = new Blob([target.buffer], { type: format === "webm" ? "video/webm" : "video/mp4" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `yumeow-video-${$("editor-resolution").value}p-${$("editor-fps").value}fps.${format}`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    const outputName = `yumeow-edited-video-${$("editor-resolution").value}p-${$("editor-fps").value}fps.${format}`;
+    const file = new File([blob], outputName, { type: blob.type, lastModified: Date.now() });
+    if (file.size > 1024 ** 3) throw Error("套用後的背景影片超過主畫面 1 GB 上限，請降低解析度、FPS 或縮短時間。");
+    let audioFile = null;
+    if (mixedAudio) {
+      const audioBlob = await encodeMedia({
+        format: "wav",
+        buffer: mixedAudio,
+        image: null,
+        settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
+        resolution: "480",
+        fps: "30",
+        signal,
+        onProgress: () => {},
+      });
+      audioFile = new File([audioBlob], "yumeow-edited-audio.wav", { type: "audio/wav", lastModified: Date.now() });
+    }
+    status("正在保存影片與混合音訊到主畫面…");
+    await deleteStoredValue("image-video-project").catch(() => {});
+    await saveStoredMedia("image", file);
+    if (audioFile) await saveStoredMedia("audio", audioFile);
+    void navigator.storage?.persist?.().catch(() => false);
     $("editor-progress").value = 100;
-    status("影片匯出完成，下載已開始。", "success");
+    status("已套用到主畫面。", "success");
+    window.location.href = "./";
   } catch (error) {
     if (output && !["finalized", "canceled"].includes(output.state)) await output.cancel().catch(() => {});
-    status(error.message || "影片匯出失敗。", "error");
+    status(error.message || "影片套用失敗。", "error");
   } finally {
     for (const { input } of decoders.values()) input.dispose();
     baseBackgroundDecoder?.input.dispose();
@@ -770,7 +794,7 @@ $("play-project").addEventListener("click", () => {
   updatePlayer();
 });
 $("fullscreen-preview").addEventListener("click", () => document.fullscreenElement ? document.exitFullscreen() : $("canvas-frame").requestFullscreen());
-$("export-project").addEventListener("click", () => void exportProject());
+$("apply-project").addEventListener("click", () => void applyProjectToMain());
 $("cancel-export").addEventListener("click", () => state.exportController?.abort());
 for (const link of document.querySelectorAll("[data-confirm-return]")) {
   link.addEventListener("click", event => {
@@ -778,7 +802,7 @@ for (const link of document.querySelectorAll("[data-confirm-return]")) {
   });
 }
 window.addEventListener("beforeunload", () => {
-  for (const layer of state.layers) URL.revokeObjectURL(layer.url);
+  for (const layer of mediaLayers()) URL.revokeObjectURL(layer.url);
   if (state.base.audioUrl) URL.revokeObjectURL(state.base.audioUrl);
   if (state.base.imageUrl) URL.revokeObjectURL(state.base.imageUrl);
   state.exportController?.abort();

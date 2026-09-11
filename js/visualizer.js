@@ -43,10 +43,10 @@ export function spectrum(b, t) {
   }
   return out;
 }
-export function draw(canvas, t, b, img, s) {
+export function drawBackground(canvas, img, darkness = 0) {
   const c = canvas.getContext("2d");
   const w = canvas.width;
-  let h = canvas.height;
+  const h = canvas.height;
   c.fillStyle = "#0c1112";
   c.fillRect(0, 0, w, h);
   if (img) {
@@ -78,8 +78,14 @@ export function draw(canvas, t, b, img, s) {
       c.stroke();
     }
   }
-  c.fillStyle = `rgba(0,0,0,${(s.darkness / 100) * 0.85})`;
+  c.fillStyle = `rgba(0,0,0,${(darkness / 100) * 0.85})`;
   c.fillRect(0, 0, w, h);
+}
+
+export function drawDynamic(canvas, t, b, img, s) {
+  const c = canvas.getContext("2d");
+  const w = canvas.width;
+  let h = canvas.height;
   // Translate only the visualizer, after painting the fixed background.
   c.save();
   const position = key => Number.isFinite(s[key]) ? Math.max(-50, Math.min(50, s[key])) : 0;
@@ -90,8 +96,6 @@ export function draw(canvas, t, b, img, s) {
   if (s.style === 19) {
     c.restore();
     drawSongDetails(c, canvas.width, canvas.height, s, t);
-    drawSubtitles(c, canvas.width, canvas.height, s, t);
-    drawIdentity(c, canvas.width, canvas.height, s);
     return;
   }
   const values = spectrum(b, t),
@@ -155,8 +159,15 @@ export function draw(canvas, t, b, img, s) {
   c.shadowBlur = 0;
   c.restore();
   drawSongDetails(c, canvas.width, canvas.height, s, t);
-    drawSubtitles(c, canvas.width, canvas.height, s, t);
-    drawIdentity(c, canvas.width, canvas.height, s);
+}
+
+export function draw(canvas, t, b, img, s) {
+  drawBackground(canvas, img, s.backgroundComposited ? 0 : s.darkness);
+  if (s.backgroundComposited) return;
+  drawDynamic(canvas, t, b, img, s);
+  const c = canvas.getContext("2d");
+  drawSubtitles(c, canvas.width, canvas.height, s, t);
+  drawIdentity(c, canvas.width, canvas.height, s);
 }
 
 export function songTextOpacity(time, fadeAfter = 5) {

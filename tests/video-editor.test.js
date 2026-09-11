@@ -58,14 +58,16 @@ test("cover sizing fills the frame without distortion", () => {
   });
 });
 
-test("影片編輯 exposes local layer controls and fixed top overlays", () => {
+test("影片編輯 exposes local layer controls, movable effects and fixed top overlays", () => {
   const html = readFileSync("video-editor.html", "utf8");
   const script = readFileSync("js/video-editor.js", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
-  assert.match(html, /字幕與個人識別會自動置於最上層/);
+  assert.match(html, /動態特效預設位於倒數第二層，字幕與個人識別固定在最上層/);
+  assert.match(script, /type: "dynamic", name: "動態特效"/);
+  assert.match(script, /layer\.type === "dynamic"/);
   assert.match(html, /id="base-layer"[^>]*>.*主畫面影片本體.*基礎鎖定/s);
   assert.match(html, /id="layer-audio"[^>]*type="checkbox"/);
   assert.doesNotMatch(html, /id="layer-audio"[^>]*checked/);
@@ -75,7 +77,8 @@ test("影片編輯 exposes local layer controls and fixed top overlays", () => {
   assert.match(html, /id="timeline"[^>]*aria-label="可拖曳播放時間軸"/);
   for (const id of ["trim-start", "trim-end", "trim-selection", "trim-drag-start", "trim-drag-body", "trim-drag-end", "trim-apply", "trim-reset"]) assert.ok(ids.includes(id), id);
   assert.match(html, /拖曳色帶或兩端 · 放開自動套用/);
-  assert.match(html, /id="export-project"[^>]*>↓ 匯出影片<\/button>/);
+  assert.doesNotMatch(html, />↓ 匯出影片<\/button>/);
+  assert.match(html, /id="apply-project"[^>]*>套用到主畫面 →<\/button>/);
   for (const id of ["enter-effect", "enter-duration", "exit-effect", "exit-duration"]) assert.ok(ids.includes(id), id);
   assert.equal((html.match(/id="(?:enter|exit)-duration"[^>]*value="0\.5"/g) || []).length, 2);
   assert.equal((html.match(/<option value="rgb-glitch">RGB 色差故障<\/option>/g) || []).length, 2);
@@ -88,12 +91,15 @@ test("影片編輯 exposes local layer controls and fixed top overlays", () => {
   assert.match(script, /isBackgroundVideo\(file\)/);
   assert.match(script, /createLoopingVideoDecoder\(m, state\.base\.backgroundFile\)/);
   assert.match(script, /function drawBase\(canvas, time, background = state\.base\.image\)/);
-  assert.match(script, /!state\.layers\.length && !state\.base\.audioBuffer/);
+  assert.match(script, /function mediaLayers\(\)/);
   assert.match(script, /addEventListener\("pointerdown"/);
   assert.match(script, /addEventListener\("pointermove"/);
   assert.match(script, /setPointerCapture/);
   assert.match(script, /const sourceTime = range\.start \+ time/);
-  assert.match(script, /mixProjectAudio\(state\.layers, range, signal\)/);
+  assert.match(script, /mixProjectAudio\(mediaLayers\(\), range, signal\)/);
+  assert.match(script, /saveStoredMedia\("image", file\)/);
+  assert.match(script, /saveStoredMedia\("audio"/);
+  assert.match(script, /window\.location\.href = "\.\/"/);
   assert.match(script, /drawSubtitles/);
   assert.match(script, /drawLayerWithEffect/);
   assert.match(script, /originalBuffer: state\.base\.audioBuffer \|\| \{ duration: timelineDuration\(\) \}/);

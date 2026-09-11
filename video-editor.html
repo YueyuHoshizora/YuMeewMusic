@@ -144,9 +144,12 @@
 
           <div class="export-box">
             <div class="section-title"><span>03</span><h2>套用到主畫面</h2></div>
-            <input id="editor-format" type="hidden" value="webm" />
-            <label class="field-label" for="editor-resolution">解析度</label><select id="editor-resolution" class="setting-select"><option value="480">480p</option><option value="720">720p</option><option value="1080" selected>1080p</option></select>
-            <label class="field-label" for="editor-fps">影格率</label><select id="editor-fps" class="setting-select"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select>
+            <div class="apply-spec" aria-label="套用規格">
+              <span>格式<strong>WebM · VP9</strong></span>
+              <span>解析度<strong id="apply-resolution">依主畫面設定</strong></span>
+              <span>影格率<strong id="apply-fps">依主畫面設定</strong></span>
+            </div>
+            <p class="position-help">解析度與影格率沿用主畫面設定，不會在影片編輯中改動。</p>
             <button id="apply-project" class="export-button" type="button" disabled>套用到主畫面 →</button>
             <progress id="editor-progress" max="100" value="0" hidden></progress>
             <button id="cancel-export" class="text-button" type="button" hidden>取消匯出</button>

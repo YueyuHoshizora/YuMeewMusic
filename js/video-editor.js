@@ -24,6 +24,8 @@ import {
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
+$("apply-resolution").textContent = `${settings.resolution}p`;
+$("apply-fps").textContent = `${settings.fps} fps`;
 
 const state = {
   layers: [],
@@ -553,8 +555,9 @@ async function applyProjectToMain() {
   try {
     const m = await import("../vendor/mediabunny.min.mjs");
     const format = "webm";
-    const fps = Number($("editor-fps").value);
-    const dimensions = videoDimensions($("editor-resolution").value, settings.aspectRatio);
+    const resolution = settings.resolution;
+    const fps = Number(settings.fps);
+    const dimensions = videoDimensions(resolution, settings.aspectRatio);
     const range = activeProjectRange();
     const duration = range.duration;
     const count = Math.ceil(duration * fps);
@@ -619,7 +622,7 @@ async function applyProjectToMain() {
     videoSource.close();
     await output.finalize();
     const blob = new Blob([target.buffer], { type: format === "webm" ? "video/webm" : "video/mp4" });
-    const outputName = `yumeow-edited-background-${$("editor-resolution").value}p-${$("editor-fps").value}fps.${format}`;
+    const outputName = `yumeow-edited-background-${resolution}p-${fps}fps.${format}`;
     const file = new File([blob], outputName, { type: blob.type, lastModified: Date.now() });
     if (file.size > 1024 ** 3) throw Error("套用後的背景影片超過主畫面 1 GB 上限，請降低解析度、FPS 或縮短時間。");
     let audioFile = null;

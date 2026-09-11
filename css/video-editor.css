@@ -80,4 +80,7 @@ body.video-editor-body { min-width: 1320px; }
 .export-box { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
 .export-box .field-label { margin-top: 15px; margin-bottom: 7px; }
 .export-box .export-button { margin-top: 18px; }
+.apply-spec { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 15px; }
+.apply-spec span { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 11px; }
+.apply-spec strong { color: var(--foreground); font-size: 12px; }
 #editor-progress { width: 100%; margin-top: 12px; }

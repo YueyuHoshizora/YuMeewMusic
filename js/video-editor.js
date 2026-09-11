@@ -552,7 +552,7 @@ async function applyProjectToMain() {
   let output;
   try {
     const m = await import("../vendor/mediabunny.min.mjs");
-    const format = $("editor-format").value;
+    const format = "webm";
     const fps = Number($("editor-fps").value);
     const dimensions = videoDimensions($("editor-resolution").value, settings.aspectRatio);
     const range = activeProjectRange();

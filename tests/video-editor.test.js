@@ -79,6 +79,9 @@ test("影片編輯 exposes editable media layers and locked visual overlays", ()
   assert.match(html, /拖曳色帶或兩端 · 放開自動套用/);
   assert.doesNotMatch(html, />↓ 匯出影片<\/button>/);
   assert.match(html, /id="apply-project"[^>]*>套用到主畫面 →<\/button>/);
+  assert.match(html, /id="editor-format"[^>]*type="hidden"[^>]*value="webm"/);
+  assert.doesNotMatch(html, /<label[^>]*for="editor-format"/);
+  assert.match(script, /const format = "webm"/);
   for (const id of ["enter-effect", "enter-duration", "exit-effect", "exit-duration"]) assert.ok(ids.includes(id), id);
   assert.equal((html.match(/id="(?:enter|exit)-duration"[^>]*value="0\.5"/g) || []).length, 2);
   assert.equal((html.match(/<option value="rgb-glitch">RGB 色差故障<\/option>/g) || []).length, 2);

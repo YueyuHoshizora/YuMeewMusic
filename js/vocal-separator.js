@@ -79,10 +79,15 @@ function applyTrackSettings(track) {
   }
 }
 
+function hasTrackEq(track) {
+  return EQ_BANDS.some(band => Math.abs(trackSettings[track][band]) > 0.001);
+}
+
 async function ensureTrackAudio(track) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) return;
   trackAudioContext ||= new AudioContextClass();
+  if (trackAudioContext.state === "suspended") await trackAudioContext.resume();
   if (!trackAudioNodes[track]) {
     const source = trackAudioContext.createMediaElementSource($(`separator-${track}`));
     const bass = trackAudioContext.createBiquadFilter();
@@ -100,7 +105,12 @@ async function ensureTrackAudio(track) {
     trackAudioNodes[track] = { source, bass, mid, treble, output };
     applyTrackSettings(track);
   }
-  if (trackAudioContext.state === "suspended") await trackAudioContext.resume();
+}
+
+function activateTrackAudio(track) {
+  void ensureTrackAudio(track).catch(() => {
+    $("separator-status").textContent = "目前瀏覽器無法啟用 EQ，音軌將使用原始聲音播放。";
+  });
 }
 
 function formatBytes(bytes) {
@@ -326,17 +336,22 @@ $("download-vocals").addEventListener("click", () => download(vocalsBlob, "vocal
 $("download-instrumental").addEventListener("click", () => download(instrumentalBlob, "instrumental"));
 for (const track of TRACK_NAMES) {
   applyTrackSettings(track);
-  $(`separator-${track}`).addEventListener("play", () => void ensureTrackAudio(track));
+  const audio = $(`separator-${track}`);
+  audio.addEventListener("pointerdown", () => {
+    if (hasTrackEq(track)) activateTrackAudio(track);
+  });
+  audio.addEventListener("keydown", () => {
+    if (hasTrackEq(track)) activateTrackAudio(track);
+  });
   $(`mute-${track}`).addEventListener("click", () => {
     trackSettings[track].muted = !trackSettings[track].muted;
     applyTrackSettings(track);
-    void ensureTrackAudio(track);
   });
   for (const band of EQ_BANDS) $(`${track}-${band}`).addEventListener("input", event => {
     trackSettings[track][band] = Number(event.target.value);
     applyTrackSettings(track);
     saveTrackSettings();
-    void ensureTrackAudio(track);
+    activateTrackAudio(track);
   });
 }
 window.addEventListener("beforeunload", event => {

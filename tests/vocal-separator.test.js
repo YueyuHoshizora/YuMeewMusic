@@ -30,6 +30,8 @@ test("vocal separator page exposes its complete local workflow", () => {
   }
   assert.match(script, /createBiquadFilter/);
   assert.match(script, /localStorage\.setItem\(TRACK_SETTINGS_KEY/);
+  assert.match(script, /trackAudioContext\.state === "suspended"[\s\S]*?await trackAudioContext\.resume\(\)[\s\S]*?createMediaElementSource/);
+  assert.doesNotMatch(script, /addEventListener\("play", \(\) => void ensureTrackAudio/);
   const workerScript = readFileSync("js/vocal-separator-worker.js", "utf8");
   assert.match(workerScript, /let sessionPromise = null/);
   assert.match(workerScript, /沿用已載入的 AI 模型/);

@@ -3,7 +3,7 @@ import { createAudioEqualizer } from "./audio-eq.js";
 export const SEPARATOR_SAMPLE_RATE = 44100;
 export const SEPARATOR_CHUNK_SIZE = 131072;
 export const SEPARATOR_STEP = SEPARATOR_CHUNK_SIZE / 2;
-export const SEPARATOR_MODEL_SIZE_MB = 103;
+export const SEPARATOR_MODEL_SIZE_MB = 201;
 export const SEPARATOR_MAX_DURATION = 8 * 60;
 
 const N_FFT = 2048;

@@ -350,7 +350,7 @@ function handleWorkerMessage(event) {
     $("separator-gpu-diagnostic").hidden = false;
     return;
   }
-  if (data.provider) $("separator-engine").textContent = data.provider === "webgpu" ? "WebGPU GPU 加速" : "WASM CPU 模式";
+  if (data.provider) $("separator-engine").textContent = data.provider === "webgpu" ? "WebGPU GPU 加速（FP32）" : "WASM CPU 模式";
   if (data.type === "status") {
     $("separator-status").textContent = data.text;
     return;

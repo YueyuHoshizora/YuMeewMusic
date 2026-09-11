@@ -11,7 +11,7 @@ import {
 
 const MODEL_BASE = "https://huggingface.co/bgkb/bs_polarformer/resolve/9158719ee2173edd480a735764627526506fe4af";
 const MODEL_PATHS = {
-  webgpu: `${MODEL_BASE}/bs_polarformer_webgpu_fp16.onnx`,
+  webgpu: `${MODEL_BASE}/bs_polarformer_webgpu.onnx`,
   wasm: `${MODEL_BASE}/bs_polarformer_fp16.onnx`,
 };
 const MODEL_CACHE = "yumeew-vocal-models-v1";
@@ -85,7 +85,7 @@ async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : [
         options.freeDimensionOverrides = { batch: 1, time_frames: frames };
       }
       const model = await loadModel(provider);
-      sendStatus(provider === "webgpu" ? "正在建立 GPU 模型工作階段…" : "正在建立 CPU 模型工作階段…", provider);
+      sendStatus(provider === "webgpu" ? "正在建立 FP32 GPU 模型工作階段…" : "正在建立 CPU 模型工作階段…", provider);
       session = await ort.InferenceSession.create(model, options);
       return { session, provider };
     } catch (error) {
@@ -153,6 +153,7 @@ async function separateWithSession(left, right, { session, provider }) {
       provider,
     });
   }
+  const instrumentalLeft = new Float32Array(total), instrumentalRight = new Float32Array(total);
   let inputPeak = 0, vocalsPeak = 0, instrumentalPeak = 0;
   for (let i = 0; i < total; i++) {
     inputPeak = Math.max(inputPeak, Math.abs(left[i]), Math.abs(right[i]));
@@ -160,12 +161,12 @@ async function separateWithSession(left, right, { session, provider }) {
       vocalsLeft[i] /= weights[i];
       vocalsRight[i] /= weights[i];
     }
-    left[i] -= vocalsLeft[i];
-    right[i] -= vocalsRight[i];
-    if (![vocalsLeft[i], vocalsRight[i], left[i], right[i]].every(Number.isFinite))
+    instrumentalLeft[i] = left[i] - vocalsLeft[i];
+    instrumentalRight[i] = right[i] - vocalsRight[i];
+    if (![vocalsLeft[i], vocalsRight[i], instrumentalLeft[i], instrumentalRight[i]].every(Number.isFinite))
       throw invalidOutput("AI 分離結果含有無效音訊。");
     vocalsPeak = Math.max(vocalsPeak, Math.abs(vocalsLeft[i]), Math.abs(vocalsRight[i]));
-    instrumentalPeak = Math.max(instrumentalPeak, Math.abs(left[i]), Math.abs(right[i]));
+    instrumentalPeak = Math.max(instrumentalPeak, Math.abs(instrumentalLeft[i]), Math.abs(instrumentalRight[i]));
   }
   if (inputPeak > 1e-5 && vocalsPeak < 1e-7 && instrumentalPeak < 1e-7)
     throw invalidOutput("AI 分離結果為靜音。");
@@ -174,9 +175,9 @@ async function separateWithSession(left, right, { session, provider }) {
     provider,
     vocalsLeft,
     vocalsRight,
-    instrumentalLeft: left,
-    instrumentalRight: right,
-  }, [vocalsLeft.buffer, vocalsRight.buffer, left.buffer, right.buffer]);
+    instrumentalLeft,
+    instrumentalRight,
+  }, [vocalsLeft.buffer, vocalsRight.buffer, instrumentalLeft.buffer, instrumentalRight.buffer]);
 }
 
 async function separate(left, right) {

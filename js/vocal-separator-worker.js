@@ -21,6 +21,12 @@ ort.env.wasm.numThreads = 1;
 const sendStatus = (text, provider = "") => self.postMessage({ type: "status", text, provider });
 let sessionPromise = null;
 
+function reportGpuFailure(stage, error) {
+  const reason = error?.message || String(error);
+  console.warn(`[人聲分離 GPU：${stage}]`, error);
+  self.postMessage({ type: "gpu-fallback", text: `GPU ${stage}：${reason}` });
+}
+
 function invalidOutput(message) {
   const error = Error(message);
   error.code = "INVALID_OUTPUT";
@@ -66,6 +72,7 @@ async function loadModel(provider) {
 }
 
 async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"]) {
+  if (!navigator.gpu) reportGpuFailure("不可用", "目前瀏覽器環境未提供 WebGPU。");
   let lastError;
   for (const provider of candidates) {
     let session;
@@ -84,7 +91,10 @@ async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : [
     } catch (error) {
       session?.release?.();
       lastError = error;
-      if (provider === "webgpu") sendStatus("GPU 無法執行此模型，正在改用 CPU…", "wasm");
+      if (provider === "webgpu") {
+        reportGpuFailure("初始化失敗", error);
+        sendStatus("GPU 無法執行此模型，正在改用 CPU…", "wasm");
+      }
     }
   }
   throw lastError || Error("無法啟動人聲分離模型。");
@@ -175,6 +185,7 @@ async function separate(left, right) {
     return await separateWithSession(left, right, state);
   } catch (error) {
     if (state.provider !== "webgpu" || error?.code !== "INVALID_OUTPUT") throw error;
+    reportGpuFailure("推論結果無效", error);
     state.session.release?.();
     sendStatus("GPU 分離結果無效，正在自動改用 CPU 重新處理…", "wasm");
     sessionPromise = createSession(["wasm"]);

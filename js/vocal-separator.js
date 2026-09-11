@@ -345,6 +345,11 @@ async function startSeparation() {
 
 function handleWorkerMessage(event) {
   const data = event.data || {};
+  if (data.type === "gpu-fallback") {
+    $("separator-gpu-diagnostic").textContent = `改用 CPU 的原因：${data.text}`;
+    $("separator-gpu-diagnostic").hidden = false;
+    return;
+  }
   if (data.provider) $("separator-engine").textContent = data.provider === "webgpu" ? "WebGPU GPU 加速" : "WASM CPU 模式";
   if (data.type === "status") {
     $("separator-status").textContent = data.text;

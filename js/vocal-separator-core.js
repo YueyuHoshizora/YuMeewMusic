@@ -57,7 +57,8 @@ function mixChunk(vocals, instrumental, settings, equalizers) {
     for (let channel = 0; channel < 2; channel++) {
       const source = channel === 0 ? sources[trackIndex].left : sources[trackIndex].right;
       const processed = equalizers[track].process(source, channel);
-      for (let i = 0; i < processed.length; i++) output[channel][i] += processed[i];
+      const gain = 10 ** (Math.max(-10, Math.min(10, Number(settings[track]?.volume) || 0)) / 20);
+      for (let i = 0; i < processed.length; i++) output[channel][i] += processed[i] * gain;
     }
   }
   return output;

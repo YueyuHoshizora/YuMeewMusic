@@ -67,7 +67,9 @@
               <div><strong>人聲</strong><span>AI 辨識出的歌聲</span></div>
             </div>
             <audio id="separator-vocals" controls></audio>
-            <div class="track-eq" role="group" aria-label="人聲 EQ">
+            <div class="track-eq" role="group" aria-label="人聲音量與 EQ">
+              <label for="vocals-volume">音量 <output id="vocals-volume-value">0.0 dB</output></label>
+              <input id="vocals-volume" type="range" min="-10" max="10" step="0.3" value="0" />
               <label for="vocals-bass">低音 <output id="vocals-bass-value">0.0 dB</output></label>
               <input id="vocals-bass" type="range" min="-10" max="10" step="0.1" value="0" />
               <label for="vocals-mid">中音 <output id="vocals-mid-value">0.0 dB</output></label>
@@ -83,7 +85,9 @@
               <div><strong>伴奏</strong><span>原始音樂扣除辨識人聲</span></div>
             </div>
             <audio id="separator-instrumental" controls></audio>
-            <div class="track-eq" role="group" aria-label="伴奏 EQ">
+            <div class="track-eq" role="group" aria-label="伴奏音量與 EQ">
+              <label for="instrumental-volume">音量 <output id="instrumental-volume-value">0.0 dB</output></label>
+              <input id="instrumental-volume" type="range" min="-10" max="10" step="0.3" value="0" />
               <label for="instrumental-bass">低音 <output id="instrumental-bass-value">0.0 dB</output></label>
               <input id="instrumental-bass" type="range" min="-10" max="10" step="0.1" value="0" />
               <label for="instrumental-mid">中音 <output id="instrumental-mid-value">0.0 dB</output></label>

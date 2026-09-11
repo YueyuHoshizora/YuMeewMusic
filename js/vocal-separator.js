@@ -34,13 +34,17 @@ function loadTrackSettings() {
   try {
     saved = JSON.parse(localStorage.getItem(TRACK_SETTINGS_KEY) || "{}");
   } catch {}
-  return Object.fromEntries(TRACK_NAMES.map(track => [track, {
-    muted: false,
-    ...Object.fromEntries(EQ_BANDS.map(band => {
-      const value = Number(saved?.[track]?.[band]);
-      return [band, Number.isFinite(value) ? Math.min(10, Math.max(-10, value)) : 0];
-    })),
-  }]));
+  return Object.fromEntries(TRACK_NAMES.map(track => {
+    const volume = Number(saved?.[track]?.volume);
+    return [track, {
+      muted: false,
+      volume: Number.isFinite(volume) ? Math.min(10, Math.max(-10, volume)) : 0,
+      ...Object.fromEntries(EQ_BANDS.map(band => {
+        const value = Number(saved?.[track]?.[band]);
+        return [band, Number.isFinite(value) ? Math.min(10, Math.max(-10, value)) : 0];
+      })),
+    }];
+  }));
 }
 
 const trackSettings = loadTrackSettings();
@@ -49,7 +53,7 @@ function saveTrackSettings() {
   try {
     localStorage.setItem(TRACK_SETTINGS_KEY, JSON.stringify(Object.fromEntries(TRACK_NAMES.map(track => [
       track,
-      Object.fromEntries(EQ_BANDS.map(band => [band, trackSettings[track][band]])),
+      { volume: trackSettings[track].volume, ...Object.fromEntries(EQ_BANDS.map(band => [band, trackSettings[track][band]])) },
     ]))));
   } catch {}
 }
@@ -65,7 +69,7 @@ function applyTrackSettings(track) {
   const audio = $(`separator-${track}`);
   if (nodes) {
     for (const band of EQ_BANDS) nodes[band].gain.value = settings[band];
-    nodes.output.gain.value = settings.muted ? 0 : 1;
+    nodes.output.gain.value = settings.muted ? 0 : 10 ** (settings.volume / 20);
     audio.muted = false;
   } else {
     audio.muted = settings.muted;
@@ -74,14 +78,16 @@ function applyTrackSettings(track) {
   mute.classList.toggle("active", settings.muted);
   mute.setAttribute("aria-pressed", String(settings.muted));
   mute.textContent = settings.muted ? "取消 MUTE" : "MUTE";
+  $(`${track}-volume`).value = String(settings.volume);
+  $(`${track}-volume-value`).textContent = formatDb(settings.volume);
   for (const band of EQ_BANDS) {
     $(`${track}-${band}`).value = String(settings[band]);
     $(`${track}-${band}-value`).textContent = formatDb(settings[band]);
   }
 }
 
-function hasTrackEq(track) {
-  return EQ_BANDS.some(band => Math.abs(trackSettings[track][band]) > 0.001);
+function hasTrackProcessing(track) {
+  return Math.abs(trackSettings[track].volume) > 0.001 || EQ_BANDS.some(band => Math.abs(trackSettings[track][band]) > 0.001);
 }
 
 async function ensureTrackAudio(track) {
@@ -110,7 +116,7 @@ async function ensureTrackAudio(track) {
 
 function activateTrackAudio(track) {
   void ensureTrackAudio(track).catch(() => {
-    $("separator-status").textContent = "目前瀏覽器無法啟用 EQ，音軌將使用原始聲音播放。";
+    $("separator-status").textContent = "目前瀏覽器無法啟用音量與 EQ 處理，音軌將使用原始聲音播放。";
   });
 }
 
@@ -360,14 +366,21 @@ for (const track of TRACK_NAMES) {
   applyTrackSettings(track);
   const audio = $(`separator-${track}`);
   audio.addEventListener("pointerdown", () => {
-    if (hasTrackEq(track)) activateTrackAudio(track);
+    if (hasTrackProcessing(track)) activateTrackAudio(track);
   });
   audio.addEventListener("keydown", () => {
-    if (hasTrackEq(track)) activateTrackAudio(track);
+    if (hasTrackProcessing(track)) activateTrackAudio(track);
   });
   $(`mute-${track}`).addEventListener("click", () => {
     trackSettings[track].muted = !trackSettings[track].muted;
     applyTrackSettings(track);
+  });
+  $(`${track}-volume`).addEventListener("input", event => {
+    const raw = Number(event.target.value);
+    trackSettings[track].volume = raw <= -9.95 ? -10 : raw >= 9.95 ? 10 : Math.round(raw / 0.3) * 0.3;
+    applyTrackSettings(track);
+    saveTrackSettings();
+    activateTrackAudio(track);
   });
   for (const band of EQ_BANDS) $(`${track}-${band}`).addEventListener("input", event => {
     trackSettings[track][band] = Number(event.target.value);

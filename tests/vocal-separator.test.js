@@ -26,6 +26,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(script, /150 \* 1024 \* 1024/);
   for (const track of ["vocals", "instrumental"]) {
     assert.match(html, new RegExp(`id="mute-${track}"[^>]*>MUTE<`));
+    assert.match(html, new RegExp(`id="${track}-volume"[^>]*min="-10"[^>]*max="10"[^>]*step="0\\.3"`));
     for (const band of ["bass", "mid", "treble"]) {
       assert.match(html, new RegExp(`id="${track}-${band}"[^>]*min="-10"[^>]*max="10"[^>]*step="0\\.1"`));
     }
@@ -76,11 +77,11 @@ test("separated tracks remix with mute, EQ processing and peak protection", asyn
   assert.ok(Math.abs(mixedView.getInt16(46, true) / 32767 - 0.37125) < 0.002);
 
   const vocalsOnly = await mixSeparatedWav(vocals, instrumental, {
-    vocals: { bass: 0, mid: 0, treble: 0, muted: false },
+    vocals: { volume: -6, bass: 0, mid: 0, treble: 0, muted: false },
     instrumental: { bass: 10, mid: 10, treble: 10, muted: true },
   });
   const vocalsView = new DataView(await vocalsOnly.arrayBuffer());
-  assert.ok(Math.abs(vocalsView.getInt16(44, true) / 32767 - 0.8) < 0.001);
+  assert.ok(Math.abs(vocalsView.getInt16(44, true) / 32767 - 0.8 * 10 ** (-6 / 20)) < 0.001);
   assert.equal(vocalsOnly.size, vocals.size);
 });
 

@@ -9,7 +9,7 @@ import {
 } from "./vocal-separator-core.js";
 
 const $ = id => document.getElementById(id);
-const MAX_FILE_SIZE = 300 * 1024 * 1024;
+const MAX_FILE_SIZE = 150 * 1024 * 1024;
 const restored = loadSettings();
 applyTheme(restored.mode, restored.theme);
 
@@ -80,7 +80,7 @@ async function loadFile(file) {
   $("separator-file-info").hidden = true;
   $("separator-start").disabled = true;
   if (file.size > MAX_FILE_SIZE) {
-    showError("檔案超過 300 MB，請選擇較小的音樂。");
+    showError("檔案超過 150 MB，請選擇較小的音樂。");
     return;
   }
   $("separator-file-name").textContent = file.name;
@@ -90,7 +90,7 @@ async function loadFile(file) {
   try {
     const buffer = await decodeFile(file);
     if (buffer.duration > SEPARATOR_MAX_DURATION + 0.01)
-      throw Error("目前人聲分離單次最多處理 5 分鐘，請先裁剪音樂。");
+      throw Error("目前人聲分離單次最多處理 8 分鐘，請先裁剪音樂。");
     sourceFile = file;
     decodedBuffer = buffer;
     $("separator-duration").textContent = formatTime(buffer.duration);
@@ -105,7 +105,7 @@ async function loadFile(file) {
     $("separator-status").textContent = `準備完成；開始後將下載約 ${SEPARATOR_MODEL_SIZE_MB} MB 的模型。`;
     $("separator-engine").textContent = navigator.gpu ? "WebGPU 可用" : "WASM CPU 模式";
   } catch (error) {
-    $("separator-file-help").textContent = "MP3 · WAV · M4A · FLAC · 300 MB 以內";
+    $("separator-file-help").textContent = "MP3 · WAV · M4A · FLAC · 150 MB 以內";
     showError(error?.message || "無法解碼這個音樂檔案。");
   } finally {
     $("separator-drop").disabled = false;

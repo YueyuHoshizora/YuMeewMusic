@@ -20,6 +20,8 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /音樂只在瀏覽器內處理/);
   assert.match(html, /WebGPU/);
   assert.match(html, /下載人聲 WAV/);
+  assert.match(html, /單次最長 8 分鐘、150 MB/);
+  assert.match(script, /150 \* 1024 \* 1024/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"vocal-separator\.html"/);
   assert.doesNotMatch(script, /sendBeacon|XMLHttpRequest|WebSocket/);
@@ -36,7 +38,7 @@ test("separator WAV output is valid stereo PCM with safe file names", async () =
   assert.equal(blob.size, 44 + left.length * 4);
   assert.equal(separatorFilename("我的/歌曲.mp3", "vocals"), "我的-歌曲-vocals.wav");
   assert.throws(() => separatorFilename("song.mp3", "drums"));
-  assert.equal(SEPARATOR_MAX_DURATION, 300);
+  assert.equal(SEPARATOR_MAX_DURATION, 480);
 });
 
 test("STFT and inverse STFT preserve the interior signal with an identity mask", () => {

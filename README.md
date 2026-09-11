@@ -4,7 +4,7 @@
 
 **線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
 
-主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，將最長 5 分鐘、300 MB 以內的音樂分離為人聲與伴奏。功能優先使用 WebGPU，無法使用時自動改以 WASM CPU 執行；完成後可分軌試聽並下載 44.1 kHz、16-bit 立體聲 WAV。第一次執行會從 Hugging Face 下載約 103 MB 的 BS PolarFormer FP16 模型並由瀏覽器快取，選擇的音樂、PCM 資料與分離結果都不會上傳。
+主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，將最長 8 分鐘、150 MB 以內的音樂分離為人聲與伴奏。功能優先使用 WebGPU，無法使用時自動改以 WASM CPU 執行；完成後可分軌試聽並下載 44.1 kHz、16-bit 立體聲 WAV。第一次執行會從 Hugging Face 下載約 103 MB 的 BS PolarFormer FP16 模型並由瀏覽器快取，選擇的音樂、PCM 資料與分離結果都不會上傳。
 
 主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入明確支援 WebM，以及 MP4、MOV 等瀏覽器可讀格式，可轉成 MP4、MOV、WebM、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
 

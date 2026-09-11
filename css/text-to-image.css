@@ -28,6 +28,7 @@ body.text-to-image-body { min-width: 1000px; }
 .empty-result small { font-size: 12px; }
 .result-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
 .result-actions button { height: 44px; }
+.result-storage-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; text-align: center; }
 .generation-lock { position: fixed; z-index: 1000; inset: 0; display: grid; place-content: center; justify-items: center; background: color-mix(in srgb, var(--background) 90%, transparent); backdrop-filter: blur(5px); color: var(--foreground); text-align: center; cursor: wait; }
 .generation-lock[hidden] { display: none; }
 .generation-lock strong { margin-top: 20px; font-size: 21px; }

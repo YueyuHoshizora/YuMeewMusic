@@ -58,16 +58,16 @@ test("cover sizing fills the frame without distortion", () => {
   });
 });
 
-test("影片編輯 exposes local layer controls, movable effects and fixed top overlays", () => {
+test("影片編輯 exposes editable media layers and locked visual overlays", () => {
   const html = readFileSync("video-editor.html", "utf8");
   const script = readFileSync("js/video-editor.js", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
-  assert.match(html, /動態特效預設位於倒數第二層，字幕與個人識別固定在最上層/);
-  assert.match(script, /type: "dynamic", name: "動態特效"/);
-  assert.match(script, /layer\.type === "dynamic"/);
+  assert.match(html, /動態特效固定在倒數第二層，字幕與個人識別固定在最上層/);
+  assert.match(html, /id="dynamic-layer"[^>]*>.*動態特效.*固定倒數第二層.*鎖定/s);
+  assert.doesNotMatch(script, /type: "dynamic"/);
   assert.match(html, /id="base-layer"[^>]*>.*主畫面影片本體.*基礎鎖定/s);
   assert.match(html, /id="layer-audio"[^>]*type="checkbox"/);
   assert.doesNotMatch(html, /id="layer-audio"[^>]*checked/);
@@ -97,6 +97,8 @@ test("影片編輯 exposes local layer controls, movable effects and fixed top o
   assert.match(script, /setPointerCapture/);
   assert.match(script, /const sourceTime = range\.start \+ time/);
   assert.match(script, /mixProjectAudio\(mediaLayers\(\), range, signal\)/);
+  assert.doesNotMatch(script, /drawDynamicLayer\(canvas, sourceTime/);
+  assert.doesNotMatch(script, /drawOverlays\(context, sourceTime\)/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredMedia\("audio"/);
   assert.match(script, /window\.location\.href = "\.\/"/);

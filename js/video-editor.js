@@ -24,11 +24,9 @@ import {
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
-const DYNAMIC_LAYER_ID = "dynamic-effects";
-const dynamicLayer = { id: DYNAMIC_LAYER_ID, type: "dynamic", name: "動態特效" };
 
 const state = {
-  layers: [dynamicLayer],
+  layers: [],
   selectedId: null,
   time: 0,
   playing: false,
@@ -182,8 +180,8 @@ function renderPreview() {
   context.fillStyle = "#080a0c";
   context.fillRect(0, 0, canvas.width, canvas.height);
   drawBase(canvas, state.time);
+  drawDynamicLayer(canvas, state.time);
   for (const layer of state.layers) {
-    if (layer.type === "dynamic") { drawDynamicLayer(canvas, state.time); continue; }
     if (!isLayerActive(layer, state.time)) continue;
     if (layer.type === "image") {
       drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, state.time);
@@ -234,9 +232,9 @@ function renderTimeline() {
     const band = document.createElement("button");
     band.type = "button";
     band.className = `timeline-band${layer.id === state.selectedId ? " selected" : ""}`;
-    band.style.left = layer.type === "dynamic" ? "0%" : `${layer.start / duration * 100}%`;
-    band.style.width = layer.type === "dynamic" ? "100%" : `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
-    band.textContent = layer.type === "dynamic" ? "動態特效" : layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
+    band.style.left = `${layer.start / duration * 100}%`;
+    band.style.width = `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
+    band.textContent = layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
     band.addEventListener("click", () => selectLayer(layer.id));
     track.append(band);
     return track;
@@ -248,15 +246,16 @@ function renderLayerList() {
     const row = document.createElement("button");
     row.type = "button";
     row.className = `layer-row${layer.id === state.selectedId ? " selected" : ""}`;
-    row.innerHTML = `<span>${layer.type === "dynamic" ? "✦" : layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
+    row.innerHTML = `<span>${layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
     row.querySelector("strong").textContent = layer.name;
-    row.querySelector("small").textContent = layer.type === "dynamic" ? "可調整順序 · 完整時間" : `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
+    row.querySelector("small").textContent = `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
     row.addEventListener("click", () => selectLayer(layer.id));
     return row;
   }));
   $("subtitle-layer").classList.toggle("inactive", !state.subtitles);
   const hasIdentity = settings.identityType === "image" ? Boolean(state.identityImage) : Boolean(settings.identityText);
   $("identity-layer").classList.toggle("inactive", !hasIdentity);
+  $("dynamic-layer").classList.toggle("inactive", !state.base.audioBuffer);
   $("base-layer").classList.toggle("inactive", !state.base.audioBuffer);
   $("base-layer-detail").textContent = state.base.audioBuffer
     ? `${formatEditorTime(state.base.duration)} · 固定最底層`
@@ -268,18 +267,10 @@ function renderInspector() {
   $("empty-inspector").hidden = Boolean(layer);
   $("layer-controls").hidden = !layer;
   if (!layer) return;
-  const dynamic = layer.type === "dynamic";
-  $("selected-kind").textContent = dynamic ? "動態特效圖層" : layer.type === "video" ? "影片圖層" : "圖片圖層";
+  $("selected-kind").textContent = layer.type === "video" ? "影片圖層" : "圖片圖層";
   $("selected-name").textContent = layer.name;
-  $("dynamic-layer-help").hidden = !dynamic;
-  $("layer-media-controls").hidden = dynamic;
-  $("remove-layer").hidden = dynamic;
-  if (dynamic) {
-    const index = state.layers.indexOf(layer);
-    $("move-layer-down").disabled = index === 0;
-    $("move-layer-up").disabled = index === state.layers.length - 1;
-    return;
-  }
+  $("layer-media-controls").hidden = false;
+  $("remove-layer").hidden = false;
   $("layer-start").value = layer.start.toFixed(1);
   $("video-time-controls").hidden = layer.type !== "video";
   $("image-time-controls").hidden = layer.type !== "image";
@@ -604,7 +595,6 @@ async function applyProjectToMain() {
         if (!baseBackgroundSample && state.base.image?.seekTime) await state.base.image.seekTime(sourceTime);
         drawBase(canvas, sourceTime, baseBackgroundSample || state.base.image);
         for (const layer of state.layers) {
-          if (layer.type === "dynamic") { drawDynamicLayer(canvas, sourceTime, baseBackgroundSample || state.base.image); continue; }
           if (!isLayerActive(layer, sourceTime)) continue;
           if (layer.type === "image") drawLayerWithEffect(context, layer, layer.element, layer.element.naturalWidth, layer.element.naturalHeight, sourceTime);
           else if (sourceTime - layer.start < layer.mediaDuration) {
@@ -615,7 +605,6 @@ async function applyProjectToMain() {
             }
           }
         }
-        drawOverlays(context, sourceTime);
       } finally {
         baseBackgroundSample?.close();
       }
@@ -630,7 +619,7 @@ async function applyProjectToMain() {
     videoSource.close();
     await output.finalize();
     const blob = new Blob([target.buffer], { type: format === "webm" ? "video/webm" : "video/mp4" });
-    const outputName = `yumeow-edited-video-${$("editor-resolution").value}p-${$("editor-fps").value}fps.${format}`;
+    const outputName = `yumeow-edited-background-${$("editor-resolution").value}p-${$("editor-fps").value}fps.${format}`;
     const file = new File([blob], outputName, { type: blob.type, lastModified: Date.now() });
     if (file.size > 1024 ** 3) throw Error("套用後的背景影片超過主畫面 1 GB 上限，請降低解析度、FPS 或縮短時間。");
     let audioFile = null;

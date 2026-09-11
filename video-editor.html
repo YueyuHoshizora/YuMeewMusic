@@ -19,7 +19,7 @@
 
     <main class="video-editor-main">
       <section class="video-editor-heading">
-        <div><div class="eyebrow">YUMEOW VIDEO</div><h1>把畫面放進時間裡<span>。</span></h1><p>加入影片與圖片，設定它們在時間軸上的位置；動態特效預設位於倒數第二層，字幕與個人識別固定在最上層。</p></div>
+        <div><div class="eyebrow">YUMEOW VIDEO</div><h1>把畫面放進時間裡<span>。</span></h1><p>加入影片與圖片，設定它們在時間軸上的位置；動態特效固定在倒數第二層，字幕與個人識別固定在最上層。</p></div>
         <div id="editor-status" class="editor-status" role="status">請加入第一個影片或圖片。</div>
       </section>
 
@@ -38,6 +38,7 @@
             <div id="identity-layer" class="fixed-layer"><span>◎</span><div><strong>個人識別</strong><small>固定最高圖層</small></div><b>鎖定</b></div>
           </div>
           <div id="layer-list" class="layer-list" aria-label="影片圖層清單"></div>
+          <div id="dynamic-layer" class="fixed-layer"><span>✦</span><div><strong>動態特效</strong><small>固定倒數第二層</small></div><b>鎖定</b></div>
           <div id="base-layer" class="fixed-layer base-layer inactive"><span>♫</span><div><strong>主畫面影片本體</strong><small id="base-layer-detail">尚未載入主畫面作品</small></div><b>基礎鎖定</b></div>
         </aside>
 
@@ -88,7 +89,6 @@
           <div id="empty-inspector" class="empty-inspector">從左側加入並選取影片或圖片。</div>
           <div id="layer-controls" hidden>
             <div class="selected-file"><span id="selected-kind"></span><strong id="selected-name"></strong></div>
-            <p id="dynamic-layer-help" class="position-help" hidden>沿用主畫面的頻譜動畫與歌曲文字設定，可使用下方按鈕調整圖層順序。</p>
             <div id="layer-media-controls">
             <label class="field-label" for="layer-start">開始時間（秒）</label>
             <input id="layer-start" class="text-input" type="number" min="0" step="0.1" />

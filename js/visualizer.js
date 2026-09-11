@@ -162,8 +162,7 @@ export function drawDynamic(canvas, t, b, img, s) {
 }
 
 export function draw(canvas, t, b, img, s) {
-  drawBackground(canvas, img, s.backgroundComposited ? 0 : s.darkness);
-  if (s.backgroundComposited) return;
+  drawBackground(canvas, img, s.darkness);
   drawDynamic(canvas, t, b, img, s);
   const c = canvas.getContext("2d");
   drawSubtitles(c, canvas.width, canvas.height, s, t);

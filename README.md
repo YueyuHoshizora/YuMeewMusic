@@ -153,7 +153,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `index.html` | 頁面與原生表單控制項 |
 | `subtitle-editor.html` | 獨立字幕編輯器與時間軸介面 |
 | `converter.html` | 獨立影片／音樂格式轉換頁面 |
-| `video-editor.html` | 「影片編輯」影片與圖片圖層時間軸編輯器；動態特效是可排序的獨立圖層，完成後可套用回主畫面 |
+| `video-editor.html` | 「影片編輯」影片與圖片圖層時間軸編輯器；動態特效鎖定於倒數第二層，套用時只編碼可編輯圖層 |
 | `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
 | `text-to-image.html` | Cloudflare Workers AI 文生圖頁面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |

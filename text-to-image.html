@@ -30,6 +30,13 @@
       <section class="panel prompt-panel">
         <label class="field-label" for="image-prompt">圖片描述</label>
         <textarea id="image-prompt" maxlength="2048" placeholder="例如：星空下的黑膠唱片，霓虹城市倒映在唱片表面，電影感光線，細節豐富"></textarea>
+        <label class="enhance-option" for="enhance-prompt">
+          <input id="enhance-prompt" type="checkbox" checked>
+          <span>
+            <strong>文字轉譯成Prompt</strong>
+            <small>將輸入文字翻譯並整理成較標準的繪圖提示詞</small>
+          </span>
+        </label>
         <div class="prompt-actions">
           <span id="prompt-count">0 / 2048</span>
           <button id="generate-image" class="export-button" type="button" disabled>✦ 生成圖片</button>

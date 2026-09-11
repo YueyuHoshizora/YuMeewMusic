@@ -27,6 +27,7 @@ function setBusy(value) {
   document.body.setAttribute("aria-busy", String(value));
   $("generation-lock").hidden = !value;
   $("image-prompt").disabled = value;
+  $("enhance-prompt").disabled = value;
   $("generate-image").disabled = value || !$("image-prompt").value.trim();
   $("download-image").disabled = value || !generatedBlob;
   $("apply-background").disabled = value || !generatedBlob;
@@ -49,6 +50,7 @@ function isQuotaError(statusCode, detail) {
 
 async function generateImage() {
   const prompt = $("image-prompt").value.trim();
+  const enhance = Boolean($("enhance-prompt").checked);
   if (!prompt || busy) return;
   showError();
   status("圖片生成中…");
@@ -60,7 +62,7 @@ async function generateImage() {
         Accept: "image/jpeg,image/*",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, enhance }),
       cache: "no-store",
     });
     if (!response.ok) {

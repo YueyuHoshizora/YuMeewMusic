@@ -22,7 +22,11 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /flux-klein-worker\.yustellar\.idv\.tw/);
   assert.match(script, /method:\s*"POST"/);
   assert.match(script, /"Content-Type":\s*"application\/json"/);
-  assert.match(script, /body:\s*JSON\.stringify\(\{ prompt \}\)/);
+  assert.match(html, /id="enhance-prompt"[^>]*type="checkbox"[^>]*checked/);
+  assert.match(html, /文字轉譯成Prompt/);
+  assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);
+  assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
+  assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);
   assert.doesNotMatch(script, /searchParams\.set\("p"/);
   assert.match(script, /statusCode === 429/);
   assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);

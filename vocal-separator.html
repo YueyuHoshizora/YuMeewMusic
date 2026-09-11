@@ -49,6 +49,8 @@
         <div class="panel separator-process">
           <div class="section-title"><span>02</span><h2>開始分離</h2></div>
           <div class="separator-mode"><strong>自動使用最快模式</strong><span>優先使用 WebGPU；無法使用時自動改用 WASM CPU。</span></div>
+          <label for="separator-speed">分離模式</label>
+          <select id="separator-speed"><option value="balanced">標準 · 50% 重疊</option><option value="fast">快速 · 25% 重疊，可能降低接縫品質</option></select>
           <button id="separator-start" class="export-button" type="button" disabled>開始分離人聲</button>
           <progress id="separator-progress" max="100" value="0" hidden></progress>
           <div class="separator-progress-row">

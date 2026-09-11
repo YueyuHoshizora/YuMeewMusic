@@ -230,6 +230,7 @@ function showError(text = "") {
 
 function setBusy(value) {
   working = value;
+  $("separator-speed").disabled = value;
   $("separator-drop").disabled = value;
   $("separator-start").disabled = value || !sourceFile;
   $("separator-cancel").hidden = !value;
@@ -337,7 +338,7 @@ async function startSeparation() {
       worker.addEventListener("message", handleWorkerMessage);
       worker.addEventListener("error", event => finishWithError(event.message || "人聲分離處理程序發生錯誤。"));
     }
-    worker.postMessage({ type: "separate", left: left.buffer, right: right.buffer }, [left.buffer, right.buffer]);
+    worker.postMessage({ type: "separate", mode: $("separator-speed").value, left: left.buffer, right: right.buffer }, [left.buffer, right.buffer]);
   } catch (error) {
     finishWithError(error?.message || "無法開始人聲分離。");
   }

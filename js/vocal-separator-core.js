@@ -289,3 +289,13 @@ export function reconstructVocals(mask, prepared, window, length) {
 export function separatorTensorShape(frames) {
   return [1, frames, FEATURE_SIZE];
 }
+
+export function separatorChunkStarts(total, mode = "balanced") {
+  const step = mode === "fast" ? SEPARATOR_CHUNK_SIZE * 3 / 4 : SEPARATOR_STEP;
+  const starts = [];
+  for (let start = step - SEPARATOR_CHUNK_SIZE; start < total; start += step) {
+    starts.push(start);
+    if (start + SEPARATOR_CHUNK_SIZE >= total + 2048) break;
+  }
+  return starts;
+}

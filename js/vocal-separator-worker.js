@@ -1,7 +1,7 @@
 import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 import {
   SEPARATOR_CHUNK_SIZE,
-  SEPARATOR_STEP,
+  separatorChunkStarts,
   decodeFloat16,
   hannWindow,
   prepareSeparatorInput,
@@ -115,15 +115,16 @@ async function getSession() {
   }
 }
 
-async function separateWithSession(left, right, { session, provider }) {
+async function separateWithSession(left, right, { session, provider }, mode) {
   const total = left.length;
   const vocalsLeft = new Float32Array(total), vocalsRight = new Float32Array(total);
   const weights = new Float32Array(total), window = hannWindow();
-  const starts = [];
-  for (let start = -SEPARATOR_STEP; start < total; start += SEPARATOR_STEP) starts.push(start);
-  const started = performance.now();
+  const starts = separatorChunkStarts(total, mode);
+  const recentDurations = [];
+  const blendWeights = Float32Array.from({ length: SEPARATOR_CHUNK_SIZE }, (_, i) => Math.sin(Math.PI * (i + 0.5) / SEPARATOR_CHUNK_SIZE) ** 2);
 
   for (let index = 0; index < starts.length; index++) {
+    const chunkStarted = performance.now();
     const start = starts[index];
     const sourceStart = Math.max(0, start), sourceEnd = Math.min(total, start + SEPARATOR_CHUNK_SIZE);
     const chunkOffset = sourceStart - start, validLength = Math.max(0, sourceEnd - sourceStart);
@@ -139,17 +140,21 @@ async function separateWithSession(left, right, { session, provider }) {
       const chunkIndex = chunkOffset + i, outputIndex = sourceStart + i;
       if (!Number.isFinite(reconstructed.left[chunkIndex]) || !Number.isFinite(reconstructed.right[chunkIndex]))
         throw invalidOutput("AI 模型產生無效音訊。");
-      const weight = Math.sin(Math.PI * (chunkIndex + 0.5) / SEPARATOR_CHUNK_SIZE) ** 2;
+      const weight = blendWeights[chunkIndex];
       vocalsLeft[outputIndex] += reconstructed.left[chunkIndex] * weight;
       vocalsRight[outputIndex] += reconstructed.right[chunkIndex] * weight;
       weights[outputIndex] += weight;
     }
     const fraction = (index + 1) / starts.length;
-    const elapsed = (performance.now() - started) / 1000;
+    const seconds = (performance.now() - chunkStarted) / 1000;
+    if (index > 0) recentDurations.push(seconds);
+    if (recentDurations.length > 8) recentDurations.shift();
+    const average = recentDurations.reduce((a, b) => a + b, 0) / recentDurations.length;
+    const estimate = index === 0 ? "首次推論完成，正在估算" : `預估剩餘 ${Math.round(average * (starts.length - index - 1))} 秒`;
     self.postMessage({
       type: "progress",
       value: Math.round(fraction * 100),
-      text: `正在分離 ${index + 1}／${starts.length} · 預估剩餘 ${Math.max(0, Math.round(elapsed / fraction * (1 - fraction)))} 秒`,
+      text: `正在分離 ${index + 1}／${starts.length} · ${estimate} · 本段 ${seconds.toFixed(1)} 秒`,
       provider,
     });
   }
@@ -180,10 +185,10 @@ async function separateWithSession(left, right, { session, provider }) {
   }, [vocalsLeft.buffer, vocalsRight.buffer, instrumentalLeft.buffer, instrumentalRight.buffer]);
 }
 
-async function separate(left, right) {
+async function separate(left, right, mode) {
   let state = await getSession();
   try {
-    return await separateWithSession(left, right, state);
+    return await separateWithSession(left, right, state, mode);
   } catch (error) {
     if (state.provider !== "webgpu" || error?.code !== "INVALID_OUTPUT") throw error;
     reportGpuFailure("推論結果無效", error);
@@ -192,7 +197,7 @@ async function separate(left, right) {
     sessionPromise = createSession(["wasm"]);
     try {
       state = await sessionPromise;
-      return await separateWithSession(left, right, state);
+      return await separateWithSession(left, right, state, mode);
     } catch (fallbackError) {
       sessionPromise = null;
       throw fallbackError;
@@ -203,7 +208,7 @@ async function separate(left, right) {
 self.addEventListener("message", event => {
   if (event.data?.type !== "separate") return;
   const left = new Float32Array(event.data.left), right = new Float32Array(event.data.right);
-  separate(left, right).catch(error => self.postMessage({
+  separate(left, right, event.data.mode).catch(error => self.postMessage({
     type: "error",
     text: error?.message || "人聲分離失敗，請重新載入後再試。",
   }));

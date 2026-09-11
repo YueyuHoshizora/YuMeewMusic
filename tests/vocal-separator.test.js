@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import {
   SEPARATOR_MAX_DURATION,
+  SEPARATOR_CHUNK_SIZE,
+  separatorChunkStarts,
   decodeFloat16,
   encodeStereoWav,
   hannWindow,
@@ -133,4 +135,22 @@ test("STFT and inverse STFT preserve the interior signal with an identity mask",
     signal += left[i] ** 2 + right[i] ** 2;
   }
   assert.ok(Math.sqrt(error / signal) < 1e-4);
+});
+
+test("fast separation reduces inference count while preserving boundary coverage", () => {
+  const total = 44100 * 300;
+  const standard = separatorChunkStarts(total);
+  const fast = separatorChunkStarts(total, "fast");
+  assert.ok(fast.length < standard.length * 0.7);
+  for (const mode of ["balanced", "fast"]) {
+    for (const length of [1, 512, SEPARATOR_CHUNK_SIZE, total]) {
+      const starts = separatorChunkStarts(length, mode);
+      let covered = 0;
+      for (const start of starts) {
+        assert.ok(start + 2048 <= covered);
+        covered = start + SEPARATOR_CHUNK_SIZE - 2048;
+      }
+      assert.ok(covered >= length);
+    }
+  }
 });

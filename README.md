@@ -204,3 +204,5 @@ MP3／FLAC／WAV 測試使用真實本機編碼器產生音訊並重新讀取，
 額外音訊編碼器取自 `@mediabunny/mp3-encoder@1.55.7` 與 `@mediabunny/flac-encoder@1.55.7`，僅將 bare `mediabunny` import 改為本機相對路徑。WASM 內嵌於模組，不呼叫 CDN；授權、來源與重建說明見 `vendor/*-encoder-README.md` 及 `vendor/*-encoder-LICENSE`。
 
 `vendor/onnxruntime-web/` 取自 `onnxruntime-web@1.21.0`，以 MIT 授權隨網站提供。人聲分離使用 MIT 授權的 BS PolarFormer FP16 ONNX 模型；模型在第一次使用時由 `bgkb/bs_polarformer` 公開模型倉庫下載。
+
+人聲分離可選「標準」（50% 重疊）或「快速」（25% 重疊）。快速模式約減少三分之一推論段數，但接縫附近的分離品質可能降低；預設保留標準模式。剩餘時間以近期分段耗時估算，排除第一次推論，並顯示每段實際秒數。

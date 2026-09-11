@@ -21,7 +21,7 @@
         <div>
           <div class="eyebrow">LOCAL AI AUDIO TOOL</div>
           <h1>人聲分離<span>。</span></h1>
-          <p>將一首歌分離成人聲與伴奏。第一次使用會下載約 201 MB 的 AI 模型，音樂內容不會離開你的裝置。</p>
+          <p>將一首歌分離成人聲與伴奏。輕量模型首次下載約 75 MB；高品質模型約 201 MB，音樂內容不會離開你的裝置。</p>
         </div>
         <span id="separator-engine" class="separator-engine">等待音樂</span>
       </section>
@@ -49,8 +49,11 @@
         <div class="panel separator-process">
           <div class="section-title"><span>02</span><h2>開始分離</h2></div>
           <div class="separator-mode"><strong>自動使用最快模式</strong><span>優先使用 WebGPU；無法使用時自動改用 WASM CPU。</span></div>
-          <label for="separator-speed">分離模式</label>
-          <select id="separator-speed"><option value="balanced">標準 · 50% 重疊</option><option value="fast">快速 · 25% 重疊，可能降低接縫品質</option></select>
+          <label for="separator-model">分離模型</label>
+          <select id="separator-model"><option value="spleeter">輕量分離 · Spleeter（約 75 MB）</option><option value="polarformer">高品質 · BS PolarFormer（約 201 MB）</option></select>
+          <p id="separator-model-help">優先縮短處理時間；人聲可能殘留較多伴奏。所有音訊仍在瀏覽器處理。</p>
+          <div id="separator-speed-group" hidden><label for="separator-speed">分離模式</label>
+          <select id="separator-speed"><option value="balanced">標準 · 50% 重疊</option><option value="fast">快速 · 25% 重疊，可能降低接縫品質</option></select></div>
           <button id="separator-start" class="export-button" type="button" disabled>開始分離人聲</button>
           <progress id="separator-progress" max="100" value="0" hidden></progress>
           <div class="separator-progress-row">
@@ -125,7 +128,7 @@
         <div><strong>處理時間</strong><span>取決於電腦與瀏覽器；CPU 模式可能需要較長時間。</span></div>
         <div><strong>隱私</strong><span>AI 模型會下載至瀏覽器，選擇的音樂不會上傳。</span></div>
       </section>
-      <p class="separator-credit">分離模型：BS PolarFormer（GPU FP32／CPU FP16）（MIT）· 推論引擎：ONNX Runtime Web（MIT）</p>
+      <p class="separator-credit">分離模型：Spleeter（MIT）／BS PolarFormer（MIT）· 推論引擎：ONNX Runtime Web（MIT）</p>
     </main>
   </body>
 </html>

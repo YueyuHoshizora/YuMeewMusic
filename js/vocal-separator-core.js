@@ -158,7 +158,7 @@ export function hannWindow(length = N_FFT) {
   return Float32Array.from({ length }, (_, i) => 0.5 * (1 - Math.cos(2 * Math.PI * i / length)));
 }
 
-function fftInPlace(real, imaginary, size) {
+export function fftInPlace(real, imaginary, size) {
   for (let i = 1, j = 0; i < size; i++) {
     let bit = size >> 1;
     for (; j & bit; bit >>= 1) j ^= bit;

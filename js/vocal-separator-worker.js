@@ -1,3 +1,4 @@
+import { SPLEETER_CHUNK, SPLEETER_SHAPE, spleeterStarts, prepareSpleeter, reconstructSpleeter } from "./spleeter-core.js";
 import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 import {
   SEPARATOR_CHUNK_SIZE,
@@ -14,6 +15,8 @@ const MODEL_PATHS = {
   webgpu: `${MODEL_BASE}/bs_polarformer_webgpu.onnx`,
   wasm: `${MODEL_BASE}/bs_polarformer_fp16.onnx`,
 };
+const SPLEETER_BASE = "https://huggingface.co/csukuangfj/sherpa-onnx-spleeter-2stems/resolve/7001ba316a615cacddb3f9ef3ec416661a277e26";
+let activeModel = "spleeter";
 const MODEL_CACHE = "yumeew-vocal-models-v1";
 ort.env.wasm.wasmPaths = new URL("../vendor/onnxruntime-web/", import.meta.url).href;
 ort.env.wasm.numThreads = 1;
@@ -43,8 +46,7 @@ function tensorValues(tensor) {
   return values;
 }
 
-async function loadModel(provider) {
-  const url = MODEL_PATHS[provider];
+async function loadModel(provider, url = MODEL_PATHS[provider]) {
   if (!("caches" in self)) return url;
 
   let cache;
@@ -75,21 +77,26 @@ async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : [
   if (!navigator.gpu) reportGpuFailure("不可用", "目前瀏覽器環境未提供 WebGPU。");
   let lastError;
   for (const provider of candidates) {
-    let session;
+    let session, accompaniment;
     try {
       sendStatus(provider === "webgpu" ? "正在載入 AI 模型並啟用 GPU…" : "正在載入 AI 模型並啟用 CPU…", provider);
       const options = { executionProviders: [provider], graphOptimizationLevel: "all" };
       if (provider === "webgpu") {
         ort.env.webgpu.powerPreference = "high-performance";
         const frames = Math.floor((SEPARATOR_CHUNK_SIZE - 2048) / 512) + 1;
-        options.freeDimensionOverrides = { batch: 1, time_frames: frames };
+        options.freeDimensionOverrides = activeModel === "spleeter" ? { num_splits: 1 } : { batch: 1, time_frames: frames };
       }
-      const model = await loadModel(provider);
+      const model = await loadModel(provider, activeModel === "spleeter" ? `${SPLEETER_BASE}/vocals.onnx` : MODEL_PATHS[provider]);
       sendStatus(provider === "webgpu" ? "正在建立 FP32 GPU 模型工作階段…" : "正在建立 CPU 模型工作階段…", provider);
       session = await ort.InferenceSession.create(model, options);
-      return { session, provider };
+      if (activeModel === "spleeter") {
+        sendStatus("正在載入 Spleeter 伴奏模型…", provider);
+        accompaniment = await ort.InferenceSession.create(await loadModel(provider, `${SPLEETER_BASE}/accompaniment.onnx`), options);
+      }
+      return { session, accompaniment, provider, model: activeModel };
     } catch (error) {
-      session?.release?.();
+      await session?.release?.();
+      await accompaniment?.release?.();
       lastError = error;
       if (provider === "webgpu") {
         reportGpuFailure("初始化失敗", error);
@@ -115,26 +122,38 @@ async function getSession() {
   }
 }
 
-async function separateWithSession(left, right, { session, provider }, mode) {
+async function separateWithSession(left, right, { session, accompaniment, provider, model }, mode) {
   const total = left.length;
+  const light = model === "spleeter";
+  const chunkSize = light ? SPLEETER_CHUNK : SEPARATOR_CHUNK_SIZE;
   const vocalsLeft = new Float32Array(total), vocalsRight = new Float32Array(total);
   const weights = new Float32Array(total), window = hannWindow();
-  const starts = separatorChunkStarts(total, mode);
+  const starts = light ? spleeterStarts(total) : separatorChunkStarts(total, mode);
   const recentDurations = [];
-  const blendWeights = Float32Array.from({ length: SEPARATOR_CHUNK_SIZE }, (_, i) => Math.sin(Math.PI * (i + 0.5) / SEPARATOR_CHUNK_SIZE) ** 2);
+  const blendWeights = Float32Array.from({ length: chunkSize }, (_, i) => Math.sin(Math.PI * (i + 0.5) / chunkSize) ** 2);
 
   for (let index = 0; index < starts.length; index++) {
     const chunkStarted = performance.now();
     const start = starts[index];
-    const sourceStart = Math.max(0, start), sourceEnd = Math.min(total, start + SEPARATOR_CHUNK_SIZE);
+    const sourceStart = Math.max(0, start), sourceEnd = Math.min(total, start + chunkSize);
     const chunkOffset = sourceStart - start, validLength = Math.max(0, sourceEnd - sourceStart);
-    const chunkLeft = new Float32Array(SEPARATOR_CHUNK_SIZE), chunkRight = new Float32Array(SEPARATOR_CHUNK_SIZE);
+    const chunkLeft = new Float32Array(chunkSize), chunkRight = new Float32Array(chunkSize);
     chunkLeft.set(left.subarray(sourceStart, sourceEnd), chunkOffset);
     chunkRight.set(right.subarray(sourceStart, sourceEnd), chunkOffset);
-    const prepared = prepareSeparatorInput(chunkLeft, chunkRight, window);
-    const tensor = new ort.Tensor("float32", prepared.input, separatorTensorShape(prepared.frames));
-    const result = await session.run({ [session.inputNames[0]]: tensor });
-    const reconstructed = reconstructVocals(tensorValues(result[session.outputNames[0]]), prepared, window, SEPARATOR_CHUNK_SIZE);
+    const prepared = light ? prepareSpleeter(chunkLeft, chunkRight) : prepareSeparatorInput(chunkLeft, chunkRight, window);
+    const tensor = new ort.Tensor("float32", prepared.input, light ? SPLEETER_SHAPE : separatorTensorShape(prepared.frames));
+    let result, other, reconstructed;
+    try {
+      result = await session.run({ [session.inputNames[0]]: tensor });
+      if (light) other = await accompaniment.run({ [accompaniment.inputNames[0]]: tensor });
+      reconstructed = light
+        ? reconstructSpleeter(tensorValues(result[session.outputNames[0]]), tensorValues(other[accompaniment.outputNames[0]]), prepared)
+        : reconstructVocals(tensorValues(result[session.outputNames[0]]), prepared, window, chunkSize);
+    } finally {
+      tensor.dispose();
+      for (const output of Object.values(result || {})) output.dispose();
+      for (const output of Object.values(other || {})) output.dispose();
+    }
 
     for (let i = 0; i < validLength; i++) {
       const chunkIndex = chunkOffset + i, outputIndex = sourceStart + i;
@@ -156,6 +175,7 @@ async function separateWithSession(left, right, { session, provider }, mode) {
       value: Math.round(fraction * 100),
       text: `正在分離 ${index + 1}／${starts.length} · ${estimate} · 本段 ${seconds.toFixed(1)} 秒`,
       provider,
+      model,
     });
   }
   const instrumentalLeft = new Float32Array(total), instrumentalRight = new Float32Array(total);
@@ -185,14 +205,25 @@ async function separateWithSession(left, right, { session, provider }, mode) {
   }, [vocalsLeft.buffer, vocalsRight.buffer, instrumentalLeft.buffer, instrumentalRight.buffer]);
 }
 
-async function separate(left, right, mode) {
+async function separate(left, right, mode, model) {
+  const selected = model === "polarformer" ? "polarformer" : "spleeter";
+  if (selected !== activeModel) {
+    if (sessionPromise) {
+      const old = await sessionPromise;
+      await old.session.release();
+      await old.accompaniment?.release();
+    }
+    sessionPromise = null;
+    activeModel = selected;
+  }
   let state = await getSession();
   try {
     return await separateWithSession(left, right, state, mode);
   } catch (error) {
     if (state.provider !== "webgpu" || error?.code !== "INVALID_OUTPUT") throw error;
     reportGpuFailure("推論結果無效", error);
-    state.session.release?.();
+    await state.session.release?.();
+    await state.accompaniment?.release?.();
     sendStatus("GPU 分離結果無效，正在自動改用 CPU 重新處理…", "wasm");
     sessionPromise = createSession(["wasm"]);
     try {
@@ -208,7 +239,7 @@ async function separate(left, right, mode) {
 self.addEventListener("message", event => {
   if (event.data?.type !== "separate") return;
   const left = new Float32Array(event.data.left), right = new Float32Array(event.data.right);
-  separate(left, right, event.data.mode).catch(error => self.postMessage({
+  separate(left, right, event.data.mode, event.data.model).catch(error => self.postMessage({
     type: "error",
     text: error?.message || "人聲分離失敗，請重新載入後再試。",
   }));

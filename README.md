@@ -4,7 +4,7 @@
 
 **線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
 
-主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，並預設從 IndexedDB 帶入主畫面目前保存的音樂；沒有保存音樂時仍可另外選擇檔案。工具可將最長 8 分鐘、150 MB 以內的音樂分離為人聲與伴奏。功能優先使用 FP32 WebGPU 模型，避免 FP16 GPU 推論產生非有限數值；無法使用時自動改以 WASM CPU 執行；程式會轉換 FP16 模型輸出並攔截無效數值與全靜音結果，GPU 輸出無效時會自動改用 WASM CPU 重新處理。完成後會產生人聲與伴奏兩個同步動畫頻譜，使用共用的播放鍵與播放位置同時播放；每條音軌仍有獨立 MUTE、-10～+10 dB／0.3 dB 步進的音量，以及 -10～+10 dB 的低、中、高音三段 EQ，並透過 Web Audio 即時套用於聲音與頻譜。設定會保存在瀏覽器並套用於試聽。可下載未經調整的獨立人聲／伴奏，也可將目前 MUTE、音量與 EQ 套用到兩軌後重新混合，經整體峰值保護後下載 44.1 kHz、16-bit 立體聲 WAV。「套用到主畫面」會將同一份混合 WAV 保存到 IndexedDB、取代主畫面的音樂並自動返回，媒體不會上傳。第一次執行會從 Hugging Face 下載約 201 MB 的 BS PolarFormer FP32 GPU 模型（CPU 回退使用 FP16），並以 Cache Storage 保存大型二進位模型；再次開啟頁面可直接從瀏覽器儲存讀取。同一頁面後續分離還會沿用已建立的 GPU／CPU 模型工作階段，避免再次載入與暖機。選擇的音樂、PCM 資料與分離結果都不會上傳。
+主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，並預設從 IndexedDB 帶入主畫面目前保存的音樂；沒有保存音樂時仍可另外選擇檔案。工具可將最長 8 分鐘、150 MB 以內的音樂分離為人聲與伴奏。預設使用輕量 Spleeter 2-stems（兩個模型合計約 75 MB），另可選原本的 BS PolarFormer 高品質模型（約 201 MB）。輕量模型優先縮短處理時間，但可能殘留更多伴奏，約 11 kHz 以上頻段保留於伴奏。功能優先使用 FP32 WebGPU 模型，無法使用時自動改以 WASM CPU 執行；程式會轉換 FP16 模型輸出並攔截無效數值與全靜音結果，GPU 輸出無效時會自動改用 WASM CPU 重新處理。完成後會產生人聲與伴奏兩個同步動畫頻譜，使用共用的播放鍵與播放位置同時播放；每條音軌仍有獨立 MUTE、-10～+10 dB／0.3 dB 步進的音量，以及 -10～+10 dB 的低、中、高音三段 EQ，並透過 Web Audio 即時套用於聲音與頻譜。設定會保存在瀏覽器並套用於試聽。可下載未經調整的獨立人聲／伴奏，也可將目前 MUTE、音量與 EQ 套用到兩軌後重新混合，經整體峰值保護後下載 44.1 kHz、16-bit 立體聲 WAV。「套用到主畫面」會將同一份混合 WAV 保存到 IndexedDB、取代主畫面的音樂並自動返回，媒體不會上傳。第一次執行會從 Hugging Face 下載所選模型（Spleeter 使用 FP32；BS PolarFormer 的 CPU 回退使用 FP16），並以 Cache Storage 保存大型二進位模型；再次開啟頁面可直接從瀏覽器儲存讀取。同一頁面後續分離還會沿用已建立的 GPU／CPU 模型工作階段，避免再次載入與暖機。選擇的音樂、PCM 資料與分離結果都不會上傳。
 
 主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入明確支援 WebM，以及 MP4、MOV 等瀏覽器可讀格式，可轉成 MP4、MOV、WebM、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
 
@@ -203,6 +203,8 @@ MP3／FLAC／WAV 測試使用真實本機編碼器產生音訊並重新讀取，
 
 額外音訊編碼器取自 `@mediabunny/mp3-encoder@1.55.7` 與 `@mediabunny/flac-encoder@1.55.7`，僅將 bare `mediabunny` import 改為本機相對路徑。WASM 內嵌於模組，不呼叫 CDN；授權、來源與重建說明見 `vendor/*-encoder-README.md` 及 `vendor/*-encoder-LICENSE`。
 
-`vendor/onnxruntime-web/` 取自 `onnxruntime-web@1.21.0`，以 MIT 授權隨網站提供。人聲分離使用 MIT 授權的 BS PolarFormer FP16 ONNX 模型；模型在第一次使用時由 `bgkb/bs_polarformer` 公開模型倉庫下載。
+`vendor/onnxruntime-web/` 取自 `onnxruntime-web@1.21.0`，以 MIT 授權隨網站提供。人聲分離提供 Spleeter 2-stems 與 BS PolarFormer ONNX 模型；下載來源、版本與授權見 `vendor/spleeter/README.md` 及人聲分離功能說明。
 
-人聲分離可選「標準」（50% 重疊）或「快速」（25% 重疊）。快速模式約減少三分之一推論段數，但接縫附近的分離品質可能降低；預設保留標準模式。剩餘時間以近期分段耗時估算，排除第一次推論，並顯示每段實際秒數。
+BS PolarFormer 高品質分離可選「標準」（50% 重疊）或「快速」（25% 重疊）。快速模式約減少三分之一推論段數，但接縫附近的分離品質可能降低；預設保留標準模式。剩餘時間以近期分段耗時估算，排除第一次推論，並顯示每段實際秒數。
+
+Spleeter 原始模型採用 [Deezer Spleeter（MIT）](https://github.com/deezer/spleeter)，ONNX 版本來自 [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx/tree/master/scripts/spleeter)。版本與推論規格記錄於 `vendor/spleeter/README.md`。

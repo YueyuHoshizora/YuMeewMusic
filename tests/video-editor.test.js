@@ -58,7 +58,7 @@ test("cover sizing fills the frame without distortion", () => {
   });
 });
 
-test("語喵影片 exposes local layer controls and fixed top overlays", () => {
+test("影片編輯 exposes local layer controls and fixed top overlays", () => {
   const html = readFileSync("video-editor.html", "utf8");
   const script = readFileSync("js/video-editor.js", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
@@ -99,6 +99,6 @@ test("語喵影片 exposes local layer controls and fixed top overlays", () => {
   assert.match(script, /originalBuffer: state\.base\.audioBuffer \|\| \{ duration: timelineDuration\(\) \}/);
   assert.match(script, /drawIdentity/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/converter\.html">任意轉<\/a>\s*<a class="tool-link" href="\.\/image-video\.html">圖轉影片<\/a>\s*<a class="tool-link" href="\.\/video-editor\.html">語喵影片<\/a>/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/image-video\.html">圖轉影片<\/a>\s*<a class="tool-link" href="\.\/video-editor\.html">影片編輯<\/a>\s*<a class="tool-link" href="\.\/converter\.html">任意轉<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-editor\.html"/);
 });

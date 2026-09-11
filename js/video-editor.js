@@ -630,7 +630,7 @@ async function exportProject() {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     $("editor-progress").value = 100;
-    status("語喵影片匯出完成，下載已開始。", "success");
+    status("影片匯出完成，下載已開始。", "success");
   } catch (error) {
     if (output && !["finalized", "canceled"].includes(output.state)) await output.cancel().catch(() => {});
     status(error.message || "影片匯出失敗。", "error");

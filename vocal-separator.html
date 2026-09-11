@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在瀏覽器內使用 AI 將音樂分離成人聲與伴奏，音樂不會上傳伺服器。" />
+    <title>人聲分離 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/vocal-separator.css" />
+    <script type="module" src="./js/vocal-separator.js"></script>
+  </head>
+  <body class="separator-body">
+    <header class="converter-header separator-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">VOCAL SEPARATOR</span></a>
+      <span class="local"><i></i>音樂只在瀏覽器內處理</span>
+      <a class="reset-settings converter-back" href="./">← 返回主畫面</a>
+    </header>
+    <main class="separator-main">
+      <section class="separator-heading">
+        <div>
+          <div class="eyebrow">LOCAL AI AUDIO TOOL</div>
+          <h1>人聲分離<span>。</span></h1>
+          <p>將一首歌分離成人聲與伴奏。第一次使用會下載約 103 MB 的 AI 模型，音樂內容不會離開你的裝置。</p>
+        </div>
+        <span id="separator-engine" class="separator-engine">等待音樂</span>
+      </section>
+
+      <section class="separator-workspace">
+        <div class="panel separator-source">
+          <div class="section-title"><span>01</span><h2>選擇音樂</h2></div>
+          <button id="separator-drop" class="separator-drop" type="button" aria-describedby="separator-error">
+            <span class="separator-drop-icon" aria-hidden="true">♫</span>
+            <span><strong id="separator-file-name">選擇本機音樂</strong><small id="separator-file-help">MP3 · WAV · M4A · FLAC · 300 MB 以內</small></span>
+          </button>
+          <input id="separator-input" type="file" accept="audio/*,.mp3,.wav,.m4a,.flac" hidden />
+          <p id="separator-error" class="separator-error" role="alert" hidden></p>
+          <div id="separator-file-info" class="separator-file-info" hidden>
+            <dl>
+              <div><dt>長度</dt><dd id="separator-duration">—</dd></div>
+              <div><dt>聲道</dt><dd id="separator-channels">—</dd></div>
+              <div><dt>處理取樣率</dt><dd>44.1 kHz</dd></div>
+              <div><dt>檔案大小</dt><dd id="separator-size">—</dd></div>
+            </dl>
+            <audio id="separator-original" controls preload="metadata"></audio>
+          </div>
+        </div>
+
+        <div class="panel separator-process">
+          <div class="section-title"><span>02</span><h2>開始分離</h2></div>
+          <div class="separator-mode"><strong>自動使用最快模式</strong><span>優先使用 WebGPU；無法使用時自動改用 WASM CPU。</span></div>
+          <button id="separator-start" class="export-button" type="button" disabled>開始分離人聲</button>
+          <progress id="separator-progress" max="100" value="0" hidden></progress>
+          <div class="separator-progress-row">
+            <span id="separator-status" role="status">請先選擇音樂。</span>
+            <button id="separator-cancel" class="text-button" type="button" hidden>取消處理</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="separator-results" class="panel separator-results" hidden>
+        <div class="section-title"><span>03</span><h2>分離結果</h2></div>
+        <div class="separator-tracks">
+          <article>
+            <div><strong>人聲</strong><span>AI 辨識出的歌聲</span></div>
+            <audio id="separator-vocals" controls></audio>
+            <button id="download-vocals" class="text-button" type="button">下載人聲 WAV</button>
+          </article>
+          <article>
+            <div><strong>伴奏</strong><span>原始音樂扣除辨識人聲</span></div>
+            <audio id="separator-instrumental" controls></audio>
+            <button id="download-instrumental" class="text-button" type="button">下載伴奏 WAV</button>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel separator-notes">
+        <div><strong>目前限制</strong><span>單次最長 5 分鐘、300 MB。較長音樂建議先用主畫面的裁剪功能處理。</span></div>
+        <div><strong>處理時間</strong><span>取決於電腦與瀏覽器；CPU 模式可能需要較長時間。</span></div>
+        <div><strong>隱私</strong><span>AI 模型會下載至瀏覽器，選擇的音樂不會上傳。</span></div>
+      </section>
+      <p class="separator-credit">分離模型：BS PolarFormer FP16（MIT）· 推論引擎：ONNX Runtime Web（MIT）</p>
+    </main>
+  </body>
+</html>

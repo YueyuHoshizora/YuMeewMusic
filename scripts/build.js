@@ -3,11 +3,11 @@ import { mkdir, cp, rm, readFile, writeFile, readdir } from "node:fs/promises";
 // Only public files are copied: never source metadata, credentials or user media.
 await rm("dist", { recursive: true, force: true });
 await mkdir("dist", { recursive: true });
-for (const path of ["index.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "favicon.svg", "css", "js", "vendor"])
+for (const path of ["index.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "favicon.svg", "css", "js", "vendor"])
   await cp(path, `dist/${path}`, { recursive: true });
 // A single content-derived version keeps entry points and app modules in sync after deploys.
-const htmlFiles = ["index.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html"];
-const files = [...htmlFiles, "css/style.css", "css/subtitle-editor.css", "css/converter.css", "css/video-editor.css", "css/image-video.css", ...(await readdir("js")).filter(name => name.endsWith(".js")).sort().map(name => `js/${name}`)];
+const htmlFiles = ["index.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html"];
+const files = [...htmlFiles, "css/style.css", "css/subtitle-editor.css", "css/converter.css", "css/video-editor.css", "css/image-video.css", "css/vocal-separator.css", ...(await readdir("js")).filter(name => name.endsWith(".js")).sort().map(name => `js/${name}`)];
 const hash = createHash("sha256");
 for (const file of files) hash.update(await readFile(file));
 const version = hash.digest("hex").slice(0, 12);

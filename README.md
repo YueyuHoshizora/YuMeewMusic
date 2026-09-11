@@ -4,6 +4,8 @@
 
 **線上使用：** [YuMeew Music Studio](https://yueyuhoshizora.github.io/YuMeewMusic/)
 
+主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，將最長 5 分鐘、300 MB 以內的音樂分離為人聲與伴奏。功能優先使用 WebGPU，無法使用時自動改以 WASM CPU 執行；完成後可分軌試聽並下載 44.1 kHz、16-bit 立體聲 WAV。第一次執行會從 Hugging Face 下載約 103 MB 的 BS PolarFormer FP16 模型並由瀏覽器快取，選擇的音樂、PCM 資料與分離結果都不會上傳。
+
 主畫面頂部的「任意轉」會開啟獨立媒體轉換頁面。影片輸入明確支援 WebM，以及 MP4、MOV 等瀏覽器可讀格式，可轉成 MP4、MOV、WebM、MP3、M4A、FLAC 或 WAV；音樂輸入僅提供 MP3、M4A、FLAC 與 WAV。頁面會依實際媒體軌限制選項，轉換與下載全程在瀏覽器完成。
 
 「圖轉影片」可一次加入多張 JPG、PNG、WebP 圖片，依序調整每張圖片的持續時間、進場特效、退場特效及特效時間。解析度、FPS 與畫面比例預設沿用主畫面設定；輸出固定為採用 PNG 影格的 MOV，因此 PNG 透明通道會保留。可直接下載 MOV，也可選擇「匯出到主畫面」；完成編碼與瀏覽器保存後，成品會取代主畫面的背景素材並自動返回。主畫面另保存圖片時間軸資料，以便在瀏覽器無法直接播放 PNG 編碼 MOV 時仍能循環預覽及匯出。
@@ -16,7 +18,7 @@
 
 ## 隱私與檔案限制
 
-所有媒體讀取、解碼、裁剪、繪製與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器與 WASM 隨網站提供，不依賴 CDN。
+所有媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。人聲分離模型會由瀏覽器從 Hugging Face 下載，但音樂不會傳送至該服務。
 
 | 素材 | 支援內容 | 限制 |
 | --- | --- | --- |
@@ -150,6 +152,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `subtitle-editor.html` | 獨立字幕編輯器與時間軸介面 |
 | `converter.html` | 獨立影片／音樂格式轉換頁面 |
 | `video-editor.html` | 「語喵影片」影片與圖片圖層時間軸編輯器 |
+| `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
 | `css/subtitle-editor.css` | 字幕編輯器、音訊波形與字幕色帶樣式 |
 | `css/converter.css` | 任意轉頁面配置與狀態樣式 |
@@ -161,6 +164,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `js/export.js` | 客戶端音訊／影片編碼 |
 | `js/converter.js`、`js/converter-core.js` | 任意轉介面、媒體辨識與轉碼流程 |
 | `js/video-editor.js`、`js/video-editor-core.js` | 語喵影片的圖層、預覽、時間軸、音訊混合與匯出流程 |
+| `js/vocal-separator.js`、`js/vocal-separator-worker.js`、`js/vocal-separator-core.js` | 人聲分離介面、背景推論與音訊 DSP／WAV 輸出 |
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |
 | `js/trim.js`、`js/trim-time.js`、`js/trim-range.js` | 音訊裁剪、時間解析與拖曳範圍計算 |
 | `js/subtitles.js` | 字幕解析與時間對應 |
@@ -198,3 +202,5 @@ MP3／FLAC／WAV 測試使用真實本機編碼器產生音訊並重新讀取，
 `vendor/mediabunny.min.mjs` 取自 `mediabunny@1.55.7`，原始碼見 [Mediabunny v1.55.7](https://github.com/Vanilagy/mediabunny/tree/v1.55.7)，授權見 [`vendor/LICENSE.mediabunny`](vendor/LICENSE.mediabunny)。
 
 額外音訊編碼器取自 `@mediabunny/mp3-encoder@1.55.7` 與 `@mediabunny/flac-encoder@1.55.7`，僅將 bare `mediabunny` import 改為本機相對路徑。WASM 內嵌於模組，不呼叫 CDN；授權、來源與重建說明見 `vendor/*-encoder-README.md` 及 `vendor/*-encoder-LICENSE`。
+
+`vendor/onnxruntime-web/` 取自 `onnxruntime-web@1.21.0`，以 MIT 授權隨網站提供。人聲分離使用 MIT 授權的 BS PolarFormer FP16 ONNX 模型；模型在第一次使用時由 `bgkb/bs_polarformer` 公開模型倉庫下載。

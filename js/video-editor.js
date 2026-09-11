@@ -247,13 +247,18 @@ function renderTimeline() {
 
 function renderLayerList() {
   $("layer-list").replaceChildren(...state.layers.map((layer, index) => {
-    const row = document.createElement("button");
-    row.type = "button";
+    const row = document.createElement("div");
     row.className = `layer-row${layer.id === state.selectedId ? " selected" : ""}`;
-    row.innerHTML = `<span>${layer.type === "dynamic" ? "✦" : layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b>`;
+    row.innerHTML = `<button class="layer-select" type="button"><span>${layer.type === "dynamic" ? "✦" : layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b></button><div class="layer-order"><button class="layer-up" type="button" aria-label="上移圖層">↑</button><button class="layer-down" type="button" aria-label="下移圖層">↓</button></div>`;
     row.querySelector("strong").textContent = layer.name;
     row.querySelector("small").textContent = layer.type === "dynamic" ? "可調整順序 · 完整時間" : `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
-    row.addEventListener("click", () => selectLayer(layer.id));
+    row.querySelector(".layer-select").addEventListener("click", () => selectLayer(layer.id));
+    const up = row.querySelector(".layer-up");
+    const down = row.querySelector(".layer-down");
+    up.disabled = index === state.layers.length - 1;
+    down.disabled = index === 0;
+    up.addEventListener("click", () => moveLayer(layer.id, 1));
+    down.addEventListener("click", () => moveLayer(layer.id, -1));
     return row;
   }));
   $("subtitle-layer").classList.toggle("inactive", !state.subtitles);
@@ -374,6 +379,15 @@ function nudgeSelectedTime(field, delta) {
   const index = state.layers.findIndex(layer => layer.id === state.selectedId);
   if (index < 0) return;
   state.layers[index] = nudgeLayerTime(state.layers[index], field, delta);
+  update();
+}
+
+function moveLayer(id, direction) {
+  const index = state.layers.findIndex(layer => layer.id === id);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= state.layers.length) return;
+  [state.layers[index], state.layers[target]] = [state.layers[target], state.layers[index]];
+  state.selectedId = id;
   update();
 }
 
@@ -696,11 +710,7 @@ $("remove-layer").addEventListener("click", () => {
   update();
 });
 for (const [id, direction] of [["move-layer-up", 1], ["move-layer-down", -1]]) $(id).addEventListener("click", () => {
-  const index = state.layers.findIndex(layer => layer.id === state.selectedId);
-  const target = index + direction;
-  if (index < 0 || target < 0 || target >= state.layers.length) return;
-  [state.layers[index], state.layers[target]] = [state.layers[target], state.layers[index]];
-  update();
+  moveLayer(state.selectedId, direction);
 });
 for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
   $(`trim-${edge}${suffix}`).addEventListener("input", () => {

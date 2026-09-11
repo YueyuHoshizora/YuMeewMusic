@@ -68,6 +68,10 @@ test("影片編輯 exposes a movable dynamic layer and locked text overlays", ()
   assert.match(html, /動態特效預設位於倒數第二層並可調整順序，字幕與個人識別固定在最上層/);
   assert.match(script, /type: "dynamic", name: "動態特效"/);
   assert.match(script, /layer\.type === "dynamic"/);
+  assert.match(script, /class="layer-order"/);
+  assert.match(script, /class="layer-up"[^>]*aria-label="上移圖層"/);
+  assert.match(script, /class="layer-down"[^>]*aria-label="下移圖層"/);
+  assert.match(script, /function moveLayer\(id, direction\)/);
   assert.match(html, /id="base-layer"[^>]*>.*主畫面影片本體.*基礎鎖定/s);
   assert.match(html, /id="layer-audio"[^>]*type="checkbox"/);
   assert.doesNotMatch(html, /id="layer-audio"[^>]*checked/);

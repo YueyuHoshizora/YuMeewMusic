@@ -86,11 +86,15 @@ test("影片編輯 exposes a movable dynamic layer and locked text overlays", ()
   for (const id of ["editor-format", "editor-resolution", "editor-fps"]) assert.ok(!ids.includes(id), id);
   assert.match(html, /格式<strong>WebM · VP9<\/strong>/);
   assert.match(html, /解析度與影格率沿用主畫面設定，不會在影片編輯中改動/);
+  assert.match(html, /id="apply-progress-value"[^>]*>0%<\/output>/);
   assert.match(script, /const format = "webm"/);
   assert.match(script, /const resolution = settings\.resolution/);
   assert.match(script, /const fps = Number\(settings\.fps\)/);
   assert.match(script, /\$\("apply-resolution"\)\.textContent = `\$\{settings\.resolution\}p`/);
   assert.match(script, /\$\("apply-fps"\)\.textContent = `\$\{settings\.fps\} fps`/);
+  assert.match(script, /function setApplyProgress\(value\)/);
+  assert.match(script, /onProgress: value => setApplyProgress\(90 \+ value \* \.08\)/);
+  assert.match(script, /setApplyProgress\(100\)/);
   for (const id of ["enter-effect", "enter-duration", "exit-effect", "exit-duration"]) assert.ok(ids.includes(id), id);
   assert.equal((html.match(/id="(?:enter|exit)-duration"[^>]*value="0\.5"/g) || []).length, 2);
   assert.equal((html.match(/<option value="rgb-glitch">RGB 色差故障<\/option>/g) || []).length, 2);

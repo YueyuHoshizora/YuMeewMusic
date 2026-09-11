@@ -51,6 +51,12 @@ function status(text, mode = "") {
   $("editor-status").className = `editor-status ${mode}`.trim();
 }
 
+function setApplyProgress(value) {
+  const progress = Math.max(0, Math.min(100, Math.round(value)));
+  $("editor-progress").value = progress;
+  $("apply-progress-value").value = `${progress}%`;
+}
+
 function selectedLayer() {
   return state.layers.find(layer => layer.id === state.selectedId) || null;
 }
@@ -568,9 +574,9 @@ async function applyProjectToMain() {
   state.exporting = true;
   state.exportController = new AbortController();
   const signal = state.exportController.signal;
-  $("editor-progress").hidden = false;
+  $("apply-progress-row").hidden = false;
   $("cancel-export").hidden = false;
-  $("editor-progress").value = 0;
+  setApplyProgress(0);
   updatePlayer();
   const decoders = new Map();
   let baseBackgroundDecoder = null;
@@ -637,14 +643,15 @@ async function applyProjectToMain() {
       }
       await videoSource.add(time, Math.min(1 / fps, duration - time));
       if (index % 5 === 0) {
-        const progress = Math.round(index / count * 98);
-        $("editor-progress").value = progress;
+        const progress = Math.round(index / count * 90);
+        setApplyProgress(progress);
         status(`正在套用 ${progress}% · ${hardwareAcceleration === "prefer-hardware" ? "硬體編碼優先" : "瀏覽器編碼"}`);
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
     videoSource.close();
     await output.finalize();
+    setApplyProgress(90);
     const blob = new Blob([target.buffer], { type: format === "webm" ? "video/webm" : "video/mp4" });
     const outputName = `yumeow-edited-background-${resolution}p-${fps}fps.${format}`;
     const file = new File([blob], outputName, { type: blob.type, lastModified: Date.now() });
@@ -659,17 +666,18 @@ async function applyProjectToMain() {
         resolution: "480",
         fps: "30",
         signal,
-        onProgress: () => {},
+        onProgress: value => setApplyProgress(90 + value * .08),
       });
       audioFile = new File([audioBlob], "yumeow-edited-audio.wav", { type: "audio/wav", lastModified: Date.now() });
     }
     status("正在保存影片與混合音訊到主畫面…");
+    setApplyProgress(99);
     await deleteStoredValue("image-video-project").catch(() => {});
     await saveStoredMedia("image", file);
     if (audioFile) await saveStoredMedia("audio", audioFile);
     if (!saveSettings({ ...settings, style: 19 })) throw Error("影片已保存，但無法將主畫面特效改為「無」。");
     void navigator.storage?.persist?.().catch(() => false);
-    $("editor-progress").value = 100;
+    setApplyProgress(100);
     status("已套用到主畫面。", "success");
     window.location.href = "./";
   } catch (error) {

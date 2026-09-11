@@ -151,7 +151,10 @@
             </div>
             <p class="position-help">解析度與影格率沿用主畫面設定，不會在影片編輯中改動。</p>
             <button id="apply-project" class="export-button" type="button" disabled>套用到主畫面 →</button>
-            <progress id="editor-progress" max="100" value="0" hidden></progress>
+            <div id="apply-progress-row" class="apply-progress-row" hidden>
+              <progress id="editor-progress" max="100" value="0"></progress>
+              <output id="apply-progress-value" for="editor-progress">0%</output>
+            </div>
             <button id="cancel-export" class="text-button" type="button" hidden>取消匯出</button>
           </div>
         </aside>

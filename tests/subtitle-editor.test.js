@@ -44,6 +44,8 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(script, /parseSubtitles\(text, 'srt'\)/);
   assert.match(script, /MAX_RECOGNITION_FILE_SIZE = 150 \* 1024 \* 1024/);
   assert.match(script, /SEPARATOR_MAX_DURATION/);
+  assert.doesNotMatch(script, /status\(message, 'error'\)/);
+  assert.match(script, /function recognitionUnavailable\(message\) \{\s+setRecognitionProgress\(0, '無法開始辨識', message\)/);
   assert.doesNotMatch(script, /lyrics-recognition|recognize-lyrics|Whisper|startLyricsRecognition/);
   assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);
   assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);

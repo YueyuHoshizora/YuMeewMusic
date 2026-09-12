@@ -125,7 +125,10 @@ function recognitionFailed(message, run) {
   releaseRecognition();
   setRecognitionBusy(false);
   setRecognitionProgress($('recognition-progress').value, '辨識失敗', message);
-  status(message, 'error');
+}
+
+function recognitionUnavailable(message) {
+  setRecognitionProgress(0, '無法開始辨識', message);
 }
 
 function vocalsAudioBuffer(left, right) {
@@ -195,15 +198,15 @@ async function encodeAndUploadVocals(data, run) {
 async function startSubtitleRecognition() {
   if (recognition.busy) return;
   if (!state.audioFile || !state.waveformBuffer) {
-    status('請先在主畫面選擇可解析的音樂。', 'error');
+    recognitionUnavailable('請先在主畫面選擇可解析的音樂。');
     return;
   }
   if (state.audioFile.size > MAX_RECOGNITION_FILE_SIZE) {
-    status('字幕辨識的音樂檔案上限為 150 MB。', 'error');
+    recognitionUnavailable('字幕辨識的音樂檔案上限為 150 MB。');
     return;
   }
   if (state.waveformBuffer.duration > SEPARATOR_MAX_DURATION + .01) {
-    status('字幕辨識目前最多處理 8 分鐘，請先在主畫面裁剪音樂。', 'error');
+    recognitionUnavailable('字幕辨識目前最多處理 8 分鐘，請先在主畫面裁剪音樂。');
     return;
   }
   const run = ++recognition.run;

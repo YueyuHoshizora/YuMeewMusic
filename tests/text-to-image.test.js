@@ -16,6 +16,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.doesNotMatch(script, /prompt-count/);
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);
+  assert.match(html, /value="flux-2-klein-4b"[\s\S]*value="gpt-image-2\.5-flare">GPT-Image-2\.5 Flare<\/option>[\s\S]*value="gpt-image-2\.5-sunburst"/);
   assert.match(html, /value="gpt-image-2\.5-sunburst">GPT-Image-2\.5 Sunburst<\/option>/);
   assert.match(html, /id="model-provider-note">Cloudflare Workers AI<\/strong>/);
   assert.match(html, /<span>API KEY<\/span>\s*<button id="model-api-key"[^>]*disabled>Free<\/button>/);
@@ -60,9 +61,11 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /async function callFlux2Klein4B\(\{ prompt, enhance \}\)/);
   assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?apiKey: "Free"[\s\S]*?call: callFlux2Klein4B/);
   assert.match(script, /"gpt-image-2\.5-sunburst": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Sunburst"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Sunburst/);
+  assert.match(script, /"gpt-image-2\.5-flare": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Flare"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Flare/);
   assert.match(script, /provider: "OpenAI Image API"/);
   assert.match(script, /\$\("model-provider-note"\)\.textContent = model\?\.provider \|\| "圖片服務"/);
-  assert.match(script, /async function callGptImage25Sunburst\(\{ prompt, apiKey \}\)/);
+  assert.match(script, /async function callOpenAiImage\(\{ model, prompt, apiKey \}\)/);
+  assert.match(script, /model: "gpt-image-2\.5-flare"/);
   assert.match(script, /Authorization: `Bearer \$\{apiKey\}`/);
   assert.match(script, /model: "gpt-image-2\.5-sunburst"/);
   assert.match(script, /size: "1280x720"/);

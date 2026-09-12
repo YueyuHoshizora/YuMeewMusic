@@ -28,7 +28,7 @@ function base64ImageBlob(encoded, type = "image/jpeg") {
   return new Blob([bytes], { type });
 }
 
-async function callGptImage25Sunburst({ prompt, apiKey }) {
+async function callOpenAiImage({ model, prompt, apiKey }) {
   const response = await fetch(OPENAI_IMAGE_URL, {
     method: "POST",
     headers: {
@@ -37,7 +37,7 @@ async function callGptImage25Sunburst({ prompt, apiKey }) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-image-2.5-sunburst",
+      model,
       prompt,
       size: "1280x720",
       quality: "auto",
@@ -58,12 +58,26 @@ async function callGptImage25Sunburst({ prompt, apiKey }) {
   throw Error("OpenAI 沒有回傳可用的圖片資料。");
 }
 
+function callGptImage25Flare({ prompt, apiKey }) {
+  return callOpenAiImage({ model: "gpt-image-2.5-flare", prompt, apiKey });
+}
+
+function callGptImage25Sunburst({ prompt, apiKey }) {
+  return callOpenAiImage({ model: "gpt-image-2.5-sunburst", prompt, apiKey });
+}
+
 const IMAGE_MODELS = Object.freeze({
   "flux-2-klein-4b": Object.freeze({
     label: "Flux.2 Klein 4B",
     provider: "Cloudflare Workers AI",
     apiKey: "Free",
     call: callFlux2Klein4B,
+  }),
+  "gpt-image-2.5-flare": Object.freeze({
+    label: "GPT-Image-2.5 Flare",
+    provider: "OpenAI Image API",
+    apiKey: "OpenAI",
+    call: callGptImage25Flare,
   }),
   "gpt-image-2.5-sunburst": Object.freeze({
     label: "GPT-Image-2.5 Sunburst",

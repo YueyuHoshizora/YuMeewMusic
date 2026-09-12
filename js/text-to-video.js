@@ -62,6 +62,7 @@ function submitVideoPromptBuilder(event) {
   event.preventDefault();
   const fields = [
     ["時間", $("video-prompt-time").value.trim()],
+    ["場景", $("video-prompt-scene").value.trim()],
     ["鏡頭", $("video-prompt-camera").value.trim()],
     ["動作", $("video-prompt-action").value.trim()],
     ["對白", $("video-prompt-dialogue").value.trim()],

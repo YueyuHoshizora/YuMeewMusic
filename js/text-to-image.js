@@ -165,10 +165,6 @@ $("prompt-keywords").addEventListener("keydown", event => {
 
 $("compose-prompt").addEventListener("click", () => void composePrompt());
 
-$("image-prompt").addEventListener("keydown", event => {
-  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") generateImage();
-});
-
 $("generate-image").addEventListener("click", generateImage);
 
 $("download-image").addEventListener("click", () => {

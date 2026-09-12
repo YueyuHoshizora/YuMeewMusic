@@ -33,6 +33,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /async function composePrompt\(\)/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt \}\)/);
   assert.match(script, /\$\("image-prompt"\)\.value = result\.slice\(0, 2048\)/);
+  assert.doesNotMatch(script, /\$\("image-prompt"\)\.addEventListener\("keydown"/);
   assert.doesNotMatch(script, /searchParams\.set\("p"/);
   assert.match(script, /statusCode === 429/);
   assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);

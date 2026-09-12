@@ -22,6 +22,7 @@ async function callFlux2Klein4B({ prompt, enhance }) {
 const IMAGE_MODELS = Object.freeze({
   "flux-2-klein-4b": Object.freeze({
     label: "Flux.2 Klein 4B",
+    apiKey: "Free",
     call: callFlux2Klein4B,
   }),
 });
@@ -85,6 +86,11 @@ function status(text, mode = "") {
 function showError(text = "") {
   $("generation-error").textContent = text;
   $("generation-error").hidden = !text;
+}
+
+function syncModelDetails() {
+  const model = IMAGE_MODELS[$("image-model").value];
+  $("model-api-key").textContent = model?.apiKey || "—";
 }
 
 function setBusy(value) {
@@ -218,6 +224,8 @@ $("prompt-keywords").addEventListener("input", () => {
 });
 
 $("compose-prompt").addEventListener("click", () => void composePrompt());
+
+$("image-model").addEventListener("change", syncModelDetails);
 
 $("generate-image").addEventListener("click", generateImage);
 

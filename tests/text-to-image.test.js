@@ -14,6 +14,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="image-prompt"[^>]*maxlength="2048"/);
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);
+  assert.match(html, /<span>API KEY<\/span>\s*<strong id="model-api-key">Free<\/strong>/);
   assert.match(html, /id="prompt-keywords"[^>]*type="text"/);
   assert.match(html, /id="compose-prompt"[^>]*class="export-button"[^>]*>組成題詞<\/button>/);
   assert.match(html, /id="generated-image-frame"/);
@@ -44,8 +45,10 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /文字轉譯成Prompt/);
   assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);
   assert.match(script, /async function callFlux2Klein4B\(\{ prompt, enhance \}\)/);
-  assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?call: callFlux2Klein4B/);
+  assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?apiKey: "Free"[\s\S]*?call: callFlux2Klein4B/);
   assert.match(script, /const model = IMAGE_MODELS\[\$\("image-model"\)\.value\]/);
+  assert.match(script, /\$\("model-api-key"\)\.textContent = model\?\.apiKey \|\| "—"/);
+  assert.match(script, /\$\("image-model"\)\.addEventListener\("change", syncModelDetails\)/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance \}\)/);
   assert.match(script, /\$\("image-model"\)\.disabled = value/);
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);

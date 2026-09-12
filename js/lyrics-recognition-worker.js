@@ -9,7 +9,7 @@ env.customCache = indexedDbModelCache;
 
 const MODELS = {
   fast: 'onnx-community/whisper-tiny_timestamped',
-  quality: 'onnx-community/whisper-base_timestamped',
+  quality: 'onnx-community/whisper-small_timestamped',
 };
 const DEVICE_OPTIONS = {
   webgpu: { device: 'webgpu', dtype: { encoder_model: 'fp16', decoder_model_merged: 'q4' } },

@@ -4,12 +4,13 @@ import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-sto
 import { formatSubtitleTime, generatedSubtitleFilename, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
 import { createUndoHistory } from './undo-history.js';
 import { LYRICS_MAX_DURATION } from './lyrics-recognition-core.js';
+import { encodeStereoWav } from './vocal-separator-core.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
 const state = { cues: [], selected: -1, duration: 60, subtitleName: 'edited-subtitles.srt', dirty: false, audioUrl: '', audioFile: null, waveformBuffer: null };
 const editHistory = createUndoHistory(10);
-const recognition = { busy: false, separator: null, whisper: null };
+const recognition = { busy: false, separator: null, whisper: null, previewUrl: '' };
 let textHistoryCue = null;
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -103,6 +104,23 @@ function stopRecognitionWorkers() {
   recognition.whisper = null;
 }
 
+function clearVocalsPreview() {
+  const preview = $('lyrics-vocals-preview');
+  preview.pause();
+  preview.removeAttribute('src');
+  preview.load();
+  $('lyrics-vocals-preview-area').hidden = true;
+  if (recognition.previewUrl) URL.revokeObjectURL(recognition.previewUrl);
+  recognition.previewUrl = '';
+}
+
+function showVocalsPreview(samples) {
+  clearVocalsPreview();
+  recognition.previewUrl = URL.createObjectURL(encodeStereoWav(samples, samples, 16000));
+  $('lyrics-vocals-preview').src = recognition.previewUrl;
+  $('lyrics-vocals-preview-area').hidden = false;
+}
+
 function recognitionFailed(message) {
   stopRecognitionWorkers();
   setRecognitionBusy(false);
@@ -170,9 +188,12 @@ async function startLyricsRecognition() {
     return;
   }
 
+  const quality = $('lyrics-quality').value === 'quality';
+  const separatorName = quality ? 'BS PolarFormer' : 'Spleeter';
   setRecognitionBusy(true);
   audio.pause();
-  setLyricsProgress(1, '第一階段：分離人聲', '正在準備 Spleeter；音訊只在瀏覽器內處理。');
+  clearVocalsPreview();
+  setLyricsProgress(1, '第一階段：分離人聲', `正在準備 ${separatorName}；音訊只在瀏覽器內處理。`);
   try { await navigator.storage?.persist?.(); } catch {}
   try {
     const left = Float32Array.from(state.waveformBuffer.getChannelData(0));
@@ -181,7 +202,7 @@ async function startLyricsRecognition() {
       : state.waveformBuffer.getChannelData(0));
     const worker = new Worker(new URL('./vocal-separator-worker.js', import.meta.url), { type: 'module' });
     recognition.separator = worker;
-    worker.addEventListener('error', event => recognitionFailed(event.message || 'Spleeter 處理程序發生錯誤。'));
+    worker.addEventListener('error', event => recognitionFailed(event.message || `${separatorName} 處理程序發生錯誤。`));
     worker.addEventListener('message', event => {
       if (worker !== recognition.separator) return;
       const data = event.data || {};
@@ -195,15 +216,23 @@ async function startLyricsRecognition() {
         recognition.separator?.terminate();
         recognition.separator = null;
         if (!(data.recognitionAudio instanceof Float32Array) || !data.recognitionAudio.length) {
-          recognitionFailed('Spleeter 沒有產生可辨識的人聲。');
+          recognitionFailed(`${separatorName} 沒有產生可辨識的人聲。`);
           return;
         }
+        showVocalsPreview(data.recognitionAudio);
         startWhisperRecognition(data.recognitionAudio);
       } else if (data.type === 'error') {
-        recognitionFailed(/fetch|network|load/i.test(data.text) ? '無法下載 Spleeter 模型，請檢查網路後再試。' : data.text);
+        recognitionFailed(/fetch|network|load/i.test(data.text) ? `無法下載 ${separatorName} 模型，請檢查網路後再試。` : data.text);
       }
     });
-    worker.postMessage({ type: 'separate', mode: 'fast', model: 'spleeter', output: 'vocals-16k', left: left.buffer, right: right.buffer }, [left.buffer, right.buffer]);
+    worker.postMessage({
+      type: 'separate',
+      mode: quality ? 'balanced' : 'fast',
+      model: quality ? 'polarformer' : 'spleeter',
+      output: 'vocals-16k',
+      left: left.buffer,
+      right: right.buffer,
+    }, [left.buffer, right.buffer]);
   } catch (error) {
     recognitionFailed(error?.message || '無法開始 AI 歌詞辨識。');
   }
@@ -598,6 +627,7 @@ window.addEventListener('resize', () => drawWaveform(state.waveformBuffer));
 window.addEventListener('beforeunload', event => { if (!state.dirty) return; event.preventDefault(); event.returnValue = ''; });
 window.addEventListener('unload', () => {
   stopRecognitionWorkers();
+  if (recognition.previewUrl) URL.revokeObjectURL(recognition.previewUrl);
   if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
 });
 

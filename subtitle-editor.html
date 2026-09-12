@@ -29,7 +29,7 @@
       <section class="lyrics-ai-panel panel" aria-labelledby="lyrics-ai-title">
         <div class="lyrics-ai-copy">
           <div class="section-title"><span>AI</span><h2 id="lyrics-ai-title">辨識歌詞</h2></div>
-          <p>先以 Spleeter 分離人聲，再由 Whisper 在瀏覽器內產生帶時間碼的字幕。音樂不會上傳伺服器；所有模型檔首次下載後都會自動保存在共用 IndexedDB。</p>
+          <p>先依辨識模式分離人聲，再由 Whisper 在瀏覽器內產生帶時間碼的字幕。音樂不會上傳伺服器；所有模型檔首次下載後都會自動保存在共用 IndexedDB。</p>
         </div>
         <div class="lyrics-ai-controls">
           <label for="lyrics-language">辨識語言
@@ -42,8 +42,8 @@
           </label>
           <label for="lyrics-quality">辨識模式
             <select id="lyrics-quality">
-              <option value="quality">品質 · Whisper Base</option>
-              <option value="fast">快速 · Whisper Tiny</option>
+              <option value="quality">品質 · PolarFormer＋Whisper Small（約 610 MB）</option>
+              <option value="fast">快速 · Spleeter＋Whisper Tiny（約 180 MB）</option>
             </select>
           </label>
           <button id="recognize-lyrics" class="export-button lyrics-recognize-button" type="button" disabled>AI 辨識歌詞</button>
@@ -52,6 +52,10 @@
           <div class="lyrics-progress-heading"><strong id="lyrics-stage">正在準備…</strong><span id="lyrics-percent">0%</span></div>
           <progress id="lyrics-progress" max="100" value="0"></progress>
           <div class="lyrics-progress-footer"><span id="lyrics-status" role="status">正在準備瀏覽器 AI…</span><button id="cancel-lyrics" class="text-button" type="button">取消辨識</button></div>
+        </div>
+        <div id="lyrics-vocals-preview-area" class="lyrics-vocals-preview" hidden>
+          <div><strong>辨識用人聲試聽</strong><span>這是送進 Whisper 的實際人聲，可用來判斷分離品質。</span></div>
+          <audio id="lyrics-vocals-preview" controls preload="metadata"></audio>
         </div>
       </section>
 

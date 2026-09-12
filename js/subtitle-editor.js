@@ -3,14 +3,11 @@ import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
 import { formatSubtitleTime, generatedSubtitleFilename, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
 import { createUndoHistory } from './undo-history.js';
-import { LYRICS_MAX_DURATION } from './lyrics-recognition-core.js';
-import { encodeStereoWav } from './vocal-separator-core.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
 const state = { cues: [], selected: -1, duration: 60, subtitleName: 'edited-subtitles.srt', dirty: false, audioUrl: '', audioFile: null, waveformBuffer: null };
 const editHistory = createUndoHistory(10);
-const recognition = { busy: false, separator: null, whisper: null, previewUrl: '' };
 let textHistoryCue = null;
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -73,186 +70,6 @@ function redoEdit() {
 function markDirty() {
   state.dirty = true;
   status('尚未儲存的修改', '');
-}
-
-function setLyricsProgress(value, stage, text) {
-  const progress = Math.max(0, Math.min(100, Math.round(value)));
-  $('lyrics-progress-area').hidden = false;
-  $('lyrics-progress').value = progress;
-  $('lyrics-percent').textContent = `${progress}%`;
-  if (stage) $('lyrics-stage').textContent = stage;
-  if (text) $('lyrics-status').textContent = text;
-}
-
-function setRecognitionBusy(value) {
-  recognition.busy = value;
-  $('recognize-lyrics').disabled = value || !state.audioFile || !state.waveformBuffer;
-  $('lyrics-language').disabled = value;
-  $('lyrics-quality').disabled = value;
-  $('return-to-main').disabled = value;
-  for (const id of ['editor-player', 'editor-workspace', 'editor-actions']) {
-    const element = document.querySelector(`.${id}`);
-    if (element) element.inert = value;
-  }
-  document.querySelector('.subtitle-editor-main').classList.toggle('recognition-busy', value);
-}
-
-function stopRecognitionWorkers() {
-  recognition.separator?.terminate();
-  recognition.whisper?.terminate();
-  recognition.separator = null;
-  recognition.whisper = null;
-}
-
-function clearVocalsPreview() {
-  const preview = $('lyrics-vocals-preview');
-  preview.pause();
-  preview.removeAttribute('src');
-  preview.load();
-  $('lyrics-vocals-preview-area').hidden = true;
-  if (recognition.previewUrl) URL.revokeObjectURL(recognition.previewUrl);
-  recognition.previewUrl = '';
-}
-
-function showVocalsPreview(samples) {
-  clearVocalsPreview();
-  recognition.previewUrl = URL.createObjectURL(encodeStereoWav(samples, samples, 16000));
-  $('lyrics-vocals-preview').src = recognition.previewUrl;
-  $('lyrics-vocals-preview-area').hidden = false;
-}
-
-function recognitionFailed(message) {
-  stopRecognitionWorkers();
-  setRecognitionBusy(false);
-  setLyricsProgress($('lyrics-progress').value, '辨識未完成', message);
-  status(message, 'error');
-}
-
-function finishLyricsRecognition(cues, device) {
-  stopRecognitionWorkers();
-  if (!Array.isArray(cues) || !cues.length) {
-    recognitionFailed('沒有辨識到可用的歌詞，請嘗試品質模式或更換音樂。');
-    return;
-  }
-  recordHistory();
-  state.cues = normalizeCues(cues, state.duration);
-  state.selected = state.cues.length ? 0 : -1;
-  state.subtitleName = generatedSubtitleFilename();
-  state.dirty = true;
-  textHistoryCue = null;
-  $('editor-subtitle-name').textContent = `AI 辨識草稿 · ${state.cues.length} 句`;
-  setRecognitionBusy(false);
-  setLyricsProgress(100, '辨識完成', `已使用 ${device === 'webgpu' ? 'WebGPU' : 'WASM CPU'} 產生 ${state.cues.length} 句字幕；請檢查內容後保存。`);
-  status(`AI 已產生 ${state.cues.length} 句歌詞，尚未保存。`, 'success');
-  render();
-}
-
-function startWhisperRecognition(samples) {
-  setLyricsProgress(56, '第二階段：辨識歌詞', '正在啟動 Whisper 並從 IndexedDB 讀取模型…');
-  const worker = new Worker(new URL('./lyrics-recognition-worker.js', import.meta.url), { type: 'module' });
-  recognition.whisper = worker;
-  worker.addEventListener('error', event => recognitionFailed(event.message || 'Whisper 處理程序發生錯誤。'));
-  worker.addEventListener('message', event => {
-    if (worker !== recognition.whisper) return;
-    const data = event.data || {};
-    if (data.type === 'status') {
-      setLyricsProgress($('lyrics-progress').value, '第二階段：辨識歌詞', data.text);
-    } else if (data.type === 'model-progress') {
-      setLyricsProgress(Math.max(Number($('lyrics-progress').value), 56 + data.value * .14), '第二階段：載入 Whisper', `模型檔案正在寫入或讀取 IndexedDB${data.file ? ` · ${data.file}` : ''}`);
-    } else if (data.type === 'fallback') {
-      setLyricsProgress($('lyrics-progress').value, '第二階段：改用 CPU', data.text);
-    } else if (data.type === 'progress') {
-      setLyricsProgress(70 + data.value * .3, '第二階段：辨識歌詞', `正在辨識第 ${data.current}／${data.total} 段 · ${data.device === 'webgpu' ? 'WebGPU' : 'WASM CPU'}`);
-    } else if (data.type === 'complete') {
-      finishLyricsRecognition(data.cues, data.device);
-    } else if (data.type === 'error') {
-      recognitionFailed(/fetch|network|load/i.test(data.text) ? '無法下載 Whisper 模型，請檢查網路後再試。' : data.text);
-    }
-  });
-  worker.postMessage({
-    type: 'transcribe',
-    audio: samples.buffer,
-    language: $('lyrics-language').value,
-    mode: $('lyrics-quality').value,
-  }, [samples.buffer]);
-}
-
-async function startLyricsRecognition() {
-  if (recognition.busy) return;
-  if (!state.audioFile || !state.waveformBuffer) {
-    status('請先在主畫面選擇可解析的音樂。', 'error');
-    return;
-  }
-  if (state.waveformBuffer.duration > LYRICS_MAX_DURATION + .01) {
-    status('AI 歌詞辨識目前最多處理 8 分鐘，請先在主畫面裁剪音樂。', 'error');
-    return;
-  }
-
-  const quality = $('lyrics-quality').value === 'quality';
-  const separatorName = quality ? 'BS PolarFormer' : 'Spleeter';
-  setRecognitionBusy(true);
-  audio.pause();
-  clearVocalsPreview();
-  setLyricsProgress(1, '第一階段：分離人聲', `正在準備 ${separatorName}；音訊只在瀏覽器內處理。`);
-  try { await navigator.storage?.persist?.(); } catch {}
-  try {
-    const left = Float32Array.from(state.waveformBuffer.getChannelData(0));
-    const right = Float32Array.from(state.waveformBuffer.numberOfChannels > 1
-      ? state.waveformBuffer.getChannelData(1)
-      : state.waveformBuffer.getChannelData(0));
-    const worker = new Worker(new URL('./vocal-separator-worker.js', import.meta.url), { type: 'module' });
-    recognition.separator = worker;
-    worker.addEventListener('error', event => recognitionFailed(event.message || `${separatorName} 處理程序發生錯誤。`));
-    worker.addEventListener('message', event => {
-      if (worker !== recognition.separator) return;
-      const data = event.data || {};
-      if (data.type === 'status') {
-        setLyricsProgress($('lyrics-progress').value, '第一階段：分離人聲', data.text);
-      } else if (data.type === 'gpu-fallback') {
-        setLyricsProgress($('lyrics-progress').value, '第一階段：改用 CPU', data.text);
-      } else if (data.type === 'progress') {
-        setLyricsProgress(Math.max(2, data.value * .55), '第一階段：分離人聲', data.text);
-      } else if (data.type === 'complete') {
-        recognition.separator?.terminate();
-        recognition.separator = null;
-        if (!(data.recognitionAudio instanceof Float32Array) || !data.recognitionAudio.length) {
-          recognitionFailed(`${separatorName} 沒有產生可辨識的人聲。`);
-          return;
-        }
-        showVocalsPreview(data.recognitionAudio);
-        startWhisperRecognition(data.recognitionAudio);
-      } else if (data.type === 'error') {
-        recognitionFailed(/fetch|network|load/i.test(data.text) ? `無法下載 ${separatorName} 模型，請檢查網路後再試。` : data.text);
-      }
-    });
-    worker.postMessage({
-      type: 'separate',
-      mode: quality ? 'balanced' : 'fast',
-      model: quality ? 'polarformer' : 'spleeter',
-      output: 'vocals-16k',
-      left: left.buffer,
-      right: right.buffer,
-    }, [left.buffer, right.buffer]);
-  } catch (error) {
-    recognitionFailed(error?.message || '無法開始 AI 歌詞辨識。');
-  }
-}
-
-function requestLyricsRecognition() {
-  if (recognition.busy) return;
-  if (state.cues.length) {
-    if (!$('replace-lyrics-dialog').open) $('replace-lyrics-dialog').showModal();
-    return;
-  }
-  void startLyricsRecognition();
-}
-
-function cancelLyricsRecognition() {
-  if (!recognition.busy) return;
-  stopRecognitionWorkers();
-  setRecognitionBusy(false);
-  setLyricsProgress(0, '已取消辨識', '處理已取消，原本的字幕沒有變更。');
-  status('已取消 AI 歌詞辨識。');
 }
 
 function selectCue(index, seek = false) {
@@ -551,7 +368,6 @@ async function loadWorkspace() {
     $('editor-duration').textContent = editorTime(state.duration);
     drawWaveform(decoded);
     render();
-    $('recognize-lyrics').disabled = !state.audioFile || !state.waveformBuffer;
     status(state.cues.length ? `已載入 ${state.cues.length} 句字幕` : '尚無字幕，可從目前時間新增。', state.cues.length ? 'success' : '');
   } catch (error) {
     drawWaveform();
@@ -599,13 +415,6 @@ $('undo-edit').addEventListener('click', undoEdit);
 $('redo-edit').addEventListener('click', redoEdit);
 $('download-subtitles').addEventListener('click', downloadSrt);
 $('save-subtitles').addEventListener('click', saveAndReturn);
-$('recognize-lyrics').addEventListener('click', requestLyricsRecognition);
-$('cancel-lyrics').addEventListener('click', cancelLyricsRecognition);
-$('replace-lyrics-cancel').addEventListener('click', () => $('replace-lyrics-dialog').close());
-$('replace-lyrics-confirm').addEventListener('click', () => {
-  $('replace-lyrics-dialog').close();
-  void startLyricsRecognition();
-});
 $('return-to-main').addEventListener('click', () => {
   if (!$('return-dialog').open) $('return-dialog').showModal();
 });
@@ -626,8 +435,6 @@ document.addEventListener('keydown', event => {
 window.addEventListener('resize', () => drawWaveform(state.waveformBuffer));
 window.addEventListener('beforeunload', event => { if (!state.dirty) return; event.preventDefault(); event.returnValue = ''; });
 window.addEventListener('unload', () => {
-  stopRecognitionWorkers();
-  if (recognition.previewUrl) URL.revokeObjectURL(recognition.previewUrl);
   if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
 });
 

@@ -22,7 +22,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /音樂只在瀏覽器內處理/);
-  assert.match(html, /與字幕歌詞辨識共用的 IndexedDB/);
+  assert.match(html, /自動保存在共用 IndexedDB/);
   assert.match(html, /WebGPU/);
   assert.match(html, /下載人聲 WAV/);
   assert.match(html, /id="download-mix"[^>]*>下載混合後 WAV</);
@@ -61,7 +61,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.doesNotMatch(script.match(/function finish\(\)[\s\S]*?\n}/)?.[0] || "", /terminate/);
   assert.match(workerScript, /GPU 分離結果無效，正在自動改用 CPU/);
   assert.match(workerScript, /vocalsPeak < 1e-7 && instrumentalPeak < 1e-7/);
-  assert.match(workerScript, /output === "vocals-16k"/);
+  assert.doesNotMatch(workerScript, /vocals-16k|歌詞辨識|lyrics-recognition/);
   assert.doesNotMatch(workerScript, /const probe = new ort\.Tensor/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"vocal-separator\.html"/);

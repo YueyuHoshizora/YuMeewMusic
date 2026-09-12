@@ -1,5 +1,4 @@
 import { SPLEETER_CHUNK, SPLEETER_SHAPE, spleeterStarts, prepareSpleeter, reconstructSpleeter } from "./spleeter-core.js";
-import { downmixAndResample } from "./lyrics-recognition-core.js";
 import { loadModelBytes } from "./indexeddb-model-cache.js";
 import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 import {
@@ -104,7 +103,7 @@ async function getSession() {
   }
 }
 
-async function separateWithSession(left, right, { session, accompaniment, provider, model }, mode, output) {
+async function separateWithSession(left, right, { session, accompaniment, provider, model }, mode) {
   const total = left.length;
   const light = model === "spleeter";
   const chunkSize = light ? SPLEETER_CHUNK : SEPARATOR_CHUNK_SIZE;
@@ -177,12 +176,6 @@ async function separateWithSession(left, right, { session, accompaniment, provid
   }
   if (inputPeak > 1e-5 && vocalsPeak < 1e-7 && instrumentalPeak < 1e-7)
     throw invalidOutput("AI 分離結果為靜音。");
-  if (output === "vocals-16k") {
-    sendStatus("人聲分離完成，正在準備歌詞辨識音訊…", provider);
-    const recognitionAudio = downmixAndResample(vocalsLeft, vocalsRight);
-    self.postMessage({ type: "complete", provider, recognitionAudio }, [recognitionAudio.buffer]);
-    return;
-  }
   self.postMessage({
     type: "complete",
     provider,
@@ -193,7 +186,7 @@ async function separateWithSession(left, right, { session, accompaniment, provid
   }, [vocalsLeft.buffer, vocalsRight.buffer, instrumentalLeft.buffer, instrumentalRight.buffer]);
 }
 
-async function separate(left, right, mode, model, output) {
+async function separate(left, right, mode, model) {
   const selected = model === "polarformer" ? "polarformer" : "spleeter";
   if (selected !== activeModel) {
     if (sessionPromise) {
@@ -206,7 +199,7 @@ async function separate(left, right, mode, model, output) {
   }
   let state = await getSession();
   try {
-    return await separateWithSession(left, right, state, mode, output);
+    return await separateWithSession(left, right, state, mode);
   } catch (error) {
     if (state.provider !== "webgpu" || error?.code !== "INVALID_OUTPUT") throw error;
     reportGpuFailure("推論結果無效", error);
@@ -216,7 +209,7 @@ async function separate(left, right, mode, model, output) {
     sessionPromise = createSession(["wasm"]);
     try {
       state = await sessionPromise;
-      return await separateWithSession(left, right, state, mode, output);
+      return await separateWithSession(left, right, state, mode);
     } catch (fallbackError) {
       sessionPromise = null;
       throw fallbackError;
@@ -227,7 +220,7 @@ async function separate(left, right, mode, model, output) {
 self.addEventListener("message", event => {
   if (event.data?.type !== "separate") return;
   const left = new Float32Array(event.data.left), right = new Float32Array(event.data.right);
-  separate(left, right, event.data.mode, event.data.model, event.data.output).catch(error => self.postMessage({
+  separate(left, right, event.data.mode, event.data.model).catch(error => self.postMessage({
     type: "error",
     text: error?.message || "人聲分離失敗，請重新載入後再試。",
   }));

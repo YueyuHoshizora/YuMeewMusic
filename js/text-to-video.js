@@ -221,6 +221,7 @@ function releaseVideo() {
   generatedVideoBlob = null;
   generatedVideoUrl = "";
   generatedVideoRemoteUrl = "";
+  $("retry-save-video").hidden = true;
 }
 
 function presentVideo() {
@@ -264,8 +265,10 @@ async function showVideoResult(remoteUrl) {
     await saveStoredMedia("generated-video", cachedFile).catch(() => {
       showError("影片已生成，但瀏覽器無法保存最後一次生成結果。");
     });
+    $("retry-save-video").hidden = true;
   } catch {
     showError("影片已生成，但下載代理無法讀取影片檔案；仍可播放或開啟下載網址。保存與套用背景功能暫時無法使用。");
+    $("retry-save-video").hidden = false;
   }
   presentVideo();
 }
@@ -356,6 +359,16 @@ $("download-video").addEventListener("click", () => {
   if (!generatedVideoBlob) link.target = "_blank";
   link.rel = "noopener";
   link.click();
+});
+
+$("retry-save-video").addEventListener("click", async () => {
+  if (!generatedVideoRemoteUrl || busy) return;
+  setBusy(true, false);
+  showError();
+  setStatus("正在重新下載並保存影片…");
+  await showVideoResult(generatedVideoRemoteUrl);
+  setStatus(generatedVideoBlob ? "影片已保存到瀏覽器" : "影片保存失敗", generatedVideoBlob ? "success" : "error");
+  setBusy(false);
 });
 
 $("apply-video-background").addEventListener("click", async () => {

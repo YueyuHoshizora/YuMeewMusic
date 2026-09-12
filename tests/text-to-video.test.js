@@ -28,6 +28,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /<button class="dialog-confirm" type="submit">確認生成<\/button>/);
   assert.match(html, /id="generated-video"[^>]*controls[^>]*playsinline[^>]*hidden/);
   assert.match(html, /id="download-video"[^>]*disabled/);
+  assert.match(html, /id="retry-save-video"[^>]*hidden>重新保存影片<\/button>/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
   assert.match(css, /#video-prompt\s*\{[^}]*height:\s*224px/);
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*#video-prompt\s*\{[^}]*height:\s*300px/);
@@ -61,6 +62,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /taskState === "succeeded"/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredMedia\("generated-video", cachedFile\)/);
+  assert.match(script, /retry-save-video"\)\.addEventListener\("click", async \(\) =>/);
   assert.match(script, /loadStoredMedia\("generated-video"\)/);
   assert.match(script, /void restoreLastGeneratedVideo\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);

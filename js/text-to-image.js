@@ -69,19 +69,16 @@ function callGptImage25Sunburst({ prompt, apiKey }) {
 const IMAGE_MODELS = Object.freeze({
   "flux-2-klein-4b": Object.freeze({
     label: "Flux.2 Klein 4B",
-    provider: "Cloudflare Workers AI",
     apiKey: "Free",
     call: callFlux2Klein4B,
   }),
   "gpt-image-2.5-flare": Object.freeze({
     label: "GPT-Image-2.5 Flare",
-    provider: "OpenAI Image API",
     apiKey: "OpenAI",
     call: callGptImage25Flare,
   }),
   "gpt-image-2.5-sunburst": Object.freeze({
     label: "GPT-Image-2.5 Sunburst",
-    provider: "OpenAI Image API",
     apiKey: "OpenAI",
     call: callGptImage25Sunburst,
   }),
@@ -153,7 +150,6 @@ function syncModelDetails() {
   const model = IMAGE_MODELS[modelId];
   const isFree = model?.apiKey === "Free";
   const storedKey = isFree ? null : getApiKey(modelId);
-  $("model-provider-note").textContent = model?.provider || "圖片服務";
   $("model-api-key").textContent = isFree ? "Free" : storedKey ? "已設定" : "未設定";
   $("model-api-key").disabled = busy || isFree || !model;
 }

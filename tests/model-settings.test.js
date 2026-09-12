@@ -33,6 +33,9 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(html, /data-settings-panel="model-manager"[^>]*aria-selected="false"/);
   assert.match(html, /id="interface-mode"/);
   assert.match(html, /id="interface-theme"/);
+  for (const theme of ['lime', 'ocean', 'violet', 'rose', 'amber', 'mint', 'indigo', 'coral', 'magenta', 'silver']) {
+    assert.match(html, new RegExp(`<option value="${theme}">`));
+  }
   assert.match(html, /<section id="model-manager" class="panel settings-panel model-manager"/);
   assert.match(script, /saveSettings\(settings\)/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);

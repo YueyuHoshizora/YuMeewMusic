@@ -16,8 +16,8 @@ function contrast(a, b) {
   return (values[0] + 0.05) / (values[1] + 0.05);
 }
 
-test("all ten appearances restore safely and maintain readable accent/button text", () => {
-  assert.equal(Object.keys(THEMES).length, 5);
+test("all twenty appearances restore safely and maintain readable accent/button text", () => {
+  assert.equal(Object.keys(THEMES).length, 10);
   for (const [theme, palette] of Object.entries(THEMES))
     for (const mode of ["dark", "light"]) {
       const properties = {};

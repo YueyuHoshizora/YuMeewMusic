@@ -24,7 +24,7 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.ok(ids.includes('return-dialog'));
   assert.ok(ids.includes('return-dialog-cancel'));
   assert.ok(ids.includes('return-dialog-confirm'));
-  for (const id of ['recognition-language', 'recognition-lyrics', 'recognize-subtitles', 'recognition-progress-area', 'cancel-recognition', 'recognition-vocals-preview', 'recognition-vocals-audio', 'replace-subtitles-dialog', 'replace-subtitles-cancel', 'replace-subtitles-confirm']) {
+  for (const id of ['recognition-language', 'recognition-lyrics', 'recognize-subtitles', 'recognition-progress-area', 'cancel-recognition', 'replace-subtitles-dialog', 'replace-subtitles-cancel', 'replace-subtitles-confirm']) {
     assert.ok(ids.includes(id), id);
   }
   for (const language of ['auto', 'zh', 'ja', 'en']) assert.match(html, new RegExp(`<option value="${language}">`));
@@ -36,8 +36,8 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(script, /new OfflineContextClass\(1, Math\.ceil\(sourceBuffer\.duration \* 16000\), 16000\)/);
   assert.match(script, /buffer: transcriptionBuffer/);
   assert.match(script, /form\.append\('audio', wav, `\$\{baseName\}-vocals\.wav`\)/);
-  assert.match(script, /showVocalsPreview\(wav\);\s+await uploadVocals\(wav, transcriptionBuffer\.duration, run\)/);
-  assert.match(script, /URL\.revokeObjectURL\(recognition\.vocalsUrl\)/);
+  assert.match(script, /await uploadVocals\(wav, transcriptionBuffer\.duration, run\)/);
+  assert.doesNotMatch(html + script, /recognition-vocals-preview|recognition-vocals-audio|showVocalsPreview|vocalsUrl/);
   assert.match(script, /const form = new FormData\(\)/);
   assert.match(script, /form\.append\('audio', wav/);
   assert.match(script, /form\.append\('language', \$\('recognition-language'\)\.value\)/);

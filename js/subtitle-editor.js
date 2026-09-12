@@ -11,7 +11,7 @@ const audio = $('editor-audio');
 const state = { cues: [], selected: -1, duration: 60, subtitleName: 'edited-subtitles.srt', dirty: false, audioUrl: '', audioFile: null, waveformBuffer: null };
 const editHistory = createUndoHistory(10);
 const MAX_RECOGNITION_FILE_SIZE = 150 * 1024 * 1024;
-const recognition = { busy: false, worker: null, controller: null, run: 0, vocalsUrl: '' };
+const recognition = { busy: false, worker: null, controller: null, run: 0 };
 let textHistoryCue = null;
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -104,23 +104,6 @@ function releaseRecognition() {
   recognition.controller = null;
 }
 
-function clearVocalsPreview() {
-  const previewAudio = $('recognition-vocals-audio');
-  previewAudio.pause();
-  previewAudio.removeAttribute('src');
-  previewAudio.load();
-  $('recognition-vocals-preview').hidden = true;
-  if (recognition.vocalsUrl) URL.revokeObjectURL(recognition.vocalsUrl);
-  recognition.vocalsUrl = '';
-}
-
-function showVocalsPreview(wav) {
-  clearVocalsPreview();
-  recognition.vocalsUrl = URL.createObjectURL(wav);
-  $('recognition-vocals-audio').src = recognition.vocalsUrl;
-  $('recognition-vocals-preview').hidden = false;
-}
-
 function recognitionFailed(message, run) {
   if (run !== recognition.run) return;
   releaseRecognition();
@@ -205,7 +188,6 @@ async function encodeAndUploadVocals(data, run) {
       onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：產生 WAV', `正在建立 16-bit PCM WAV · ${value}%`),
     });
     if (run !== recognition.run) return;
-    showVocalsPreview(wav);
     await uploadVocals(wav, transcriptionBuffer.duration, run);
   } catch (error) {
     if (error?.name !== 'AbortError') recognitionFailed(error?.message || '字幕辨識失敗。', run);
@@ -227,7 +209,6 @@ async function startSubtitleRecognition() {
     return;
   }
   const run = ++recognition.run;
-  clearVocalsPreview();
   recognition.controller = new AbortController();
   setRecognitionBusy(true);
   audio.pause();
@@ -607,8 +588,6 @@ $('timeline').addEventListener('keydown', event => {
 });
 audio.addEventListener('timeupdate', updatePlayhead);
 audio.addEventListener('loadedmetadata', () => { if (Number.isFinite(audio.duration)) { state.duration = audio.duration; $('editor-duration').textContent = editorTime(state.duration); renderTimeline(); } });
-audio.addEventListener('play', () => $('recognition-vocals-audio').pause());
-$('recognition-vocals-audio').addEventListener('play', () => audio.pause());
 $('add-cue').addEventListener('click', addCue);
 $('delete-cue').addEventListener('click', deleteCue);
 $('duplicate-cue').addEventListener('click', duplicateCue);
@@ -663,7 +642,6 @@ window.addEventListener('beforeunload', event => { if (!state.dirty) return; eve
 window.addEventListener('unload', () => {
   recognition.worker?.terminate();
   recognition.controller?.abort();
-  if (recognition.vocalsUrl) URL.revokeObjectURL(recognition.vocalsUrl);
   if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
 });
 

@@ -12,7 +12,7 @@ test("text-to-image page exposes generation, download and background actions", (
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /id="image-prompt"[^>]*maxlength="2048"/);
   assert.match(html, /id="prompt-keywords"[^>]*type="text"/);
-  assert.match(html, /id="compose-prompt"[^>]*>組成題詞<\/button>/);
+  assert.match(html, /id="compose-prompt"[^>]*class="export-button"[^>]*>組成題詞<\/button>/);
   assert.match(html, /id="generated-image-frame"/);
   assert.match(html, /1280 × 720/);
   assert.match(html, /每日早上 8 點（台灣時間）重置額度/);

@@ -36,10 +36,12 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /https:\/\/minimax-proxy\.yustellar\.idv\.tw\/video/);
   assert.match(script, /CREATE_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/generate`/);
   assert.match(script, /QUERY_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/query`/);
+  assert.match(script, /DOWNLOAD_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/download`/);
   assert.match(script, /content: \[\{ type: "text", text: prompt \}\]/);
   assert.doesNotMatch(script, /AUTOCOMPLETE_URL|requestCompletedPrompt|enhance-video-prompt/);
   assert.match(script, /JSON\.stringify\(\{ apiKey, taskId \}\)/);
   assert.match(script, /apiKey,\s*payload: \{/);
+  assert.match(script, /fetch\(DOWNLOAD_VIDEO_URL, \{[\s\S]*body: JSON\.stringify\(\{ url: remoteUrl \}\)/);
   assert.match(script, /code === 1008 \|\| \/insufficient balance\/i\.test\(message\)/);
   assert.match(script, /目前 MiniMax API KEY 所屬帳戶餘額不足（1008），請充值或更換 API KEY。/);
   assert.match(script, /code === 2013 && \/TokenPlan\|Credit\.\*MiniMax-H3\/i\.test\(message\)/);

@@ -6,6 +6,7 @@ import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 const VIDEO_PROXY_URL = "https://minimax-proxy.yustellar.idv.tw/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
 const QUERY_VIDEO_URL = `${VIDEO_PROXY_URL}/query`;
+const DOWNLOAD_VIDEO_URL = `${VIDEO_PROXY_URL}/download`;
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
@@ -248,7 +249,12 @@ async function showVideoResult(remoteUrl) {
   releaseVideo();
   generatedVideoRemoteUrl = remoteUrl;
   try {
-    const response = await fetch(remoteUrl, { cache: "no-store" });
+    const response = await fetch(DOWNLOAD_VIDEO_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: remoteUrl }),
+      cache: "no-store",
+    });
     if (!response.ok) throw Error(`影片下載回傳 ${response.status}`);
     const blob = await response.blob();
     if (!blob.size) throw Error("影片檔案內容為空。");
@@ -259,7 +265,7 @@ async function showVideoResult(remoteUrl) {
       showError("影片已生成，但瀏覽器無法保存最後一次生成結果。");
     });
   } catch {
-    showError("影片已生成，但瀏覽器無法讀取影片檔案；仍可播放或開啟下載網址。套用背景功能暫時無法使用。");
+    showError("影片已生成，但下載代理無法讀取影片檔案；仍可播放或開啟下載網址。保存與套用背景功能暫時無法使用。");
   }
   presentVideo();
 }

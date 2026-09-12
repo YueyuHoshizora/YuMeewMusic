@@ -11,6 +11,8 @@ test("text-to-image page exposes generation, download and background actions", (
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /id="image-prompt"[^>]*maxlength="2048"/);
+  assert.match(html, /id="prompt-keywords"[^>]*type="text"/);
+  assert.match(html, /id="compose-prompt"[^>]*>組成題詞<\/button>/);
   assert.match(html, /id="generated-image-frame"/);
   assert.match(html, /1280 × 720/);
   assert.match(html, /每日早上 8 點（台灣時間）重置額度/);
@@ -20,6 +22,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/generate/);
+  assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/autocomplete/);
   assert.match(script, /method:\s*"POST"/);
   assert.match(script, /"Content-Type":\s*"application\/json"/);
   assert.match(html, /id="enhance-prompt"[^>]*type="checkbox"[^>]*checked/);
@@ -27,6 +30,9 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);
+  assert.match(script, /async function composePrompt\(\)/);
+  assert.match(script, /body:\s*JSON\.stringify\(\{ prompt \}\)/);
+  assert.match(script, /\$\("image-prompt"\)\.value = result\.slice\(0, 2048\)/);
   assert.doesNotMatch(script, /searchParams\.set\("p"/);
   assert.match(script, /statusCode === 429/);
   assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);

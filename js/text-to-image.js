@@ -3,6 +3,7 @@ import { loadSettings } from "./settings.js";
 import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
+const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 const $ = id => document.getElementById(id);
 const settings = loadSettings();
@@ -11,6 +12,7 @@ applyTheme(settings.mode, settings.theme);
 let generatedBlob = null;
 let generatedUrl = "";
 let busy = false;
+let composing = false;
 
 function status(text, mode = "") {
   $("generation-status").textContent = text;
@@ -28,9 +30,61 @@ function setBusy(value) {
   $("generation-lock").hidden = !value;
   $("image-prompt").disabled = value;
   $("enhance-prompt").disabled = value;
-  $("generate-image").disabled = value || !$("image-prompt").value.trim();
+  $("prompt-keywords").disabled = value;
+  $("compose-prompt").disabled = value || composing || !$("prompt-keywords").value.trim();
+  $("generate-image").disabled = value || composing || !$("image-prompt").value.trim();
   $("download-image").disabled = value || !generatedBlob;
   $("apply-background").disabled = value || !generatedBlob;
+}
+
+function setComposing(value) {
+  composing = value;
+  $("prompt-keywords").disabled = value || busy;
+  $("compose-prompt").disabled = value || busy || !$("prompt-keywords").value.trim();
+  $("compose-prompt").textContent = value ? "組成中…" : "組成題詞";
+  $("generate-image").disabled = value || busy || !$("image-prompt").value.trim();
+}
+
+function completedPrompt(value) {
+  if (typeof value === "string") return value.trim();
+  for (const key of ["prompt", "result", "text", "completion"]) {
+    if (typeof value?.[key] === "string" && value[key].trim()) return value[key].trim();
+  }
+  return "";
+}
+
+async function composePrompt() {
+  const prompt = $("prompt-keywords").value.trim();
+  if (!prompt || busy || composing) return;
+  showError();
+  status("正在組成題詞…");
+  setComposing(true);
+  try {
+    const response = await fetch(AUTOCOMPLETE_URL, {
+      method: "POST",
+      headers: { Accept: "application/json,text/plain", "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+      cache: "no-store",
+    });
+    const contentType = response.headers.get("content-type") || "";
+    const body = contentType.includes("application/json") ? await response.json() : await response.text();
+    if (!response.ok) {
+      const detail = completedPrompt(body) || body?.error || body?.message || "";
+      if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
+      throw Error(detail || `文字補全服務回傳 ${response.status}`);
+    }
+    const result = completedPrompt(body);
+    if (!result) throw Error("文字補全服務沒有回傳可用的題詞。");
+    $("image-prompt").value = result.slice(0, 2048);
+    $("image-prompt").dispatchEvent(new Event("input"));
+    status("題詞已組成，可繼續修改或直接生成圖片。", "success");
+  } catch (error) {
+    const message = error instanceof TypeError ? "文字補全服務目前無法連線，請稍後再試。" : error.message || "題詞組成失敗。";
+    showError(message);
+    status("題詞組成失敗", "error");
+  } finally {
+    setComposing(false);
+  }
 }
 
 function imageFilename() {
@@ -51,7 +105,7 @@ function isQuotaError(statusCode, detail) {
 async function generateImage() {
   const prompt = $("image-prompt").value.trim();
   const enhance = Boolean($("enhance-prompt").checked);
-  if (!prompt || busy) return;
+  if (!prompt || busy || composing) return;
   showError();
   status("圖片生成中…");
   setBusy(true);
@@ -98,8 +152,18 @@ async function generateImage() {
 $("image-prompt").addEventListener("input", () => {
   const length = $("image-prompt").value.length;
   $("prompt-count").textContent = `${length} / 2048`;
-  $("generate-image").disabled = busy || !$("image-prompt").value.trim();
+  $("generate-image").disabled = busy || composing || !$("image-prompt").value.trim();
 });
+
+$("prompt-keywords").addEventListener("input", () => {
+  $("compose-prompt").disabled = busy || composing || !$("prompt-keywords").value.trim();
+});
+
+$("prompt-keywords").addEventListener("keydown", event => {
+  if (event.key === "Enter") { event.preventDefault(); void composePrompt(); }
+});
+
+$("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("image-prompt").addEventListener("keydown", event => {
   if ((event.ctrlKey || event.metaKey) && event.key === "Enter") generateImage();

@@ -9,7 +9,10 @@ body.text-to-image-body { min-width: 1000px; }
 .generation-status.success { color: var(--primary-text); }
 .generation-status.error { color: var(--error-text); }
 .prompt-panel { margin-bottom: 22px; }
-.prompt-panel .field-label { margin-top: 0; }
+.prompt-panel .field-label:first-child { margin-top: 0; }
+.autocomplete-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; margin-bottom: 16px; }
+.autocomplete-row .text-input { width: 100%; box-sizing: border-box; }
+.autocomplete-row button { width: 100%; }
 #image-prompt { display: block; width: 100%; height: 112px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; line-height: 1.7; }
 #image-prompt::placeholder { color: var(--muted); }
 #image-prompt:focus { border-color: var(--primary); outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent); }

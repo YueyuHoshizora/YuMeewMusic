@@ -28,6 +28,11 @@
       </section>
 
       <section class="panel prompt-panel">
+        <label class="field-label" for="prompt-keywords">題詞詞語</label>
+        <div class="autocomplete-row">
+          <input id="prompt-keywords" class="text-input" type="text" maxlength="500" placeholder="輸入多個詞，例如：星空、黑膠唱片、霓虹城市、電影感" />
+          <button id="compose-prompt" class="text-button" type="button" disabled>組成題詞</button>
+        </div>
         <label class="field-label" for="image-prompt">圖片描述</label>
         <textarea id="image-prompt" maxlength="2048" placeholder="例如：星空下的黑膠唱片，霓虹城市倒映在唱片表面，電影感光線，細節豐富"></textarea>
         <label class="enhance-option" for="enhance-prompt">

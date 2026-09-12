@@ -24,8 +24,8 @@ function writeRecords(records) {
 export function maskApiKey(value) {
   const key = String(value || "");
   if (!key) return "";
-  if (key.length <= 6) return "*".repeat(key.length);
-  return `${key.slice(0, 3)}${"*".repeat(key.length - 6)}${key.slice(-3)}`;
+  if (key.length <= 6) return "*".repeat(Math.min(key.length, 5));
+  return `${key.slice(0, 3)}${"*".repeat(Math.min(key.length - 6, 5))}${key.slice(-3)}`;
 }
 
 export function listApiKeys() {

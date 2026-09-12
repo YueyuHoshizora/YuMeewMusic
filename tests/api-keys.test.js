@@ -11,9 +11,10 @@ function createStorage() {
   };
 }
 
-test("API keys keep only the first and last three characters visible", () => {
-  assert.equal(maskApiKey("abc123456xyz"), "abc******xyz");
-  assert.equal(maskApiKey("123456"), "******");
+test("API keys keep only the first and last three characters visible with at most five stars", () => {
+  assert.equal(maskApiKey("abc123456xyz"), "abc*****xyz");
+  assert.equal(maskApiKey("abc1xyz"), "abc*xyz");
+  assert.equal(maskApiKey("123456"), "*****");
   assert.equal(maskApiKey(""), "");
 });
 

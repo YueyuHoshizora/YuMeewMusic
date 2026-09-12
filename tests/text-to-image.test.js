@@ -29,7 +29,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /@media \(max-width:\s*800px\)/);
   assert.match(css, /@media \(max-width:\s*560px\)/);
   assert.match(css, /width:\s*100dvh;\s*height:\s*100vw/);
-  assert.match(css, /rotate\(-90deg\)/);
+  assert.match(css, /rotate\(90deg\)/);
   assert.match(css, /@keyframes mobile-result-fullscreen-in/);
   assert.match(css, /\.autocomplete-row\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(css, /\.result-actions\s*\{\s*grid-template-columns:\s*1fr/);

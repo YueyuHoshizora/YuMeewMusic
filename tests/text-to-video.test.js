@@ -39,6 +39,9 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(script, /AUTOCOMPLETE_URL|requestCompletedPrompt|enhance-video-prompt/);
   assert.match(script, /JSON\.stringify\(\{ apiKey, taskId \}\)/);
   assert.match(script, /apiKey,\s*payload: \{/);
+  assert.match(script, /code === 1008 \|\| \/insufficient balance\/i\.test\(message\)/);
+  assert.match(script, /目前 MiniMax API KEY 所屬帳戶餘額不足（1008），請充值或更換 API KEY。/);
+  assert.match(script, /miniMaxError\(body, response\.ok \? "" : `MiniMax API 回傳 \$\{response\.status\}`\)/);
   assert.match(script, /async function pollVideoTask\(taskId, apiKey, signal\)/);
   assert.match(script, /taskState === "succeeded"/);
   assert.match(script, /saveStoredMedia\("image", file\)/);

@@ -138,19 +138,33 @@ function setBusy(value, showLock = value) {
   syncGenerateAvailability();
 }
 
-async function responseError(response) {
-  try {
-    const body = await response.json();
-    return body?.error?.message || body?.message || body?.base_resp?.status_msg || `MiniMax API 回傳 ${response.status}`;
-  } catch {
-    return `MiniMax API 回傳 ${response.status}`;
+function miniMaxError(body, fallback = "") {
+  const rawCode = body?.base_resp?.status_code ?? body?.error?.code ?? body?.code;
+  const code = Number(rawCode);
+  const message = body?.error?.message
+    || (typeof body?.error === "string" ? body.error : "")
+    || body?.message
+    || body?.base_resp?.status_msg
+    || "";
+  if (code === 1008 || /insufficient balance/i.test(message)) {
+    return "目前 MiniMax API KEY 所屬帳戶餘額不足（1008），請充值或更換 API KEY。";
   }
+  if (Number.isFinite(code) && code !== 0) return message ? `${message}（${code}）` : `MiniMax API 錯誤（${code}）`;
+  return fallback ? message || fallback : "";
 }
 
 async function fetchJson(url, options) {
   const response = await fetch(url, options);
-  if (!response.ok) throw Error(await responseError(response));
-  return response.json();
+  let body;
+  try {
+    body = await response.json();
+  } catch {
+    if (!response.ok) throw Error(`MiniMax API 回傳 ${response.status}`);
+    throw Error("MiniMax API 回傳無法解析的資料。");
+  }
+  const error = miniMaxError(body, response.ok ? "" : `MiniMax API 回傳 ${response.status}`);
+  if (error) throw Error(error);
+  return body;
 }
 
 function wait(ms, signal) {

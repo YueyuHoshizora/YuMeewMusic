@@ -152,7 +152,7 @@ async function transcriptionAudioBuffer(left, right) {
   return context.startRendering();
 }
 
-async function uploadVocals(wav, run) {
+async function uploadVocals(wav, audioDuration, run) {
   if (run !== recognition.run) return;
   setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳單聲道、16 kHz、16-bit PCM 人聲 WAV 並等待辨識…');
   const form = new FormData();
@@ -160,6 +160,7 @@ async function uploadVocals(wav, run) {
   form.append('audio', wav, `${baseName}-vocals.wav`);
   form.append('language', $('recognition-language').value);
   form.append('lyrics', $('recognition-lyrics').value);
+  form.append('duration', String(audioDuration));
   const response = await fetch('https://lyrics-transcriber.yustellar.idv.tw', {
     method: 'POST',
     body: form,
@@ -205,7 +206,7 @@ async function encodeAndUploadVocals(data, run) {
     });
     if (run !== recognition.run) return;
     showVocalsPreview(wav);
-    await uploadVocals(wav, run);
+    await uploadVocals(wav, transcriptionBuffer.duration, run);
   } catch (error) {
     if (error?.name !== 'AbortError') recognitionFailed(error?.message || '字幕辨識失敗。', run);
   }

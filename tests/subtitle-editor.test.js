@@ -36,12 +36,14 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(script, /new OfflineContextClass\(1, Math\.ceil\(sourceBuffer\.duration \* 16000\), 16000\)/);
   assert.match(script, /buffer: transcriptionBuffer/);
   assert.match(script, /form\.append\('audio', wav, `\$\{baseName\}-vocals\.wav`\)/);
-  assert.match(script, /showVocalsPreview\(wav\);\s+await uploadVocals\(wav, run\)/);
+  assert.match(script, /showVocalsPreview\(wav\);\s+await uploadVocals\(wav, transcriptionBuffer\.duration, run\)/);
   assert.match(script, /URL\.revokeObjectURL\(recognition\.vocalsUrl\)/);
   assert.match(script, /const form = new FormData\(\)/);
   assert.match(script, /form\.append\('audio', wav/);
   assert.match(script, /form\.append\('language', \$\('recognition-language'\)\.value\)/);
   assert.match(script, /form\.append\('lyrics', \$\('recognition-lyrics'\)\.value\)/);
+  assert.match(script, /form\.append\('duration', String\(audioDuration\)\)/);
+  assert.match(script, /uploadVocals\(wav, transcriptionBuffer\.duration, run\)/);
   assert.match(script, /\$\('recognition-lyrics'\)\.disabled = value/);
   assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.yustellar\.idv\.tw'/);
   assert.equal((script.match(/\bfetch\s*\(/g) || []).length, 1);

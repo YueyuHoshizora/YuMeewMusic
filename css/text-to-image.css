@@ -17,9 +17,9 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 #image-model { display: block; width: 100%; }
 .generation-options { display: grid; grid-template-columns: minmax(190px, 300px) 200px; align-items: end; gap: 10px; max-width: 510px; }
 .generation-model .field-label { margin-top: 0; }
-.model-api-key { display: flex; width: 200px; min-height: 42px; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; box-sizing: border-box; padding: 5px 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.model-api-key { display: flex; width: 200px; min-height: 42px; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box; padding: 5px 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
 .model-api-key span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
-.model-api-key button { min-width: 0; max-width: 100%; overflow: hidden; border: 0; background: transparent; color: var(--primary-text); font: 700 12px monospace; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
+.model-api-key button { min-width: 0; max-width: 100%; overflow: hidden; border: 0; background: transparent; color: var(--primary-text); font: 700 12px monospace; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 .model-api-key button:not(:disabled) { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .model-api-key button:disabled { opacity: 1; }
 .api-key-input-label { display: block; margin: 18px 0 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }

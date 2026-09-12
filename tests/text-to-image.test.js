@@ -39,6 +39,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /\.prompt-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 210px/);
   assert.match(css, /\.generation-options\s*\{[^}]*grid-template-columns:\s*minmax\(190px, 300px\) 200px/);
   assert.match(css, /\.model-api-key\s*\{[^}]*width:\s*200px/);
+  assert.match(css, /\.model-api-key\s*\{[^}]*flex-direction:\s*row/);
   assert.match(css, /@media \(max-width:\s*800px\)[\s\S]*?\.prompt-actions\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(css, /@media \(max-width:\s*560px\)/);
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.generation-options\s*\{\s*grid-template-columns:\s*1fr/);

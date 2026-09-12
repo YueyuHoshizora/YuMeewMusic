@@ -1,4 +1,6 @@
 import { SPLEETER_CHUNK, SPLEETER_SHAPE, spleeterStarts, prepareSpleeter, reconstructSpleeter } from "./spleeter-core.js";
+import { downmixAndResample } from "./lyrics-recognition-core.js";
+import { indexedDbModelCache } from "./indexeddb-model-cache.js";
 import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 import {
   SEPARATOR_CHUNK_SIZE,
@@ -17,7 +19,7 @@ const MODEL_PATHS = {
 };
 const SPLEETER_BASE = "https://huggingface.co/csukuangfj/sherpa-onnx-spleeter-2stems/resolve/7001ba316a615cacddb3f9ef3ec416661a277e26";
 let activeModel = "spleeter";
-const MODEL_CACHE = "yumeew-vocal-models-v1";
+const LEGACY_MODEL_CACHE = "yumeew-vocal-models-v1";
 ort.env.wasm.wasmPaths = new URL("../vendor/onnxruntime-web/", import.meta.url).href;
 ort.env.wasm.numThreads = 1;
 
@@ -47,30 +49,42 @@ function tensorValues(tensor) {
 }
 
 async function loadModel(provider, url = MODEL_PATHS[provider]) {
-  if (!("caches" in self)) return url;
-
-  let cache;
+  if (!("indexedDB" in self)) return url;
   try {
-    cache = await caches.open(MODEL_CACHE);
-    const stored = await cache.match(url);
+    const stored = await indexedDbModelCache.match(url);
     if (stored) {
-      sendStatus("正在從瀏覽器儲存讀取 AI 模型…", provider);
+      sendStatus("正在從 IndexedDB 讀取共用 AI 模型…", provider);
       return new Uint8Array(await stored.arrayBuffer());
     }
   } catch {
-    sendStatus("瀏覽器模型儲存不可用，正在直接載入…", provider);
+    sendStatus("IndexedDB 模型儲存不可用，正在直接載入…", provider);
     return url;
   }
 
-  sendStatus("首次下載 AI 模型；完成後會保存在這個瀏覽器…", provider);
+  if ("caches" in self) {
+    try {
+      const legacy = await caches.open(LEGACY_MODEL_CACHE);
+      const stored = await legacy.match(url);
+      if (stored) {
+        sendStatus("正在將既有模型移到共用 IndexedDB…", provider);
+        const bytes = new Uint8Array(await stored.arrayBuffer());
+        await indexedDbModelCache.put(url, new Response(bytes));
+        await legacy.delete(url);
+        return bytes;
+      }
+    } catch {}
+  }
+
+  sendStatus("首次下載 AI 模型；完成後會保存在共用 IndexedDB…", provider);
   const response = await fetch(url);
   if (!response.ok) throw Error(`AI 模型下載失敗（HTTP ${response.status}）。`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
   try {
-    await cache.put(url, response.clone());
+    await indexedDbModelCache.put(url, new Response(bytes, { headers: response.headers }));
   } catch {
-    sendStatus("模型已下載，但瀏覽器儲存空間不足，本次仍會繼續。", provider);
+    sendStatus("模型已下載，但 IndexedDB 空間不足，本次仍會繼續。", provider);
   }
-  return new Uint8Array(await response.arrayBuffer());
+  return bytes;
 }
 
 async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"]) {
@@ -122,7 +136,7 @@ async function getSession() {
   }
 }
 
-async function separateWithSession(left, right, { session, accompaniment, provider, model }, mode) {
+async function separateWithSession(left, right, { session, accompaniment, provider, model }, mode, output) {
   const total = left.length;
   const light = model === "spleeter";
   const chunkSize = light ? SPLEETER_CHUNK : SEPARATOR_CHUNK_SIZE;
@@ -195,6 +209,12 @@ async function separateWithSession(left, right, { session, accompaniment, provid
   }
   if (inputPeak > 1e-5 && vocalsPeak < 1e-7 && instrumentalPeak < 1e-7)
     throw invalidOutput("AI 分離結果為靜音。");
+  if (output === "vocals-16k") {
+    sendStatus("人聲分離完成，正在準備歌詞辨識音訊…", provider);
+    const recognitionAudio = downmixAndResample(vocalsLeft, vocalsRight);
+    self.postMessage({ type: "complete", provider, recognitionAudio }, [recognitionAudio.buffer]);
+    return;
+  }
   self.postMessage({
     type: "complete",
     provider,
@@ -205,7 +225,7 @@ async function separateWithSession(left, right, { session, accompaniment, provid
   }, [vocalsLeft.buffer, vocalsRight.buffer, instrumentalLeft.buffer, instrumentalRight.buffer]);
 }
 
-async function separate(left, right, mode, model) {
+async function separate(left, right, mode, model, output) {
   const selected = model === "polarformer" ? "polarformer" : "spleeter";
   if (selected !== activeModel) {
     if (sessionPromise) {
@@ -218,7 +238,7 @@ async function separate(left, right, mode, model) {
   }
   let state = await getSession();
   try {
-    return await separateWithSession(left, right, state, mode);
+    return await separateWithSession(left, right, state, mode, output);
   } catch (error) {
     if (state.provider !== "webgpu" || error?.code !== "INVALID_OUTPUT") throw error;
     reportGpuFailure("推論結果無效", error);
@@ -228,7 +248,7 @@ async function separate(left, right, mode, model) {
     sessionPromise = createSession(["wasm"]);
     try {
       state = await sessionPromise;
-      return await separateWithSession(left, right, state, mode);
+      return await separateWithSession(left, right, state, mode, output);
     } catch (fallbackError) {
       sessionPromise = null;
       throw fallbackError;
@@ -239,7 +259,7 @@ async function separate(left, right, mode, model) {
 self.addEventListener("message", event => {
   if (event.data?.type !== "separate") return;
   const left = new Float32Array(event.data.left), right = new Float32Array(event.data.right);
-  separate(left, right, event.data.mode, event.data.model).catch(error => self.postMessage({
+  separate(left, right, event.data.mode, event.data.model, event.data.output).catch(error => self.postMessage({
     type: "error",
     text: error?.message || "人聲分離失敗，請重新載入後再試。",
   }));

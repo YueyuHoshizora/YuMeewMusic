@@ -26,6 +26,35 @@
         <div id="editor-status" class="editor-status" role="status">正在讀取瀏覽器中的素材…</div>
       </section>
 
+      <section class="lyrics-ai-panel panel" aria-labelledby="lyrics-ai-title">
+        <div class="lyrics-ai-copy">
+          <div class="section-title"><span>AI</span><h2 id="lyrics-ai-title">辨識歌詞</h2></div>
+          <p>先以 Spleeter 分離人聲，再由 Whisper 在瀏覽器內產生帶時間碼的字幕。音樂不會上傳伺服器；模型首次下載後保存在 IndexedDB。</p>
+        </div>
+        <div class="lyrics-ai-controls">
+          <label for="lyrics-language">辨識語言
+            <select id="lyrics-language">
+              <option value="">自動判斷</option>
+              <option value="zh">繁體中文</option>
+              <option value="ja">日文</option>
+              <option value="en">英文</option>
+            </select>
+          </label>
+          <label for="lyrics-quality">辨識模式
+            <select id="lyrics-quality">
+              <option value="quality">品質 · Whisper Base</option>
+              <option value="fast">快速 · Whisper Tiny</option>
+            </select>
+          </label>
+          <button id="recognize-lyrics" class="export-button lyrics-recognize-button" type="button" disabled>AI 辨識歌詞</button>
+        </div>
+        <div id="lyrics-progress-area" class="lyrics-progress-area" hidden>
+          <div class="lyrics-progress-heading"><strong id="lyrics-stage">正在準備…</strong><span id="lyrics-percent">0%</span></div>
+          <progress id="lyrics-progress" max="100" value="0"></progress>
+          <div class="lyrics-progress-footer"><span id="lyrics-status" role="status">正在準備瀏覽器 AI…</span><button id="cancel-lyrics" class="text-button" type="button">取消辨識</button></div>
+        </div>
+      </section>
+
       <section class="editor-player panel">
         <div class="editor-player-row">
           <div>
@@ -116,6 +145,14 @@
       <div class="dialog-actions">
         <button id="return-dialog-cancel" class="reset-settings" type="button" autofocus>取消</button>
         <button id="return-dialog-confirm" class="reset-confirm" type="button">不保存並返回</button>
+      </div>
+    </dialog>
+    <dialog id="replace-lyrics-dialog" class="reset-dialog" aria-labelledby="replace-lyrics-title">
+      <h2 id="replace-lyrics-title">覆蓋原本的歌詞？</h2>
+      <p>自動辨識完成後會覆蓋目前的全部字幕。這次操作仍可使用「復原」恢復。</p>
+      <div class="dialog-actions">
+        <button id="replace-lyrics-cancel" class="reset-settings" type="button" autofocus>取消</button>
+        <button id="replace-lyrics-confirm" class="reset-confirm" type="button">覆蓋並開始辨識</button>
       </div>
     </dialog>
   </body>

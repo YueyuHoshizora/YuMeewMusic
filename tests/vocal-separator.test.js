@@ -22,6 +22,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /音樂只在瀏覽器內處理/);
+  assert.match(html, /與字幕歌詞辨識共用 IndexedDB/);
   assert.match(html, /WebGPU/);
   assert.match(html, /下載人聲 WAV/);
   assert.match(html, /id="download-mix"[^>]*>下載混合後 WAV</);
@@ -53,14 +54,15 @@ test("vocal separator page exposes its complete local workflow", () => {
   const workerScript = readFileSync("js/vocal-separator-worker.js", "utf8");
   assert.match(workerScript, /let sessionPromise = null/);
   assert.match(workerScript, /沿用已載入的 AI 模型/);
-  assert.match(workerScript, /caches\.open\(MODEL_CACHE\)/);
-  assert.match(workerScript, /cache\.match\(url\)/);
-  assert.match(workerScript, /cache\.put\(url, response\.clone\(\)\)/);
+  assert.match(workerScript, /indexedDbModelCache\.match\(url\)/);
+  assert.match(workerScript, /indexedDbModelCache\.put\(url/);
+  assert.match(workerScript, /yumeew-vocal-models-v1/);
   assert.match(workerScript, /new Uint8Array\(await (?:stored|response)\.arrayBuffer\(\)\)/);
   assert.doesNotMatch(workerScript, /finally\s*{\s*session\.release/);
   assert.doesNotMatch(script.match(/function finish\(\)[\s\S]*?\n}/)?.[0] || "", /terminate/);
   assert.match(workerScript, /GPU 分離結果無效，正在自動改用 CPU/);
   assert.match(workerScript, /vocalsPeak < 1e-7 && instrumentalPeak < 1e-7/);
+  assert.match(workerScript, /output === "vocals-16k"/);
   assert.doesNotMatch(workerScript, /const probe = new ort\.Tensor/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"vocal-separator\.html"/);

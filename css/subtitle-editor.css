@@ -7,6 +7,25 @@ body.subtitle-editor-body { min-width: 1100px; }
 .editor-status { max-width: 420px; color: var(--muted); font-size: 13px; text-align: right; }
 .editor-status.success { color: var(--primary-text); }
 .editor-status.error { color: var(--error-text); }
+.lyrics-ai-panel { display: grid; grid-template-columns: minmax(320px, 1fr) auto; gap: 22px 34px; align-items: center; margin-bottom: 22px; padding: 20px; }
+.lyrics-ai-copy .section-title { margin-bottom: 8px; }
+.lyrics-ai-copy .section-title h2 { font-size: 18px; }
+.lyrics-ai-copy p { max-width: 680px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.lyrics-ai-controls { display: grid; grid-template-columns: 150px 190px 170px; gap: 10px; align-items: end; }
+.lyrics-ai-controls label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
+.lyrics-ai-controls select { width: 100%; height: 42px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); }
+.lyrics-recognize-button { width: auto; min-width: 170px; height: 42px; margin: 0; padding: 0 16px; }
+.lyrics-progress-area { grid-column: 1 / -1; padding-top: 15px; border-top: 1px solid var(--border); }
+.lyrics-progress-heading, .lyrics-progress-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.lyrics-progress-heading { margin-bottom: 8px; font-size: 13px; }
+.lyrics-progress-heading span { color: var(--primary-text); font: 12px monospace; }
+.lyrics-progress-area progress { display: block; width: 100%; height: 9px; accent-color: var(--primary); }
+.lyrics-progress-footer { margin-top: 8px; color: var(--muted); font-size: 12px; }
+.lyrics-progress-footer .text-button { flex-shrink: 0; }
+.subtitle-editor-main.recognition-busy .editor-player,
+.subtitle-editor-main.recognition-busy .editor-workspace,
+.subtitle-editor-main.recognition-busy .editor-actions { opacity: .55; }
+#replace-lyrics-dialog p { max-width: 440px; margin: 12px 0 20px; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .editor-player { padding: 20px; }
 .editor-player-row { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 14px; }
 .editor-player-row > div:first-child { display: flex; flex-direction: column; gap: 5px; min-width: 0; }

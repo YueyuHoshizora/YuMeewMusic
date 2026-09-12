@@ -44,7 +44,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*12px 0 28px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
-  assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}` : block/);
+  assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}\\n\\n` : `\$\{block\}\\n\\n`/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*minimumDuration: 5[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-5-260628": Object\.freeze\(\{[^}]*label: "Seedance 2\.5"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p"\][^}]*minimumDuration: 4[^}]*maximumDuration: 30/);

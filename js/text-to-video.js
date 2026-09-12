@@ -70,7 +70,7 @@ function submitVideoPromptBuilder(event) {
   const block = fields.filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("\n");
   if (!block) return;
   const prompt = $("video-prompt");
-  prompt.value = prompt.value.trim() ? `${prompt.value.trimEnd()}\n\n${block}` : block;
+  prompt.value = prompt.value.trim() ? `${prompt.value.trimEnd()}\n\n${block}\n\n` : `${block}\n\n`;
   $("video-prompt-builder-form").reset();
   $("video-prompt-builder-dialog").close();
   syncDraftStatus();

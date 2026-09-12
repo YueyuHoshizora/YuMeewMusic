@@ -105,8 +105,38 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
   .empty-result strong { font-size: 13px; }
   .empty-result small { font-size: 11px; }
   .generation-lock { padding: 24px; }
+
+  .generated-image-frame:fullscreen,
+  .generated-image-frame:-webkit-full-screen,
+  .generated-image-frame.fullscreen-fallback {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    width: 100dvh;
+    height: 100vw;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    transform-origin: center;
+    animation: mobile-result-fullscreen-in .38s cubic-bezier(.2, .75, .25, 1) both;
+  }
 }
 
 @media (hover: none) {
   .result-fullscreen-hint { opacity: .82; }
+}
+
+@keyframes mobile-result-fullscreen-in {
+  from {
+    opacity: .25;
+    transform: translate(-50%, -50%) rotate(-78deg) scale(.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .generated-image-frame:fullscreen,
+  .generated-image-frame:-webkit-full-screen,
+  .generated-image-frame.fullscreen-fallback { animation: none; }
 }

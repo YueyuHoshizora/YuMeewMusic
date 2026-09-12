@@ -16,6 +16,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.doesNotMatch(script, /prompt-count/);
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);
+  assert.match(html, /value="gpt-image-2\.5-sunburst">GPT-Image-2\.5 Sunburst<\/option>/);
+  assert.match(html, /id="model-provider-note">Cloudflare Workers AI<\/strong>/);
   assert.match(html, /<span>API KEY<\/span>\s*<button id="model-api-key"[^>]*disabled>Free<\/button>/);
   assert.match(html, /class="prompt-actions">[\s\S]*class="generation-options"[\s\S]*id="image-model"[\s\S]*id="model-api-key"[\s\S]*id="generate-image"/);
   assert.match(html, /id="prompt-keywords"[^>]*type="text"/);
@@ -46,6 +48,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /\.result-actions\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/generate/);
   assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/autocomplete/);
+  assert.match(script, /https:\/\/api\.openai\.com\/v1\/images\/generations/);
   assert.match(script, /method:\s*"POST"/);
   assert.match(script, /"Content-Type":\s*"application\/json"/);
   assert.match(html, /id="enhance-prompt"[^>]*type="checkbox"[^>]*checked/);
@@ -53,6 +56,15 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);
   assert.match(script, /async function callFlux2Klein4B\(\{ prompt, enhance \}\)/);
   assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?apiKey: "Free"[\s\S]*?call: callFlux2Klein4B/);
+  assert.match(script, /"gpt-image-2\.5-sunburst": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Sunburst"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Sunburst/);
+  assert.match(script, /provider: "OpenAI Image API"/);
+  assert.match(script, /\$\("model-provider-note"\)\.textContent = model\?\.provider \|\| "圖片服務"/);
+  assert.match(script, /async function callGptImage25Sunburst\(\{ prompt, apiKey \}\)/);
+  assert.match(script, /Authorization: `Bearer \$\{apiKey\}`/);
+  assert.match(script, /model: "gpt-image-2\.5-sunburst"/);
+  assert.match(script, /size: "1280x720"/);
+  assert.match(script, /output_format: "jpeg"/);
+  assert.match(script, /image\?\.b64_json/);
   assert.match(script, /const modelId = \$\("image-model"\)\.value;\s*const model = IMAGE_MODELS\[modelId\]/);
   assert.match(script, /maskApiKey\(storedKey\.value\)/);
   assert.match(script, /\$\("image-model"\)\.addEventListener\("change", syncModelDetails\)/);

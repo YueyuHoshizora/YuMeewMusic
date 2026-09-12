@@ -5,6 +5,7 @@ import { getApiKey, maskApiKey, saveApiKey } from "./api-keys.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
+const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 const $ = id => document.getElementById(id);
 
@@ -20,11 +21,55 @@ async function callFlux2Klein4B({ prompt, enhance }) {
   });
 }
 
+function base64ImageBlob(encoded, type = "image/jpeg") {
+  const binary = atob(encoded);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+  return new Blob([bytes], { type });
+}
+
+async function callGptImage25Sunburst({ prompt, apiKey }) {
+  const response = await fetch(OPENAI_IMAGE_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-image-2.5-sunburst",
+      prompt,
+      size: "1280x720",
+      quality: "auto",
+      output_format: "jpeg",
+    }),
+    cache: "no-store",
+  });
+  if (!response.ok) return response;
+  const result = await response.json();
+  const image = result?.data?.[0];
+  if (image?.b64_json) {
+    return new Response(base64ImageBlob(image.b64_json), {
+      status: 200,
+      headers: { "Content-Type": "image/jpeg" },
+    });
+  }
+  if (image?.url) return fetch(image.url, { cache: "no-store" });
+  throw Error("OpenAI 沒有回傳可用的圖片資料。");
+}
+
 const IMAGE_MODELS = Object.freeze({
   "flux-2-klein-4b": Object.freeze({
     label: "Flux.2 Klein 4B",
+    provider: "Cloudflare Workers AI",
     apiKey: "Free",
     call: callFlux2Klein4B,
+  }),
+  "gpt-image-2.5-sunburst": Object.freeze({
+    label: "GPT-Image-2.5 Sunburst",
+    provider: "OpenAI Image API",
+    apiKey: "OpenAI",
+    call: callGptImage25Sunburst,
   }),
 });
 
@@ -94,6 +139,7 @@ function syncModelDetails() {
   const model = IMAGE_MODELS[modelId];
   const isFree = model?.apiKey === "Free";
   const storedKey = isFree ? null : getApiKey(modelId);
+  $("model-provider-note").textContent = model?.provider || "圖片服務";
   $("model-api-key").textContent = isFree ? "Free" : storedKey ? maskApiKey(storedKey.value) : "點擊輸入";
   $("model-api-key").disabled = busy || isFree || !model;
 }
@@ -229,7 +275,7 @@ async function generateImage() {
       let detail = "";
       try {
         const errorBody = await response.json();
-        detail = errorBody?.error || errorBody?.message || "";
+        detail = errorBody?.error?.message || (typeof errorBody?.error === "string" ? errorBody.error : "") || errorBody?.message || "";
       } catch {}
       if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `圖片服務回傳 ${response.status}`);
@@ -246,7 +292,11 @@ async function generateImage() {
     $("empty-result").hidden = true;
     status(`生成完成 · ${image.naturalWidth} × ${image.naturalHeight}`, "success");
   } catch (error) {
-    const corsHint = error instanceof TypeError ? "圖片服務目前不允許 GitHub Pages 跨網域讀取，請在 Worker 回應加入 Access-Control-Allow-Origin。" : "";
+    const corsHint = error instanceof TypeError
+      ? modelId === "gpt-image-2.5-sunburst"
+        ? "目前無法從瀏覽器連線至 OpenAI Image API，請檢查網路或 API 服務狀態。"
+        : "圖片服務目前不允許 GitHub Pages 跨網域讀取，請在 Worker 回應加入 Access-Control-Allow-Origin。"
+      : "";
     const message = corsHint || error.message || "圖片生成失敗，請稍後再試。";
     showError(message);
     status("圖片生成失敗", "error");

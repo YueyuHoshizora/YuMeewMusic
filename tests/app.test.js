@@ -98,7 +98,6 @@ test("editor initializes, switches formats and reaches download for every format
     STYLES,
     moveTrimRange, formatTrimTime, parseTrimTime,
     DEFAULT_SETTINGS,
-    clearSettings: () => true,
     getFormat,
     exportFilename,
     loadSettings: () => ({ ...DEFAULT_SETTINGS }),
@@ -217,20 +216,8 @@ test("editor initializes, switches formats and reaches download for every format
   await elements.get("export").listeners.click();
   assert.equal(durations.at(-1),65);
   assert.equal(elements.get("trim-end").value,"00:25.00");
-  context.window.confirm = () => { throw Error("Native confirm must not be used"); };
-  elements.get("reset-settings").listeners.click();
-  assert.equal(elements.get("aspect-ratio").value, "9:16");
-  assert.equal(elements.get("reset-dialog").open, true);
-  elements.get("reset-dialog-cancel").listeners.click();
-  assert.equal(elements.get("reset-dialog").open, false);
-  assert.equal(elements.get("aspect-ratio").value, "9:16");
-  elements.get("reset-settings").listeners.click();
-  elements.get("reset-dialog-confirm").listeners.click();
-  assert.equal(elements.get("reset-dialog").open, false);
-  assert.equal(elements.get("aspect-ratio").value, "16:9");
-  assert.equal(elements.get("format").value, "mp4");
-  assert.equal(elements.get("songTitle").value, "");
-  assert.equal(elements.get("appearance-mode").value, "dark");
+  assert.doesNotMatch(html, /id="reset-settings"|id="reset-dialog"|重置所有設定/);
+  assert.doesNotMatch(source, /clearSettings|reset-dialog|\$\("reset-settings"\)/);
   assert.equal(elements.get("export").disabled, false);
   assert.match(elements.get("audio-info").textContent, /01:05/);
   assert.equal(downloads.length, Object.keys(FORMATS).length + 2);

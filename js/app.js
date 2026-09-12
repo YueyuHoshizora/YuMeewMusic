@@ -8,7 +8,7 @@ import { getFormat, exportFilename } from "./formats.js";
 import { draw } from "./visualizer.js";
 import { encodeMedia } from "./export.js";
 import { deleteStoredMedia, deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
-import { DEFAULT_SETTINGS, loadSettings, saveSettings, clearSettings } from "./settings.js";
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from "./settings.js";
 import { isBackgroundVideo, loopingVideoTimestamp } from "./background-video.js";
 import { createImageSequenceRenderer } from "./image-sequence.js";
 
@@ -235,7 +235,7 @@ function update() {
   for (const mode of ["start", "body", "end"]) $(`trim-drag-${mode}`).disabled = locked || !state.originalBuffer;
   document
     .querySelectorAll(
-      "#exportVolume, #eqBass, #eqMid, #eqTreble, #reset-equalizer, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityOpacity, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #reset-settings, #aspect-ratio, #resolution, #fps, #format, #restart, #loop-playback, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
+      "#exportVolume, #eqBass, #eqMid, #eqTreble, #reset-equalizer, #identityType, #identityText, #identityTextSize, #identityFont, #identityTextColor, #identityOutlineColor, #identityOpacity, #identityX, #identityY, #identityScale, #identity-drop, #remove-identity, #subtitlePosition, #subtitleMargin, #subtitleMargin-range, #subtitleSize, #subtitleDirection, #subtitleFont, #subtitleTypewriter, #subtitleTextColor, #subtitleOutlineColor, #subtitle-drop, #remove-subtitle, #trim-start, #trim-end, #trim-start-range, #trim-end-range, #trim-apply, #trim-reset, .style-card, #songTitle, #lyricist, #composer, #textX, #textY, #textSize, #textFadeAfter, #textColor, #spectrum-color, #strength, #darkness, #positionX, #positionY, #reset-position, #aspect-ratio, #resolution, #fps, #format, #restart, #loop-playback, #remove-image, #audio-drop, #image-drop, #sleeve-drop, #record-drop, #remove-sleeve, #remove-record",
     )
     .forEach((el) => (el.disabled = locked));
   for (const id of ["trim-start", "trim-end", "trim-start-range", "trim-end-range", "trim-apply", "trim-reset"]) $(id).disabled = locked || !state.originalBuffer;
@@ -680,31 +680,6 @@ for (const id of ["strength", "darkness", "positionX", "positionY", "textX", "te
     state[id] = Number($(id).value);
     update();
   });
-$("reset-settings").addEventListener("click", () => {
-  if (state.busy || state.loading || state.imageLoading) return;
-  if (!$("reset-dialog").open) $("reset-dialog").showModal();
-});
-$("reset-dialog-cancel").addEventListener("click", () => $("reset-dialog").close());
-$("reset-dialog").addEventListener("close", () => $("reset-settings").focus());
-$("reset-dialog-confirm").addEventListener("click", () => {
-  if (!$("reset-dialog").open || state.busy || state.loading || state.imageLoading) return;
-  $("reset-dialog").close();
-  Object.assign(state, DEFAULT_SETTINGS);
-  state.identityImage = null;
-  fileError("identity");
-  for (const id of ["songTitle", "lyricist", "composer", "textX", "textY", "textSize", "textFadeAfter", "textColor", "strength", "darkness", "positionX", "positionY", "resolution", "fps", "format", "profile", "exportVolume", ...EQ_IDS]) {
-    $(id).value = state[id];
-  }
-  $("spectrum-color").value = state.color;
-  $("aspect-ratio").value = state.aspectRatio;
-  $("appearance-mode").value = state.mode;
-  $("appearance-theme").value = state.theme;
-  applyTheme(state.mode, state.theme);
-  applyPreviewEqualizer();
-  update();
-  const cleared = clearSettings();
-  message(cleared ? "所有設定已恢復預設值。" : "本次設定已重置，但瀏覽器無法清除儲存的設定。");
-});
 $("reset-position").addEventListener("click", () => {
   state.positionX = state.positionY = 0;
   $("positionX").value = $("positionY").value = 0;

@@ -24,7 +24,7 @@
           <h1>把文字變成影像<span>。</span></h1>
           <p>輸入場景、鏡頭運動、主體動作、風格與光線，準備生成一段 AI 影片。</p>
         </div>
-        <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待設定影片模型</span>
+        <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待輸入影片描述</span>
       </section>
 
       <section class="panel prompt-panel">
@@ -46,20 +46,20 @@
           <div class="generation-options">
             <div class="generation-model">
               <label class="field-label" for="video-model">生成模型</label>
-              <select id="video-model" class="setting-select" disabled>
-                <option value="" selected>尚未設定模型</option>
+              <select id="video-model" class="setting-select">
+                <option value="MiniMax-H3" selected>MiniMax H3</option>
+                <option value="MiniMax-H3-Max">MiniMax H3 Max</option>
               </select>
             </div>
             <div class="model-api-key" aria-label="所選影片模型的 API KEY 狀態">
               <span>API KEY</span>
-              <button id="video-api-key" type="button" disabled>未設定</button>
+              <button id="video-api-key" type="button">未設定</button>
             </div>
           </div>
           <div class="generate-action">
             <button id="generate-video" class="export-button" type="button" disabled>▶ 生成影片</button>
           </div>
         </div>
-        <p class="video-model-note">影片模型與 API 尚未設定，後續加入模型後即可啟用生成。</p>
         <p id="video-generation-error" class="generation-error" role="alert" hidden></p>
       </section>
 
@@ -76,5 +76,23 @@
         <p class="result-storage-note">後續完成模型串接後，生成結果可下載或套用為主畫面的背景素材。</p>
       </section>
     </main>
+
+    <dialog id="video-api-key-dialog" class="reset-dialog" aria-labelledby="video-api-key-dialog-title">
+      <form id="video-api-key-form" method="dialog">
+        <h2 id="video-api-key-dialog-title">輸入 API KEY</h2>
+        <p>可從其他模型複製金鑰，或直接輸入。金鑰只會保存在目前瀏覽器。</p>
+        <label class="api-key-input-label" for="video-api-key-source">從其他模型複製</label>
+        <select id="video-api-key-source" class="setting-select">
+          <option value="">目前沒有其他已保存的金鑰</option>
+        </select>
+        <label class="api-key-input-label" for="video-api-key-input">API KEY</label>
+        <input id="video-api-key-input" class="text-input" type="password" autocomplete="off" spellcheck="false" />
+        <p id="video-api-key-error" class="generation-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-video-api-key" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">保存金鑰</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

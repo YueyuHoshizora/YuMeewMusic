@@ -2,7 +2,7 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
 
-const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/";
+const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 const $ = id => document.getElementById(id);
 const settings = loadSettings();

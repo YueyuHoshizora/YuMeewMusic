@@ -19,7 +19,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
-  assert.match(script, /flux-klein-worker\.yustellar\.idv\.tw/);
+  assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/generate/);
   assert.match(script, /method:\s*"POST"/);
   assert.match(script, /"Content-Type":\s*"application\/json"/);
   assert.match(html, /id="enhance-prompt"[^>]*type="checkbox"[^>]*checked/);

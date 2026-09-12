@@ -12,7 +12,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /<title>文生影 · YuMeew<\/title>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
-  assert.match(html, /id="video-prompt"[^>]*maxlength="2048"/);
+  assert.match(html, /<textarea id="video-prompt"/);
+  assert.doesNotMatch(html, /<textarea id="video-prompt"[^>]*maxlength=/);
   assert.match(html, /id="video-resolution"/);
   assert.match(html, /id="video-duration"/);
   assert.match(html, /id="video-ratio"/);

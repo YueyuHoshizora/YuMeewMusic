@@ -28,6 +28,9 @@ test('model settings page exposes list and confirmed delete actions', () => {
   for (const [, id] of script.matchAll(/\$\(['"]([^'"]+)['"]\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /下次使用將重新下載，是否刪除？/);
+  assert.match(html, /<aside class="panel settings-sidebar"[^>]*aria-label="設定項目">/);
+  assert.match(html, /class="settings-nav-link active" href="#model-manager" aria-current="page"/);
+  assert.match(html, /<section id="model-manager" class="panel model-manager"/);
   assert.match(script, /listCachedModels\(\)/);
   assert.match(script, /deleteCachedModel\(target\.keys\)/);
   assert.match(script, /deleteAllCachedModels\(\)/);

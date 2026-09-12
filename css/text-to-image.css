@@ -13,15 +13,18 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 .autocomplete-row { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 10px; margin-bottom: 16px; }
 .autocomplete-row .text-input { width: 100%; box-sizing: border-box; }
 .autocomplete-row button { width: 100%; }
-#image-model { display: block; width: min(100%, 360px); }
-.model-api-key { display: flex; align-items: center; justify-content: space-between; gap: 20px; width: min(100%, 360px); box-sizing: border-box; margin: 8px 0 16px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+#image-model { display: block; width: 100%; }
+.generation-options { display: grid; grid-template-columns: minmax(190px, 360px) 110px; align-items: end; gap: 10px; }
+.generation-model .field-label { margin-top: 0; }
+.model-api-key { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
 .model-api-key span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
 .model-api-key strong { color: var(--primary-text); font-size: 13px; }
 #image-prompt { display: block; width: 100%; height: 112px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; line-height: 1.7; }
 #image-prompt::placeholder { color: var(--muted); }
 #image-prompt:focus { border-color: var(--primary); outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent); }
-.prompt-actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 14px; }
+.prompt-actions { display: grid; grid-template-columns: minmax(0, 1fr) 210px; align-items: end; gap: 20px; margin-top: 14px; }
 #prompt-count { color: var(--muted); font: 12px monospace; }
+.generate-action { display: grid; justify-items: end; gap: 6px; }
 .enhance-option { display: flex; align-items: center; gap: 10px; width: fit-content; margin-top: 12px; color: var(--foreground); cursor: pointer; }
 .enhance-option input { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); }
 .enhance-option span { display: grid; gap: 2px; }
@@ -80,6 +83,10 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
   .generation-status { max-width: none; text-align: left; }
   .prompt-panel,
   .result-panel { padding: 18px; }
+  .prompt-actions { grid-template-columns: 1fr; gap: 12px; }
+  .generate-action { justify-items: stretch; }
+  .generate-action #prompt-count { justify-self: end; }
+  .prompt-actions .export-button { width: 100%; }
 }
 
 @media (max-width: 560px) {
@@ -98,9 +105,7 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
   .autocomplete-row button { min-height: 44px; }
   #image-prompt { height: 150px; }
   .enhance-option { align-items: flex-start; }
-  .prompt-actions { align-items: stretch; flex-direction: column; gap: 10px; }
-  .prompt-actions .export-button { width: 100%; }
-  #prompt-count { align-self: flex-end; }
+  .generation-options { grid-template-columns: minmax(0, 1fr) 96px; }
   .result-heading { align-items: flex-start; }
   .result-actions { grid-template-columns: 1fr; gap: 10px; }
   .empty-result { padding: 14px; }

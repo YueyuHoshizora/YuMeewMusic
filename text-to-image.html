@@ -33,14 +33,6 @@
           <input id="prompt-keywords" class="text-input" type="text" maxlength="500" placeholder="輸入多個詞，例如：星空、黑膠唱片、霓虹城市、電影感" />
           <button id="compose-prompt" class="export-button" type="button" disabled>組成題詞</button>
         </div>
-        <label class="field-label" for="image-model">生成模型</label>
-        <select id="image-model" class="setting-select">
-          <option value="flux-2-klein-4b" selected>Flux.2 Klein 4B</option>
-        </select>
-        <div class="model-api-key" aria-label="所選模型的 API KEY 類型">
-          <span>API KEY</span>
-          <strong id="model-api-key">Free</strong>
-        </div>
         <label class="field-label" for="image-prompt">圖片描述</label>
         <textarea id="image-prompt" maxlength="2048" placeholder="例如：星空下的黑膠唱片，霓虹城市倒映在唱片表面，電影感光線，細節豐富"></textarea>
         <label class="enhance-option" for="enhance-prompt">
@@ -51,8 +43,22 @@
           </span>
         </label>
         <div class="prompt-actions">
-          <span id="prompt-count">0 / 2048</span>
-          <button id="generate-image" class="export-button" type="button" disabled>✦ 生成圖片</button>
+          <div class="generation-options">
+            <div class="generation-model">
+              <label class="field-label" for="image-model">生成模型</label>
+              <select id="image-model" class="setting-select">
+                <option value="flux-2-klein-4b" selected>Flux.2 Klein 4B</option>
+              </select>
+            </div>
+            <div class="model-api-key" aria-label="所選模型的 API KEY 類型">
+              <span>API KEY</span>
+              <strong id="model-api-key">Free</strong>
+            </div>
+          </div>
+          <div class="generate-action">
+            <span id="prompt-count">0 / 2048</span>
+            <button id="generate-image" class="export-button" type="button" disabled>✦ 生成圖片</button>
+          </div>
         </div>
         <p id="generation-error" class="generation-error" role="alert" hidden></p>
       </section>

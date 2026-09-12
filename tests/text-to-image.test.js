@@ -15,6 +15,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);
   assert.match(html, /<span>API KEY<\/span>\s*<strong id="model-api-key">Free<\/strong>/);
+  assert.match(html, /class="prompt-actions">[\s\S]*class="generation-options"[\s\S]*id="image-model"[\s\S]*id="model-api-key"[\s\S]*id="generate-image"/);
   assert.match(html, /id="prompt-keywords"[^>]*type="text"/);
   assert.match(html, /id="compose-prompt"[^>]*class="export-button"[^>]*>組成題詞<\/button>/);
   assert.match(html, /id="generated-image-frame"/);
@@ -31,6 +32,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /\.generated-image-frame\.fullscreen-fallback/);
   assert.match(css, /body\.text-to-image-body\s*\{[^}]*min-width:\s*0/);
   assert.match(css, /@media \(max-width:\s*800px\)/);
+  assert.match(css, /\.prompt-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 210px/);
+  assert.match(css, /@media \(max-width:\s*800px\)[\s\S]*?\.prompt-actions\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(css, /@media \(max-width:\s*560px\)/);
   assert.match(css, /width:\s*100dvh;\s*height:\s*100vw/);
   assert.match(css, /rotate\(90deg\)/);

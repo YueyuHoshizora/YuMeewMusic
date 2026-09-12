@@ -45,6 +45,8 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(script, /form\.append\('duration', String\(audioDuration\)\)/);
   assert.match(script, /uploadVocals\(wav, transcriptionBuffer\.duration, run\)/);
   assert.match(script, /\$\('recognition-lyrics'\)\.disabled = value/);
+  assert.match(html, /id="cancel-recognition"[^>]*hidden/);
+  assert.match(script, /\$\('cancel-recognition'\)\.hidden = !value/);
   assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.yustellar\.idv\.tw'/);
   assert.equal((script.match(/\bfetch\s*\(/g) || []).length, 1);
   assert.match(script, /parseSubtitles\(text, 'srt'\)/);

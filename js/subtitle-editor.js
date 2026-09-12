@@ -90,6 +90,7 @@ function setRecognitionBusy(value) {
   $('recognize-subtitles').disabled = value || !state.audioFile || !state.waveformBuffer;
   $('recognition-language').disabled = value;
   $('recognition-lyrics').disabled = value;
+  $('cancel-recognition').hidden = !value;
   $('return-to-main').disabled = value;
   for (const className of ['editor-player', 'editor-workspace', 'editor-actions']) {
     const element = document.querySelector(`.${className}`);

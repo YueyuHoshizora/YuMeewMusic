@@ -1,6 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
+import { getApiKey, maskApiKey, saveApiKey } from "./api-keys.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
@@ -89,14 +90,52 @@ function showError(text = "") {
 }
 
 function syncModelDetails() {
-  const model = IMAGE_MODELS[$("image-model").value];
-  $("model-api-key").textContent = model?.apiKey || "—";
+  const modelId = $("image-model").value;
+  const model = IMAGE_MODELS[modelId];
+  const isFree = model?.apiKey === "Free";
+  const storedKey = isFree ? null : getApiKey(modelId);
+  $("model-api-key").textContent = isFree ? "Free" : storedKey ? maskApiKey(storedKey.value) : "點擊輸入";
+  $("model-api-key").disabled = busy || isFree || !model;
+}
+
+function openApiKeyDialog() {
+  const modelId = $("image-model").value;
+  const model = IMAGE_MODELS[modelId];
+  if (!model || model.apiKey === "Free" || busy) return;
+  $("api-key-dialog-title").textContent = `${model.label} API KEY`;
+  $("api-key-dialog-description").textContent = "金鑰只會保存在目前瀏覽器的 localStorage，頁面僅顯示遮蔽內容。";
+  $("api-key-input").value = "";
+  $("api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
+  $("api-key-error").hidden = true;
+  $("api-key-dialog").showModal();
+  $("api-key-input").focus();
+}
+
+function submitApiKey(event) {
+  event.preventDefault();
+  const modelId = $("image-model").value;
+  const model = IMAGE_MODELS[modelId];
+  const value = $("api-key-input").value.trim();
+  if (!model || model.apiKey === "Free") return;
+  if (!value) {
+    $("api-key-error").textContent = "請輸入 API KEY。";
+    $("api-key-error").hidden = false;
+    return;
+  }
+  if (!saveApiKey(modelId, model.label, value)) {
+    $("api-key-error").textContent = "瀏覽器無法保存 API KEY。";
+    $("api-key-error").hidden = false;
+    return;
+  }
+  $("api-key-dialog").close();
+  syncModelDetails();
 }
 
 function setBusy(value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("generation-lock").hidden = !value;
+  syncModelDetails();
   $("image-model").disabled = value;
   $("image-prompt").disabled = value;
   $("enhance-prompt").disabled = value;
@@ -175,14 +214,17 @@ function isQuotaError(statusCode, detail) {
 async function generateImage() {
   const prompt = $("image-prompt").value.trim();
   const enhance = Boolean($("enhance-prompt").checked);
-  const model = IMAGE_MODELS[$("image-model").value];
+  const modelId = $("image-model").value;
+  const model = IMAGE_MODELS[modelId];
   if (!prompt || busy || composing) return;
   showError();
   status("圖片生成中…");
   setBusy(true);
   try {
     if (!model) throw Error("找不到所選圖片模型的呼叫方式。");
-    const response = await model.call({ prompt, enhance });
+    const apiKey = model.apiKey === "Free" ? "" : getApiKey(modelId)?.value || "";
+    if (model.apiKey !== "Free" && !apiKey) throw Error("請先點擊 API KEY 並輸入金鑰。");
+    const response = await model.call({ prompt, enhance, apiKey });
     if (!response.ok) {
       let detail = "";
       try {
@@ -226,6 +268,9 @@ $("prompt-keywords").addEventListener("input", () => {
 $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("image-model").addEventListener("change", syncModelDetails);
+$("model-api-key").addEventListener("click", openApiKeyDialog);
+$("api-key-form").addEventListener("submit", submitApiKey);
+$("cancel-api-key").addEventListener("click", () => $("api-key-dialog").close());
 
 $("generate-image").addEventListener("click", generateImage);
 

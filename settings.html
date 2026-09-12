@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="管理 YuMeew 保存在瀏覽器 IndexedDB 中的 AI 模型。" />
+    <meta name="description" content="管理 YuMeew 的介面、AI 模型與保存在瀏覽器中的 API 金鑰。" />
     <title>設定 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -37,6 +37,10 @@
             <button class="settings-nav-link" type="button" role="tab" data-settings-panel="model-manager" aria-controls="model-manager" aria-selected="false">
               <span class="settings-nav-icon" aria-hidden="true">◇</span>
               <span><strong>模型管理</strong><small>查看與清除 AI 模型</small></span>
+            </button>
+            <button class="settings-nav-link" type="button" role="tab" data-settings-panel="api-key-manager" aria-controls="api-key-manager" aria-selected="false">
+              <span class="settings-nav-icon" aria-hidden="true">⌁</span>
+              <span><strong>金鑰管理</strong><small>查看與刪除 API KEY</small></span>
             </button>
           </nav>
         </aside>
@@ -86,6 +90,18 @@
             </div>
             <p id="model-error" class="model-error" role="alert" hidden></p>
           </section>
+
+          <section id="api-key-manager" class="panel settings-panel api-key-manager" role="tabpanel" aria-labelledby="api-key-manager-title" hidden>
+            <div class="section-title"><span>03</span><h2 id="api-key-manager-title">金鑰管理</h2></div>
+            <p class="settings-panel-intro">列出保存在目前瀏覽器 localStorage 的 API KEY。為保護金鑰，畫面只顯示前後各三碼。</p>
+            <div id="api-key-list" class="api-key-list" aria-live="polite"></div>
+            <div id="api-key-empty" class="model-empty" hidden>
+              <span aria-hidden="true">⌁</span>
+              <strong>目前沒有已保存的 API KEY</strong>
+              <p>在需要金鑰的模型旁點擊 API KEY，即可輸入並保存。</p>
+            </div>
+            <p id="api-key-status" class="model-status" role="status" aria-live="polite"></p>
+          </section>
         </div>
       </div>
     </main>
@@ -97,6 +113,17 @@
         <div class="dialog-actions">
           <button id="cancel-delete-model" class="text-button" value="cancel">取消</button>
           <button id="confirm-delete-model" class="dialog-confirm" value="confirm">確認刪除</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-api-key-dialog" class="reset-dialog" aria-labelledby="delete-api-key-title">
+      <form method="dialog">
+        <h2 id="delete-api-key-title">刪除 API KEY？</h2>
+        <p>刪除後，使用相關模型時必須重新輸入金鑰。是否刪除？</p>
+        <div class="dialog-actions">
+          <button class="text-button" value="cancel">取消</button>
+          <button class="dialog-confirm" value="confirm">確認刪除</button>
         </div>
       </form>
     </dialog>

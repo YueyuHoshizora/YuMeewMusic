@@ -52,7 +52,7 @@
             </div>
             <div class="model-api-key" aria-label="所選模型的 API KEY 類型">
               <span>API KEY</span>
-              <strong id="model-api-key">Free</strong>
+              <button id="model-api-key" type="button" disabled>Free</button>
             </div>
           </div>
           <div class="generate-action">
@@ -83,5 +83,19 @@
       <strong>圖片生成中</strong>
       <p>正在把文字轉換成畫面，請稍候…</p>
     </div>
+
+    <dialog id="api-key-dialog" class="reset-dialog" aria-labelledby="api-key-dialog-title">
+      <form id="api-key-form" method="dialog">
+        <h2 id="api-key-dialog-title">輸入 API KEY</h2>
+        <p id="api-key-dialog-description">金鑰只會保存在目前瀏覽器的 localStorage。</p>
+        <label class="api-key-input-label" for="api-key-input">API KEY</label>
+        <input id="api-key-input" class="text-input" type="password" autocomplete="off" spellcheck="false" />
+        <p id="api-key-error" class="generation-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-api-key" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">保存金鑰</button>
+        </div>
+      </form>
+    </dialog>
   </body>
 </html>

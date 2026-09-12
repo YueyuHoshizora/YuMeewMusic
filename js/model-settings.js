@@ -1,9 +1,10 @@
 import { applyTheme } from './themes.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { deleteAllCachedModels, deleteCachedModel, listCachedModels } from './indexeddb-model-cache.js';
+import { deleteApiKey, listApiKeys, maskApiKey } from './api-keys.js';
 
 const $ = id => document.getElementById(id);
-const state = { models: [], pending: null, busy: false };
+const state = { models: [], apiKeys: [], pending: null, pendingApiKey: null, busy: false };
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 $('interface-mode').value = settings.mode;
@@ -76,6 +77,40 @@ function render() {
   }));
 }
 
+function refreshApiKeys(message = '') {
+  state.apiKeys = listApiKeys();
+  $('api-key-empty').hidden = Boolean(state.apiKeys.length);
+  $('api-key-list').replaceChildren(...state.apiKeys.map(key => {
+    const row = document.createElement('article');
+    row.className = 'api-key-row';
+    const details = document.createElement('div');
+    details.className = 'api-key-details';
+    const name = document.createElement('strong');
+    name.textContent = key.label;
+    const id = document.createElement('span');
+    id.textContent = key.id;
+    details.append(name, id);
+    const masked = document.createElement('code');
+    masked.className = 'api-key-masked';
+    masked.textContent = maskApiKey(key.value);
+    const button = document.createElement('button');
+    button.className = 'model-delete';
+    button.type = 'button';
+    button.textContent = '刪除';
+    button.addEventListener('click', () => requestDeleteApiKey(key));
+    row.append(details, masked, button);
+    return row;
+  }));
+  $('api-key-status').textContent = message || (state.apiKeys.length ? `共 ${state.apiKeys.length} 組金鑰` : '目前沒有已保存的金鑰');
+}
+
+function requestDeleteApiKey(key) {
+  state.pendingApiKey = key;
+  $('delete-api-key-title').textContent = `刪除「${key.label}」API KEY？`;
+  $('delete-api-key-dialog').returnValue = '';
+  $('delete-api-key-dialog').showModal();
+}
+
 async function refreshModels(successMessage = '') {
   state.busy = true;
   render();
@@ -136,5 +171,14 @@ $('delete-model-dialog').addEventListener('close', () => {
   if ($('delete-model-dialog').returnValue === 'confirm') void confirmDelete();
   else state.pending = null;
 });
+$('delete-api-key-dialog').addEventListener('close', () => {
+  const key = state.pendingApiKey;
+  state.pendingApiKey = null;
+  if ($('delete-api-key-dialog').returnValue !== 'confirm' || !key) return;
+  const deleted = deleteApiKey(key.id);
+  refreshApiKeys(deleted ? `已刪除 ${key.label} 的 API KEY` : '瀏覽器無法刪除 API KEY');
+  $('api-key-status').classList.toggle('error', !deleted);
+});
 
 void refreshModels();
+refreshApiKeys();

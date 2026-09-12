@@ -47,7 +47,7 @@ function setComposing(value) {
 
 function completedPrompt(value) {
   if (typeof value === "string") return value.trim();
-  for (const key of ["prompt", "result", "text", "completion"]) {
+  for (const key of ["completed", "prompt", "result", "text", "completion"]) {
     if (typeof value?.[key] === "string" && value[key].trim()) return value[key].trim();
   }
   return "";
@@ -69,7 +69,7 @@ async function composePrompt() {
     const contentType = response.headers.get("content-type") || "";
     const body = contentType.includes("application/json") ? await response.json() : await response.text();
     if (!response.ok) {
-      const detail = completedPrompt(body) || body?.error || body?.message || "";
+      const detail = body?.message || body?.error || completedPrompt(body) || "";
       if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `文字補全服務回傳 ${response.status}`);
     }

@@ -32,6 +32,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);
   assert.match(script, /async function composePrompt\(\)/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt \}\)/);
+  assert.match(script, /\["completed", "prompt", "result", "text", "completion"\]/);
+  assert.match(script, /body\?\.message \|\| body\?\.error/);
   assert.match(script, /\$\("image-prompt"\)\.value = result\.slice\(0, 2048\)/);
   assert.doesNotMatch(script, /\$\("image-prompt"\)\.addEventListener\("keydown"/);
   assert.doesNotMatch(script, /\$\("prompt-keywords"\)\.addEventListener\("keydown"/);

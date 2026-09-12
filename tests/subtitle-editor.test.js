@@ -29,14 +29,15 @@ test('standalone subtitle editor has every referenced control and local page ass
   }
   for (const language of ['auto', 'zh', 'ja', 'en']) assert.match(html, new RegExp(`<option value="${language}">`));
   assert.match(html, /將會複寫目前的字幕，是否確認？/);
-  assert.match(html, /只上傳分離後的人聲 MP3|原始音樂不會上傳/);
+  assert.match(html, /只上傳分離後的人聲 WAV|原始音樂不會上傳/);
   assert.match(script, /new Worker\(new URL\('\.\/vocal-separator-worker\.js'/);
   assert.match(script, /model: 'spleeter'/);
-  assert.match(script, /format: 'mp3'/);
-  assert.match(script, /showVocalsPreview\(mp3\);\s+await uploadVocals\(mp3, run\)/);
+  assert.match(script, /format: 'wav'/);
+  assert.match(script, /form\.append\('audio', wav, `\$\{baseName\}-vocals\.wav`\)/);
+  assert.match(script, /showVocalsPreview\(wav\);\s+await uploadVocals\(wav, run\)/);
   assert.match(script, /URL\.revokeObjectURL\(recognition\.vocalsUrl\)/);
   assert.match(script, /const form = new FormData\(\)/);
-  assert.match(script, /form\.append\('audio', mp3/);
+  assert.match(script, /form\.append\('audio', wav/);
   assert.match(script, /form\.append\('language', \$\('recognition-language'\)\.value\)/);
   assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.yustellar\.idv\.tw'/);
   assert.equal((script.match(/\bfetch\s*\(/g) || []).length, 1);

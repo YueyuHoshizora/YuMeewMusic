@@ -113,9 +113,9 @@ function clearVocalsPreview() {
   recognition.vocalsUrl = '';
 }
 
-function showVocalsPreview(mp3) {
+function showVocalsPreview(wav) {
   clearVocalsPreview();
-  recognition.vocalsUrl = URL.createObjectURL(mp3);
+  recognition.vocalsUrl = URL.createObjectURL(wav);
   $('recognition-vocals-audio').src = recognition.vocalsUrl;
   $('recognition-vocals-preview').hidden = false;
 }
@@ -136,12 +136,12 @@ function vocalsAudioBuffer(left, right) {
   return buffer;
 }
 
-async function uploadVocals(mp3, run) {
+async function uploadVocals(wav, run) {
   if (run !== recognition.run) return;
-  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳分離後的人聲 MP3 並等待辨識…');
+  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳分離後的人聲 WAV 並等待辨識…');
   const form = new FormData();
   const baseName = state.audioFile.name.replace(/\.[^.]+$/, '') || 'audio';
-  form.append('audio', mp3, `${baseName}-vocals.mp3`);
+  form.append('audio', wav, `${baseName}-vocals.wav`);
   form.append('language', $('recognition-language').value);
   const response = await fetch('https://lyrics-transcriber.yustellar.idv.tw', {
     method: 'POST',
@@ -174,19 +174,19 @@ async function encodeAndUploadVocals(data, run) {
     recognition.worker = null;
     if (!(data.vocalsLeft instanceof Float32Array) || !(data.vocalsRight instanceof Float32Array))
       throw Error('Spleeter 沒有產生可用的人聲軌道。');
-    setRecognitionProgress(56, '第二階段：轉換 MP3', '正在瀏覽器內將人聲轉換為 MP3…');
-    const mp3 = await encodeMedia({
-      format: 'mp3',
+    setRecognitionProgress(56, '第二階段：產生 WAV', '正在瀏覽器內產生人聲 WAV…');
+    const wav = await encodeMedia({
+      format: 'wav',
       buffer: vocalsAudioBuffer(data.vocalsLeft, data.vocalsRight),
       settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
       resolution: '1080',
       fps: '60',
       signal: recognition.controller.signal,
-      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：轉換 MP3', `正在編碼人聲 MP3 · ${value}%`),
+      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：產生 WAV', `正在建立人聲 WAV · ${value}%`),
     });
     if (run !== recognition.run) return;
-    showVocalsPreview(mp3);
-    await uploadVocals(mp3, run);
+    showVocalsPreview(wav);
+    await uploadVocals(wav, run);
   } catch (error) {
     if (error?.name !== 'AbortError') recognitionFailed(error?.message || '字幕辨識失敗。', run);
   }

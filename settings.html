@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="管理 YuMeew 保存在瀏覽器 IndexedDB 中的 AI 模型。" />
+    <title>設定 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/settings.css" />
+    <script type="module" src="./js/model-settings.js"></script>
+  </head>
+  <body class="model-settings-body">
+    <header class="model-settings-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SETTINGS</span></a>
+      <span class="local"><i></i>模型只保存在目前瀏覽器</span>
+      <a class="reset-settings model-settings-back" href="./">← 返回主畫面</a>
+    </header>
+
+    <main class="model-settings-main">
+      <section class="model-settings-heading">
+        <div>
+          <div class="eyebrow">LOCAL MODEL STORAGE</div>
+          <h1>設定<span>。</span></h1>
+          <p>查看與清理由 AI 功能下載到 IndexedDB 的模型。刪除模型不會影響音樂、圖片、字幕或其他設定。</p>
+        </div>
+        <span id="model-status" class="model-status" role="status" aria-live="polite">正在讀取模型…</span>
+      </section>
+
+      <section class="panel model-manager" aria-labelledby="model-manager-title">
+        <div class="model-manager-header">
+          <div class="section-title"><span>01</span><h2 id="model-manager-title">模型管理</h2></div>
+          <button id="delete-all-models" class="model-delete-all" type="button" disabled>刪除全部</button>
+        </div>
+        <div class="model-summary"><strong id="model-count">—</strong><span id="model-total-size">正在計算使用容量</span></div>
+        <div id="model-list" class="model-list" aria-live="polite"></div>
+        <div id="model-empty" class="model-empty" hidden>
+          <span aria-hidden="true">◇</span>
+          <strong>目前沒有已下載的模型</strong>
+          <p>使用人聲分離或 AI 辨識歌詞後，模型會自動保存在這裡。</p>
+        </div>
+        <p id="model-error" class="model-error" role="alert" hidden></p>
+      </section>
+    </main>
+
+    <dialog id="delete-model-dialog" class="reset-dialog" aria-labelledby="delete-model-title">
+      <form method="dialog">
+        <h2 id="delete-model-title">刪除模型？</h2>
+        <p id="delete-model-message">下次使用將重新下載，是否刪除？</p>
+        <div class="dialog-actions">
+          <button id="cancel-delete-model" class="text-button" value="cancel">取消</button>
+          <button id="confirm-delete-model" class="dialog-confirm" value="confirm">確認刪除</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

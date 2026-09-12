@@ -13,6 +13,49 @@ let generatedBlob = null;
 let generatedUrl = "";
 let busy = false;
 let composing = false;
+const resultFrame = $("generated-image-frame");
+
+const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+
+function syncResultFullscreen() {
+  const active = fullscreenElement() === resultFrame || resultFrame.classList.contains("fullscreen-fallback");
+  resultFrame.classList.toggle("is-fullscreen", active);
+  resultFrame.setAttribute("aria-label", active ? "恢復生成結果原尺寸" : "放大生成結果至全螢幕");
+  $("result-fullscreen-hint").textContent = active ? "↙ 點擊恢復" : "⛶ 點擊全螢幕";
+}
+
+function closeFullscreenFallback() {
+  resultFrame.classList.remove("fullscreen-fallback");
+  document.body.classList.remove("result-fullscreen-open");
+  syncResultFullscreen();
+}
+
+function openFullscreenFallback() {
+  resultFrame.classList.add("fullscreen-fallback");
+  document.body.classList.add("result-fullscreen-open");
+  syncResultFullscreen();
+}
+
+async function toggleResultFullscreen() {
+  if (resultFrame.classList.contains("fullscreen-fallback")) {
+    closeFullscreenFallback();
+    return;
+  }
+  try {
+    if (fullscreenElement()) {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+    } else if (resultFrame.requestFullscreen) {
+      await resultFrame.requestFullscreen();
+    } else if (resultFrame.webkitRequestFullscreen) {
+      await resultFrame.webkitRequestFullscreen();
+    } else {
+      openFullscreenFallback();
+    }
+  } catch {
+    openFullscreenFallback();
+  }
+}
 
 function status(text, mode = "") {
   $("generation-status").textContent = text;
@@ -163,6 +206,18 @@ $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("generate-image").addEventListener("click", generateImage);
 
+resultFrame.addEventListener("click", () => void toggleResultFullscreen());
+resultFrame.addEventListener("keydown", event => {
+  if (!["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  void toggleResultFullscreen();
+});
+document.addEventListener("fullscreenchange", syncResultFullscreen);
+document.addEventListener("webkitfullscreenchange", syncResultFullscreen);
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && resultFrame.classList.contains("fullscreen-fallback")) closeFullscreenFallback();
+});
+
 $("download-image").addEventListener("click", () => {
   if (!generatedBlob || busy) return;
   const link = document.createElement("a");
@@ -189,4 +244,7 @@ $("apply-background").addEventListener("click", async () => {
   }
 });
 
-window.addEventListener("pagehide", releaseImage);
+window.addEventListener("pagehide", () => {
+  closeFullscreenFallback();
+  releaseImage();
+});

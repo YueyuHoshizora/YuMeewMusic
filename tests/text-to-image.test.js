@@ -14,6 +14,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="prompt-keywords"[^>]*type="text"/);
   assert.match(html, /id="compose-prompt"[^>]*class="export-button"[^>]*>組成題詞<\/button>/);
   assert.match(html, /id="generated-image-frame"/);
+  assert.match(html, /id="generated-image-frame"[^>]*role="button"[^>]*tabindex="0"/);
+  assert.match(html, /id="result-fullscreen-hint"[^>]*>⛶ 點擊全螢幕<\/span>/);
   assert.match(html, /1280 × 720/);
   assert.match(html, /每日早上 8 點（台灣時間）重置額度/);
   assert.match(html, /id="download-image"[^>]*disabled/);
@@ -21,6 +23,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
+  assert.match(css, /\.generated-image-frame:fullscreen/);
+  assert.match(css, /\.generated-image-frame\.fullscreen-fallback/);
   assert.match(css, /body\.text-to-image-body\s*\{[^}]*min-width:\s*0/);
   assert.match(css, /@media \(max-width:\s*800px\)/);
   assert.match(css, /@media \(max-width:\s*560px\)/);
@@ -36,6 +40,9 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);
   assert.match(script, /async function composePrompt\(\)/);
+  assert.match(script, /async function toggleResultFullscreen\(\)/);
+  assert.match(script, /resultFrame\.requestFullscreen\(\)/);
+  assert.match(script, /resultFrame\.classList\.contains\("fullscreen-fallback"\)/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt \}\)/);
   assert.match(script, /\["completed", "prompt", "result", "text", "completion"\]/);
   assert.match(script, /body\?\.message \|\| body\?\.error/);

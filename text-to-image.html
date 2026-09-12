@@ -52,9 +52,10 @@
 
       <section class="panel result-panel">
         <div class="result-heading"><div class="section-title"><span>1280 × 720</span><h2>生成結果</h2></div><small>16:9 · JPEG</small></div>
-        <div id="generated-image-frame" class="generated-image-frame">
+        <div id="generated-image-frame" class="generated-image-frame" role="button" tabindex="0" aria-label="放大生成結果至全螢幕">
           <div id="empty-result" class="empty-result"><span aria-hidden="true">✦</span><strong>生成的圖片會出現在這裡</strong><small>完成前不會離開目前頁面</small></div>
           <img id="generated-image" alt="AI 生成圖片" hidden />
+          <span id="result-fullscreen-hint" class="result-fullscreen-hint" aria-hidden="true">⛶ 點擊全螢幕</span>
         </div>
         <div class="result-actions">
           <button id="download-image" class="reset-settings" type="button" disabled>↓ 下載圖片</button>

@@ -29,8 +29,18 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 .result-panel { padding: 20px; }
 .result-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
 .result-heading small { color: var(--muted); font-size: 12px; }
-.generated-image-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--border); border-radius: 11px; background: #090b0d; }
+.generated-image-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--border); border-radius: 11px; background: #090b0d; cursor: zoom-in; }
 .generated-image-frame img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.generated-image-frame:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.result-fullscreen-hint { position: absolute; right: 10px; bottom: 10px; z-index: 2; padding: 6px 9px; border: 1px solid rgb(255 255 255 / .24); border-radius: 7px; background: rgb(0 0 0 / .68); color: #fff; font-size: 11px; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
+.generated-image-frame:hover .result-fullscreen-hint,
+.generated-image-frame:focus-visible .result-fullscreen-hint,
+.generated-image-frame.is-fullscreen .result-fullscreen-hint { opacity: 1; }
+.generated-image-frame:fullscreen,
+.generated-image-frame:-webkit-full-screen,
+.generated-image-frame.fullscreen-fallback { width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; background: #000; aspect-ratio: auto; cursor: zoom-out; }
+.generated-image-frame.fullscreen-fallback { position: fixed; z-index: 2000; inset: 0; }
+.text-to-image-body.result-fullscreen-open { overflow: hidden; }
 .empty-result { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--muted); text-align: center; }
 .empty-result > span { color: var(--primary); font-size: 30px; animation: idle-glow 2.2s ease-in-out infinite; }
 .empty-result strong { color: var(--foreground); font-size: 15px; font-weight: 600; }
@@ -95,4 +105,8 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
   .empty-result strong { font-size: 13px; }
   .empty-result small { font-size: 11px; }
   .generation-lock { padding: 24px; }
+}
+
+@media (hover: none) {
+  .result-fullscreen-hint { opacity: .82; }
 }

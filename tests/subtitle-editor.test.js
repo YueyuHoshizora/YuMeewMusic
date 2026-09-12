@@ -27,7 +27,9 @@ test('standalone subtitle editor has every referenced control and local page ass
   for (const id of ['recognition-language', 'recognition-lyrics', 'recognize-subtitles', 'recognition-progress-area', 'cancel-recognition', 'replace-subtitles-dialog', 'replace-subtitles-cancel', 'replace-subtitles-confirm']) {
     assert.ok(ids.includes(id), id);
   }
-  for (const language of ['auto', 'zh', 'ja', 'en']) assert.match(html, new RegExp(`<option value="${language}">`));
+  for (const language of ['zh', 'ja', 'en']) assert.match(html, new RegExp(`<option value="${language}">`));
+  assert.doesNotMatch(html, /<option value="auto">/);
+  assert.match(html, /<select id="recognition-language">\s*<option value="zh">中文<\/option>/);
   assert.match(html, /將會複寫目前的字幕，是否確認？/);
   assert.match(html, /只上傳分離後的人聲 WAV|原始音樂不會上傳/);
   assert.match(script, /new Worker\(new URL\('\.\/vocal-separator-worker\.js'/);

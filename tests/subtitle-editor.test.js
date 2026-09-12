@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 
-test('standalone subtitle editor has every referenced control and only local assets', () => {
+test('standalone subtitle editor has every referenced control and local page assets', () => {
   const html = readFileSync('subtitle-editor.html', 'utf8');
   const script = readFileSync('js/subtitle-editor.js', 'utf8');
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\(['"]([^'"]+)['"]\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
-  assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
+  assert.doesNotMatch(script, /\b(XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
   assert.match(script, /saveStoredMedia\('subtitle'/);
   assert.match(script, /serializeSubtitles/);
   assert.doesNotMatch(script, /scrollCueToCenter|scrollIntoView/);
@@ -24,7 +24,23 @@ test('standalone subtitle editor has every referenced control and only local ass
   assert.ok(ids.includes('return-dialog'));
   assert.ok(ids.includes('return-dialog-cancel'));
   assert.ok(ids.includes('return-dialog-confirm'));
-  assert.doesNotMatch(html, /AI 辨識歌詞|辨識歌詞|lyrics-ai|replace-lyrics/);
+  for (const id of ['recognition-language', 'recognize-subtitles', 'recognition-progress-area', 'cancel-recognition', 'replace-subtitles-dialog', 'replace-subtitles-cancel', 'replace-subtitles-confirm']) {
+    assert.ok(ids.includes(id), id);
+  }
+  for (const language of ['auto', 'zh', 'ja', 'en']) assert.match(html, new RegExp(`<option value="${language}">`));
+  assert.match(html, /將會複寫目前的字幕，是否確認？/);
+  assert.match(html, /只上傳分離後的人聲 MP3|原始音樂不會上傳/);
+  assert.match(script, /new Worker\(new URL\('\.\/vocal-separator-worker\.js'/);
+  assert.match(script, /model: 'spleeter'/);
+  assert.match(script, /format: 'mp3'/);
+  assert.match(script, /const form = new FormData\(\)/);
+  assert.match(script, /form\.append\('audio', mp3/);
+  assert.match(script, /form\.append\('language', \$\('recognition-language'\)\.value\)/);
+  assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.yustellar\.idv\.tw'/);
+  assert.equal((script.match(/\bfetch\s*\(/g) || []).length, 1);
+  assert.match(script, /parseSubtitles\(text, 'srt'\)/);
+  assert.match(script, /MAX_RECOGNITION_FILE_SIZE = 150 \* 1024 \* 1024/);
+  assert.match(script, /SEPARATOR_MAX_DURATION/);
   assert.doesNotMatch(script, /lyrics-recognition|recognize-lyrics|Whisper|startLyricsRecognition/);
   assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);
   assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);

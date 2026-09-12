@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="在瀏覽器內編輯 YuMeew Music 字幕，音樂與字幕不會上傳伺服器。" />
+    <meta name="description" content="在瀏覽器內編輯 YuMeew Music 字幕；使用 AI 辨識時，只上傳分離後的人聲 MP3。" />
     <title>字幕編輯器 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -13,7 +13,7 @@
   <body class="subtitle-editor-body">
     <header class="editor-header">
       <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SUBTITLE EDITOR</span></a>
-      <span class="local"><i></i>音樂與字幕只在瀏覽器內處理</span>
+      <span class="local"><i></i>原始音樂與字幕保存在瀏覽器</span>
       <button id="return-to-main" class="reset-settings editor-back" type="button">← 返回主畫面</button>
     </header>
     <main class="subtitle-editor-main">
@@ -24,6 +24,29 @@
           <p>拖曳時間軸上的字幕色帶，或直接輸入時間與文字。儲存後會覆寫主畫面目前的字幕。</p>
         </div>
         <div id="editor-status" class="editor-status" role="status">正在讀取瀏覽器中的素材…</div>
+      </section>
+
+      <section class="subtitle-recognition panel" aria-labelledby="subtitle-recognition-title">
+        <div class="subtitle-recognition-copy">
+          <div class="section-title"><span>AI</span><h2 id="subtitle-recognition-title">辨識字幕</h2></div>
+          <p>瀏覽器先以 Spleeter 分離人聲並轉為 MP3，再將人聲 MP3 傳送至辨識服務。原始音樂不會上傳。</p>
+        </div>
+        <div class="subtitle-recognition-controls">
+          <label for="recognition-language">字幕語言
+            <select id="recognition-language">
+              <option value="auto">自動</option>
+              <option value="zh">中文</option>
+              <option value="ja">日文</option>
+              <option value="en">英文</option>
+            </select>
+          </label>
+          <button id="recognize-subtitles" class="export-button recognition-button" type="button" disabled>AI 辨識字幕</button>
+        </div>
+        <div id="recognition-progress-area" class="recognition-progress-area" hidden>
+          <div class="recognition-progress-heading"><strong id="recognition-stage">正在準備…</strong><span id="recognition-percent">0%</span></div>
+          <progress id="recognition-progress" max="100" value="0"></progress>
+          <div class="recognition-progress-footer"><span id="recognition-status" role="status">正在準備人聲分離…</span><button id="cancel-recognition" class="text-button" type="button">取消辨識</button></div>
+        </div>
       </section>
 
       <section class="editor-player panel">
@@ -116,6 +139,14 @@
       <div class="dialog-actions">
         <button id="return-dialog-cancel" class="reset-settings" type="button" autofocus>取消</button>
         <button id="return-dialog-confirm" class="reset-confirm" type="button">不保存並返回</button>
+      </div>
+    </dialog>
+    <dialog id="replace-subtitles-dialog" class="reset-dialog" aria-labelledby="replace-subtitles-title">
+      <h2 id="replace-subtitles-title">複寫目前的字幕？</h2>
+      <p>將會複寫目前的字幕，是否確認？這次替換仍可使用「復原」恢復。</p>
+      <div class="dialog-actions">
+        <button id="replace-subtitles-cancel" class="reset-settings" type="button" autofocus>取消</button>
+        <button id="replace-subtitles-confirm" class="reset-confirm" type="button">確認並開始辨識</button>
       </div>
     </dialog>
   </body>

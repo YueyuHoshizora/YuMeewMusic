@@ -3,11 +3,15 @@ import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
 import { formatSubtitleTime, generatedSubtitleFilename, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
 import { createUndoHistory } from './undo-history.js';
+import { encodeMedia } from './export.js';
+import { SEPARATOR_MAX_DURATION } from './vocal-separator-core.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
 const state = { cues: [], selected: -1, duration: 60, subtitleName: 'edited-subtitles.srt', dirty: false, audioUrl: '', audioFile: null, waveformBuffer: null };
 const editHistory = createUndoHistory(10);
+const MAX_RECOGNITION_FILE_SIZE = 150 * 1024 * 1024;
+const recognition = { busy: false, worker: null, controller: null, run: 0 };
 let textHistoryCue = null;
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -70,6 +74,178 @@ function redoEdit() {
 function markDirty() {
   state.dirty = true;
   status('尚未儲存的修改', '');
+}
+
+function setRecognitionProgress(value, stage, text) {
+  const progress = Math.max(0, Math.min(100, Math.round(value)));
+  $('recognition-progress-area').hidden = false;
+  $('recognition-progress').value = progress;
+  $('recognition-percent').textContent = `${progress}%`;
+  if (stage) $('recognition-stage').textContent = stage;
+  if (text) $('recognition-status').textContent = text;
+}
+
+function setRecognitionBusy(value) {
+  recognition.busy = value;
+  $('recognize-subtitles').disabled = value || !state.audioFile || !state.waveformBuffer;
+  $('recognition-language').disabled = value;
+  $('return-to-main').disabled = value;
+  for (const className of ['editor-player', 'editor-workspace', 'editor-actions']) {
+    const element = document.querySelector(`.${className}`);
+    if (element) element.inert = value;
+  }
+  document.querySelector('.subtitle-editor-main').classList.toggle('recognition-busy', value);
+}
+
+function releaseRecognition() {
+  recognition.worker?.terminate();
+  recognition.worker = null;
+  recognition.controller = null;
+}
+
+function recognitionFailed(message, run) {
+  if (run !== recognition.run) return;
+  releaseRecognition();
+  setRecognitionBusy(false);
+  setRecognitionProgress($('recognition-progress').value, '辨識失敗', message);
+  status(message, 'error');
+}
+
+function vocalsAudioBuffer(left, right) {
+  const length = Math.min(left.length, right.length);
+  const buffer = new AudioBuffer({ length, numberOfChannels: 2, sampleRate: state.waveformBuffer.sampleRate });
+  buffer.copyToChannel(left.subarray(0, length), 0);
+  buffer.copyToChannel(right.subarray(0, length), 1);
+  return buffer;
+}
+
+async function uploadVocals(mp3, run) {
+  if (run !== recognition.run) return;
+  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳分離後的人聲 MP3 並等待辨識…');
+  const form = new FormData();
+  const baseName = state.audioFile.name.replace(/\.[^.]+$/, '') || 'audio';
+  form.append('audio', mp3, `${baseName}-vocals.mp3`);
+  form.append('language', $('recognition-language').value);
+  const response = await fetch('https://lyrics-transcriber.yustellar.idv.tw', {
+    method: 'POST',
+    body: form,
+    signal: recognition.controller.signal,
+  });
+  const text = await response.text();
+  if (!response.ok) throw Error(text.trim().slice(0, 300) || `字幕辨識服務回應錯誤（HTTP ${response.status}）。`);
+  const parsed = parseSubtitles(text, 'srt');
+  if (!parsed.cues.length) throw Error('辨識服務沒有回傳有效的 SRT 字幕。');
+  if (run !== recognition.run) return;
+  recordHistory();
+  state.cues = normalizeCues(parsed.cues, state.duration);
+  state.selected = state.cues.length ? 0 : -1;
+  state.subtitleName = generatedSubtitleFilename();
+  state.dirty = true;
+  textHistoryCue = null;
+  $('editor-subtitle-name').textContent = `AI 辨識草稿 · ${state.cues.length} 句`;
+  releaseRecognition();
+  setRecognitionBusy(false);
+  setRecognitionProgress(100, '辨識完成', `已載入 ${state.cues.length} 句 SRT 字幕，請檢查後保存。`);
+  status(`AI 已載入 ${state.cues.length} 句字幕，尚未保存。`, 'success');
+  render();
+}
+
+async function encodeAndUploadVocals(data, run) {
+  try {
+    if (run !== recognition.run) return;
+    recognition.worker?.terminate();
+    recognition.worker = null;
+    if (!(data.vocalsLeft instanceof Float32Array) || !(data.vocalsRight instanceof Float32Array))
+      throw Error('Spleeter 沒有產生可用的人聲軌道。');
+    setRecognitionProgress(56, '第二階段：轉換 MP3', '正在瀏覽器內將人聲轉換為 MP3…');
+    const mp3 = await encodeMedia({
+      format: 'mp3',
+      buffer: vocalsAudioBuffer(data.vocalsLeft, data.vocalsRight),
+      settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
+      resolution: '1080',
+      fps: '60',
+      signal: recognition.controller.signal,
+      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：轉換 MP3', `正在編碼人聲 MP3 · ${value}%`),
+    });
+    await uploadVocals(mp3, run);
+  } catch (error) {
+    if (error?.name !== 'AbortError') recognitionFailed(error?.message || '字幕辨識失敗。', run);
+  }
+}
+
+async function startSubtitleRecognition() {
+  if (recognition.busy) return;
+  if (!state.audioFile || !state.waveformBuffer) {
+    status('請先在主畫面選擇可解析的音樂。', 'error');
+    return;
+  }
+  if (state.audioFile.size > MAX_RECOGNITION_FILE_SIZE) {
+    status('字幕辨識的音樂檔案上限為 150 MB。', 'error');
+    return;
+  }
+  if (state.waveformBuffer.duration > SEPARATOR_MAX_DURATION + .01) {
+    status('字幕辨識目前最多處理 8 分鐘，請先在主畫面裁剪音樂。', 'error');
+    return;
+  }
+  const run = ++recognition.run;
+  recognition.controller = new AbortController();
+  setRecognitionBusy(true);
+  audio.pause();
+  setRecognitionProgress(1, '第一階段：分離人聲', '正在準備 Spleeter；原始音樂不會上傳。');
+  try { await navigator.storage?.persist?.(); } catch {}
+  try {
+    const left = Float32Array.from(state.waveformBuffer.getChannelData(0));
+    const right = Float32Array.from(state.waveformBuffer.numberOfChannels > 1
+      ? state.waveformBuffer.getChannelData(1)
+      : state.waveformBuffer.getChannelData(0));
+    const worker = new Worker(new URL('./vocal-separator-worker.js', import.meta.url), { type: 'module' });
+    recognition.worker = worker;
+    worker.addEventListener('error', event => recognitionFailed(event.message || 'Spleeter 處理程序發生錯誤。', run));
+    worker.addEventListener('message', event => {
+      if (run !== recognition.run || worker !== recognition.worker) return;
+      const data = event.data || {};
+      if (data.type === 'status') {
+        setRecognitionProgress($('recognition-progress').value, '第一階段：分離人聲', data.text);
+      } else if (data.type === 'gpu-fallback') {
+        setRecognitionProgress($('recognition-progress').value, '第一階段：改用 CPU', data.text);
+      } else if (data.type === 'progress') {
+        setRecognitionProgress(Math.max(2, data.value * .55), '第一階段：分離人聲', data.text);
+      } else if (data.type === 'complete') {
+        void encodeAndUploadVocals(data, run);
+      } else if (data.type === 'error') {
+        recognitionFailed(/fetch|network|load/i.test(data.text) ? '無法下載 Spleeter 模型，請檢查網路後再試。' : data.text, run);
+      }
+    });
+    worker.postMessage({
+      type: 'separate',
+      mode: 'fast',
+      model: 'spleeter',
+      left: left.buffer,
+      right: right.buffer,
+    }, [left.buffer, right.buffer]);
+  } catch (error) {
+    recognitionFailed(error?.message || '無法開始字幕辨識。', run);
+  }
+}
+
+function requestSubtitleRecognition() {
+  if (recognition.busy) return;
+  if (state.cues.length) {
+    if (!$('replace-subtitles-dialog').open) $('replace-subtitles-dialog').showModal();
+    return;
+  }
+  void startSubtitleRecognition();
+}
+
+function cancelSubtitleRecognition() {
+  if (!recognition.busy) return;
+  recognition.run += 1;
+  recognition.worker?.terminate();
+  recognition.controller?.abort();
+  releaseRecognition();
+  setRecognitionBusy(false);
+  setRecognitionProgress(0, '已取消辨識', '處理已取消，原本的字幕沒有變更。');
+  status('已取消 AI 字幕辨識。');
 }
 
 function selectCue(index, seek = false) {
@@ -368,6 +544,7 @@ async function loadWorkspace() {
     $('editor-duration').textContent = editorTime(state.duration);
     drawWaveform(decoded);
     render();
+    $('recognize-subtitles').disabled = !state.audioFile || !state.waveformBuffer;
     status(state.cues.length ? `已載入 ${state.cues.length} 句字幕` : '尚無字幕，可從目前時間新增。', state.cues.length ? 'success' : '');
   } catch (error) {
     drawWaveform();
@@ -413,6 +590,13 @@ $('cue-text').addEventListener('input', () => {
 $('cue-text').addEventListener('blur', () => { textHistoryCue = null; });
 $('undo-edit').addEventListener('click', undoEdit);
 $('redo-edit').addEventListener('click', redoEdit);
+$('recognize-subtitles').addEventListener('click', requestSubtitleRecognition);
+$('cancel-recognition').addEventListener('click', cancelSubtitleRecognition);
+$('replace-subtitles-cancel').addEventListener('click', () => $('replace-subtitles-dialog').close());
+$('replace-subtitles-confirm').addEventListener('click', () => {
+  $('replace-subtitles-dialog').close();
+  void startSubtitleRecognition();
+});
 $('download-subtitles').addEventListener('click', downloadSrt);
 $('save-subtitles').addEventListener('click', saveAndReturn);
 $('return-to-main').addEventListener('click', () => {
@@ -435,6 +619,8 @@ document.addEventListener('keydown', event => {
 window.addEventListener('resize', () => drawWaveform(state.waveformBuffer));
 window.addEventListener('beforeunload', event => { if (!state.dirty) return; event.preventDefault(); event.returnValue = ''; });
 window.addEventListener('unload', () => {
+  recognition.worker?.terminate();
+  recognition.controller?.abort();
   if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
 });
 

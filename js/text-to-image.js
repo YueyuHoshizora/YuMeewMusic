@@ -6,6 +6,26 @@ const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 const $ = id => document.getElementById(id);
+
+async function callFlux2Klein4B({ prompt, enhance }) {
+  return fetch(WORKER_URL, {
+    method: "POST",
+    headers: {
+      Accept: "image/jpeg,image/*",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt, enhance }),
+    cache: "no-store",
+  });
+}
+
+const IMAGE_MODELS = Object.freeze({
+  "flux-2-klein-4b": Object.freeze({
+    label: "Flux.2 Klein 4B",
+    call: callFlux2Klein4B,
+  }),
+});
+
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 
@@ -71,6 +91,7 @@ function setBusy(value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("generation-lock").hidden = !value;
+  $("image-model").disabled = value;
   $("image-prompt").disabled = value;
   $("enhance-prompt").disabled = value;
   $("prompt-keywords").disabled = value;
@@ -148,20 +169,14 @@ function isQuotaError(statusCode, detail) {
 async function generateImage() {
   const prompt = $("image-prompt").value.trim();
   const enhance = Boolean($("enhance-prompt").checked);
+  const model = IMAGE_MODELS[$("image-model").value];
   if (!prompt || busy || composing) return;
   showError();
   status("圖片生成中…");
   setBusy(true);
   try {
-    const response = await fetch(WORKER_URL, {
-      method: "POST",
-      headers: {
-        Accept: "image/jpeg,image/*",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt, enhance }),
-      cache: "no-store",
-    });
+    if (!model) throw Error("找不到所選圖片模型的呼叫方式。");
+    const response = await model.call({ prompt, enhance });
     if (!response.ok) {
       let detail = "";
       try {

@@ -323,6 +323,17 @@ async function generateVideo() {
   }
 }
 
+function openGenerateConfirmation() {
+  if ($("generate-video").disabled || busy) return;
+  $("confirm-video-generation-dialog").showModal();
+}
+
+function confirmVideoGeneration(event) {
+  event.preventDefault();
+  $("confirm-video-generation-dialog").close();
+  void generateVideo();
+}
+
 $("video-prompt").addEventListener("input", syncDraftStatus);
 $("video-model").addEventListener("change", syncModelDetails);
 $("video-resolution").addEventListener("change", syncResultHeading);
@@ -331,7 +342,9 @@ $("video-api-key").addEventListener("click", openApiKeyDialog);
 $("video-api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("video-api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialog").close());
-$("generate-video").addEventListener("click", () => void generateVideo());
+$("generate-video").addEventListener("click", openGenerateConfirmation);
+$("confirm-video-generation-form").addEventListener("submit", confirmVideoGeneration);
+$("cancel-video-generation").addEventListener("click", () => $("confirm-video-generation-dialog").close());
 
 $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;

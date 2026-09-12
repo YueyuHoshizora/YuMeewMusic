@@ -21,6 +21,10 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-api-key"[^>]*>未設定<\/button>/);
   assert.doesNotMatch(html, /影片模型與 API 尚未設定，後續加入模型後即可啟用生成/);
   assert.match(html, /id="generate-video"[^>]*disabled>▶ 生成影片<\/button>/);
+  assert.match(html, /id="confirm-video-generation-dialog"[^>]*aria-labelledby="confirm-video-generation-title"/);
+  assert.match(html, /影片生成會消耗 MiniMax 帳戶額度，是否確定開始生成？/);
+  assert.match(html, /id="cancel-video-generation"[^>]*>取消<\/button>/);
+  assert.match(html, /<button class="dialog-confirm" type="submit">確認生成<\/button>/);
   assert.match(html, /id="generated-video"[^>]*controls[^>]*playsinline[^>]*hidden/);
   assert.match(html, /id="download-video"[^>]*disabled/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
@@ -49,6 +53,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援/);
   assert.match(script, /miniMaxError\(body, response\.ok \? "" : `MiniMax API 回傳 \$\{response\.status\}`\)/);
   assert.match(script, /async function pollVideoTask\(taskId, apiKey, signal\)/);
+  assert.match(script, /generate-video"\)\.addEventListener\("click", openGenerateConfirmation\)/);
+  assert.match(script, /confirm-video-generation-form"\)\.addEventListener\("submit", confirmVideoGeneration\)/);
   assert.match(script, /taskState === "succeeded"/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredMedia\("generated-video", cachedFile\)/);

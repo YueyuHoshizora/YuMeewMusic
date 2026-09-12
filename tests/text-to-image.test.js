@@ -18,7 +18,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="generated-image-frame"[^>]*role="button"[^>]*tabindex="0"/);
   assert.match(html, /id="result-fullscreen-hint"[^>]*>⛶ 點擊全螢幕<\/span>/);
   assert.match(html, /1280 × 720/);
-  assert.match(html, /每日早上 8 點（台灣時間）重置額度/);
+  assert.doesNotMatch(html, /每日早上 8 點（台灣時間）重置額度/);
   assert.match(html, /id="download-image"[^>]*disabled/);
   assert.match(html, /id="apply-background"[^>]*disabled/);
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);

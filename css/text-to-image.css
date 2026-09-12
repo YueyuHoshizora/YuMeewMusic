@@ -24,7 +24,6 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 .enhance-option strong { font-size: 14px; }
 .enhance-option small { color: var(--muted); font-size: 12px; }
 .prompt-actions .export-button { width: 210px; }
-.quota-note { margin: 10px 0 0; color: var(--muted); font-size: 12px; }
 .generation-error { margin: 13px 0 0; padding: 11px 13px; border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); font-size: 13px; line-height: 1.6; }
 .result-panel { padding: 20px; }
 .result-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }

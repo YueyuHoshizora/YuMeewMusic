@@ -139,9 +139,21 @@ function vocalsAudioBuffer(left, right) {
   return buffer;
 }
 
+async function transcriptionAudioBuffer(left, right) {
+  const sourceBuffer = vocalsAudioBuffer(left, right);
+  const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineContextClass) throw Error('此瀏覽器無法建立辨識用的 16 kHz 音訊。');
+  const context = new OfflineContextClass(1, Math.ceil(sourceBuffer.duration * 16000), 16000);
+  const source = context.createBufferSource();
+  source.buffer = sourceBuffer;
+  source.connect(context.destination);
+  source.start();
+  return context.startRendering();
+}
+
 async function uploadVocals(wav, run) {
   if (run !== recognition.run) return;
-  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳分離後的人聲 WAV 並等待辨識…');
+  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳單聲道、16 kHz、16-bit PCM 人聲 WAV 並等待辨識…');
   const form = new FormData();
   const baseName = state.audioFile.name.replace(/\.[^.]+$/, '') || 'audio';
   form.append('audio', wav, `${baseName}-vocals.wav`);
@@ -177,15 +189,17 @@ async function encodeAndUploadVocals(data, run) {
     recognition.worker = null;
     if (!(data.vocalsLeft instanceof Float32Array) || !(data.vocalsRight instanceof Float32Array))
       throw Error('Spleeter 沒有產生可用的人聲軌道。');
-    setRecognitionProgress(56, '第二階段：產生 WAV', '正在瀏覽器內產生人聲 WAV…');
+    setRecognitionProgress(56, '第二階段：產生 WAV', '正在轉為單聲道、16 kHz 音訊…');
+    const transcriptionBuffer = await transcriptionAudioBuffer(data.vocalsLeft, data.vocalsRight);
+    if (run !== recognition.run) return;
     const wav = await encodeMedia({
       format: 'wav',
-      buffer: vocalsAudioBuffer(data.vocalsLeft, data.vocalsRight),
+      buffer: transcriptionBuffer,
       settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
       resolution: '1080',
       fps: '60',
       signal: recognition.controller.signal,
-      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：產生 WAV', `正在建立人聲 WAV · ${value}%`),
+      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：產生 WAV', `正在建立 16-bit PCM WAV · ${value}%`),
     });
     if (run !== recognition.run) return;
     showVocalsPreview(wav);

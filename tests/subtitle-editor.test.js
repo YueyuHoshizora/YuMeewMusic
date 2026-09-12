@@ -33,6 +33,8 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(script, /new Worker\(new URL\('\.\/vocal-separator-worker\.js'/);
   assert.match(script, /model: 'spleeter'/);
   assert.match(script, /format: 'wav'/);
+  assert.match(script, /new OfflineContextClass\(1, Math\.ceil\(sourceBuffer\.duration \* 16000\), 16000\)/);
+  assert.match(script, /buffer: transcriptionBuffer/);
   assert.match(script, /form\.append\('audio', wav, `\$\{baseName\}-vocals\.wav`\)/);
   assert.match(script, /showVocalsPreview\(wav\);\s+await uploadVocals\(wav, run\)/);
   assert.match(script, /URL\.revokeObjectURL\(recognition\.vocalsUrl\)/);

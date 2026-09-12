@@ -29,7 +29,7 @@
       <section class="subtitle-recognition panel" aria-labelledby="subtitle-recognition-title">
         <div class="subtitle-recognition-copy">
           <div class="section-title"><span>AI</span><h2 id="subtitle-recognition-title">辨識字幕</h2></div>
-          <p>瀏覽器先以 Spleeter 分離人聲並產生 WAV，再將人聲 WAV 傳送至辨識服務。原始音樂不會上傳。</p>
+          <p>瀏覽器先以 Spleeter 分離人聲，再產生單聲道、16 kHz、16-bit PCM WAV 傳送至辨識服務。原始音樂不會上傳。</p>
         </div>
         <div class="subtitle-recognition-controls">
           <label for="recognition-language">字幕語言
@@ -47,7 +47,7 @@
           <progress id="recognition-progress" max="100" value="0"></progress>
           <div class="recognition-progress-footer"><span id="recognition-status" role="status">正在準備人聲分離…</span><button id="cancel-recognition" class="text-button" type="button">取消辨識</button></div>
           <div id="recognition-vocals-preview" class="recognition-vocals-preview" hidden>
-            <strong>分離後的人聲</strong>
+            <strong>分離後的人聲 · Mono / 16 kHz</strong>
             <audio id="recognition-vocals-audio" controls preload="metadata"></audio>
           </div>
         </div>

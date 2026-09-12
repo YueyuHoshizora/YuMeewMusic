@@ -13,6 +13,12 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /<title>文生影 · YuMeew<\/title>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<textarea id="video-prompt"/);
+  assert.match(html, /id="open-video-prompt-builder"[^>]*>＋<\/button>/);
+  assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
+  assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
+  assert.match(html, /for="video-prompt-camera"><span>鏡頭<\/span>/);
+  assert.match(html, /for="video-prompt-action"><span>動作<\/span>/);
+  assert.match(html, /for="video-prompt-dialogue"><span>對白<\/span>/);
   assert.doesNotMatch(html, /<textarea id="video-prompt"[^>]*maxlength=/);
   assert.match(html, /id="video-resolution"/);
   assert.match(html, /id="video-duration"/);
@@ -36,6 +42,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*#video-prompt\s*\{[^}]*height:\s*300px/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*12px 0 28px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
+  assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
+  assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}` : block/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*minimumDuration: 5[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-5-260628": Object\.freeze\(\{[^}]*label: "Seedance 2\.5"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p"\][^}]*minimumDuration: 4[^}]*maximumDuration: 30/);

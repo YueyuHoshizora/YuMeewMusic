@@ -52,6 +52,30 @@ function syncDraftStatus() {
   syncGenerateAvailability();
 }
 
+function openVideoPromptBuilder() {
+  if (busy) return;
+  $("video-prompt-builder-dialog").showModal();
+  $("video-prompt-time").focus();
+}
+
+function submitVideoPromptBuilder(event) {
+  event.preventDefault();
+  const fields = [
+    ["時間", $("video-prompt-time").value.trim()],
+    ["鏡頭", $("video-prompt-camera").value.trim()],
+    ["動作", $("video-prompt-action").value.trim()],
+    ["對白", $("video-prompt-dialogue").value.trim()],
+  ];
+  const block = fields.filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("\n");
+  if (!block) return;
+  const prompt = $("video-prompt");
+  prompt.value = prompt.value.trim() ? `${prompt.value.trimEnd()}\n\n${block}` : block;
+  $("video-prompt-builder-form").reset();
+  $("video-prompt-builder-dialog").close();
+  syncDraftStatus();
+  prompt.focus();
+}
+
 function replaceOptions(select, values, selected) {
   select.replaceChildren(...values.map(value => {
     const option = document.createElement("option");
@@ -144,7 +168,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["video-prompt", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
+  for (const id of ["video-prompt", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
   syncGenerateAvailability();
@@ -370,6 +394,9 @@ function confirmVideoGeneration(event) {
 }
 
 $("video-prompt").addEventListener("input", syncDraftStatus);
+$("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
+$("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
+$("cancel-video-prompt-builder").addEventListener("click", () => $("video-prompt-builder-dialog").close());
 $("video-model").addEventListener("change", syncModelDetails);
 $("video-resolution").addEventListener("change", syncResultHeading);
 $("video-ratio").addEventListener("change", syncResultHeading);

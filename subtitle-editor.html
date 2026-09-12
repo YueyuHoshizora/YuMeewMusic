@@ -42,6 +42,10 @@
           </label>
           <button id="recognize-subtitles" class="export-button recognition-button" type="button" disabled>AI 辨識字幕</button>
         </div>
+        <label class="recognition-lyrics-field" for="recognition-lyrics">
+          <span>完整歌詞 <small>選填，提供歌詞可協助辨識服務校正文字</small></span>
+          <textarea id="recognition-lyrics" rows="5" placeholder="在這裡貼上完整歌詞…"></textarea>
+        </label>
         <div id="recognition-progress-area" class="recognition-progress-area" hidden>
           <div class="recognition-progress-heading"><strong id="recognition-stage">正在準備…</strong><span id="recognition-percent">0%</span></div>
           <progress id="recognition-progress" max="100" value="0"></progress>

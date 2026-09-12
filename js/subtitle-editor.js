@@ -89,6 +89,7 @@ function setRecognitionBusy(value) {
   recognition.busy = value;
   $('recognize-subtitles').disabled = value || !state.audioFile || !state.waveformBuffer;
   $('recognition-language').disabled = value;
+  $('recognition-lyrics').disabled = value;
   $('return-to-main').disabled = value;
   for (const className of ['editor-player', 'editor-workspace', 'editor-actions']) {
     const element = document.querySelector(`.${className}`);
@@ -158,6 +159,7 @@ async function uploadVocals(wav, run) {
   const baseName = state.audioFile.name.replace(/\.[^.]+$/, '') || 'audio';
   form.append('audio', wav, `${baseName}-vocals.wav`);
   form.append('language', $('recognition-language').value);
+  form.append('lyrics', $('recognition-lyrics').value);
   const response = await fetch('https://lyrics-transcriber.yustellar.idv.tw', {
     method: 'POST',
     body: form,

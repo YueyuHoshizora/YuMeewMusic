@@ -15,6 +15,10 @@ body.subtitle-editor-body { min-width: 1100px; }
 .subtitle-recognition-controls label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
 .subtitle-recognition-controls select { width: 100%; height: 42px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--foreground); }
 .recognition-button { width: auto; min-width: 180px; height: 42px; margin: 0; padding: 0 16px; }
+.recognition-lyrics-field { grid-column: 1 / -1; display: grid; gap: 8px; color: var(--foreground); font-size: 13px; font-weight: 650; }
+.recognition-lyrics-field small { margin-left: 8px; color: var(--muted); font-size: 12px; font-weight: 400; }
+#recognition-lyrics { width: 100%; min-height: 108px; resize: vertical; padding: 11px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--foreground); font: inherit; line-height: 1.7; }
+#recognition-lyrics:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .recognition-progress-area { grid-column: 1 / -1; padding-top: 15px; border-top: 1px solid var(--border); }
 .recognition-progress-heading, .recognition-progress-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .recognition-progress-heading { margin-bottom: 8px; font-size: 13px; }

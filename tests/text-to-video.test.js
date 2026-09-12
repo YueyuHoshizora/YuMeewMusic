@@ -24,7 +24,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /id="generated-video"[^>]*controls[^>]*playsinline[^>]*hidden/);
   assert.match(html, /id="download-video"[^>]*disabled/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
-  assert.match(css, /#video-prompt\s*\{[^}]*height:\s*112px/);
+  assert.match(css, /#video-prompt\s*\{[^}]*height:\s*224px/);
+  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*#video-prompt\s*\{[^}]*height:\s*300px/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*12px 0 28px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4/);

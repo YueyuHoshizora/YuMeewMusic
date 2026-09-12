@@ -12,6 +12,8 @@ test("text-to-image page exposes generation, download and background actions", (
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /id="image-prompt"[^>]*maxlength="2048"/);
+  assert.doesNotMatch(html, /id="prompt-count"|0 \/ 2048/);
+  assert.doesNotMatch(script, /prompt-count/);
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);
   assert.match(html, /<span>API KEY<\/span>\s*<button id="model-api-key"[^>]*disabled>Free<\/button>/);

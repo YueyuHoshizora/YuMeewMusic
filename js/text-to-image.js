@@ -256,8 +256,6 @@ async function generateImage() {
 }
 
 $("image-prompt").addEventListener("input", () => {
-  const length = $("image-prompt").value.length;
-  $("prompt-count").textContent = `${length} / 2048`;
   $("generate-image").disabled = busy || composing || !$("image-prompt").value.trim();
 });
 

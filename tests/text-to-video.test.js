@@ -32,11 +32,13 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
   assert.match(html, /id="video-api-key-dialog"/);
-  assert.match(script, /https:\/\/api\.minimax\.io\/v2\/video_generation/);
-  assert.match(script, /https:\/\/api\.minimax\.io\/v2\/query\/video_generation/);
+  assert.match(script, /https:\/\/minimax-proxy\.yustellar\.idv\.tw\/video/);
+  assert.match(script, /CREATE_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/generate`/);
+  assert.match(script, /QUERY_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/query`/);
   assert.match(script, /content: \[\{ type: "text", text: prompt \}\]/);
   assert.doesNotMatch(script, /AUTOCOMPLETE_URL|requestCompletedPrompt|enhance-video-prompt/);
-  assert.match(script, /Authorization: `Bearer \$\{apiKey\}`/);
+  assert.match(script, /JSON\.stringify\(\{ apiKey, taskId \}\)/);
+  assert.match(script, /apiKey,\s*payload: \{/);
   assert.match(script, /async function pollVideoTask\(taskId, apiKey, signal\)/);
   assert.match(script, /taskState === "succeeded"/);
   assert.match(script, /saveStoredMedia\("image", file\)/);

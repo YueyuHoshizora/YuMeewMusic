@@ -3,8 +3,9 @@ import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
-const CREATE_VIDEO_URL = "https://api.minimax.io/v2/video_generation";
-const QUERY_VIDEO_URL = "https://api.minimax.io/v2/query/video_generation";
+const VIDEO_PROXY_URL = "https://minimax-proxy.yustellar.idv.tw/video";
+const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
+const QUERY_VIDEO_URL = `${VIDEO_PROXY_URL}/query`;
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
@@ -169,8 +170,10 @@ function wait(ms, signal) {
 async function pollVideoTask(taskId, apiKey, signal) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < POLL_TIMEOUT) {
-    const result = await fetchJson(`${QUERY_VIDEO_URL}/${encodeURIComponent(taskId)}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
+    const result = await fetchJson(QUERY_VIDEO_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey, taskId }),
       cache: "no-store",
       signal,
     });
@@ -263,13 +266,16 @@ async function generateVideo() {
     setStatus("正在建立 MiniMax 影片任務…");
     const created = await fetchJson(CREATE_VIDEO_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: modelId,
-        content: [{ type: "text", text: prompt }],
-        resolution: $("video-resolution").value,
-        duration: Number($("video-duration").value),
-        ratio: $("video-ratio").value,
+        apiKey,
+        payload: {
+          model: modelId,
+          content: [{ type: "text", text: prompt }],
+          resolution: $("video-resolution").value,
+          duration: Number($("video-duration").value),
+          ratio: $("video-ratio").value,
+        },
       }),
       cache: "no-store",
       signal: generationAbort.signal,
@@ -283,7 +289,7 @@ async function generateVideo() {
   } catch (error) {
     if (error?.name !== "AbortError") {
       const message = error instanceof TypeError
-        ? "瀏覽器無法連線至 MiniMax API，請確認 MiniMax 是否允許目前網域的跨來源請求。"
+        ? "瀏覽器無法連線至影片生成服務，請稍後再試。"
         : error.message || "影片生成失敗。";
       showError(message);
       setStatus("影片生成失敗", "error");

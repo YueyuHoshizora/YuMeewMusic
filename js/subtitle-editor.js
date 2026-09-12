@@ -3,8 +3,8 @@ import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
 import { formatSubtitleTime, generatedSubtitleFilename, parseSubtitleTime, parseSubtitles, serializeSubtitles } from './subtitles.js';
 import { createUndoHistory } from './undo-history.js';
-import { encodeMedia } from './export.js';
 import { SEPARATOR_MAX_DURATION } from './vocal-separator-core.js';
+import { encodePcm16Wav, transcribeSong } from './song-transcription.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
@@ -151,20 +151,17 @@ async function transcriptionAudioBuffer(left, right) {
   return context.startRendering();
 }
 
-async function uploadVocals(wav, run) {
+async function uploadVocals(samples, run) {
   if (run !== recognition.run) return;
-  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳單聲道、16 kHz、16-bit PCM 人聲 WAV 並等待辨識…');
-  const form = new FormData();
-  const baseName = state.audioFile.name.replace(/\.[^.]+$/, '') || 'audio';
-  form.append('audio', wav, `${baseName}-vocals.wav`);
-  form.append('language', $('recognition-language').value);
-  const response = await fetch('https://lyrics-transcriber.yustellar.idv.tw', {
-    method: 'POST',
-    body: form,
-    signal: recognition.controller.signal,
-  });
-  const text = await response.text();
-  if (!response.ok) throw Error(text.trim().slice(0, 300) || `字幕辨識服務回應錯誤（HTTP ${response.status}）。`);
+  setRecognitionProgress(72, '第三階段：辨識字幕', '正在分段上傳人聲 WAV 並等待辨識…');
+  const text = await transcribeSong(
+    samples,
+    16000,
+    'https://lyrics-transcriber.yustellar.idv.tw',
+    $('recognition-language').value,
+    (current, total) => setRecognitionProgress(72 + current / total * 27, '第三階段：辨識字幕', `正在辨識第 ${current}／${total} 段…`),
+    recognition.controller.signal,
+  );
   const parsed = parseSubtitles(text, 'srt');
   if (!parsed.cues.length) throw Error('辨識服務沒有回傳有效的 SRT 字幕。');
   if (run !== recognition.run) return;
@@ -192,18 +189,11 @@ async function encodeAndUploadVocals(data, run) {
     setRecognitionProgress(56, '第二階段：產生 WAV', '正在轉為單聲道、16 kHz 音訊…');
     const transcriptionBuffer = await transcriptionAudioBuffer(data.vocalsLeft, data.vocalsRight);
     if (run !== recognition.run) return;
-    const wav = await encodeMedia({
-      format: 'wav',
-      buffer: transcriptionBuffer,
-      settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
-      resolution: '1080',
-      fps: '60',
-      signal: recognition.controller.signal,
-      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：產生 WAV', `正在建立 16-bit PCM WAV · ${value}%`),
-    });
+    const samples = Float32Array.from(transcriptionBuffer.getChannelData(0));
+    const wav = encodePcm16Wav(samples, transcriptionBuffer.sampleRate);
     if (run !== recognition.run) return;
     showVocalsPreview(wav);
-    await uploadVocals(wav, run);
+    await uploadVocals(samples, run);
   } catch (error) {
     if (error?.name !== 'AbortError') recognitionFailed(error?.message || '字幕辨識失敗。', run);
   }

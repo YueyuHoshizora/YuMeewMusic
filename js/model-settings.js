@@ -1,11 +1,31 @@
 import { applyTheme } from './themes.js';
-import { loadSettings } from './settings.js';
+import { loadSettings, saveSettings } from './settings.js';
 import { deleteAllCachedModels, deleteCachedModel, listCachedModels } from './indexeddb-model-cache.js';
 
 const $ = id => document.getElementById(id);
 const state = { models: [], pending: null, busy: false };
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
+$('interface-mode').value = settings.mode;
+$('interface-theme').value = settings.theme;
+
+function selectSettingsPanel(panelId) {
+  for (const button of document.querySelectorAll('[data-settings-panel]')) {
+    const selected = button.dataset.settingsPanel === panelId;
+    button.classList.toggle('active', selected);
+    button.setAttribute('aria-selected', String(selected));
+  }
+  for (const panel of document.querySelectorAll('.settings-panel')) panel.hidden = panel.id !== panelId;
+}
+
+function saveAppearance() {
+  settings.mode = $('interface-mode').value;
+  settings.theme = $('interface-theme').value;
+  applyTheme(settings.mode, settings.theme);
+  const saved = saveSettings(settings);
+  $('interface-status').textContent = saved ? '介面設定已自動保存' : '介面已套用，但瀏覽器無法保存設定';
+  $('interface-status').classList.toggle('error', !saved);
+}
 
 function formatBytes(bytes) {
   const value = Math.max(0, Number(bytes) || 0);
@@ -107,6 +127,11 @@ async function confirmDelete() {
 }
 
 $('delete-all-models').addEventListener('click', () => requestDelete());
+$('interface-mode').addEventListener('change', saveAppearance);
+$('interface-theme').addEventListener('change', saveAppearance);
+for (const button of document.querySelectorAll('[data-settings-panel]')) {
+  button.addEventListener('click', () => selectSettingsPanel(button.dataset.settingsPanel));
+}
 $('delete-model-dialog').addEventListener('close', () => {
   if ($('delete-model-dialog').returnValue === 'confirm') void confirmDelete();
   else state.pending = null;

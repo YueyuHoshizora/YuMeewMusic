@@ -70,17 +70,7 @@ $("aspect-ratio").value = restored.aspectRatio;
 $("fps").value = restored.fps;
 $("profile").value = restored.profile;
 $("format").value = restored.format;
-$("appearance-mode").value = restored.mode;
-$("appearance-theme").value = restored.theme;
 applyTheme(restored.mode, restored.theme);
-for (const id of ["appearance-mode", "appearance-theme"]) {
-  $(id).addEventListener("change", () => {
-    state.mode = $("appearance-mode").value;
-    state.theme = $("appearance-theme").value;
-    applyTheme(state.mode, state.theme);
-    persistSettings();
-  });
-}
 
 function persistSettings() {
   return saveSettings({

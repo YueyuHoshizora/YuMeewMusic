@@ -13,36 +13,64 @@
   <body class="model-settings-body">
     <header class="model-settings-header">
       <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SETTINGS</span></a>
-      <span class="local"><i></i>模型只保存在目前瀏覽器</span>
+      <span class="local"><i></i>設定只保存在目前瀏覽器</span>
       <a class="reset-settings model-settings-back" href="./">← 返回主畫面</a>
     </header>
 
     <main class="model-settings-main">
       <section class="model-settings-heading">
         <div>
-          <div class="eyebrow">LOCAL MODEL STORAGE</div>
+          <div class="eyebrow">LOCAL PREFERENCES</div>
           <h1>設定<span>。</span></h1>
-          <p>查看與清理由 AI 功能下載到 IndexedDB 的模型。刪除模型不會影響音樂、圖片、字幕或其他設定。</p>
+          <p>管理介面外觀與儲存在瀏覽器內的資源。所有變更只會保存在目前的瀏覽器。</p>
         </div>
-        <span id="model-status" class="model-status" role="status" aria-live="polite">正在讀取模型…</span>
       </section>
 
       <div class="settings-workspace">
         <aside class="panel settings-sidebar" aria-label="設定項目">
           <span class="settings-sidebar-label">設定項目</span>
-          <nav class="settings-nav">
-            <a class="settings-nav-link active" href="#model-manager" aria-current="page">
+          <nav class="settings-nav" role="tablist" aria-label="設定頁籤">
+            <button class="settings-nav-link active" type="button" role="tab" data-settings-panel="interface-settings" aria-controls="interface-settings" aria-selected="true">
+              <span class="settings-nav-icon" aria-hidden="true">◐</span>
+              <span><strong>介面</strong><small>模式與佈景主題</small></span>
+            </button>
+            <button class="settings-nav-link" type="button" role="tab" data-settings-panel="model-manager" aria-controls="model-manager" aria-selected="false">
               <span class="settings-nav-icon" aria-hidden="true">◇</span>
               <span><strong>模型管理</strong><small>查看與清除 AI 模型</small></span>
-            </a>
+            </button>
           </nav>
         </aside>
 
         <div class="settings-content">
-          <section id="model-manager" class="panel model-manager" aria-labelledby="model-manager-title">
+          <section id="interface-settings" class="panel settings-panel interface-settings" role="tabpanel" aria-labelledby="interface-settings-title">
+            <div class="section-title"><span>01</span><h2 id="interface-settings-title">介面</h2></div>
+            <p class="settings-panel-intro">選擇網站的日夜模式與主題色彩。變更會立即顯示並自動保存。</p>
+            <div class="appearance-settings-grid">
+              <label for="interface-mode">
+                <span><strong>模式</strong><small>切換介面的明暗外觀</small></span>
+                <select id="interface-mode" class="setting-select">
+                  <option value="dark">☾ 夜間</option>
+                  <option value="light">☀ 日間</option>
+                </select>
+              </label>
+              <label for="interface-theme">
+                <span><strong>佈景</strong><small>套用網站的主要色彩</small></span>
+                <select id="interface-theme" class="setting-select">
+                  <option value="lime">青檸</option>
+                  <option value="ocean">海藍</option>
+                  <option value="violet">紫羅蘭</option>
+                  <option value="rose">玫瑰</option>
+                  <option value="amber">琥珀</option>
+                </select>
+              </label>
+            </div>
+            <p id="interface-status" class="interface-status" role="status" aria-live="polite">目前介面設定已載入</p>
+          </section>
+
+          <section id="model-manager" class="panel settings-panel model-manager" role="tabpanel" aria-labelledby="model-manager-title" hidden>
             <div class="model-manager-header">
-              <div class="section-title"><span>01</span><h2 id="model-manager-title">模型管理</h2></div>
-              <button id="delete-all-models" class="model-delete-all" type="button" disabled>刪除全部</button>
+              <div class="section-title"><span>02</span><h2 id="model-manager-title">模型管理</h2></div>
+              <div class="model-manager-actions"><span id="model-status" class="model-status" role="status" aria-live="polite">正在讀取模型…</span><button id="delete-all-models" class="model-delete-all" type="button" disabled>刪除全部</button></div>
             </div>
             <div class="model-summary"><strong id="model-count">—</strong><span id="model-total-size">正在計算使用容量</span></div>
             <div id="model-list" class="model-list" aria-live="polite"></div>

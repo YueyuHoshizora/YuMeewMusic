@@ -3,7 +3,7 @@ import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
-const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/video";
+const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
 const QUERY_VIDEO_URL = `${VIDEO_PROXY_URL}/query`;
 const DOWNLOAD_VIDEO_URL = `${VIDEO_PROXY_URL}/download`;

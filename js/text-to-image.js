@@ -159,10 +159,6 @@ $("prompt-keywords").addEventListener("input", () => {
   $("compose-prompt").disabled = busy || composing || !$("prompt-keywords").value.trim();
 });
 
-$("prompt-keywords").addEventListener("keydown", event => {
-  if (event.key === "Enter") { event.preventDefault(); void composePrompt(); }
-});
-
 $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("generate-image").addEventListener("click", generateImage);

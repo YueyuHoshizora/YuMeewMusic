@@ -1,7 +1,14 @@
 const DATABASE = "yumeew-media-v1";
 const STORE = "files";
-const ALLOWED_KINDS = new Set(["audio", "image", "subtitle"]);
+const ALLOWED_KINDS = new Set(["audio", "image", "subtitle", "generated-image"]);
 const ALLOWED_VALUE_KINDS = new Set(["image-video-project"]);
+const ENTRY_DETAILS = Object.freeze({
+  audio: { page: "主畫面／人聲分離", field: "音樂檔案" },
+  image: { page: "主畫面", field: "背景素材" },
+  subtitle: { page: "主畫面／字幕編輯器", field: "字幕檔案" },
+  "generated-image": { page: "文生圖", field: "最後生成結果" },
+  "image-video-project": { page: "圖轉影片", field: "素材專案" },
+});
 
 function requireKind(kind, values = false) {
   if (!(values ? ALLOWED_VALUE_KINDS : ALLOWED_KINDS).has(kind)) throw Error("不支援的本機媒體類型。");
@@ -37,8 +44,7 @@ function openDatabase(factory = globalThis.indexedDB) {
   });
 }
 
-async function transact(kind, mode, operation, factory, values = false) {
-  requireKind(kind, values);
+async function accessStore(mode, operation, factory) {
   const database = await openDatabase(factory);
   try {
     return await new Promise((resolve, reject) => {
@@ -51,6 +57,18 @@ async function transact(kind, mode, operation, factory, values = false) {
   } finally {
     database.close();
   }
+}
+
+async function transact(kind, mode, operation, factory, values = false) {
+  requireKind(kind, values);
+  return accessStore(mode, operation, factory);
+}
+
+export function storedValueSize(value, seen = new WeakSet()) {
+  if (!value || typeof value !== "object" || seen.has(value)) return 0;
+  seen.add(value);
+  if (value instanceof Blob) return value.size;
+  return Object.values(value).reduce((total, item) => total + storedValueSize(item, seen), 0);
 }
 
 export function saveStoredMedia(kind, file, factory) {
@@ -75,4 +93,30 @@ export function loadStoredValue(kind, factory) {
 
 export function deleteStoredValue(kind, factory) {
   return transact(kind, "readwrite", store => store.delete(kind), factory, true);
+}
+
+export async function listStoredEntries(factory) {
+  const entries = await Promise.all(Object.keys(ENTRY_DETAILS).map(async key => {
+    const value = await accessStore("readonly", store => store.get(key), factory);
+    if (!value) return null;
+    const media = ALLOWED_KINDS.has(key);
+    return {
+      key,
+      ...ENTRY_DETAILS[key],
+      name: media ? value.name || "本機媒體" : "專案資料",
+      type: media ? value.type || value.blob?.type || "" : "application/x-yumeew-project",
+      size: storedValueSize(media ? value.blob : value),
+      savedAt: media ? Number(value.lastModified) || 0 : Number(value.updatedAt) || 0,
+    };
+  }));
+  return entries.filter(Boolean);
+}
+
+export function deleteStoredEntry(kind, factory) {
+  if (ALLOWED_KINDS.has(kind)) return deleteStoredMedia(kind, factory);
+  return deleteStoredValue(kind, factory);
+}
+
+export function deleteAllStoredEntries(factory) {
+  return accessStore("readwrite", store => store.clear(), factory);
 }

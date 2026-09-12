@@ -6,9 +6,9 @@
 
 文生圖模型若需要 API KEY，可點擊生成按鈕旁的 API KEY 區域輸入。金鑰會保存在目前瀏覽器的 `localStorage`；文生圖頁只顯示「已設定」或「未設定」，免費模型顯示 `Free`。設定頁的「金鑰管理」會列出所有已保存金鑰，僅保留前後各三碼並以最多五個 `*` 遮蔽中間內容，並提供逐筆確認刪除。
 
-文生圖另支援 GPT-Image-2.5 Sunburst（`gpt-image-2.5-sunburst`）。選用時需輸入 OpenAI API KEY，網站會由瀏覽器直接呼叫 OpenAI Image API，以 `1280x720`、`quality: auto` 與 JPEG 格式生成圖片；API KEY 不會傳送至 YuMeew 或 Cloudflare Worker。
+文生圖另支援 GPT-Image-2.5 Flare（`gpt-image-2.5-flare`）與 GPT-Image-2.5 Sunburst（`gpt-image-2.5-sunburst`）。選用時需輸入 OpenAI API KEY，網站會由瀏覽器直接呼叫 OpenAI Image API，以 `1280x720`、`quality: auto` 與 JPEG 格式生成圖片；API KEY 不會傳送至 YuMeew 或 Cloudflare Worker。
 
-主畫面頂部的「文生圖」會開啟獨立的 AI 圖片生成頁面。模型選單目前預設為 Flux.2 Klein 4B（`flux-2-klein-4b`），其 API KEY 類型顯示為 `Free`；各模型透過獨立的 call function 對應其後端呼叫方式，方便後續加入採用不同 API 的模型。使用者可先輸入多個詞，以 POST JSON 的 `prompt` 欄位呼叫 `/autocomplete`，再由「組成題詞」將回傳結果覆寫至圖片描述框；圖片生成只會在點擊「生成圖片」後，以 `prompt` 與布林值 `enhance` 呼叫 `/generate`，生成 1280 × 720 JPEG。「文字轉譯成Prompt」預設開啟，會要求服務將輸入文字翻譯並整理成較標準的繪圖提示詞。生成結果只暫存在目前分頁，可直接下載；只有使用者按下「套用主畫面背景」時，才會將圖片保存至 IndexedDB 並取代主畫面的背景素材。此功能只會把文字題詞與選項傳送至 `flux-klein-worker.yustellar.idv.tw`，本機媒體不會隨請求上傳。
+主畫面頂部的「文生圖」會開啟獨立的 AI 圖片生成頁面。模型選單目前預設為 Flux.2 Klein 4B（`flux-2-klein-4b`），其 API KEY 類型顯示為 `Free`；各模型透過獨立的 call function 對應其後端呼叫方式，方便後續加入採用不同 API 的模型。使用者可先輸入多個詞，以 POST JSON 的 `prompt` 欄位呼叫 `/autocomplete`，再由「組成題詞」將回傳結果覆寫至圖片描述框；圖片生成只會在點擊「生成圖片」後，以 `prompt` 與布林值 `enhance` 呼叫 `/generate`，生成 1280 × 720 JPEG。「文字轉譯成Prompt」預設開啟，會要求服務將輸入文字翻譯並整理成較標準的繪圖提示詞。最後一次生成結果會獨立保存到 IndexedDB，下次進入文生圖時自動恢復，並可直接下載；只有使用者按下「套用主畫面背景」時，才會取代主畫面的背景素材。此功能只會把文字題詞與選項傳送至對應的圖片服務，本機媒體不會隨請求上傳。
 
 主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，並預設從 IndexedDB 帶入主畫面目前保存的音樂；沒有保存音樂時仍可另外選擇檔案。工具可將最長 8 分鐘、150 MB 以內的音樂分離為人聲與伴奏。預設使用輕量 Spleeter 2-stems（兩個模型合計約 75 MB），另可選原本的 BS PolarFormer 高品質模型（約 201 MB）。輕量模型優先縮短處理時間，但可能殘留更多伴奏，約 11 kHz 以上頻段保留於伴奏。功能優先使用 FP32 WebGPU 模型，無法使用時自動改以 WASM CPU 執行；程式會轉換 FP16 模型輸出並攔截無效數值與全靜音結果，GPU 輸出無效時會自動改用 WASM CPU 重新處理。完成後會產生人聲與伴奏兩個同步動畫頻譜，使用共用的播放鍵與播放位置同時播放；每條音軌仍有獨立 MUTE、-10～+10 dB／0.3 dB 步進的音量，以及 −24～+24 dB 的低、中、高音三段 EQ（300 Hz 低頻棚架、1 kHz 寬中頻、3 kHz 高頻棚架），並透過 Web Audio 即時套用於聲音與頻譜。設定會保存在瀏覽器並套用於試聽。可下載未經調整的獨立人聲／伴奏，也可將目前 MUTE、音量與 EQ 套用到兩軌後重新混合，經整體峰值保護後下載 44.1 kHz、16-bit 立體聲 WAV。「套用到主畫面」會將同一份混合 WAV 保存到 IndexedDB、取代主畫面的音樂並自動返回，媒體不會上傳。第一次執行會從 Hugging Face 下載所選模型（Spleeter 使用 FP32；BS PolarFormer 的 CPU 回退使用 FP16），並保存到 `yumeew-ai-models-v1` IndexedDB。舊版 Cache Storage 中的模型會在首次使用時自動移入 IndexedDB。同一頁面後續分離還會沿用已建立的 GPU／CPU 模型工作階段，避免再次載入與暖機。選擇的音樂、PCM 資料與分離結果都不會上傳。
 
@@ -26,7 +26,7 @@
 
 一般媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成，沒有雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。全站所有遠端模型檔都統一自動保存到 `yumeew-ai-models-v1` IndexedDB：Spleeter 與 BS PolarFormer 第一次由瀏覽器從 Hugging Face 下載，之後可直接使用本機快取，音樂不會傳送至 Hugging Face。需要網路傳輸的功能只有文生圖與使用者主動啟動的 AI 字幕辨識：文生圖只傳送圖片描述；字幕辨識會先在瀏覽器用 Spleeter 分離人聲，再把衍生的人聲軌轉為單聲道、16 kHz、16-bit PCM WAV 並傳送至 `lyrics-transcriber.yustellar.idv.tw`，原始音樂與原有字幕不會上傳。
 
-主畫面頂端的「設定」會開啟獨立設定頁面，各項功能排列在左側導覽列。「介面」可選擇日間／夜間模式，以及青檸、海藍、紫羅蘭、玫瑰、琥珀、薄荷、靛青、珊瑚、洋紅、銀灰十種佈景，變更會立即預覽並保存；主畫面不再顯示模式與佈景選單。「模型管理」會列出 IndexedDB 中每套 AI 模型的名稱、來源、合計容量與快取檔案數。可逐一刪除模型或刪除全部模型；每次刪除前都會提示下次使用時必須重新下載。這項操作只清除 AI 模型，不影響音樂、背景素材、字幕與其他網站設定。
+主畫面頂端的「設定」會開啟獨立設定頁面，各項功能排列在左側導覽列。「介面」可選擇日間／夜間模式，以及青檸、海藍、紫羅蘭、玫瑰、琥珀、薄荷、靛青、珊瑚、洋紅、銀灰十種佈景，變更會立即預覽並保存；主畫面不再顯示模式與佈景選單。「模型管理」會列出 IndexedDB 中每套 AI 模型的名稱、來源、合計容量與快取檔案數。可逐一刪除模型或刪除全部模型；每次刪除前都會提示下次使用時必須重新下載。「快取管理」依頁面與欄位列出 IndexedDB 中的音樂、背景素材、字幕、圖轉影片專案及文生圖最後生成結果，顯示檔名、類型與容量，並提供個別刪除及全部清除。媒體快取與 AI 模型分開管理。
 
 | 素材 | 支援內容 | 限制 |
 | --- | --- | --- |
@@ -163,7 +163,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `converter.html` | 獨立影片／音樂格式轉換頁面 |
 | `video-editor.html` | 「影片編輯」影片與圖片圖層時間軸編輯器；每個非鎖定圖層可直接上下排序，套用時顯示 0%～100% 進度，完成後會把主畫面節奏特效改為「無」 |
 | `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
-| `text-to-image.html` | Cloudflare Workers AI 文生圖頁面 |
+| `text-to-image.html` | 多模型 AI 文生圖頁面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
 | `css/subtitle-editor.css` | 字幕編輯器、音訊波形與字幕色帶樣式 |
 | `css/converter.css` | 任意轉頁面配置與狀態樣式 |
@@ -181,7 +181,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |
 | `js/trim.js`、`js/trim-time.js`、`js/trim-range.js` | 音訊裁剪、時間解析與拖曳範圍計算 |
 | `js/subtitles.js` | 字幕解析與時間對應 |
-| `js/media-store.js` | 使用 IndexedDB 保存及還原音樂、背景素材與字幕 |
+| `js/media-store.js` | 使用 IndexedDB 保存、還原及整理各頁面的媒體快取 |
 | `js/image-video.js`、`js/image-sequence.js`、`js/png-mov.js` | 多圖片時間軸、透明 MOV 編碼及匯出到主畫面 |
 | `js/settings.js`、`js/themes.js` | 偏好驗證、儲存與佈景 |
 | `js/dimensions.js`、`js/formats.js` | 影片尺寸與輸出格式定義 |

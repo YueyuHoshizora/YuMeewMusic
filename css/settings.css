@@ -55,6 +55,8 @@ body.model-settings-body { min-width: 900px; }
 .model-empty p { margin: 0; font-size: 13px; }
 .model-error { margin: 18px 0 0; font-size: 13px; }
 .api-key-manager { padding: 28px; }
+.cache-manager { padding: 28px; }
+.cache-row .model-details span { white-space: normal; line-height: 1.5; }
 .api-key-list { display: grid; gap: 10px; }
 .api-key-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr) 120px; align-items: center; gap: 20px; padding: 17px 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 .api-key-details strong, .api-key-details span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

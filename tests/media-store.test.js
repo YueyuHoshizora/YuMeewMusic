@@ -2,12 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   deleteStoredMedia,
+  deleteAllStoredEntries,
+  deleteStoredEntry,
   deleteStoredValue,
+  listStoredEntries,
   loadStoredMedia,
   loadStoredValue,
   packStoredMedia,
   saveStoredMedia,
   saveStoredValue,
+  storedValueSize,
   unpackStoredMedia,
 } from "../js/media-store.js";
 
@@ -63,6 +67,7 @@ function memoryIndexedDb() {
             put(value, key) { return request(() => { data.set(key, value); return key; }); },
             get(key) { return request(() => data.get(key)); },
             delete(key) { return request(() => data.delete(key)); },
+            clear() { return request(() => data.clear()); },
           };
         },
       };
@@ -103,4 +108,27 @@ test("image-to-video project data can be stored beside the rendered background f
   await deleteStoredValue("image-video-project", database);
   assert.equal(await loadStoredValue("image-video-project", database), null);
   await assert.rejects(saveStoredValue("other", project, database), /不支援/);
+});
+
+test("media cache entries identify their page and field and can be cleared", async () => {
+  const database = memoryIndexedDb();
+  const audio = new TestFile(["audio-data"], "song.wav", { type: "audio/wav", lastModified: 123 });
+  const generated = new TestFile(["image-data"], "result.jpg", { type: "image/jpeg", lastModified: 456 });
+  await saveStoredMedia("audio", audio, database);
+  await saveStoredMedia("generated-image", generated, database);
+  let entries = await listStoredEntries(database);
+  assert.equal(entries.length, 2);
+  assert.equal(entries.find(entry => entry.key === "audio").field, "音樂檔案");
+  assert.equal(entries.find(entry => entry.key === "generated-image").page, "文生圖");
+  assert.equal(entries.find(entry => entry.key === "generated-image").size, generated.size);
+  await deleteStoredEntry("audio", database);
+  entries = await listStoredEntries(database);
+  assert.deepEqual(entries.map(entry => entry.key), ["generated-image"]);
+  await deleteAllStoredEntries(database);
+  assert.deepEqual(await listStoredEntries(database), []);
+});
+
+test("nested project media size counts each Blob once", () => {
+  const blob = new Blob(["12345"]);
+  assert.equal(storedValueSize({ slides: [{ blob }, { blob }] }), blob.size);
 });

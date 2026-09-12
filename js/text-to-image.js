@@ -1,6 +1,6 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
+import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
@@ -286,6 +286,28 @@ function releaseImage() {
   generatedBlob = null;
 }
 
+async function displayGeneratedImage(blob, restored = false) {
+  releaseImage();
+  generatedBlob = blob;
+  generatedUrl = URL.createObjectURL(generatedBlob);
+  const image = $("generated-image");
+  image.src = generatedUrl;
+  await image.decode();
+  image.hidden = false;
+  $("empty-result").hidden = true;
+  status(`${restored ? "已載入上次生成結果" : "生成完成"} · ${image.naturalWidth} × ${image.naturalHeight}`, "success");
+}
+
+async function restoreLastGeneratedImage() {
+  try {
+    const record = await loadStoredMedia("generated-image");
+    if (!record?.blob?.type?.startsWith("image/") || !record.blob.size) return;
+    if (busy) return;
+    await displayGeneratedImage(record.blob, true);
+    setBusy(false);
+  } catch {}
+}
+
 function isQuotaError(statusCode, detail) {
   return statusCode === 429 || /(?:quota|neuron|daily limit|rate limit|too many requests|limit exceeded|額度|用量上限)/i.test(detail);
 }
@@ -315,18 +337,15 @@ async function generateImage() {
     }
     const blob = await response.blob();
     if (!blob.type.startsWith("image/") || !blob.size) throw Error("圖片服務沒有回傳可用的圖片。");
-    releaseImage();
-    generatedBlob = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
-    generatedUrl = URL.createObjectURL(generatedBlob);
-    const image = $("generated-image");
-    image.src = generatedUrl;
-    await image.decode();
-    image.hidden = false;
-    $("empty-result").hidden = true;
-    status(`生成完成 · ${image.naturalWidth} × ${image.naturalHeight}`, "success");
+    const result = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
+    await displayGeneratedImage(result);
+    const cachedFile = new File([result], imageFilename(), { type: result.type || "image/jpeg", lastModified: Date.now() });
+    await saveStoredMedia("generated-image", cachedFile).catch(() => {
+      showError("圖片已生成，但瀏覽器無法保存最後一次生成結果。");
+    });
   } catch (error) {
     const corsHint = error instanceof TypeError
-      ? modelId === "gpt-image-2.5-sunburst"
+      ? model?.apiKey === "OpenAI"
         ? "目前無法從瀏覽器連線至 OpenAI Image API，請檢查網路或 API 服務狀態。"
         : "圖片服務目前不允許 GitHub Pages 跨網域讀取，請在 Worker 回應加入 Access-Control-Allow-Origin。"
       : "";
@@ -398,3 +417,5 @@ window.addEventListener("pagehide", () => {
   closeFullscreenFallback();
   releaseImage();
 });
+
+void restoreLastGeneratedImage();

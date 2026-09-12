@@ -32,6 +32,7 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(html, /data-settings-panel="interface-settings"[^>]*aria-selected="true"/);
   assert.match(html, /data-settings-panel="model-manager"[^>]*aria-selected="false"/);
   assert.match(html, /data-settings-panel="api-key-manager"[^>]*aria-selected="false"/);
+  assert.match(html, /data-settings-panel="cache-manager"[^>]*aria-selected="false"/);
   assert.match(html, /id="interface-mode"/);
   assert.match(html, /id="interface-theme"/);
   for (const theme of ['lime', 'ocean', 'violet', 'rose', 'amber', 'mint', 'indigo', 'coral', 'magenta', 'silver']) {
@@ -39,6 +40,8 @@ test('model settings page exposes list and confirmed delete actions', () => {
   }
   assert.match(html, /<section id="model-manager" class="panel settings-panel model-manager"/);
   assert.match(html, /<section id="api-key-manager" class="panel settings-panel api-key-manager"/);
+  assert.match(html, /<section id="cache-manager" class="panel settings-panel cache-manager"/);
+  assert.match(html, /id="delete-cache-dialog"/);
   assert.match(html, /id="delete-api-key-dialog"/);
   assert.match(script, /saveSettings\(settings\)/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
@@ -48,6 +51,9 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(script, /listApiKeys\(\)/);
   assert.match(script, /maskApiKey\(key\.value\)/);
   assert.match(script, /deleteApiKey\(key\.id\)/);
+  assert.match(script, /listStoredEntries\(\)/);
+  assert.match(script, /deleteStoredEntry\(target\.key\)/);
+  assert.match(script, /deleteAllStoredEntries\(\)/);
   assert.match(readFileSync('index.html', 'utf8'), /href="\.\/settings\.html"[^>]*>⚙ 設定<\/a>/);
   assert.doesNotMatch(readFileSync('index.html', 'utf8'), /id="appearance-mode"|id="appearance-theme"/);
   assert.match(readFileSync('scripts/build.js', 'utf8'), /"settings\.html"/);

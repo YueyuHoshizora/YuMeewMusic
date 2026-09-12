@@ -99,7 +99,9 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /statusCode === 429/);
   assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
-  assert.doesNotMatch(script.slice(script.indexOf("async function generateImage"), script.indexOf('$("image-prompt")')), /saveStoredMedia/);
+  assert.match(script, /saveStoredMedia\("generated-image", cachedFile\)/);
+  assert.match(script, /loadStoredMedia\("generated-image"\)/);
+  assert.match(script, /void restoreLastGeneratedImage\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   const mainHtml = readFileSync("index.html", "utf8");
   assert.match(mainHtml, /href="\.\/text-to-image\.html"[^>]*>文生圖<\/a>/);

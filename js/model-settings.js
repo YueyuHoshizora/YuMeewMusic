@@ -2,9 +2,10 @@ import { applyTheme } from './themes.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { deleteAllCachedModels, deleteCachedModel, listCachedModels } from './indexeddb-model-cache.js';
 import { deleteApiKey, listApiKeys, maskApiKey } from './api-keys.js';
+import { deleteAllStoredEntries, deleteStoredEntry, listStoredEntries } from './media-store.js';
 
 const $ = id => document.getElementById(id);
-const state = { models: [], apiKeys: [], pending: null, pendingApiKey: null, busy: false };
+const state = { models: [], apiKeys: [], cache: [], pending: null, pendingApiKey: null, pendingCache: null, busy: false, cacheBusy: false };
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 $('interface-mode').value = settings.mode;
@@ -111,6 +112,94 @@ function requestDeleteApiKey(key) {
   $('delete-api-key-dialog').showModal();
 }
 
+function renderCache() {
+  const total = state.cache.reduce((sum, entry) => sum + entry.size, 0);
+  $('cache-count').textContent = `${state.cache.length} 個項目`;
+  $('cache-total-size').textContent = `共使用 ${formatBytes(total)}`;
+  $('delete-all-cache').disabled = state.cacheBusy || !state.cache.length;
+  $('cache-empty').hidden = Boolean(state.cache.length);
+  $('cache-list').replaceChildren(...state.cache.map(entry => {
+    const row = document.createElement('article');
+    row.className = 'model-row cache-row';
+    const details = document.createElement('div');
+    details.className = 'model-details';
+    const field = document.createElement('strong');
+    field.textContent = entry.field;
+    const source = document.createElement('span');
+    source.textContent = `${entry.page} · ${entry.name}`;
+    details.append(field, source);
+    const size = document.createElement('div');
+    size.className = 'model-size';
+    const amount = document.createElement('strong');
+    amount.textContent = formatBytes(entry.size);
+    const type = document.createElement('span');
+    type.textContent = entry.type || '媒體資料';
+    size.append(amount, type);
+    const button = document.createElement('button');
+    button.className = 'model-delete';
+    button.type = 'button';
+    button.textContent = '刪除';
+    button.disabled = state.cacheBusy;
+    button.addEventListener('click', () => requestDeleteCache(entry));
+    row.append(details, size, button);
+    return row;
+  }));
+}
+
+async function refreshCache(successMessage = '') {
+  state.cacheBusy = true;
+  renderCache();
+  $('cache-error').hidden = true;
+  $('cache-status').textContent = '正在讀取 IndexedDB 媒體…';
+  $('cache-status').className = 'model-status';
+  try {
+    state.cache = await listStoredEntries();
+    $('cache-status').textContent = successMessage || (state.cache.length ? '媒體快取清單已更新' : '目前沒有媒體快取');
+    $('cache-status').className = 'model-status success';
+  } catch (error) {
+    state.cache = [];
+    $('cache-error').textContent = error?.message || '無法讀取媒體快取。';
+    $('cache-error').hidden = false;
+    $('cache-status').textContent = '媒體快取讀取失敗';
+    $('cache-status').className = 'model-status error';
+  } finally {
+    state.cacheBusy = false;
+    renderCache();
+  }
+}
+
+function requestDeleteCache(entry = null) {
+  if (state.cacheBusy || (!entry && !state.cache.length)) return;
+  state.pendingCache = entry;
+  $('delete-cache-dialog').returnValue = '';
+  $('delete-cache-title').textContent = entry ? `刪除「${entry.field}」？` : '刪除全部媒體快取？';
+  $('delete-cache-message').textContent = entry
+    ? `將刪除 ${entry.page} 的「${entry.name}」，相關頁面將無法自動恢復這份媒體。是否刪除？`
+    : '將刪除所有頁面保存在 IndexedDB 的媒體與專案資料，是否刪除全部？';
+  $('delete-cache-dialog').showModal();
+}
+
+async function confirmDeleteCache() {
+  if (state.cacheBusy) return;
+  const target = state.pendingCache;
+  state.pendingCache = null;
+  state.cacheBusy = true;
+  renderCache();
+  $('cache-status').textContent = target ? `正在刪除 ${target.field}…` : '正在刪除全部媒體快取…';
+  try {
+    if (target) await deleteStoredEntry(target.key);
+    else await deleteAllStoredEntries();
+    await refreshCache(target ? `已刪除 ${target.field}` : '已刪除全部媒體快取');
+  } catch (error) {
+    state.cacheBusy = false;
+    renderCache();
+    $('cache-error').textContent = error?.message || '媒體快取刪除失敗。';
+    $('cache-error').hidden = false;
+    $('cache-status').textContent = '媒體快取刪除失敗';
+    $('cache-status').className = 'model-status error';
+  }
+}
+
 async function refreshModels(successMessage = '') {
   state.busy = true;
   render();
@@ -162,6 +251,7 @@ async function confirmDelete() {
 }
 
 $('delete-all-models').addEventListener('click', () => requestDelete());
+$('delete-all-cache').addEventListener('click', () => requestDeleteCache());
 $('interface-mode').addEventListener('change', saveAppearance);
 $('interface-theme').addEventListener('change', saveAppearance);
 for (const button of document.querySelectorAll('[data-settings-panel]')) {
@@ -179,6 +269,11 @@ $('delete-api-key-dialog').addEventListener('close', () => {
   refreshApiKeys(deleted ? `已刪除 ${key.label} 的 API KEY` : '瀏覽器無法刪除 API KEY');
   $('api-key-status').classList.toggle('error', !deleted);
 });
+$('delete-cache-dialog').addEventListener('close', () => {
+  if ($('delete-cache-dialog').returnValue === 'confirm') void confirmDeleteCache();
+  else state.pendingCache = null;
+});
 
 void refreshModels();
+void refreshCache();
 refreshApiKeys();

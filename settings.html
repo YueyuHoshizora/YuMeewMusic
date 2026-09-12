@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="管理 YuMeew 的介面、AI 模型與保存在瀏覽器中的 API 金鑰。" />
+    <meta name="description" content="管理 YuMeew 的介面、AI 模型、媒體快取與保存在瀏覽器中的 API 金鑰。" />
     <title>設定 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -41,6 +41,10 @@
             <button class="settings-nav-link" type="button" role="tab" data-settings-panel="api-key-manager" aria-controls="api-key-manager" aria-selected="false">
               <span class="settings-nav-icon" aria-hidden="true">⌁</span>
               <span><strong>金鑰管理</strong><small>查看與刪除 API KEY</small></span>
+            </button>
+            <button class="settings-nav-link" type="button" role="tab" data-settings-panel="cache-manager" aria-controls="cache-manager" aria-selected="false">
+              <span class="settings-nav-icon" aria-hidden="true">▣</span>
+              <span><strong>快取管理</strong><small>整理各頁面的媒體檔案</small></span>
             </button>
           </nav>
         </aside>
@@ -102,6 +106,22 @@
             </div>
             <p id="api-key-status" class="model-status" role="status" aria-live="polite"></p>
           </section>
+
+          <section id="cache-manager" class="panel settings-panel cache-manager" role="tabpanel" aria-labelledby="cache-manager-title" hidden>
+            <div class="model-manager-header">
+              <div class="section-title"><span>04</span><h2 id="cache-manager-title">快取管理</h2></div>
+              <div class="model-manager-actions"><span id="cache-status" class="model-status" role="status" aria-live="polite">正在讀取媒體…</span><button id="delete-all-cache" class="model-delete-all" type="button" disabled>刪除全部</button></div>
+            </div>
+            <p class="settings-panel-intro">依頁面與欄位列出保存在 IndexedDB 的音樂、圖片、字幕及專案素材。AI 模型請至「模型管理」整理。</p>
+            <div class="model-summary"><strong id="cache-count">—</strong><span id="cache-total-size">正在計算使用容量</span></div>
+            <div id="cache-list" class="model-list" aria-live="polite"></div>
+            <div id="cache-empty" class="model-empty" hidden>
+              <span aria-hidden="true">▣</span>
+              <strong>目前沒有已保存的媒體快取</strong>
+              <p>各功能保存的媒體檔案會依頁面與欄位列在這裡。</p>
+            </div>
+            <p id="cache-error" class="model-error" role="alert" hidden></p>
+          </section>
         </div>
       </div>
     </main>
@@ -121,6 +141,17 @@
       <form method="dialog">
         <h2 id="delete-api-key-title">刪除 API KEY？</h2>
         <p>刪除後，使用相關模型時必須重新輸入金鑰。是否刪除？</p>
+        <div class="dialog-actions">
+          <button class="text-button" value="cancel">取消</button>
+          <button class="dialog-confirm" value="confirm">確認刪除</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-cache-dialog" class="reset-dialog" aria-labelledby="delete-cache-title">
+      <form method="dialog">
+        <h2 id="delete-cache-title">刪除媒體快取？</h2>
+        <p id="delete-cache-message">刪除後，相關頁面將無法自動恢復這份媒體，是否刪除？</p>
         <div class="dialog-actions">
           <button class="text-button" value="cancel">取消</button>
           <button class="dialog-confirm" value="confirm">確認刪除</button>

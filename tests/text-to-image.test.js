@@ -37,10 +37,12 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /body\.text-to-image-body\s*\{[^}]*min-width:\s*0/);
   assert.match(css, /@media \(max-width:\s*800px\)/);
   assert.match(css, /\.prompt-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 210px/);
-  assert.match(css, /\.generation-options\s*\{[^}]*grid-template-columns:\s*minmax\(190px, 300px\) minmax\(260px, 1fr\)/);
+  assert.match(css, /\.generation-options\s*\{[^}]*grid-template-columns:\s*minmax\(190px, 300px\) 100px/);
+  assert.match(css, /\.model-api-key\s*\{[^}]*width:\s*100px/);
   assert.match(css, /@media \(max-width:\s*800px\)[\s\S]*?\.prompt-actions\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(css, /@media \(max-width:\s*560px\)/);
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.generation-options\s*\{\s*grid-template-columns:\s*1fr/);
+  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.model-api-key\s*\{[^}]*width:\s*100%/);
   assert.match(css, /width:\s*100dvh;\s*height:\s*100vw/);
   assert.match(css, /rotate\(90deg\)/);
   assert.match(css, /@keyframes mobile-result-fullscreen-in/);

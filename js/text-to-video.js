@@ -7,12 +7,18 @@ const VIDEO_PROXY_URL = "https://minimax-proxy.yustellar.idv.tw/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
 const QUERY_VIDEO_URL = `${VIDEO_PROXY_URL}/query`;
 const DOWNLOAD_VIDEO_URL = `${VIDEO_PROXY_URL}/download`;
+const BYTEPLUS_VIDEO_PROXY_URL = "https://minimax-proxy.yustellar.idv.tw/byteplus/video";
+const BYTEPLUS_CREATE_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/generate`;
+const BYTEPLUS_QUERY_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/query`;
+const BYTEPLUS_DOWNLOAD_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/download`;
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
 const VIDEO_MODELS = Object.freeze({
-  "MiniMax-H3": Object.freeze({ label: "MiniMax H3", apiKey: "MiniMax", resolutions: ["768P", "2K"], minimumDuration: 4 }),
-  "MiniMax-H3-Max": Object.freeze({ label: "MiniMax H3 Max", apiKey: "MiniMax", resolutions: ["480P", "768P"], minimumDuration: 5 }),
+  "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15 }),
+  "MiniMax-H3-Max": Object.freeze({ label: "MiniMax H3 Max", provider: "minimax", apiKey: "MiniMax", resolutions: ["480P", "768P"], defaultResolution: "768P", minimumDuration: 5, maximumDuration: 15 }),
+  "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "720p", minimumDuration: 4, maximumDuration: 30 }),
+  "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "720p", minimumDuration: 4, maximumDuration: 15 }),
 });
 
 const settings = loadSettings();
@@ -22,6 +28,7 @@ let busy = false;
 let generatedVideoBlob = null;
 let generatedVideoUrl = "";
 let generatedVideoRemoteUrl = "";
+let generatedVideoProvider = "minimax";
 let generationAbort = null;
 
 function setStatus(text, mode = "") {
@@ -59,12 +66,13 @@ function syncModelDetails() {
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const previousResolution = $("video-resolution").value;
-  replaceOptions($("video-resolution"), model.resolutions, model.resolutions.includes(previousResolution) ? previousResolution : "768P");
+  replaceOptions($("video-resolution"), model.resolutions, model.resolutions.includes(previousResolution) ? previousResolution : model.defaultResolution);
   const previousDuration = Number($("video-duration").value) || 5;
-  const durations = Array.from({ length: 16 - model.minimumDuration }, (_, index) => String(model.minimumDuration + index));
-  replaceOptions($("video-duration"), durations, String(Math.max(model.minimumDuration, previousDuration)));
+  const durations = Array.from({ length: model.maximumDuration - model.minimumDuration + 1 }, (_, index) => String(model.minimumDuration + index));
+  replaceOptions($("video-duration"), durations, String(Math.min(model.maximumDuration, Math.max(model.minimumDuration, previousDuration))));
   $("video-duration").querySelectorAll("option").forEach(option => { option.textContent = `${option.value} 秒`; });
   $("video-api-key").textContent = getApiKey(modelId) ? "已設定" : "未設定";
+  $("confirm-video-generation-message").textContent = `影片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
   syncResultHeading();
   syncGenerateAvailability();
 }
@@ -94,6 +102,9 @@ function openApiKeyDialog() {
   const model = VIDEO_MODELS[modelId];
   if (!model || busy) return;
   $("video-api-key-dialog-title").textContent = `${model.label} API KEY`;
+  $("video-api-key-help").textContent = model.provider === "minimax"
+    ? "MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援。金鑰只會保存在目前瀏覽器。"
+    : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
   $("video-api-key-input").value = "";
   $("video-api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("video-api-key-error").hidden = true;
@@ -139,12 +150,12 @@ function setBusy(value, showLock = value) {
   syncGenerateAvailability();
 }
 
-function miniMaxError(body, fallback = "") {
+function apiError(body, fallback = "", provider = "minimax") {
   const rawCode = body?.base_resp?.status_code ?? body?.error?.code ?? body?.code;
   const code = Number(rawCode);
   const message = body?.error?.message
-    || (typeof body?.error === "string" ? body.error : "")
     || body?.message
+    || (typeof body?.error === "string" ? body.error : "")
     || body?.base_resp?.status_msg
     || "";
   if (code === 1008 || /insufficient balance/i.test(message)) {
@@ -153,20 +164,23 @@ function miniMaxError(body, fallback = "") {
   if (code === 2013 && /TokenPlan|Credit.*MiniMax-H3/i.test(message)) {
     return "目前使用的 MiniMax Token Plan／Credit Key 不支援 H3 系列（2013）。請改用一般 Pay-as-you-go API KEY，並確認帳戶有足夠餘額。";
   }
-  if (Number.isFinite(code) && code !== 0) return message ? `${message}（${code}）` : `MiniMax API 錯誤（${code}）`;
+  const service = provider === "byteplus" ? "BytePlus" : "MiniMax";
+  if (Number.isFinite(code) && code !== 0) return message ? `${message}（${code}）` : `${service} API 錯誤（${code}）`;
   return fallback ? message || fallback : "";
 }
 
-async function fetchJson(url, options) {
+async function fetchJson(url, options, provider = "minimax") {
   const response = await fetch(url, options);
   let body;
   try {
     body = await response.json();
   } catch {
-    if (!response.ok) throw Error(`MiniMax API 回傳 ${response.status}`);
-    throw Error("MiniMax API 回傳無法解析的資料。");
+    const service = provider === "byteplus" ? "BytePlus" : "MiniMax";
+    if (!response.ok) throw Error(`${service} API 回傳 ${response.status}`);
+    throw Error(`${service} API 回傳無法解析的資料。`);
   }
-  const error = miniMaxError(body, response.ok ? "" : `MiniMax API 回傳 ${response.status}`);
+  const service = provider === "byteplus" ? "BytePlus" : "MiniMax";
+  const error = apiError(body, response.ok ? "" : `${service} API 回傳 ${response.status}`, provider);
   if (error) throw Error(error);
   return body;
 }
@@ -185,31 +199,39 @@ function wait(ms, signal) {
   });
 }
 
-async function pollVideoTask(taskId, apiKey, signal) {
+function providerEndpoints(provider) {
+  return provider === "byteplus"
+    ? { create: BYTEPLUS_CREATE_VIDEO_URL, query: BYTEPLUS_QUERY_VIDEO_URL, download: BYTEPLUS_DOWNLOAD_VIDEO_URL }
+    : { create: CREATE_VIDEO_URL, query: QUERY_VIDEO_URL, download: DOWNLOAD_VIDEO_URL };
+}
+
+async function pollVideoTask(taskId, apiKey, model, signal) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < POLL_TIMEOUT) {
-    const result = await fetchJson(QUERY_VIDEO_URL, {
+    const result = await fetchJson(providerEndpoints(model.provider).query, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ apiKey, taskId }),
       cache: "no-store",
       signal,
-    });
-    const task = result?.task;
-    if (!task) throw Error("MiniMax 沒有回傳任務資料。");
+    }, model.provider);
+    const task = model.provider === "byteplus" ? result : result?.task;
+    if (!task) throw Error(`${model.apiKey} 沒有回傳任務資料。`);
     const taskState = String(task.status || "").toLowerCase();
     if (taskState === "succeeded") {
-      if (!task.content?.url) throw Error("影片任務完成，但沒有回傳影片網址。");
+      const videoUrl = model.provider === "byteplus" ? task.content?.video_url : task.content?.url;
+      if (!videoUrl) throw Error("影片任務完成，但沒有回傳影片網址。");
+      task.videoUrl = videoUrl;
       return task;
     }
-    if (["failed", "cancelled"].includes(taskState)) throw Error(task.error?.message || task.message || `影片生成${taskState === "cancelled" ? "已取消" : "失敗"}。`);
+    if (["failed", "cancelled", "expired"].includes(taskState)) throw Error(task.error?.message || task.message || `影片生成${taskState === "cancelled" ? "已取消" : taskState === "expired" ? "已逾時" : "失敗"}。`);
     const elapsed = Math.floor((Date.now() - startedAt) / 1000);
     $("video-generation-lock-title").textContent = taskState === "running" ? "影片生成中" : "影片任務排隊中";
     $("video-generation-lock-detail").textContent = `任務 ${taskId} · 已等待 ${elapsed} 秒`;
     setStatus(`${taskState === "running" ? "影片生成中" : "影片排隊中"} · 已等待 ${elapsed} 秒`);
     await wait(POLL_INTERVAL, signal);
   }
-  throw Error("影片生成等待超過 30 分鐘，請稍後查詢 MiniMax 任務狀態。");
+  throw Error(`影片生成等待超過 30 分鐘，請稍後至 ${model.apiKey} 查詢任務狀態。`);
 }
 
 function releaseVideo() {
@@ -246,11 +268,12 @@ async function restoreLastGeneratedVideo() {
   } catch {}
 }
 
-async function showVideoResult(remoteUrl) {
+async function showVideoResult(remoteUrl, provider = generatedVideoProvider) {
   releaseVideo();
   generatedVideoRemoteUrl = remoteUrl;
+  generatedVideoProvider = provider;
   try {
-    const response = await fetch(DOWNLOAD_VIDEO_URL, {
+    const response = await fetch(providerEndpoints(provider).download, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: remoteUrl }),
@@ -283,6 +306,7 @@ function videoFilename(date = new Date()) {
 async function generateVideo() {
   const prompt = $("video-prompt").value.trim();
   const modelId = $("video-model").value;
+  const model = VIDEO_MODELS[modelId];
   const apiKey = getApiKey(modelId)?.value || "";
   if (!prompt || !apiKey || busy) return;
   showError();
@@ -291,28 +315,34 @@ async function generateVideo() {
   $("video-generation-lock-title").textContent = "正在建立影片生成任務";
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
-    setStatus("正在建立 MiniMax 影片任務…");
-    const created = await fetchJson(CREATE_VIDEO_URL, {
+    setStatus(`正在建立 ${model.apiKey} 影片任務…`);
+    const payload = {
+      model: modelId,
+      content: [{ type: "text", text: prompt }],
+      resolution: $("video-resolution").value,
+      duration: Number($("video-duration").value),
+      ratio: $("video-ratio").value,
+    };
+    if (model.provider === "byteplus") {
+      payload.generate_audio = true;
+      payload.watermark = false;
+    }
+    const created = await fetchJson(providerEndpoints(model.provider).create, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         apiKey,
-        payload: {
-          model: modelId,
-          content: [{ type: "text", text: prompt }],
-          resolution: $("video-resolution").value,
-          duration: Number($("video-duration").value),
-          ratio: $("video-ratio").value,
-        },
+        payload,
       }),
       cache: "no-store",
       signal: generationAbort.signal,
-    });
-    if (!created?.task_id) throw Error("MiniMax 沒有回傳影片任務 ID。");
-    const task = await pollVideoTask(created.task_id, apiKey, generationAbort.signal);
+    }, model.provider);
+    const taskId = model.provider === "byteplus" ? created?.id : created?.task_id;
+    if (!taskId) throw Error(`${model.apiKey} 沒有回傳影片任務 ID。`);
+    const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal);
     $("video-generation-lock-title").textContent = "影片已完成，正在載入結果";
     $("video-generation-lock-detail").textContent = "正在準備預覽與下載檔案…";
-    await showVideoResult(task.content.url);
+    await showVideoResult(task.videoUrl, model.provider);
     setStatus(`生成完成 · ${task.resolution || $("video-resolution").value} · ${task.duration || $("video-duration").value} 秒`, "success");
   } catch (error) {
     if (error?.name !== "AbortError") {
@@ -366,7 +396,7 @@ $("retry-save-video").addEventListener("click", async () => {
   setBusy(true, false);
   showError();
   setStatus("正在重新下載並保存影片…");
-  await showVideoResult(generatedVideoRemoteUrl);
+  await showVideoResult(generatedVideoRemoteUrl, generatedVideoProvider);
   setStatus(generatedVideoBlob ? "影片已保存到瀏覽器" : "影片保存失敗", generatedVideoBlob ? "success" : "error");
   setBusy(false);
 });

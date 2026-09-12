@@ -44,6 +44,8 @@
               <select id="video-model" class="setting-select">
                 <option value="MiniMax-H3" selected>MiniMax H3</option>
                 <option value="MiniMax-H3-Max">MiniMax H3 Max</option>
+                <option value="dreamina-seedance-2-5-260628">Seedance 2.5</option>
+                <option value="dreamina-seedance-2-0-260128">Seedance 2.0</option>
               </select>
             </div>
             <div class="model-api-key" aria-label="所選影片模型的 API KEY 狀態">
@@ -82,7 +84,7 @@
     <dialog id="video-api-key-dialog" class="reset-dialog" aria-labelledby="video-api-key-dialog-title">
       <form id="video-api-key-form" method="dialog">
         <h2 id="video-api-key-dialog-title">輸入 API KEY</h2>
-        <p>MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援。金鑰只會保存在目前瀏覽器。</p>
+        <p id="video-api-key-help">MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援。金鑰只會保存在目前瀏覽器。</p>
         <label class="api-key-input-label" for="video-api-key-source">從其他模型複製</label>
         <select id="video-api-key-source" class="setting-select">
           <option value="">目前沒有其他已保存的金鑰</option>
@@ -100,7 +102,7 @@
     <dialog id="confirm-video-generation-dialog" class="reset-dialog" aria-labelledby="confirm-video-generation-title">
       <form id="confirm-video-generation-form" method="dialog">
         <h2 id="confirm-video-generation-title">確認生成影片</h2>
-        <p>影片生成會消耗 MiniMax 帳戶額度，是否確定開始生成？</p>
+        <p id="confirm-video-generation-message">影片生成會消耗 MiniMax 帳戶額度，是否確定開始生成？</p>
         <div class="dialog-actions">
           <button id="cancel-video-generation" class="text-button" type="button">取消</button>
           <button class="dialog-confirm" type="submit">確認生成</button>

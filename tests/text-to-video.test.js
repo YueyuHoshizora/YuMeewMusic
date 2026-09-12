@@ -11,9 +11,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /<title>文生影 · YuMeew<\/title>/);
-  assert.match(html, /id="video-keywords"[^>]*maxlength="500"/);
+  assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /id="video-prompt"[^>]*maxlength="2048"/);
-  assert.match(html, /id="enhance-video-prompt"[^>]*checked/);
   assert.match(html, /id="video-resolution"/);
   assert.match(html, /id="video-duration"/);
   assert.match(html, /id="video-ratio"/);
@@ -26,6 +25,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /id="download-video"[^>]*disabled/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
   assert.match(css, /#video-prompt\s*\{[^}]*height:\s*112px/);
+  assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*12px 0 28px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*resolutions: \["480P", "768P"\][^}]*minimumDuration: 5/);
@@ -35,10 +35,14 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /https:\/\/api\.minimax\.io\/v2\/video_generation/);
   assert.match(script, /https:\/\/api\.minimax\.io\/v2\/query\/video_generation/);
   assert.match(script, /content: \[\{ type: "text", text: prompt \}\]/);
+  assert.doesNotMatch(script, /AUTOCOMPLETE_URL|requestCompletedPrompt|enhance-video-prompt/);
   assert.match(script, /Authorization: `Bearer \$\{apiKey\}`/);
   assert.match(script, /async function pollVideoTask\(taskId, apiKey, signal\)/);
   assert.match(script, /taskState === "succeeded"/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
+  assert.match(script, /saveStoredMedia\("generated-video", cachedFile\)/);
+  assert.match(script, /loadStoredMedia\("generated-video"\)/);
+  assert.match(script, /void restoreLastGeneratedVideo\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/text-to-video\.html"[^>]*>文生影<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-video\.html"/);

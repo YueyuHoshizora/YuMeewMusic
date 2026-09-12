@@ -28,20 +28,10 @@
       </section>
 
       <section class="panel prompt-panel">
-        <label class="field-label" for="video-keywords">題詞詞語</label>
-        <div class="autocomplete-row">
-          <input id="video-keywords" class="text-input" type="text" maxlength="500" placeholder="輸入多個詞，例如：星空、城市、運鏡、電影感" />
-          <button id="compose-video-prompt" class="export-button" type="button" disabled>組成題詞</button>
+        <div class="video-prompt-field">
+          <label class="field-label" for="video-prompt">影片描述</label>
+          <textarea id="video-prompt" maxlength="2048" placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></textarea>
         </div>
-        <label class="field-label" for="video-prompt">影片描述</label>
-        <textarea id="video-prompt" maxlength="2048" placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></textarea>
-        <label class="enhance-option" for="enhance-video-prompt">
-          <input id="enhance-video-prompt" type="checkbox" checked>
-          <span>
-            <strong>文字轉譯成 Prompt</strong>
-            <small>將輸入文字翻譯並整理成適合影片模型的提示詞</small>
-          </span>
-        </label>
         <div class="video-output-options">
           <label for="video-resolution"><span>解析度</span><select id="video-resolution" class="setting-select"><option value="768P" selected>768P</option><option value="2K">2K</option></select></label>
           <label for="video-duration"><span>影片長度</span><select id="video-duration" class="setting-select"></select></label>
@@ -78,7 +68,7 @@
           <button id="download-video" class="reset-settings" type="button" disabled>↓ 下載影片</button>
           <button id="apply-video-background" class="export-button" type="button" disabled>套用主畫面背景 →</button>
         </div>
-        <p class="result-storage-note">生成完成後可下載 MP4；影片能由瀏覽器讀取時，也可套用為主畫面的背景素材。</p>
+        <p class="result-storage-note">最後一次生成結果會保存在目前瀏覽器；可下載 MP4 或套用為主畫面的背景素材。</p>
       </section>
     </main>
 

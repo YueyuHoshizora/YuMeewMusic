@@ -1,12 +1,13 @@
 const DATABASE = "yumeew-media-v1";
 const STORE = "files";
-const ALLOWED_KINDS = new Set(["audio", "image", "subtitle", "generated-image"]);
+const ALLOWED_KINDS = new Set(["audio", "image", "subtitle", "generated-image", "generated-video"]);
 const ALLOWED_VALUE_KINDS = new Set(["image-video-project"]);
 const ENTRY_DETAILS = Object.freeze({
   audio: { page: "主畫面／人聲分離", field: "音樂檔案" },
   image: { page: "主畫面", field: "背景素材" },
   subtitle: { page: "主畫面／字幕編輯器", field: "字幕檔案" },
   "generated-image": { page: "文生圖", field: "最後生成結果" },
+  "generated-video": { page: "文生影", field: "最後生成結果" },
   "image-video-project": { page: "圖轉影片", field: "素材專案" },
 });
 

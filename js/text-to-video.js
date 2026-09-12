@@ -1,11 +1,10 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
+import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
 const CREATE_VIDEO_URL = "https://api.minimax.io/v2/video_generation";
 const QUERY_VIDEO_URL = "https://api.minimax.io/v2/query/video_generation";
-const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
@@ -37,11 +36,10 @@ function syncGenerateAvailability() {
   const prompt = $("video-prompt").value.trim();
   const hasKey = Boolean(getApiKey($("video-model").value));
   $("generate-video").disabled = busy || !prompt || !hasKey;
-  $("compose-video-prompt").disabled = busy || !$("video-keywords").value.trim();
 }
 
 function syncDraftStatus() {
-  if (!busy) setStatus($("video-prompt").value.trim() || $("video-keywords").value.trim() ? "題詞已輸入" : "等待輸入影片描述");
+  if (!busy) setStatus($("video-prompt").value.trim() ? "影片描述已輸入" : "等待輸入影片描述");
   syncGenerateAvailability();
 }
 
@@ -129,51 +127,11 @@ function submitApiKey(event) {
   syncModelDetails();
 }
 
-function completedPrompt(value) {
-  if (typeof value === "string") return value.trim();
-  for (const key of ["completed", "prompt", "result", "text", "completion"]) {
-    if (typeof value?.[key] === "string" && value[key].trim()) return value[key].trim();
-  }
-  return "";
-}
-
-async function requestCompletedPrompt(prompt) {
-  const response = await fetch(AUTOCOMPLETE_URL, {
-    method: "POST",
-    headers: { Accept: "application/json,text/plain", "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt }),
-    cache: "no-store",
-  });
-  const contentType = response.headers.get("content-type") || "";
-  const body = contentType.includes("application/json") ? await response.json() : await response.text();
-  const result = completedPrompt(body);
-  if (!response.ok) throw Error(body?.message || body?.error || result || `文字補全服務回傳 ${response.status}`);
-  if (!result) throw Error("文字補全服務沒有回傳可用的題詞。");
-  return result.slice(0, 2048);
-}
-
-async function composePrompt() {
-  const prompt = $("video-keywords").value.trim();
-  if (!prompt || busy) return;
-  showError();
-  setStatus("正在組成題詞…");
-  setBusy(true, false);
-  try {
-    $("video-prompt").value = await requestCompletedPrompt(prompt);
-    setStatus("題詞已組成，可繼續修改或生成影片。", "success");
-  } catch (error) {
-    showError(error instanceof TypeError ? "文字補全服務目前無法連線，請稍後再試。" : error.message || "題詞組成失敗。");
-    setStatus("題詞組成失敗", "error");
-  } finally {
-    setBusy(false);
-  }
-}
-
 function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["video-keywords", "video-prompt", "enhance-video-prompt", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
+  for (const id of ["video-prompt", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
   syncGenerateAvailability();
@@ -244,6 +202,28 @@ function releaseVideo() {
   generatedVideoRemoteUrl = "";
 }
 
+function presentVideo() {
+  const video = $("generated-video");
+  video.src = generatedVideoUrl || generatedVideoRemoteUrl;
+  video.hidden = false;
+  $("empty-video-result").hidden = true;
+  video.load();
+  $("download-video").disabled = false;
+  $("apply-video-background").disabled = !generatedVideoBlob;
+}
+
+async function restoreLastGeneratedVideo() {
+  try {
+    const record = await loadStoredMedia("generated-video");
+    if (!record?.blob?.size || !record.blob.type?.startsWith("video/") || busy) return;
+    releaseVideo();
+    generatedVideoBlob = record.blob;
+    generatedVideoUrl = URL.createObjectURL(generatedVideoBlob);
+    presentVideo();
+    setStatus("已載入上次生成結果", "success");
+  } catch {}
+}
+
 async function showVideoResult(remoteUrl) {
   releaseVideo();
   generatedVideoRemoteUrl = remoteUrl;
@@ -254,16 +234,14 @@ async function showVideoResult(remoteUrl) {
     if (!blob.size) throw Error("影片檔案內容為空。");
     generatedVideoBlob = new Blob([blob], { type: blob.type || "video/mp4" });
     generatedVideoUrl = URL.createObjectURL(generatedVideoBlob);
+    const cachedFile = new File([generatedVideoBlob], videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
+    await saveStoredMedia("generated-video", cachedFile).catch(() => {
+      showError("影片已生成，但瀏覽器無法保存最後一次生成結果。");
+    });
   } catch {
     showError("影片已生成，但瀏覽器無法讀取影片檔案；仍可播放或開啟下載網址。套用背景功能暫時無法使用。");
   }
-  const video = $("generated-video");
-  video.src = generatedVideoUrl || generatedVideoRemoteUrl;
-  video.hidden = false;
-  $("empty-video-result").hidden = true;
-  video.load();
-  $("download-video").disabled = false;
-  $("apply-video-background").disabled = !generatedVideoBlob;
+  presentVideo();
 }
 
 function videoFilename() {
@@ -272,7 +250,7 @@ function videoFilename() {
 }
 
 async function generateVideo() {
-  let prompt = $("video-prompt").value.trim();
+  const prompt = $("video-prompt").value.trim();
   const modelId = $("video-model").value;
   const apiKey = getApiKey(modelId)?.value || "";
   if (!prompt || !apiKey || busy) return;
@@ -282,11 +260,6 @@ async function generateVideo() {
   $("video-generation-lock-title").textContent = "正在建立影片生成任務";
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
-    if ($("enhance-video-prompt").checked) {
-      setStatus("正在整理影片提示詞…");
-      prompt = await requestCompletedPrompt(prompt);
-      $("video-prompt").value = prompt;
-    }
     setStatus("正在建立 MiniMax 影片任務…");
     const created = await fetchJson(CREATE_VIDEO_URL, {
       method: "POST",
@@ -321,7 +294,6 @@ async function generateVideo() {
   }
 }
 
-$("video-keywords").addEventListener("input", syncDraftStatus);
 $("video-prompt").addEventListener("input", syncDraftStatus);
 $("video-model").addEventListener("change", syncModelDetails);
 $("video-resolution").addEventListener("change", syncResultHeading);
@@ -330,7 +302,6 @@ $("video-api-key").addEventListener("click", openApiKeyDialog);
 $("video-api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("video-api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialog").close());
-$("compose-video-prompt").addEventListener("click", () => void composePrompt());
 $("generate-video").addEventListener("click", () => void generateVideo());
 
 $("download-video").addEventListener("click", () => {
@@ -366,3 +337,4 @@ window.addEventListener("pagehide", () => {
 
 syncModelDetails();
 syncDraftStatus();
+void restoreLastGeneratedVideo();

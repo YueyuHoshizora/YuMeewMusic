@@ -1,6 +1,6 @@
 import { SPLEETER_CHUNK, SPLEETER_SHAPE, spleeterStarts, prepareSpleeter, reconstructSpleeter } from "./spleeter-core.js";
 import { downmixAndResample } from "./lyrics-recognition-core.js";
-import { indexedDbModelCache } from "./indexeddb-model-cache.js";
+import { loadModelBytes } from "./indexeddb-model-cache.js";
 import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 import {
   SEPARATOR_CHUNK_SIZE,
@@ -49,42 +49,10 @@ function tensorValues(tensor) {
 }
 
 async function loadModel(provider, url = MODEL_PATHS[provider]) {
-  if (!("indexedDB" in self)) return url;
-  try {
-    const stored = await indexedDbModelCache.match(url);
-    if (stored) {
-      sendStatus("正在從 IndexedDB 讀取共用 AI 模型…", provider);
-      return new Uint8Array(await stored.arrayBuffer());
-    }
-  } catch {
-    sendStatus("IndexedDB 模型儲存不可用，正在直接載入…", provider);
-    return url;
-  }
-
-  if ("caches" in self) {
-    try {
-      const legacy = await caches.open(LEGACY_MODEL_CACHE);
-      const stored = await legacy.match(url);
-      if (stored) {
-        sendStatus("正在將既有模型移到共用 IndexedDB…", provider);
-        const bytes = new Uint8Array(await stored.arrayBuffer());
-        await indexedDbModelCache.put(url, new Response(bytes));
-        await legacy.delete(url);
-        return bytes;
-      }
-    } catch {}
-  }
-
-  sendStatus("首次下載 AI 模型；完成後會保存在共用 IndexedDB…", provider);
-  const response = await fetch(url);
-  if (!response.ok) throw Error(`AI 模型下載失敗（HTTP ${response.status}）。`);
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  try {
-    await indexedDbModelCache.put(url, new Response(bytes, { headers: response.headers }));
-  } catch {
-    sendStatus("模型已下載，但 IndexedDB 空間不足，本次仍會繼續。", provider);
-  }
-  return bytes;
+  return loadModelBytes(url, {
+    legacyCacheName: LEGACY_MODEL_CACHE,
+    onStatus: text => sendStatus(text, provider),
+  });
 }
 
 async function createSession(candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"]) {

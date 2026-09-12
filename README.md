@@ -20,7 +20,7 @@
 
 ## 隱私與檔案限制
 
-所有媒體讀取、解碼、裁剪、繪製、AI 分離、歌詞辨識與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime、Transformers.js 與 WASM 隨網站提供。Spleeter、BS PolarFormer 與 Whisper 模型由瀏覽器從 Hugging Face 下載並保存在 IndexedDB，音樂不會傳送至該服務。文生圖是唯一的雲端 AI 例外：只傳送使用者輸入的圖片描述，並接收生成的 JPEG，不傳送既有媒體檔案。
+所有媒體讀取、解碼、裁剪、繪製、AI 分離、歌詞辨識與匯出都在客戶端完成。沒有媒體上傳 API、雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime、Transformers.js 與 WASM 隨網站提供。全站所有遠端模型檔都統一自動保存到 `yumeew-ai-models-v1` IndexedDB：Spleeter、BS PolarFormer 與 Whisper 第一次由瀏覽器從 Hugging Face 下載，之後可直接使用本機快取，音樂不會傳送至該服務。文生圖是唯一的雲端 AI 例外：只傳送使用者輸入的圖片描述，並接收生成的 JPEG，不傳送既有媒體檔案。
 
 | 素材 | 支援內容 | 限制 |
 | --- | --- | --- |

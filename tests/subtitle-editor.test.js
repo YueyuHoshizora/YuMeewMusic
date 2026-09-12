@@ -29,7 +29,7 @@ test('standalone subtitle editor has every referenced control and only local ass
   assert.ok(ids.includes('lyrics-quality'));
   assert.ok(ids.includes('replace-lyrics-dialog'));
   assert.match(html, /覆蓋原本的歌詞？/);
-  assert.match(html, /模型首次下載後保存在 IndexedDB/);
+  assert.match(html, /所有模型檔首次下載後都會自動保存在共用 IndexedDB/);
   assert.match(script, /new Worker\(new URL\('\.\/vocal-separator-worker\.js'/);
   assert.match(script, /new Worker\(new URL\('\.\/lyrics-recognition-worker\.js'/);
   assert.match(script, /recordHistory\(\);[\s\S]*state\.cues = normalizeCues\(cues/);

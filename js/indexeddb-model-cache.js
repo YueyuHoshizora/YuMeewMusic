@@ -57,3 +57,46 @@ export const indexedDbModelCache = {
   },
 };
 
+export async function loadModelBytes(url, { legacyCacheName = '', onStatus = () => {} } = {}) {
+  if (!globalThis.indexedDB) {
+    onStatus('此瀏覽器不支援 IndexedDB，模型只供本次使用。');
+    const response = await fetch(url);
+    if (!response.ok) throw Error(`AI 模型下載失敗（HTTP ${response.status}）。`);
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  try {
+    const stored = await indexedDbModelCache.match(url);
+    if (stored) {
+      onStatus('正在從 IndexedDB 讀取共用 AI 模型…');
+      return new Uint8Array(await stored.arrayBuffer());
+    }
+  } catch {
+    onStatus('IndexedDB 模型儲存暫時不可用，正在直接載入…');
+  }
+
+  if (legacyCacheName && globalThis.caches) {
+    try {
+      const legacy = await caches.open(legacyCacheName);
+      const stored = await legacy.match(url);
+      if (stored) {
+        onStatus('正在將既有模型移到共用 IndexedDB…');
+        const bytes = new Uint8Array(await stored.arrayBuffer());
+        await indexedDbModelCache.put(url, new Response(bytes));
+        await legacy.delete(url);
+        return bytes;
+      }
+    } catch {}
+  }
+
+  onStatus('首次下載 AI 模型；完成後會自動保存在共用 IndexedDB…');
+  const response = await fetch(url);
+  if (!response.ok) throw Error(`AI 模型下載失敗（HTTP ${response.status}）。`);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  try {
+    await indexedDbModelCache.put(url, new Response(bytes, { headers: response.headers }));
+  } catch {
+    onStatus('模型已下載，但 IndexedDB 空間不足，本次仍會繼續。');
+  }
+  return bytes;
+}

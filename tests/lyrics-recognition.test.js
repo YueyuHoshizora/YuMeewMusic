@@ -44,7 +44,19 @@ test('Spleeter and Whisper share the IndexedDB model cache', () => {
   const separator = readFileSync('js/vocal-separator-worker.js', 'utf8');
   const whisper = readFileSync('js/lyrics-recognition-worker.js', 'utf8');
   assert.match(cache, /yumeew-ai-models-v1/);
-  assert.match(separator, /indexedDbModelCache/);
+  assert.match(separator, /loadModelBytes/);
   assert.match(whisper, /indexedDbModelCache/);
-  assert.match(separator, /正在將既有模型移到共用 IndexedDB/);
+  assert.match(cache, /正在將既有模型移到共用 IndexedDB/);
+});
+
+test('every remote model loader routes downloads through the shared IndexedDB cache', () => {
+  const separator = readFileSync('js/vocal-separator-worker.js', 'utf8');
+  const whisper = readFileSync('js/lyrics-recognition-worker.js', 'utf8');
+  assert.match(separator, /\.onnx/);
+  assert.match(separator, /loadModelBytes/);
+  assert.doesNotMatch(separator, /\bfetch\s*\(/);
+  assert.match(whisper, /pipeline\('automatic-speech-recognition'/);
+  assert.match(whisper, /env\.useBrowserCache = false/);
+  assert.match(whisper, /env\.useCustomCache = true/);
+  assert.match(whisper, /env\.customCache = indexedDbModelCache/);
 });

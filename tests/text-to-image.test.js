@@ -76,6 +76,10 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey \}\)/);
   assert.match(html, /id="api-key-input"[^>]*type="password"/);
+  assert.match(html, /id="api-key-source"[^>]*class="setting-select"/);
+  assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
+  assert.match(script, /\$\("api-key-source"\)\.addEventListener\("change", copyApiKeyFromSource\)/);
+  assert.match(script, /\$\("api-key-input"\)\.value = source\.value/);
   assert.match(script, /\$\("image-model"\)\.disabled = value/);
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);

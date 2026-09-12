@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
-import { getApiKey, saveApiKey } from "./api-keys.js";
+import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
@@ -144,12 +144,35 @@ function syncModelDetails() {
   $("model-api-key").disabled = busy || isFree || !model;
 }
 
+function syncApiKeySources(modelId) {
+  const select = $("api-key-source");
+  const sources = listApiKeys().filter(key => key.id !== modelId);
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = sources.length ? "選擇已保存的金鑰…" : "目前沒有其他已保存的金鑰";
+  select.replaceChildren(placeholder, ...sources.map(source => {
+    const option = document.createElement("option");
+    option.value = source.id;
+    option.textContent = source.label;
+    return option;
+  }));
+  select.disabled = !sources.length;
+}
+
+function copyApiKeyFromSource() {
+  const source = getApiKey($("api-key-source").value);
+  if (!source) return;
+  $("api-key-input").value = source.value;
+  $("api-key-error").hidden = true;
+}
+
 function openApiKeyDialog() {
   const modelId = $("image-model").value;
   const model = IMAGE_MODELS[modelId];
   if (!model || model.apiKey === "Free" || busy) return;
   $("api-key-dialog-title").textContent = `${model.label} API KEY`;
-  $("api-key-dialog-description").textContent = "金鑰只會保存在目前瀏覽器的 localStorage，頁面僅顯示遮蔽內容。";
+  $("api-key-dialog-description").textContent = "可從其他模型複製金鑰，或直接輸入。金鑰只會保存在目前瀏覽器。";
+  syncApiKeySources(modelId);
   $("api-key-input").value = "";
   $("api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("api-key-error").hidden = true;
@@ -317,6 +340,7 @@ $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("image-model").addEventListener("change", syncModelDetails);
 $("model-api-key").addEventListener("click", openApiKeyDialog);
+$("api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-api-key").addEventListener("click", () => $("api-key-dialog").close());
 

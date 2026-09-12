@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="description" content="輸入文字描述，透過 AI 生成影片並套用為 YuMeew 背景素材。" />
+    <title>文生影 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/text-to-image.css" />
+    <link rel="stylesheet" href="./css/text-to-video.css" />
+    <script type="module" src="./js/text-to-video.js"></script>
+  </head>
+  <body class="text-to-image-body text-to-video-body">
+    <header class="text-to-image-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">▶</span>文生影<span class="brand-sub">TEXT TO VIDEO</span></a>
+      <a class="reset-settings text-to-image-back" href="./">← 返回主畫面</a>
+    </header>
+
+    <main class="text-to-image-main">
+      <section class="text-to-image-heading">
+        <div>
+          <div class="eyebrow">CREATE MOTION WITH WORDS</div>
+          <h1>把文字變成影像<span>。</span></h1>
+          <p>輸入場景、鏡頭運動、主體動作、風格與光線，準備生成一段 AI 影片。</p>
+        </div>
+        <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待設定影片模型</span>
+      </section>
+
+      <section class="panel prompt-panel">
+        <label class="field-label" for="video-keywords">題詞詞語</label>
+        <div class="autocomplete-row">
+          <input id="video-keywords" class="text-input" type="text" maxlength="500" placeholder="輸入多個詞，例如：星空、城市、運鏡、電影感" />
+          <button id="compose-video-prompt" class="export-button" type="button" disabled>組成題詞</button>
+        </div>
+        <label class="field-label" for="video-prompt">影片描述</label>
+        <textarea id="video-prompt" maxlength="2048" placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></textarea>
+        <label class="enhance-option" for="enhance-video-prompt">
+          <input id="enhance-video-prompt" type="checkbox" checked>
+          <span>
+            <strong>文字轉譯成 Prompt</strong>
+            <small>將輸入文字翻譯並整理成適合影片模型的提示詞</small>
+          </span>
+        </label>
+        <div class="prompt-actions">
+          <div class="generation-options">
+            <div class="generation-model">
+              <label class="field-label" for="video-model">生成模型</label>
+              <select id="video-model" class="setting-select" disabled>
+                <option value="" selected>尚未設定模型</option>
+              </select>
+            </div>
+            <div class="model-api-key" aria-label="所選影片模型的 API KEY 狀態">
+              <span>API KEY</span>
+              <button id="video-api-key" type="button" disabled>未設定</button>
+            </div>
+          </div>
+          <div class="generate-action">
+            <button id="generate-video" class="export-button" type="button" disabled>▶ 生成影片</button>
+          </div>
+        </div>
+        <p class="video-model-note">影片模型與 API 尚未設定，後續加入模型後即可啟用生成。</p>
+        <p id="video-generation-error" class="generation-error" role="alert" hidden></p>
+      </section>
+
+      <section class="panel result-panel">
+        <div class="result-heading"><div class="section-title"><span>1280 × 720</span><h2>生成結果</h2></div><small>16:9 · VIDEO</small></div>
+        <div id="generated-video-frame" class="generated-image-frame generated-video-frame" aria-label="生成影片預覽區">
+          <div class="empty-result"><span aria-hidden="true">▶</span><strong>生成的影片會出現在這裡</strong><small>設定影片模型後即可開始生成</small></div>
+          <video id="generated-video" controls playsinline hidden></video>
+        </div>
+        <div class="result-actions">
+          <button id="download-video" class="reset-settings" type="button" disabled>↓ 下載影片</button>
+          <button id="apply-video-background" class="export-button" type="button" disabled>套用主畫面背景 →</button>
+        </div>
+        <p class="result-storage-note">後續完成模型串接後，生成結果可下載或套用為主畫面的背景素材。</p>
+      </section>
+    </main>
+  </body>
+</html>

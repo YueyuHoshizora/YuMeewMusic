@@ -3,11 +3,11 @@ import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
-const VIDEO_PROXY_URL = "https://minimax-proxy.yustellar.idv.tw/video";
+const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
 const QUERY_VIDEO_URL = `${VIDEO_PROXY_URL}/query`;
 const DOWNLOAD_VIDEO_URL = `${VIDEO_PROXY_URL}/download`;
-const BYTEPLUS_VIDEO_PROXY_URL = "https://minimax-proxy.yustellar.idv.tw/byteplus/video";
+const BYTEPLUS_VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/byteplus/video";
 const BYTEPLUS_CREATE_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/generate`;
 const BYTEPLUS_QUERY_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/query`;
 const BYTEPLUS_DOWNLOAD_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/download`;

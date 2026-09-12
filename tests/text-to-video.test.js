@@ -43,11 +43,11 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
   assert.match(html, /id="video-api-key-dialog"/);
-  assert.match(script, /https:\/\/minimax-proxy\.yustellar\.idv\.tw\/video/);
+  assert.match(script, /https:\/\/model-proxy\.yustellar\.idv\.tw\/video/);
   assert.match(script, /CREATE_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/generate`/);
   assert.match(script, /QUERY_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/query`/);
   assert.match(script, /DOWNLOAD_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/download`/);
-  assert.match(script, /https:\/\/minimax-proxy\.yustellar\.idv\.tw\/byteplus\/video/);
+  assert.match(script, /https:\/\/model-proxy\.yustellar\.idv\.tw\/byteplus\/video/);
   assert.match(script, /BYTEPLUS_CREATE_VIDEO_URL = `\$\{BYTEPLUS_VIDEO_PROXY_URL\}\/generate`/);
   assert.match(script, /BYTEPLUS_QUERY_VIDEO_URL = `\$\{BYTEPLUS_VIDEO_PROXY_URL\}\/query`/);
   assert.match(script, /BYTEPLUS_DOWNLOAD_VIDEO_URL = `\$\{BYTEPLUS_VIDEO_PROXY_URL\}\/download`/);

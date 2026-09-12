@@ -149,6 +149,9 @@ function miniMaxError(body, fallback = "") {
   if (code === 1008 || /insufficient balance/i.test(message)) {
     return "目前 MiniMax API KEY 所屬帳戶餘額不足（1008），請充值或更換 API KEY。";
   }
+  if (code === 2013 && /TokenPlan|Credit.*MiniMax-H3/i.test(message)) {
+    return "目前使用的 MiniMax Token Plan／Credit Key 不支援 H3 系列（2013）。請改用一般 Pay-as-you-go API KEY，並確認帳戶有足夠餘額。";
+  }
   if (Number.isFinite(code) && code !== 0) return message ? `${message}（${code}）` : `MiniMax API 錯誤（${code}）`;
   return fallback ? message || fallback : "";
 }

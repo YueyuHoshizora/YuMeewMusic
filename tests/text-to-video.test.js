@@ -41,6 +41,9 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /apiKey,\s*payload: \{/);
   assert.match(script, /code === 1008 \|\| \/insufficient balance\/i\.test\(message\)/);
   assert.match(script, /目前 MiniMax API KEY 所屬帳戶餘額不足（1008），請充值或更換 API KEY。/);
+  assert.match(script, /code === 2013 && \/TokenPlan\|Credit\.\*MiniMax-H3\/i\.test\(message\)/);
+  assert.match(script, /目前使用的 MiniMax Token Plan／Credit Key 不支援 H3 系列（2013）/);
+  assert.match(html, /MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援/);
   assert.match(script, /miniMaxError\(body, response\.ok \? "" : `MiniMax API 回傳 \$\{response\.status\}`\)/);
   assert.match(script, /async function pollVideoTask\(taskId, apiKey, signal\)/);
   assert.match(script, /taskState === "succeeded"/);

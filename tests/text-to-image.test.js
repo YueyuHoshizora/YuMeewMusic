@@ -21,6 +21,11 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
+  assert.match(css, /body\.text-to-image-body\s*\{[^}]*min-width:\s*0/);
+  assert.match(css, /@media \(max-width:\s*800px\)/);
+  assert.match(css, /@media \(max-width:\s*560px\)/);
+  assert.match(css, /\.autocomplete-row\s*\{\s*grid-template-columns:\s*1fr/);
+  assert.match(css, /\.result-actions\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/generate/);
   assert.match(script, /https:\/\/flux-klein-worker\.yustellar\.idv\.tw\/autocomplete/);
   assert.match(script, /method:\s*"POST"/);

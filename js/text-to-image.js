@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, saveStoredMedia } from "./media-store.js";
-import { getApiKey, maskApiKey, saveApiKey } from "./api-keys.js";
+import { getApiKey, saveApiKey } from "./api-keys.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
@@ -140,7 +140,7 @@ function syncModelDetails() {
   const isFree = model?.apiKey === "Free";
   const storedKey = isFree ? null : getApiKey(modelId);
   $("model-provider-note").textContent = model?.provider || "圖片服務";
-  $("model-api-key").textContent = isFree ? "Free" : storedKey ? maskApiKey(storedKey.value) : "點擊輸入";
+  $("model-api-key").textContent = isFree ? "Free" : storedKey ? "已設定" : "未設定";
   $("model-api-key").disabled = busy || isFree || !model;
 }
 

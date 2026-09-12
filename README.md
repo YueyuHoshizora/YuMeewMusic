@@ -4,7 +4,7 @@
 
 **線上使用：** [YuMeew Music Studio](https://ezmusic.yustellar.idv.tw/)
 
-文生圖模型若需要 API KEY，可點擊生成按鈕旁的 API KEY 區域輸入。金鑰會保存在目前瀏覽器的 `localStorage`，畫面只保留前後各三碼並以 `*` 遮蔽中間內容；免費模型顯示 `Free`。設定頁的「金鑰管理」會列出所有已保存金鑰，並提供逐筆確認刪除。
+文生圖模型若需要 API KEY，可點擊生成按鈕旁的 API KEY 區域輸入。金鑰會保存在目前瀏覽器的 `localStorage`；文生圖頁只顯示「已設定」或「未設定」，免費模型顯示 `Free`。設定頁的「金鑰管理」會列出所有已保存金鑰，僅保留前後各三碼並以 `*` 遮蔽中間內容，並提供逐筆確認刪除。
 
 文生圖另支援 GPT-Image-2.5 Sunburst（`gpt-image-2.5-sunburst`）。選用時需輸入 OpenAI API KEY，網站會由瀏覽器直接呼叫 OpenAI Image API，以 `1280x720`、`quality: auto` 與 JPEG 格式生成圖片；API KEY 不會傳送至 YuMeew 或 Cloudflare Worker。
 

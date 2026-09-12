@@ -66,7 +66,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /output_format: "jpeg"/);
   assert.match(script, /image\?\.b64_json/);
   assert.match(script, /const modelId = \$\("image-model"\)\.value;\s*const model = IMAGE_MODELS\[modelId\]/);
-  assert.match(script, /maskApiKey\(storedKey\.value\)/);
+  assert.match(script, /storedKey \? "已設定" : "未設定"/);
+  assert.doesNotMatch(script, /maskApiKey/);
   assert.match(script, /\$\("image-model"\)\.addEventListener\("change", syncModelDetails\)/);
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);

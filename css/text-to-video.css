@@ -2,6 +2,9 @@
 #video-prompt { display: block; width: 100%; height: 112px; resize: vertical; box-sizing: border-box; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; line-height: 1.7; }
 #video-prompt::placeholder { color: var(--muted); }
 #video-prompt:focus { border-color: var(--primary); outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent); }
+.video-output-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.video-output-options label { display: grid; gap: 7px; color: var(--foreground); font-size: 12px; font-weight: 700; }
+.video-output-options select { width: 100%; }
 .reset-dialog #video-api-key-source,
 .reset-dialog #video-api-key-input { width: 100%; box-sizing: border-box; }
 .reset-dialog #video-api-key-input { font-family: monospace; }
@@ -11,4 +14,5 @@
 
 @media (max-width: 560px) {
   #video-prompt { height: 150px; }
+  .video-output-options { grid-template-columns: 1fr; }
 }

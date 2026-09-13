@@ -210,7 +210,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-dialogue-row { display: grid; grid-template-columns: 170px 180px minmax(0, 1fr) auto; align-items: start; gap: 8px; border: 1px solid var(--border); border-radius: 9px; padding: 9px; background: var(--card); }
 .video-dialogue-row .setting-select,
 .video-dialogue-row .text-input { width: 100%; min-width: 0; box-sizing: border-box; }
-.video-dialogue-text { min-height: 62px; max-height: 150px; }
+.video-dialogue-text { height: 38px; }
 .video-dialogue-actions { display: grid; grid-template-columns: repeat(3, 28px); gap: 4px; }
 .video-dialogue-action { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--border); border-radius: 6px; padding: 0; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
 .video-dialogue-action:not(:disabled):hover { border-color: var(--primary); color: var(--primary-text); }

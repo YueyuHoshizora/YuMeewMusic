@@ -74,6 +74,7 @@ const uploadedResourceCache = new WeakMap();
 let pendingVideoProject = null;
 
 function editorText(editor) {
+  if (editor?.matches?.("input, textarea")) return String(editor.value || "").replace(/\u00a0/g, " ").trim();
   return String(editor?.innerText || editor?.textContent || "").replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 }
 
@@ -174,11 +175,11 @@ function arrangeVideoPromptBuilderFields() {
     fields.querySelector(".video-prompt-time-fields"),
     fields.querySelector(".video-prompt-camera-field"),
     fields.querySelector(".video-prompt-view-field"),
+    fields.querySelector(".video-prompt-lighting-field"),
     $("video-prompt-sound").closest("label"),
   );
   right.append(
     $("video-prompt-scene").closest("label"),
-    fields.querySelector(".video-prompt-lighting-field"),
     fields.querySelector(".video-prompt-action-field"),
   );
   fields.prepend(left, right);
@@ -360,21 +361,12 @@ function createDialogueRow(dialogue = {}) {
   emotion.placeholder = "口氣／情緒（選填）";
   emotion.setAttribute("aria-label", "口氣或情緒");
   emotion.value = dialogue.emotion || "";
-  const text = document.createElement("div");
-  text.className = "text-input resource-editor resource-editor-multiline video-dialogue-text";
-  text.contentEditable = "true";
-  text.setAttribute("role", "textbox");
+  const text = document.createElement("input");
+  text.type = "text";
+  text.className = "text-input video-dialogue-text";
   text.setAttribute("aria-label", "對話內容");
-  text.setAttribute("aria-multiline", "true");
-  text.dataset.placeholder = "輸入對話；可使用 @ 資源或 # 人物";
-  text.innerHTML = dialogue.text || "";
-  text.querySelectorAll(".resource-token").forEach(token => {
-    if (!videoResources.some(resource => resource.id === token.dataset.resourceId)) {
-      token.classList.add("missing");
-      token.title = "資源不存在";
-    }
-  });
-  setupResourceEditor(text);
+  text.placeholder = "輸入對話";
+  text.value = htmlText(dialogue.text || "");
   const actions = document.createElement("div");
   actions.className = "video-dialogue-actions";
   const moveUp = dialogueAction("向上移動對話", "↑", () => {
@@ -420,11 +412,17 @@ function renderDialogueRows(dialogues = []) {
   syncDialogueEmptyState();
 }
 
+function escapedTextHtml(text) {
+  const holder = document.createElement("div");
+  holder.textContent = text || "";
+  return holder.innerHTML;
+}
+
 function collectDialogueRows() {
   return [...$("video-dialogue-list").querySelectorAll(".video-dialogue-row")].map(row => ({
     speaker: row.querySelector(".video-dialogue-speaker").value,
     emotion: row.querySelector(".video-dialogue-emotion").value.trim(),
-    text: row.querySelector(".video-dialogue-text").innerHTML,
+    text: escapedTextHtml(row.querySelector(".video-dialogue-text").value),
   })).filter(dialogue => htmlText(dialogue.text));
 }
 

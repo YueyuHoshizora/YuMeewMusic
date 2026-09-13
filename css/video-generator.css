@@ -87,10 +87,15 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .reset-dialog #video-api-key-input { font-family: monospace; }
 .video-prompt-builder-dialog { width: min(820px, calc(100vw - 80px)); }
 .video-prompt-builder-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin: 18px 0 22px; }
-.video-prompt-builder-fields label { display: grid; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
+.video-prompt-builder-fields label,
+.video-prompt-camera-field { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .video-prompt-builder-fields .video-prompt-action-field { align-self: start; }
 .video-prompt-builder-fields .text-input { width: 100%; box-sizing: border-box; }
 .video-prompt-builder-fields textarea { min-height: 88px; resize: vertical; font: inherit; line-height: 1.6; }
+.video-camera-selects { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: 8px; }
+.video-camera-selects .setting-select { width: 100%; min-width: 0; }
+.video-camera-custom { margin-top: 2px; }
+.video-camera-custom[hidden] { display: none; }
 .character-mention-menu { position: fixed; z-index: 20; display: grid; max-height: 220px; gap: 5px; overflow-y: auto; box-sizing: border-box; border: 1px solid var(--primary); border-radius: 10px; padding: 7px; background: var(--surface); box-shadow: 0 14px 34px #0007; }
 .character-mention-menu[hidden] { display: none; }
 .character-mention-option { display: block; width: 100%; border: 1px solid transparent; border-radius: 7px; padding: 10px 12px; background: transparent; color: var(--foreground); text-align: left; font: inherit; font-size: 13px; cursor: pointer; }

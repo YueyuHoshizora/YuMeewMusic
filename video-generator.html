@@ -162,7 +162,54 @@
         <div class="video-prompt-builder-fields">
           <label for="video-prompt-time"><span>時間</span><input id="video-prompt-time" class="text-input" type="text" placeholder="例如：0–5 秒" /></label>
           <label><span>場景</span><div id="video-prompt-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="場景" data-placeholder="例如：繁星閃爍的夜空下"></div></label>
-          <label><span>鏡頭</span><div id="video-prompt-camera" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="鏡頭" data-placeholder="例如：鏡頭緩慢向前推進"></div></label>
+          <div class="video-prompt-camera-field">
+            <span>鏡頭</span>
+            <div class="video-camera-selects">
+              <select id="video-prompt-camera" class="setting-select" aria-label="運鏡方式">
+                <option value="" selected>選擇運鏡方式</option>
+                <optgroup label="基本運鏡">
+                  <option value="固定鏡頭">固定鏡頭</option>
+                  <option value="手持跟拍">手持跟拍</option>
+                  <option value="向左搖攝">向左搖攝</option>
+                  <option value="向右搖攝">向右搖攝</option>
+                  <option value="向上搖攝">向上搖攝</option>
+                  <option value="向下搖攝">向下搖攝</option>
+                  <option value="向前推進">向前推進</option>
+                  <option value="向後拉遠">向後拉遠</option>
+                  <option value="向左平移">向左平移</option>
+                  <option value="向右平移">向右平移</option>
+                  <option value="鏡頭上升">鏡頭上升</option>
+                  <option value="鏡頭下降">鏡頭下降</option>
+                </optgroup>
+                <optgroup label="跟拍與環繞">
+                  <option value="前方跟拍">前方跟拍</option>
+                  <option value="後方跟拍">後方跟拍</option>
+                  <option value="側面跟拍">側面跟拍</option>
+                  <option value="順時針環繞">順時針環繞</option>
+                  <option value="逆時針環繞">逆時針環繞</option>
+                </optgroup>
+                <optgroup label="電影感運鏡">
+                  <option value="希區考克變焦">希區考克變焦</option>
+                  <option value="航拍俯衝">航拍俯衝</option>
+                  <option value="航拍拉升">航拍拉升</option>
+                  <option value="第一人稱移動">第一人稱移動</option>
+                  <option value="穿越鏡頭">穿越鏡頭</option>
+                  <option value="甩鏡轉場">甩鏡轉場</option>
+                  <option value="子彈時間環繞">子彈時間環繞</option>
+                  <option value="焦點轉移">焦點轉移</option>
+                  <option value="手持晃動">手持晃動</option>
+                  <option value="滑軌推進">滑軌推進</option>
+                </optgroup>
+                <option value="custom">自訂運鏡（開放輸入）</option>
+              </select>
+              <select id="video-prompt-camera-speed" class="setting-select" aria-label="運鏡速度" disabled>
+                <option value="緩慢">緩慢</option>
+                <option value="" selected>正常速度</option>
+                <option value="快速">快速</option>
+              </select>
+            </div>
+            <div id="video-prompt-camera-custom" class="text-input resource-editor resource-editor-single video-camera-custom" contenteditable="true" role="textbox" aria-label="自訂運鏡" data-placeholder="輸入自訂運鏡，也可使用 @ 資源或 # 人物" hidden></div>
+          </div>
           <label><span>視角</span><div id="video-prompt-view" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="視角" data-placeholder="例如：低角度仰視主體"></div></label>
           <label><span>燈光</span><div id="video-prompt-lighting" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="燈光" data-placeholder="例如：柔和的金色逆光"></div></label>
           <label><span>音效</span><div id="video-prompt-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="音效" data-placeholder="例如：雨聲與遠方的雷聲"></div></label>

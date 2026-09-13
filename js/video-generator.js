@@ -138,6 +138,26 @@ function openVideoPromptBuilder() {
   $("video-prompt-time").focus();
 }
 
+function syncCameraControls(focusCustom = false) {
+  const custom = $("video-prompt-camera").value === "custom";
+  $("video-prompt-camera-speed").disabled = !$("video-prompt-camera").value;
+  $("video-prompt-camera-custom").hidden = !custom;
+  if (custom && focusCustom) $("video-prompt-camera-custom").focus();
+}
+
+function cameraPromptField() {
+  const motion = $("video-prompt-camera").value;
+  if (!motion) return ["", null];
+  const speed = $("video-prompt-camera-speed").value;
+  if (motion !== "custom") return [`${speed}${motion}`, null];
+  const editor = $("video-prompt-camera-custom");
+  const value = editorText(editor);
+  if (!value) return ["", null];
+  const nodes = [...editor.childNodes];
+  if (speed) nodes.unshift(document.createTextNode(`${speed} `));
+  return [`${speed}${speed ? " " : ""}${value}`, nodes];
+}
+
 function hideCharacterMentionMenu() {
   const menu = $("character-mention-menu");
   menu.hidden = true;
@@ -596,10 +616,11 @@ function submitVideoPromptBuilder(event) {
   event.preventDefault();
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
+  const [cameraText, cameraNodes] = cameraPromptField();
   const fields = [
     ["時間", $("video-prompt-time").value.trim()],
     ["場景", editorText($("video-prompt-scene")), $("video-prompt-scene")],
-    ["鏡頭", editorText($("video-prompt-camera")), $("video-prompt-camera")],
+    ["鏡頭", cameraText, cameraNodes],
     ["視角", editorText($("video-prompt-view")), $("video-prompt-view")],
     ["燈光", editorText($("video-prompt-lighting")), $("video-prompt-lighting")],
     ["音效", editorText($("video-prompt-sound")), $("video-prompt-sound")],
@@ -609,10 +630,14 @@ function submitVideoPromptBuilder(event) {
   const populated = fields.filter(([, value]) => value);
   if (!populated.length) return;
   const prompt = $("video-prompt");
-  populated.forEach(([label, value, editor]) => appendEditorLine(prompt, label, value, editor ? [...editor.childNodes] : null));
+  populated.forEach(([label, value, source]) => {
+    const nodes = Array.isArray(source) ? source : source ? [...source.childNodes] : null;
+    appendEditorLine(prompt, label, value, nodes);
+  });
   prompt.append(document.createElement("br"));
   $("video-prompt-builder-form").reset();
   document.querySelectorAll("#video-prompt-builder-dialog .resource-editor").forEach(clearEditor);
+  syncCameraControls();
   $("video-prompt-builder-dialog").close();
   syncDraftStatus();
   prompt.focus();
@@ -1302,6 +1327,7 @@ $("character-editor-form").addEventListener("submit", submitCharacterEditor);
 $("cancel-character-editor").addEventListener("click", () => $("character-editor-dialog").close());
 $("delete-character").addEventListener("click", deleteEditingCharacter);
 $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
+$("video-prompt-camera").addEventListener("change", () => syncCameraControls(true));
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
 $("cancel-video-prompt-builder").addEventListener("click", () => {
   hideCharacterMentionMenu();
@@ -1331,6 +1357,7 @@ document.querySelectorAll(".resource-editor").forEach(editor => {
   });
   editor.addEventListener("paste", handlePlainTextPaste);
 });
+syncCameraControls();
 $("video-resource-input").addEventListener("change", event => void addVideoResources([...event.currentTarget.files]));
 $("close-video-resource-preview").addEventListener("click", () => $("video-resource-preview-dialog").close());
 $("video-resource-preview-dialog").addEventListener("close", stopResourcePreview);

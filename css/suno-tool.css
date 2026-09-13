@@ -1,9 +1,9 @@
-body.suno-download-body { min-width: 960px; min-height: 100vh; }
-.suno-download-header { justify-content: space-between; }
-.suno-download-main { max-width: 1040px; padding-top: 48px; }
-.suno-download-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 28px; }
-.suno-download-heading h1 { margin-bottom: 10px; }
-.suno-download-heading p { margin: 0; color: var(--muted); font-size: 14px; }
+body.suno-tool-body { min-width: 960px; min-height: 100vh; }
+.suno-tool-header { justify-content: space-between; }
+.suno-tool-main { max-width: 1040px; padding-top: 48px; }
+.suno-tool-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 28px; }
+.suno-tool-heading h1 { margin-bottom: 10px; }
+.suno-tool-heading p { margin: 0; color: var(--muted); font-size: 14px; }
 .suno-status-badge { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; }
 .suno-status-badge.ready { border-color: var(--primary); color: var(--primary-text); }
 .suno-status-badge.error { border-color: var(--error); color: var(--error-text); }

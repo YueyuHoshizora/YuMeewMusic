@@ -27,8 +27,7 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(script, /saveStoredMedia\("audio", file\)/);
   assert.match(script, /location\.href = "\.\/index\.html"/);
   assert.doesNotMatch(script, /localStorage/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/suno-tool\.html"[^>]*>Suno 工具<\/a>/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/converter\.html"[^>]*>任意轉<\/a>\s*<a class="tool-link" href="\.\/music-rating\.html">歌曲評分<\/a>\s*<a class="tool-link" href="\.\/suno-tool\.html">Suno 工具<\/a>/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/suno-tool\.html"[\s\S]*<strong>Suno 工具<\/strong>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"suno-tool\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"suno-tool\.html"/);
 });

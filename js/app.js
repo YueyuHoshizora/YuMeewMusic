@@ -13,6 +13,16 @@ import { isBackgroundVideo, loopingVideoTimestamp } from "./background-video.js"
 import { createImageSequenceRenderer } from "./image-sequence.js";
 
 const $ = (id) => document.getElementById(id);
+const toolsMenu = document.querySelector(".tools-menu");
+document.addEventListener("click", event => {
+  if (toolsMenu?.open && !toolsMenu.contains(event.target)) toolsMenu.open = false;
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && toolsMenu?.open) {
+    toolsMenu.open = false;
+    toolsMenu.querySelector("summary")?.focus();
+  }
+});
 const audio = $("audio");
 let previewAudioContext = null;
 let previewGain = null;

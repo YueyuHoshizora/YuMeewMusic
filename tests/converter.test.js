@@ -52,7 +52,7 @@ test('converter page has every referenced control and only local assets', () => 
   assert.match(html, /id="converter-input"[^>]*accept="[^"]*video\/webm[^"]*\.webm/);
   assert.match(html, /支援 MP4、MOV、WebM/);
   const mainHtml = readFileSync('index.html', 'utf8');
-  assert.match(mainHtml, /href="\.\/converter\.html"[^>]*>任意轉<\/a>/);
+  assert.match(mainHtml, /href="\.\/converter\.html"[\s\S]*?<strong>任意轉<\/strong>/);
   assert.doesNotMatch(mainHtml, /href="\.\/converter\.html"[^>]*target="_blank"/);
   assert.match(readFileSync('scripts/serve.js', 'utf8'), /"converter\.html"/);
   assert.match(core, /chooseVideoAcceleration\(/);

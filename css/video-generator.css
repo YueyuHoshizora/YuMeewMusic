@@ -110,8 +110,46 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-builder-minimized:hover { background: var(--hover); }
 .video-prompt-builder-minimized span { font-size: 14px; font-weight: 800; }
 .video-prompt-builder-minimized small { color: var(--muted); font-size: 11px; }
+.storyboard-block {
+  position: relative;
+  display: block;
+  margin: 10px 0;
+  border: 1px solid var(--tint-border);
+  border-radius: 11px;
+  padding: 42px 14px 13px;
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  color: var(--foreground);
+  cursor: pointer;
+  user-select: none;
+}
+.storyboard-block::before {
+  content: attr(data-title);
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  color: var(--primary-text);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+.storyboard-block:hover { border-color: var(--primary); background: var(--hover); }
+.storyboard-block:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.storyboard-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; }
+.storyboard-card-action { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--border); border-radius: 7px; padding: 0; background: var(--card); color: var(--muted); }
+.storyboard-card-action:hover { border-color: var(--primary); color: var(--primary-text); }
+.storyboard-card-action::before { font-size: 13px; font-weight: 800; }
+.storyboard-card-action.edit::before { content: "✎"; }
+.storyboard-card-action.copy::before { content: "⧉"; }
+.storyboard-card-action.delete { color: var(--error-text); }
+.storyboard-card-action.delete::before { content: "×"; font-size: 18px; }
+.storyboard-field { min-height: 21px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.storyboard-field + .storyboard-field { margin-top: 3px; }
+.storyboard-field-label { color: var(--muted); font-weight: 800; }
+.storyboard-block .resource-token { user-select: none; }
 .video-prompt-builder-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin: 18px 0 22px; }
+.video-prompt-time-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .video-prompt-builder-fields label,
+.video-prompt-time-fields label,
 .video-prompt-camera-field,
 .video-prompt-lighting-field { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .video-prompt-builder-fields .video-prompt-action-field { align-self: start; }

@@ -40,9 +40,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<h2 id="video-prompt-builder-title">分鏡內容<\/h2>/);
   assert.match(html, /id="minimize-video-prompt-builder"[^>]*>縮小<\/button>/);
   assert.match(html, /id="restore-video-prompt-builder"[^>]*hidden>[\s\S]*分鏡內容[\s\S]*繼續編輯/);
-  assert.match(html, /id="video-prompt-builder-form"[\s\S]*<button class="dialog-confirm" type="submit">加入分鏡<\/button>/);
+  assert.match(html, /id="video-prompt-builder-form"[\s\S]*id="submit-video-prompt-builder"[^>]*>加入分鏡<\/button>/);
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
-  assert.match(html, /for="video-prompt-time"><span>時間<\/span><input id="video-prompt-time"/);
+  assert.match(html, /for="video-prompt-start"><span>開始時間（秒）<\/span><input id="video-prompt-start"[^>]*type="number"[^>]*min="0"[^>]*step="0\.1"[^>]*required/);
+  assert.match(html, /for="video-prompt-end"><span>結束時間（秒）<\/span><input id="video-prompt-end"[^>]*type="number"[^>]*min="0"[^>]*step="0\.1"[^>]*required/);
   for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-view", "視角"], ["video-prompt-sound", "音效"], ["video-prompt-action", "動作"], ["video-prompt-dialogue", "對白"]]) {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
@@ -55,9 +56,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-prompt-lighting-custom"[^>]*resource-editor[^>]*hidden/);
   assert.match(script, /function lightingPromptField\(\)[\s\S]*const prefix = `\$\{intensity\}\$\{temperature\}`[\s\S]*lighting !== "custom"/);
   assert.match(script, /function minimizeVideoPromptBuilder\(\)[\s\S]*promptBuilderMinimized = true;[\s\S]*\.close\("minimized"\)/);
-  assert.match(script, /function restoreVideoPromptBuilder\(\)[\s\S]*openVideoPromptBuilder\(\)/);
+  assert.match(script, /function restoreVideoPromptBuilder\(\)[\s\S]*showVideoPromptBuilder\(\)/);
   assert.match(script, /const minimized = \$\("video-prompt-builder-dialog"\)\.returnValue === "minimized";[\s\S]*\$\("open-video-prompt-builder"\)\.disabled = busy \|\| minimized/);
-  assert.doesNotMatch(html, /id="video-prompt-time"[^>]*resource-editor/);
+  assert.doesNotMatch(html, /id="video-prompt-(?:start|end)"[^>]*resource-editor/);
   assert.doesNotMatch(html, /id="video-prompt"[^>]*maxlength=/);
   assert.match(html, /id="video-resolution"/);
   assert.match(html, /id="video-duration"/);
@@ -101,11 +102,17 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
   assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
-  assert.match(script, /const fields = \[\s*\["時間", \$\("video-prompt-time"\)\.value\.trim\(\)\],\s*\["場景", editorText/);
-  assert.match(script, /populated\.forEach\(\(\[label, value, source\]\) => \{[\s\S]*Array\.isArray\(source\)[\s\S]*appendEditorLine\(prompt, label, value, nodes\)/);
-  assert.match(script, /if \(editorText\(editor\)\) editor\.append\(document\.createElement\("br"\)\);/);
-  assert.match(script, /populated\.forEach[\s\S]*prompt\.append\(document\.createElement\("br"\)\);/);
-  assert.doesNotMatch(script, /prompt\.append\(document\.createElement\("br"\), document\.createElement\("br"\)\)/);
+  assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*cameraSpeed:[\s\S]*lightingIntensity:/);
+  assert.match(script, /function nextStoryboardStart\(\)[\s\S]*storyboards\.get\(last\.dataset\.storyboardId\)\?\.end \|\| "0"/);
+  assert.match(script, /function formatStoryboardTime\(start, end\)[\s\S]*`\$\{Number\(start\)\}-\$\{Number\(end\)\}s`/);
+  assert.match(script, /function createStoryboardBlock\(draft\)[\s\S]*storyboard-card-action[\s\S]*editStoryboard\(draft\.id\)/);
+  assert.match(script, /function editStoryboard\(id\)[\s\S]*restoreEditorHtml[\s\S]*"儲存分鏡"/);
+  assert.match(script, /function duplicateStoryboard\(id\)[\s\S]*structuredClone\(source\)/);
+  assert.match(script, /function deleteStoryboard\(id\)[\s\S]*確定刪除這個分鏡/);
+  assert.match(script, /existing\.replaceWith\(block\)[\s\S]*refreshStoryboardLabels\(\)/);
+  assert.match(script, /endInput\.setCustomValidity\(Number\(draft\.end\) > Number\(draft\.start\)[\s\S]*reportValidity\(\)/);
+  assert.match(script, /else prompt\.append\(block\);/);
+  assert.doesNotMatch(script, /prompt\.append\(block, document\.createElement\("br"\)\)/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*defaultResolution: "480P"[^}]*minimumDuration: 5[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-0-260128": Object\.freeze\(\{[^}]*label: "Seedance 2\.0"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p", "1080p", "4k"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 15/);

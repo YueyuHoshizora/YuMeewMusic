@@ -14,11 +14,13 @@ test("Suno download page resolves, converts, previews and applies public audio",
   assert.match(html, /id="suno-download"[^>]*>下載音樂（WAV）</);
   assert.match(html, /id="suno-apply"[^>]*>套用到主畫面</);
   assert.match(script, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
-  assert.match(script, /audioBlob = await readAudioResponse\(await fetch\(result\.audioUrl/);
+  assert.match(script, /const m4aBlob = await readAudioResponse\(await fetch\(result\.audioUrl/);
+  assert.match(script, /audioBlob = await convertToWav\(m4aBlob\)/);
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
   assert.match(script, /decodeAudioData\(await blob\.arrayBuffer\(\)\)/);
   assert.match(script, /encodeStereoWav\(left, right, decoded\.sampleRate\)/);
-  assert.ok(script.includes('fileName.replace(/\\.m4a$/i, ".wav")'));
+  assert.match(script, /downloadBlob\(audioBlob, fileName\)/);
+  assert.match(script, /new File\(\[audioBlob\], fileName, \{ type: "audio\/wav"/);
   assert.match(script, /saveStoredMedia\("audio", file\)/);
   assert.match(script, /location\.href = "\.\/index\.html"/);
   assert.doesNotMatch(script, /localStorage\.setItem\([^,]+,\s*(?:audioBlob|audioUrl)/);

@@ -21,7 +21,7 @@
         <div>
           <div class="eyebrow">PUBLIC SUNO LINK</div>
           <h1>Suno 下載<span>。</span></h1>
-          <p>貼上可公開播放的 Suno 分享連結，解析後會直接在瀏覽器取得 M4A 音樂。</p>
+          <p>貼上可公開播放的 Suno 分享連結，音樂會在瀏覽器下載並轉換為 WAV。</p>
         </div>
         <span id="suno-status-badge" class="suno-status-badge">等待連結</span>
       </section>
@@ -36,7 +36,7 @@
           </div>
         </form>
         <progress id="suno-progress" max="100" value="0" hidden></progress>
-        <p id="suno-status" class="suno-status" role="status" aria-live="polite">支援 suno.com/s/… 與 suno.com/song/… 公開連結；下載時會在瀏覽器轉換為 WAV。</p>
+        <p id="suno-status" class="suno-status" role="status" aria-live="polite">支援 suno.com/s/… 與 suno.com/song/… 公開連結；取得後會在瀏覽器轉換為 WAV。</p>
         <p id="suno-error" class="suno-error" role="alert" hidden></p>
       </section>
 
@@ -56,7 +56,7 @@
       <section class="panel suno-notes">
         <div><strong>公開連結</strong><span>僅支援不需登入即可播放的 Suno 分享頁。</span></div>
         <div><strong>本機處理</strong><span>Worker 只解析分享頁；M4A 由瀏覽器直接取得，下載時在本機轉為 16-bit PCM WAV。</span></div>
-        <div><strong>套用方式</strong><span>選擇套用後，音樂才會保存至本機 IndexedDB 並取代主畫面的音檔。</span></div>
+        <div><strong>套用方式</strong><span>播放器、下載與套用主畫面都使用轉換完成的 WAV；選擇套用後才會保存至 IndexedDB。</span></div>
       </section>
     </main>
   </body>

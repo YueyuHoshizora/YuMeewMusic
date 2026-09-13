@@ -12,12 +12,12 @@ applyTheme(loadSettings().mode, loadSettings().theme);
 
 let audioBlob = null;
 let audioUrl = "";
-let fileName = "suno-music.m4a";
+let fileName = "suno-music.wav";
 let busy = false;
 
 function safeFileName(title) {
   const base = String(title || "suno-music").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 120);
-  return `${base || "suno-music"}.m4a`;
+  return `${base || "suno-music"}.wav`;
 }
 
 function formatBytes(bytes) {
@@ -104,7 +104,11 @@ async function fetchSuno(event) {
     $("suno-progress").value = 10;
     $("suno-fetch").textContent = "正在下載…";
     $("suno-status").textContent = "已找到音樂，正在從 Suno CDN 下載…";
-    audioBlob = await readAudioResponse(await fetch(result.audioUrl, { cache: "no-store" }));
+    const m4aBlob = await readAudioResponse(await fetch(result.audioUrl, { cache: "no-store" }));
+    $("suno-progress").value = 99;
+    $("suno-fetch").textContent = "正在轉換…";
+    $("suno-status").textContent = "M4A 已下載，正在瀏覽器中轉換為 16-bit PCM WAV…";
+    audioBlob = await convertToWav(m4aBlob);
     audioUrl = URL.createObjectURL(audioBlob);
     fileName = safeFileName(result.title);
     $("suno-player").src = audioUrl;
@@ -121,7 +125,7 @@ async function fetchSuno(event) {
     $("suno-progress").value = 100;
     $("suno-status-badge").className = "suno-status-badge ready";
     $("suno-status-badge").textContent = "準備完成";
-    $("suno-status").textContent = "M4A 已下載至瀏覽器，可播放、下載或套用到主畫面。";
+    $("suno-status").textContent = "WAV 已準備完成，可播放、下載或套用到主畫面。";
   } catch (error) {
     clearAudio();
     setError(error?.message || "目前無法取得這首 Suno 音樂。");
@@ -157,27 +161,12 @@ async function convertToWav(blob) {
   }
 }
 
-async function downloadAudio() {
+function downloadAudio() {
   if (!audioBlob || busy) return;
-  setBusy(true);
-  setError();
-  $("suno-download").textContent = "正在轉換…";
-  $("suno-status-badge").className = "suno-status-badge";
-  $("suno-status-badge").textContent = "轉換中";
-  $("suno-status").textContent = "正在瀏覽器中把 M4A 解碼並轉換為 16-bit PCM WAV…";
-  try {
-    const wav = await convertToWav(audioBlob);
-    downloadBlob(wav, fileName.replace(/\.m4a$/i, ".wav"));
-    $("suno-status-badge").className = "suno-status-badge ready";
-    $("suno-status-badge").textContent = "下載完成";
-    $("suno-status").textContent = `WAV 已建立並開始下載 · ${formatBytes(wav.size)}`;
-  } catch (error) {
-    setError(error?.message || "無法將 M4A 轉換為 WAV。");
-    $("suno-status").textContent = "請確認瀏覽器可正常解碼這首音樂後再試一次。";
-  } finally {
-    setBusy(false);
-    $("suno-download").textContent = "下載音樂（WAV）";
-  }
+  downloadBlob(audioBlob, fileName);
+  $("suno-status-badge").className = "suno-status-badge ready";
+  $("suno-status-badge").textContent = "下載完成";
+  $("suno-status").textContent = `WAV 已開始下載 · ${formatBytes(audioBlob.size)}`;
 }
 
 async function applyToMain() {
@@ -186,7 +175,7 @@ async function applyToMain() {
   $("suno-apply").textContent = "正在保存…";
   setError();
   try {
-    const file = new File([audioBlob], fileName, { type: audioBlob.type || "audio/mp4", lastModified: Date.now() });
+    const file = new File([audioBlob], fileName, { type: "audio/wav", lastModified: Date.now() });
     await saveStoredMedia("audio", file);
     void navigator.storage?.persist?.().catch(() => false);
     $("suno-status").textContent = "音樂已保存，正在返回主畫面…";

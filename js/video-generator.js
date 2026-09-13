@@ -143,15 +143,16 @@ function hideCharacterMentionMenu() {
 
 function positionCharacterMentionMenu(target, optionCount) {
   const menu = $("character-mention-menu");
-  const dialogRect = $("video-prompt-builder-dialog").getBoundingClientRect();
+  const dialog = target.closest("dialog");
+  const boundary = dialog?.getBoundingClientRect() || { top: 0, right: window.innerWidth, bottom: window.innerHeight, left: 0, width: window.innerWidth };
   const targetRect = target.getBoundingClientRect();
   const menuHeight = Math.min(optionCount * 50 + 14, 220);
-  const availableBelow = dialogRect.bottom - targetRect.bottom - 12;
+  const availableBelow = boundary.bottom - targetRect.bottom - 12;
   const top = availableBelow >= Math.min(menuHeight, 150)
     ? targetRect.bottom + 6
-    : Math.max(dialogRect.top + 12, targetRect.top - menuHeight - 6);
-  const width = Math.min(Math.max(targetRect.width, 210), dialogRect.width - 24);
-  const left = Math.min(Math.max(targetRect.left, dialogRect.left + 12), dialogRect.right - width - 12);
+    : Math.max(boundary.top + 12, targetRect.top - menuHeight - 6);
+  const width = Math.min(Math.max(targetRect.width, 210), boundary.width - 24);
+  const left = Math.min(Math.max(targetRect.left, boundary.left + 12), boundary.right - width - 12);
   Object.assign(menu.style, { top: `${top}px`, left: `${left}px`, width: `${width}px` });
 }
 
@@ -210,6 +211,8 @@ function showCharacterMentionMenu(target) {
     return option;
   });
   const menu = $("character-mention-menu");
+  const menuHost = target.closest("dialog") || document.body;
+  if (menu.parentElement !== menuHost) menuHost.append(menu);
   menu.replaceChildren(...options);
   menu.hidden = false;
   target.setAttribute("aria-expanded", "true");
@@ -415,7 +418,7 @@ function handleResourceEditorInput(event) {
   const target = event.currentTarget;
   if (!editorText(target) && target.childNodes.length) target.replaceChildren();
   if (showResourceMentionMenu(target)) return;
-  if (target.closest("#video-prompt-builder-dialog")) showCharacterMentionMenu(target);
+  showCharacterMentionMenu(target);
   if (target.id === "video-prompt") syncDraftStatus();
 }
 
@@ -1302,7 +1305,7 @@ document.querySelectorAll(".resource-editor").forEach(editor => {
   editor.addEventListener("keydown", event => {
     if (removeResourceMentionAtCaret(event, editor)) return;
     if (!$("resource-mention-menu").hidden) handleResourceMentionKeydown(event);
-    else if (editor.closest("#video-prompt-builder-dialog")) handleCharacterMentionKeydown(event);
+    else handleCharacterMentionKeydown(event);
     if (!event.defaultPrevented && editor.classList.contains("resource-editor-single") && event.key === "Enter") event.preventDefault();
   });
   editor.addEventListener("paste", handlePlainTextPaste);
@@ -1326,6 +1329,7 @@ document.addEventListener("keydown", event => {
   openResourcePreview(event.target.dataset.resourceId);
 });
 document.addEventListener("pointerdown", event => {
+  if (characterMentionTarget && !$("character-mention-menu").contains(event.target) && event.target !== characterMentionTarget) hideCharacterMentionMenu();
   if (resourceMentionTarget && !$("resource-mention-menu").contains(event.target) && !event.target.closest?.(".resource-editor")) hideResourceMentionMenu();
 });
 $("video-model").addEventListener("change", syncModelDetails);

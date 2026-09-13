@@ -168,6 +168,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(script, /character-mention-avatar|character\.name\.slice\(0, 1\)/);
   assert.match(script, /replaceMentionText\(characterMentionMatch, document\.createTextNode\(name\)\)/);
   assert.match(script, /editor\.addEventListener\("input", handleResourceEditorInput\)/);
+  assert.match(script, /function handleResourceEditorInput\(event\)[\s\S]*showCharacterMentionMenu\(target\)/);
+  assert.doesNotMatch(script, /if \(target\.closest\("#video-prompt-builder-dialog"\)\) showCharacterMentionMenu/);
+  assert.match(script, /const menuHost = target\.closest\("dialog"\) \|\| document\.body;[\s\S]*menuHost\.append\(menu\)/);
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);

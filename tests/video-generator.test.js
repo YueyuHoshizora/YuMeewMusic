@@ -45,7 +45,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="download-video"[^>]*disabled/);
   assert.match(html, /id="retry-save-video"[^>]*hidden>重新保存影片<\/button>/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
-  assert.match(css, /#video-prompt\s*\{[^}]*height:\s*224px/);
+  assert.match(css, /#video-prompt\s*\{[^}]*height:\s*560px/);
   assert.match(css, /body\.video-generator-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
   assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);

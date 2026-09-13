@@ -154,6 +154,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
   assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
+  assert.match(script, /video-description-panel"\)\.addEventListener\("toggle",[\s\S]*video-settings-panel"\)\.open = false;[\s\S]*video-result-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影像產生器<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"video-generator\.html"/);

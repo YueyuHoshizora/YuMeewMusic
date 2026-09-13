@@ -768,6 +768,11 @@ $("cancel-video-generation").addEventListener("click", () => $("confirm-video-ge
 $("video-settings-panel").addEventListener("toggle", () => {
   if ($("video-settings-panel").open) $("video-description-panel").open = false;
 });
+$("video-description-panel").addEventListener("toggle", () => {
+  if (!$("video-description-panel").open) return;
+  $("video-settings-panel").open = false;
+  $("video-result-panel").open = false;
+});
 
 $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;

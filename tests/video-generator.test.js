@@ -11,7 +11,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
-  assert.match(html, /<title>影像產生器 · YuMeew<\/title>/);
+  assert.match(html, /<title>影片生成器 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.match(html, /<a class="brand" href="\.\/" data-confirm-return/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
@@ -84,7 +84,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /\.video-prompt-builder-fields \.video-prompt-action-field\s*\{[^}]*align-self:\s*start/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
-  assert.match(script, /window\.confirm\("離開影像產生器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
+  assert.match(script, /window\.confirm\("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
   assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
   assert.doesNotMatch(script, /hasTransientPageWork/);
   assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
@@ -200,7 +200,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /video-description-panel"\)\.addEventListener\("toggle",[\s\S]*video-settings-panel"\)\.open = false;[\s\S]*video-result-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影像產生器<\/a>/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影片生成器<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"video-generator\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-generator\.html"/);
 });

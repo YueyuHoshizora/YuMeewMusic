@@ -123,7 +123,7 @@ function syncDraftStatus() {
 
 function confirmPageExit(event) {
   if (allowPageExit) return;
-  if (!window.confirm("離開影像產生器將不會保留影片細節與本次加入的資源，是否確定？")) {
+  if (!window.confirm("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？")) {
     event.preventDefault();
     return;
   }

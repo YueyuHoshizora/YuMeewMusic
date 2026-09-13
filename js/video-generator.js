@@ -125,6 +125,7 @@ function renderCharacterTemplates() {
 function showCharacterEditorReference(file) {
   const preview = $("character-reference-preview");
   editingCharacterReference = file || null;
+  $("character-reference").setCustomValidity(file ? "" : "請選擇人物參考圖。");
   preview.hidden = true;
   preview.removeAttribute("src");
   $("character-reference-name").textContent = "尚未選擇圖片";
@@ -148,6 +149,7 @@ function openCharacterEditor(index = -1) {
   $("character-clothing").value = character?.clothing || "";
   $("delete-character").hidden = !character;
   showCharacterEditorReference(character?.referenceImage || null);
+  $("character-reference").required = !editingCharacterReference;
   $("character-editor-dialog").showModal();
   $("character-name").focus();
 }
@@ -167,7 +169,11 @@ async function submitCharacterEditor(event) {
     voice: $("character-voice").value.trim(),
     clothing: $("character-clothing").value.trim(),
   };
-  if (!character.name) return;
+  if (!character.name || !character.referenceImage) {
+    $("character-reference").setCustomValidity(character.referenceImage ? "" : "請選擇人物參考圖。");
+    $("character-editor-form").reportValidity();
+    return;
+  }
   if (editingCharacterIndex >= 0) characterTemplates[editingCharacterIndex] = character;
   else characterTemplates.push(character);
   try {

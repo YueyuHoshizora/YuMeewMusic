@@ -876,14 +876,23 @@ function deleteStoryboard(id) {
   syncDraftStatus();
 }
 
+function validateStoryboardTimes(form) {
+  const startInput = $("video-prompt-start");
+  const endInput = $("video-prompt-end");
+  startInput.setCustomValidity(startInput.value === "" ? "請輸入開始時間" : "");
+  endInput.setCustomValidity(endInput.value === "" ? "請輸入結束時間" : "");
+  if (startInput.value !== "" && endInput.value !== "" && Number(endInput.value) <= Number(startInput.value)) {
+    endInput.setCustomValidity("結束時間必須大於開始時間");
+  }
+  return form.reportValidity();
+}
+
 function submitVideoPromptBuilder(event) {
   event.preventDefault();
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
+  if (!validateStoryboardTimes(event.currentTarget)) return;
   const draft = collectStoryboardDraft();
-  const endInput = $("video-prompt-end");
-  endInput.setCustomValidity(Number(draft.end) > Number(draft.start) ? "" : "結束時間必須大於開始時間");
-  if (!event.currentTarget.reportValidity()) return;
   if (!storyboardFields(draft).length) return;
   const prompt = $("video-prompt");
   storyboards.set(draft.id, draft);
@@ -1592,7 +1601,10 @@ for (const input of [$("video-prompt-start"), $("video-prompt-end")]) {
   input.addEventListener("keydown", event => {
     if (["e", "E", "+", "-"].includes(event.key)) event.preventDefault();
   });
-  input.addEventListener("input", () => $("video-prompt-end").setCustomValidity(""));
+  input.addEventListener("input", () => {
+    input.setCustomValidity("");
+    $("video-prompt-end").setCustomValidity("");
+  });
 }
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
 $("cancel-video-prompt-builder").addEventListener("click", () => {

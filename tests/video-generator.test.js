@@ -110,7 +110,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function duplicateStoryboard\(id\)[\s\S]*structuredClone\(source\)[\s\S]*duration = Number\(source\.end\) - Number\(source\.start\)[\s\S]*copy\.start = roundedStoryboardTime\(source\.end\)[\s\S]*copy\.end = roundedStoryboardTime\(Number\(copy\.start\) \+ duration\)/);
   assert.match(script, /function deleteStoryboard\(id\)[\s\S]*確定刪除這個分鏡/);
   assert.match(script, /existing\.replaceWith\(block\)[\s\S]*refreshStoryboardLabels\(\)/);
-  assert.match(script, /endInput\.setCustomValidity\(Number\(draft\.end\) > Number\(draft\.start\)[\s\S]*reportValidity\(\)/);
+  assert.match(script, /function validateStoryboardTimes\(form\)[\s\S]*請輸入開始時間[\s\S]*請輸入結束時間[\s\S]*Number\(endInput\.value\) <= Number\(startInput\.value\)[\s\S]*結束時間必須大於開始時間[\s\S]*form\.reportValidity\(\)/);
+  assert.match(script, /if \(!validateStoryboardTimes\(event\.currentTarget\)\) return;/);
   assert.match(script, /else prompt\.append\(block\);/);
   assert.doesNotMatch(script, /prompt\.append\(block, document\.createElement\("br"\)\)/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);

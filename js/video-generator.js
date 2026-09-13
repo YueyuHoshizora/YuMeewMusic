@@ -64,6 +64,9 @@ function submitVideoPromptBuilder(event) {
     ["時間", $("video-prompt-time").value.trim()],
     ["場景", $("video-prompt-scene").value.trim()],
     ["鏡頭", $("video-prompt-camera").value.trim()],
+    ["視角", $("video-prompt-view").value.trim()],
+    ["燈光", $("video-prompt-lighting").value.trim()],
+    ["音效", $("video-prompt-sound").value.trim()],
     ["動作", $("video-prompt-action").value.trim()],
     ["對白", $("video-prompt-dialogue").value.trim()],
   ];

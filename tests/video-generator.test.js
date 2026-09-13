@@ -24,6 +24,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
   assert.match(html, /for="video-prompt-scene"><span>場景<\/span>/);
   assert.match(html, /for="video-prompt-camera"><span>鏡頭<\/span>/);
+  assert.match(html, /for="video-prompt-view"><span>視角<\/span>/);
+  assert.match(html, /for="video-prompt-lighting"><span>燈光<\/span>/);
+  assert.match(html, /for="video-prompt-sound"><span>音效<\/span>/);
   assert.match(html, /for="video-prompt-action"><span>動作<\/span>/);
   assert.match(html, /for="video-prompt-dialogue"><span>對白<\/span>/);
   assert.doesNotMatch(html, /<textarea id="video-prompt"[^>]*maxlength=/);
@@ -52,7 +55,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
-  assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
+  assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["視角"[^\]]*\],\s*\["燈光"[^\]]*\],\s*\["音效"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
   assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}\\n\\n` : `\$\{block\}\\n\\n`/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*minimumDuration: 5[^}]*maximumDuration: 15/);

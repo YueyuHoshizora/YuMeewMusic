@@ -19,7 +19,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
-  assert.match(html, /id="open-video-prompt-builder"[^>]*>＋<\/button>/);
+  assert.match(html, /id="open-video-prompt-builder"[^>]*>增加場景<\/button>/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
   assert.match(html, /for="video-prompt-scene"><span>場景<\/span>/);

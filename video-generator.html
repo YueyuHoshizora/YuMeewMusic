@@ -34,8 +34,17 @@
               <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">加入分鏡</button>
             </div>
-            <textarea id="video-prompt" aria-label="影片細節" placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></textarea>
+            <div id="video-prompt" class="resource-editor" contenteditable="true" role="textbox" aria-label="影片細節" aria-multiline="true" data-placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></div>
           </div>
+          <section class="video-resource-library" aria-labelledby="video-resource-title">
+            <div class="video-resource-heading">
+              <div><h2 id="video-resource-title">資源</h2><p>加入圖片、音頻或影片；在影片細節與分鏡欄位輸入 @ 即可引用。</p></div>
+              <label class="video-prompt-add video-resource-upload" for="video-resource-input">＋ 加入資源</label>
+              <input id="video-resource-input" type="file" accept="image/*,audio/*,video/*" multiple hidden />
+            </div>
+            <div id="video-resource-list" class="video-resource-list"></div>
+            <p id="video-resource-empty" class="video-resource-empty">尚未加入資源。</p>
+          </section>
         </div>
       </details>
 
@@ -152,13 +161,13 @@
         <h2 id="video-prompt-builder-title">分鏡內容</h2>
         <div class="video-prompt-builder-fields">
           <label for="video-prompt-time"><span>時間</span><input id="video-prompt-time" class="text-input" type="text" placeholder="例如：0–5 秒" /></label>
-          <label for="video-prompt-scene"><span>場景</span><input id="video-prompt-scene" class="text-input" type="text" placeholder="例如：繁星閃爍的夜空下" /></label>
-          <label for="video-prompt-camera"><span>鏡頭</span><input id="video-prompt-camera" class="text-input" type="text" placeholder="例如：鏡頭緩慢向前推進" /></label>
-          <label for="video-prompt-view"><span>視角</span><input id="video-prompt-view" class="text-input" type="text" placeholder="例如：低角度仰視主體" /></label>
-          <label for="video-prompt-lighting"><span>燈光</span><input id="video-prompt-lighting" class="text-input" type="text" placeholder="例如：柔和的金色逆光" /></label>
-          <label for="video-prompt-sound"><span>音效</span><input id="video-prompt-sound" class="text-input" type="text" placeholder="例如：雨聲與遠方的雷聲" /></label>
-          <label for="video-prompt-action"><span>動作</span><input id="video-prompt-action" class="text-input" type="text" placeholder="例如：角色抬頭望向天空" /></label>
-          <label for="video-prompt-dialogue"><span>對白</span><textarea id="video-prompt-dialogue" class="text-input" placeholder="例如：今晚的星光真美。"></textarea></label>
+          <label><span>場景</span><div id="video-prompt-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="場景" data-placeholder="例如：繁星閃爍的夜空下"></div></label>
+          <label><span>鏡頭</span><div id="video-prompt-camera" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="鏡頭" data-placeholder="例如：鏡頭緩慢向前推進"></div></label>
+          <label><span>視角</span><div id="video-prompt-view" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="視角" data-placeholder="例如：低角度仰視主體"></div></label>
+          <label><span>燈光</span><div id="video-prompt-lighting" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="燈光" data-placeholder="例如：柔和的金色逆光"></div></label>
+          <label><span>音效</span><div id="video-prompt-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="音效" data-placeholder="例如：雨聲與遠方的雷聲"></div></label>
+          <label class="video-prompt-action-field"><span>動作</span><div id="video-prompt-action" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="動作" data-placeholder="例如：角色抬頭望向天空"></div></label>
+          <label><span>對白</span><div id="video-prompt-dialogue" class="text-input resource-editor resource-editor-multiline" contenteditable="true" role="textbox" aria-label="對白" aria-multiline="true" data-placeholder="例如：今晚的星光真美。"></div></label>
         </div>
         <div id="character-mention-menu" class="character-mention-menu" role="listbox" aria-label="選擇已啟用人物" hidden></div>
         <div class="dialog-actions">
@@ -166,6 +175,22 @@
           <button class="dialog-confirm" type="submit">加入分鏡</button>
         </div>
       </form>
+    </dialog>
+
+    <div id="resource-mention-menu" class="resource-mention-menu" role="listbox" aria-label="選擇資源" hidden></div>
+
+    <dialog id="video-resource-preview-dialog" class="reset-dialog video-resource-preview-dialog" aria-labelledby="video-resource-preview-title">
+      <div>
+        <div class="video-resource-preview-heading">
+          <div><h2 id="video-resource-preview-title">資源預覽</h2><p id="video-resource-preview-meta"></p></div>
+          <button id="close-video-resource-preview" class="dialog-confirm" type="button">關閉</button>
+        </div>
+        <div id="video-resource-preview-stage" class="video-resource-preview-stage">
+          <img id="video-resource-preview-image" alt="資源圖片預覽" hidden />
+          <audio id="video-resource-preview-audio" controls hidden></audio>
+          <video id="video-resource-preview-video" controls playsinline hidden></video>
+        </div>
+      </div>
     </dialog>
 
     <dialog id="confirm-video-generation-dialog" class="reset-dialog" aria-labelledby="confirm-video-generation-title">

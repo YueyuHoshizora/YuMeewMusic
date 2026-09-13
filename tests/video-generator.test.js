@@ -14,7 +14,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<title>影像產生器 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
-  assert.match(html, /<textarea id="video-prompt"[^>]*aria-label="影片細節"/);
+  assert.match(html, /<div id="video-prompt"[^>]*class="resource-editor"[^>]*contenteditable="true"[^>]*aria-label="影片細節"/);
   assert.doesNotMatch(html, />影片描述<\/label>|加入影片描述|等待輸入影片描述/);
   assert.match(html, /<details id="video-description-panel" class="panel prompt-panel video-description-panel" open>[\s\S]*<summary[^>]*>影片細節<\/summary>[\s\S]*id="video-prompt"[\s\S]*<\/details>\s*<details id="video-settings-panel" class="panel prompt-panel video-settings-panel">/);
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
@@ -22,6 +22,11 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>加入分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
+  assert.match(html, /id="video-resource-title">資源<\/h2>/);
+  assert.match(html, /id="video-resource-input"[^>]*accept="image\/\*,audio\/\*,video\/\*"[^>]*multiple/);
+  assert.match(html, /id="video-resource-list"/);
+  assert.match(html, /id="resource-mention-menu"[^>]*aria-label="選擇資源"[^>]*hidden/);
+  assert.match(html, /id="video-resource-preview-dialog"[^>]*aria-labelledby="video-resource-preview-title"/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="add-character"[^>]*>＋ 新增人物<\/button>/);
   assert.match(html, /id="character-editor-dialog"[^>]*aria-labelledby="character-editor-title"/);
@@ -33,15 +38,12 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<h2 id="video-prompt-builder-title">分鏡內容<\/h2>/);
   assert.match(html, /id="video-prompt-builder-form"[\s\S]*<button class="dialog-confirm" type="submit">加入分鏡<\/button>/);
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
-  assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
-  assert.match(html, /for="video-prompt-scene"><span>場景<\/span>/);
-  assert.match(html, /for="video-prompt-camera"><span>鏡頭<\/span>/);
-  assert.match(html, /for="video-prompt-view"><span>視角<\/span>/);
-  assert.match(html, /for="video-prompt-lighting"><span>燈光<\/span>/);
-  assert.match(html, /for="video-prompt-sound"><span>音效<\/span>/);
-  assert.match(html, /for="video-prompt-action"><span>動作<\/span>/);
-  assert.match(html, /for="video-prompt-dialogue"><span>對白<\/span>/);
-  assert.doesNotMatch(html, /<textarea id="video-prompt"[^>]*maxlength=/);
+  assert.match(html, /for="video-prompt-time"><span>時間<\/span><input id="video-prompt-time"/);
+  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-camera", "鏡頭"], ["video-prompt-view", "視角"], ["video-prompt-lighting", "燈光"], ["video-prompt-sound", "音效"], ["video-prompt-action", "動作"], ["video-prompt-dialogue", "對白"]]) {
+    assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
+  }
+  assert.doesNotMatch(html, /id="video-prompt-time"[^>]*resource-editor/);
+  assert.doesNotMatch(html, /id="video-prompt"[^>]*maxlength=/);
   assert.match(html, /id="video-resolution"/);
   assert.match(html, /id="video-duration"/);
   assert.match(html, /id="video-ratio"/);
@@ -68,6 +70,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*min\(820px, calc\(100vw - 80px\)\)/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*220px/);
+  assert.match(css, /\.resource-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*248px/);
+  assert.match(css, /\.resource-token\s*\{[^}]*cursor:\s*pointer/);
+  assert.match(css, /\.video-resource-list\s*\{[^}]*grid-template-columns:\s*repeat\(4, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-template-list\s*\{[^}]*grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-template-item\s*\{[^}]*flex-direction:\s*column/);
   assert.match(css, /\.character-template-edit img,[\s\S]*?\.character-thumbnail-placeholder\s*\{[^}]*width:\s*100%[^}]*aspect-ratio:\s*4 \/ 5/);
@@ -75,11 +80,11 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.character-template-toggle\[aria-pressed="false"\]/);
   assert.match(globalCss, /\.dialog-confirm\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*background:\s*transparent/);
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
-  assert.match(css, /label\[for="video-prompt-action"\]\s*\{[^}]*align-self:\s*start/);
+  assert.match(css, /\.video-prompt-builder-fields \.video-prompt-action-field\s*\{[^}]*align-self:\s*start/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
-  assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["視角"[^\]]*\],\s*\["燈光"[^\]]*\],\s*\["音效"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
-  assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}\\n\\n` : `\$\{block\}\\n\\n`/);
+  assert.match(script, /const fields = \[\s*\["時間", \$\("video-prompt-time"\)\.value\.trim\(\)\],\s*\["場景", editorText/);
+  assert.match(script, /populated\.forEach\(\(\[label, value, editor\]\) => appendEditorLine/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*defaultResolution: "480P"[^}]*minimumDuration: 5[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-0-260128": Object\.freeze\(\{[^}]*label: "Seedance 2\.0"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p", "1080p", "4k"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
@@ -148,12 +153,15 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false\)/);
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false && character\.name\)/);
   assert.doesNotMatch(script, /character-mention-avatar|character\.name\.slice\(0, 1\)/);
-  assert.match(script, /target\.setRangeText\(`\$\{name\} `, characterMentionStart, end, "end"\)/);
-  assert.match(script, /field\.addEventListener\("input", event => showCharacterMentionMenu\(event\.currentTarget\)\)/);
+  assert.match(script, /replaceMentionText\(characterMentionMatch, document\.createTextNode\(name\)\)/);
+  assert.match(script, /editor\.addEventListener\("input", handleResourceEditorInput\)/);
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
   assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
+  assert.doesNotMatch(script, /saveStoredValue\("video-generation-resources"|loadStoredValue\("video-generation-resources"/);
+  assert.match(script, /createResourceMention\(resource\)/);
+  assert.match(script, /openResourcePreview\(token\.dataset\.resourceId\)/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /video-description-panel"\)\.addEventListener\("toggle",[\s\S]*video-settings-panel"\)\.open = false;[\s\S]*video-result-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);

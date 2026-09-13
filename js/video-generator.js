@@ -2,6 +2,7 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
+import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLabel } from "./video-resources.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -42,8 +43,58 @@ const characterPreviewUrls = new Set();
 let editingCharacterIndex = -1;
 let editingCharacterReference = null;
 let characterMentionTarget = null;
-let characterMentionStart = -1;
+let characterMentionMatch = null;
 let characterMentionActiveIndex = 0;
+let videoResources = [];
+let resourceCounters = { image: 0, audio: 0, video: 0 };
+const resourcePreviewUrls = new Set();
+let activeResourcePreviewUrl = "";
+let resourceMentionTarget = null;
+let resourceMentionMatch = null;
+let resourceMentionActiveIndex = 0;
+
+function editorText(editor) {
+  return String(editor?.innerText || editor?.textContent || "").replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function clearEditor(editor) {
+  editor.replaceChildren();
+}
+
+function triggerAtCaret(editor, trigger) {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return null;
+  const node = selection.anchorNode;
+  if (node?.nodeType !== Node.TEXT_NODE) return null;
+  const end = selection.anchorOffset;
+  const start = node.data.lastIndexOf(trigger, end - 1);
+  if (start < 0) return null;
+  const query = node.data.slice(start + 1, end);
+  if (/\s/u.test(query)) return null;
+  return { node, start, end, query };
+}
+
+function replaceMentionText(match, replacement) {
+  const range = document.createRange();
+  range.setStart(match.node, match.start);
+  range.setEnd(match.node, match.end);
+  range.deleteContents();
+  range.insertNode(replacement);
+  const spacer = document.createTextNode(" ");
+  replacement.after(spacer);
+  range.setStartAfter(spacer);
+  range.collapse(true);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function appendEditorLine(editor, label, value, nodes = null) {
+  if (editorText(editor)) editor.append(document.createElement("br"), document.createElement("br"));
+  editor.append(document.createTextNode(`${label}：`));
+  if (nodes) editor.append(...nodes.map(node => node.cloneNode(true)));
+  else editor.append(document.createTextNode(value));
+}
 
 function setStatus(text, mode = "") {
   $("video-generation-status").textContent = text;
@@ -57,19 +108,20 @@ function showError(text = "") {
 }
 
 function syncGenerateAvailability() {
-  const prompt = $("video-prompt").value.trim();
+  const prompt = editorText($("video-prompt"));
   const hasKey = Boolean(getApiKey($("video-model").value));
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
 function syncDraftStatus() {
-  if (!busy) setStatus($("video-prompt").value.trim() ? "影片細節已輸入" : "等待輸入影片細節");
+  if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
 }
 
 function openVideoPromptBuilder() {
   if (busy) return;
   hideCharacterMentionMenu();
+  hideResourceMentionMenu();
   $("video-prompt-builder-dialog").showModal();
   $("video-prompt-time").focus();
 }
@@ -83,7 +135,7 @@ function hideCharacterMentionMenu() {
     characterMentionTarget.removeAttribute("aria-activedescendant");
   }
   characterMentionTarget = null;
-  characterMentionStart = -1;
+  characterMentionMatch = null;
   characterMentionActiveIndex = 0;
 }
 
@@ -117,30 +169,26 @@ function setCharacterMentionActive(index) {
 
 function selectCharacterMention(name) {
   const target = characterMentionTarget;
-  if (!target || characterMentionStart < 0) return;
-  const end = target.selectionStart ?? target.value.length;
-  target.setRangeText(`${name} `, characterMentionStart, end, "end");
+  if (!target || !characterMentionMatch) return;
+  replaceMentionText(characterMentionMatch, document.createTextNode(name));
   hideCharacterMentionMenu();
   target.focus();
 }
 
 function showCharacterMentionMenu(target) {
-  const caret = target.selectionStart ?? target.value.length;
-  const beforeCaret = target.value.slice(0, caret);
-  const hashIndex = beforeCaret.lastIndexOf("#");
-  const query = hashIndex >= 0 ? beforeCaret.slice(hashIndex + 1) : "";
+  const match = triggerAtCaret(target, "#");
   const enabledCharacters = characterTemplates.filter(character => character.enabled !== false && character.name);
-  if (hashIndex < 0 || /[\s#]/u.test(query) || !enabledCharacters.length) {
+  if (!match || !enabledCharacters.length) {
     hideCharacterMentionMenu();
     return;
   }
-  const matches = enabledCharacters.filter(character => character.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  const matches = enabledCharacters.filter(character => character.name.toLocaleLowerCase().includes(match.query.toLocaleLowerCase()));
   if (!matches.length) {
     hideCharacterMentionMenu();
     return;
   }
   characterMentionTarget = target;
-  characterMentionStart = hashIndex;
+  characterMentionMatch = match;
   characterMentionActiveIndex = 0;
   const options = matches.map((character, index) => {
     const option = document.createElement("button");
@@ -183,24 +231,326 @@ function handleCharacterMentionKeydown(event) {
   }
 }
 
+function hideResourceMentionMenu() {
+  const menu = $("resource-mention-menu");
+  menu.hidden = true;
+  menu.replaceChildren();
+  resourceMentionTarget?.setAttribute("aria-expanded", "false");
+  resourceMentionTarget?.removeAttribute("aria-activedescendant");
+  resourceMentionTarget = null;
+  resourceMentionMatch = null;
+  resourceMentionActiveIndex = 0;
+}
+
+function resourceIcon(kind) {
+  return kind === "image" ? "▧" : kind === "audio" ? "♪" : "▶";
+}
+
+function positionResourceMentionMenu(target, optionCount) {
+  const rect = target.getBoundingClientRect();
+  const width = Math.min(Math.max(rect.width * .6, 280), 440);
+  const menuHeight = Math.min(optionCount * 54 + 14, 248);
+  const below = window.innerHeight - rect.bottom;
+  const top = below > Math.min(menuHeight, 160) ? rect.bottom + 6 : Math.max(10, rect.top - menuHeight - 6);
+  const left = Math.min(Math.max(10, rect.left), window.innerWidth - width - 10);
+  Object.assign($("resource-mention-menu").style, { top: `${top}px`, left: `${left}px`, width: `${width}px` });
+}
+
+function setResourceMentionActive(index) {
+  const options = [...$("resource-mention-menu").querySelectorAll(".resource-mention-option")];
+  if (!options.length) return;
+  resourceMentionActiveIndex = (index + options.length) % options.length;
+  options.forEach((option, optionIndex) => {
+    const active = optionIndex === resourceMentionActiveIndex;
+    option.classList.toggle("active", active);
+    option.setAttribute("aria-selected", String(active));
+  });
+  resourceMentionTarget?.setAttribute("aria-activedescendant", options[resourceMentionActiveIndex].id);
+  options[resourceMentionActiveIndex].scrollIntoView({ block: "nearest" });
+}
+
+function createResourceMention(resource) {
+  const mention = document.createElement("button");
+  mention.type = "button";
+  mention.className = "resource-token";
+  mention.contentEditable = "false";
+  mention.dataset.resourceId = resource.id;
+  mention.title = `預覽 ${resource.referenceName}`;
+  mention.textContent = `@${resource.referenceName}`;
+  return mention;
+}
+
+function selectResourceMention(resource) {
+  if (!resourceMentionTarget || !resourceMentionMatch) return;
+  replaceMentionText(resourceMentionMatch, createResourceMention(resource));
+  const target = resourceMentionTarget;
+  hideResourceMentionMenu();
+  target.focus();
+  target.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+function showResourceMentionMenu(target) {
+  const match = triggerAtCaret(target, "@");
+  if (!match || !videoResources.length) {
+    hideResourceMentionMenu();
+    return false;
+  }
+  const query = match.query.toLocaleLowerCase();
+  const matches = videoResources.filter(resource => resource.referenceName.toLocaleLowerCase().includes(query));
+  if (!matches.length) {
+    hideResourceMentionMenu();
+    return false;
+  }
+  hideCharacterMentionMenu();
+  resourceMentionTarget = target;
+  resourceMentionMatch = match;
+  resourceMentionActiveIndex = 0;
+  const options = matches.map((resource, index) => {
+    const option = document.createElement("button");
+    option.id = `resource-mention-option-${index}`;
+    option.type = "button";
+    option.className = `resource-mention-option${index === 0 ? " active" : ""}`;
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", String(index === 0));
+    const icon = document.createElement("span");
+    icon.className = "resource-option-icon";
+    icon.textContent = resourceIcon(resource.kind);
+    const detail = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = resource.referenceName;
+    const original = document.createElement("small");
+    original.textContent = resource.originalName;
+    detail.append(name, original);
+    option.append(icon, detail);
+    option.addEventListener("mousedown", event => {
+      event.preventDefault();
+      selectResourceMention(resource);
+    });
+    return option;
+  });
+  const menu = $("resource-mention-menu");
+  const menuHost = target.closest("dialog") || document.body;
+  if (menu.parentElement !== menuHost) menuHost.append(menu);
+  menu.replaceChildren(...options);
+  menu.hidden = false;
+  target.setAttribute("aria-expanded", "true");
+  target.setAttribute("aria-controls", "resource-mention-menu");
+  target.setAttribute("aria-activedescendant", options[0].id);
+  positionResourceMentionMenu(target, options.length);
+  return true;
+}
+
+function handleResourceMentionKeydown(event) {
+  const menu = $("resource-mention-menu");
+  if (!menu.hidden) {
+    const options = [...menu.querySelectorAll(".resource-mention-option")];
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      setResourceMentionActive(resourceMentionActiveIndex + (event.key === "ArrowDown" ? 1 : -1));
+      return;
+    }
+    if (event.key === "Enter" && options[resourceMentionActiveIndex]) {
+      event.preventDefault();
+      options[resourceMentionActiveIndex].dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+      return;
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      hideResourceMentionMenu();
+      return;
+    }
+  }
+}
+
+function handleResourceEditorInput(event) {
+  const target = event.currentTarget;
+  if (!editorText(target) && target.childNodes.length) target.replaceChildren();
+  if (showResourceMentionMenu(target)) return;
+  if (target.closest("#video-prompt-builder-dialog")) showCharacterMentionMenu(target);
+  if (target.id === "video-prompt") syncDraftStatus();
+}
+
+function handlePlainTextPaste(event) {
+  event.preventDefault();
+  document.execCommand("insertText", false, event.clipboardData?.getData("text/plain") || "");
+}
+
+function formatDuration(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+}
+
+function readMediaDuration(file, kind) {
+  if (kind === "image") return Promise.resolve(null);
+  return new Promise(resolve => {
+    const media = document.createElement(kind === "audio" ? "audio" : "video");
+    const url = URL.createObjectURL(file);
+    let completed = false;
+    const finish = value => {
+      if (completed) return;
+      completed = true;
+      clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      resolve(Number.isFinite(value) ? value : null);
+    };
+    const timeout = setTimeout(() => finish(null), 5000);
+    media.preload = "metadata";
+    media.onloadedmetadata = () => finish(media.duration);
+    media.onerror = () => finish(null);
+    media.src = url;
+  });
+}
+
+function releaseResourceUrls() {
+  resourcePreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  resourcePreviewUrls.clear();
+}
+
+function createResourceCard(resource) {
+  const card = document.createElement("article");
+  card.className = "video-resource-card";
+  const preview = document.createElement("button");
+  preview.type = "button";
+  preview.className = "video-resource-card-preview";
+  preview.setAttribute("aria-label", `預覽 ${resource.referenceName}`);
+  if (resource.kind === "image") {
+    const image = document.createElement("img");
+    const url = URL.createObjectURL(resource.file);
+    resourcePreviewUrls.add(url);
+    image.src = url;
+    image.alt = "";
+    preview.append(image);
+  } else {
+    const icon = document.createElement("span");
+    icon.textContent = resourceIcon(resource.kind);
+    preview.append(icon);
+  }
+  const details = document.createElement("div");
+  const name = document.createElement("strong");
+  name.textContent = resource.referenceName;
+  const original = document.createElement("small");
+  original.textContent = resource.originalName;
+  const meta = document.createElement("small");
+  meta.textContent = [resourceTypeLabel(resource.kind), formatResourceSize(resource.file?.size), formatDuration(resource.duration)].filter(Boolean).join(" · ");
+  details.append(name, original, meta);
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "video-resource-remove";
+  remove.textContent = "刪除";
+  remove.addEventListener("click", () => void deleteVideoResource(resource.id));
+  preview.addEventListener("click", () => openResourcePreview(resource.id));
+  card.append(preview, details, remove);
+  return card;
+}
+
+function renderVideoResources() {
+  releaseResourceUrls();
+  $("video-resource-list").replaceChildren(...videoResources.map(createResourceCard));
+  $("video-resource-empty").hidden = Boolean(videoResources.length);
+}
+
+async function addVideoResources(files) {
+  const unsupported = [];
+  let added = 0;
+  for (const file of files) {
+    const kind = resourceKind(file);
+    if (!kind) {
+      unsupported.push(file.name);
+      continue;
+    }
+    const next = nextResourceReference(videoResources, kind, resourceCounters);
+    resourceCounters[kind] = next.nextNumber;
+    videoResources.push({
+      id: globalThis.crypto?.randomUUID?.() || `resource-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      kind,
+      referenceName: next.referenceName,
+      originalName: file.name || next.referenceName,
+      mimeType: file.type || "",
+      file,
+      duration: await readMediaDuration(file, kind),
+      createdAt: Date.now(),
+    });
+    added += 1;
+  }
+  $("video-resource-input").value = "";
+  renderVideoResources();
+  if (unsupported.length) setStatus(`${added ? `已加入 ${added} 個資源；` : ""}${unsupported.length} 個檔案格式不支援`, "error");
+  else setStatus(`已加入 ${added} 個資源`, "success");
+}
+
+function resourceReferenceCount(id) {
+  return [...document.querySelectorAll(".resource-token")].filter(token => token.dataset.resourceId === id).length;
+}
+
+async function deleteVideoResource(id) {
+  const resource = videoResources.find(item => item.id === id);
+  if (!resource) return;
+  const references = resourceReferenceCount(id);
+  const message = references
+    ? `${resource.referenceName} 已被引用 ${references} 次，刪除後引用將標示為資源不存在，是否刪除？`
+    : `確定刪除 ${resource.referenceName}？`;
+  if (!window.confirm(message)) return;
+  videoResources = videoResources.filter(item => item.id !== id);
+  document.querySelectorAll(".resource-token").forEach(token => {
+    if (token.dataset.resourceId !== id) return;
+    token.classList.add("missing");
+    token.title = "資源不存在";
+  });
+  renderVideoResources();
+}
+
+function stopResourcePreview() {
+  for (const id of ["video-resource-preview-audio", "video-resource-preview-video"]) {
+    const media = $(id);
+    media.pause();
+    media.removeAttribute("src");
+    media.hidden = true;
+  }
+  const image = $("video-resource-preview-image");
+  image.removeAttribute("src");
+  image.hidden = true;
+  if (activeResourcePreviewUrl) URL.revokeObjectURL(activeResourcePreviewUrl);
+  activeResourcePreviewUrl = "";
+}
+
+function openResourcePreview(id) {
+  const resource = videoResources.find(item => item.id === id);
+  if (!resource) {
+    setStatus("引用的資源已不存在", "error");
+    return;
+  }
+  stopResourcePreview();
+  activeResourcePreviewUrl = URL.createObjectURL(resource.file);
+  $("video-resource-preview-title").textContent = resource.referenceName;
+  $("video-resource-preview-meta").textContent = [resource.originalName, resourceTypeLabel(resource.kind), formatResourceSize(resource.file.size), formatDuration(resource.duration)].filter(Boolean).join(" · ");
+  const target = resource.kind === "image" ? $("video-resource-preview-image") : resource.kind === "audio" ? $("video-resource-preview-audio") : $("video-resource-preview-video");
+  target.src = activeResourcePreviewUrl;
+  target.hidden = false;
+  $("video-resource-preview-dialog").showModal();
+}
+
 function submitVideoPromptBuilder(event) {
   event.preventDefault();
   hideCharacterMentionMenu();
+  hideResourceMentionMenu();
   const fields = [
     ["時間", $("video-prompt-time").value.trim()],
-    ["場景", $("video-prompt-scene").value.trim()],
-    ["鏡頭", $("video-prompt-camera").value.trim()],
-    ["視角", $("video-prompt-view").value.trim()],
-    ["燈光", $("video-prompt-lighting").value.trim()],
-    ["音效", $("video-prompt-sound").value.trim()],
-    ["動作", $("video-prompt-action").value.trim()],
-    ["對白", $("video-prompt-dialogue").value.trim()],
+    ["場景", editorText($("video-prompt-scene")), $("video-prompt-scene")],
+    ["鏡頭", editorText($("video-prompt-camera")), $("video-prompt-camera")],
+    ["視角", editorText($("video-prompt-view")), $("video-prompt-view")],
+    ["燈光", editorText($("video-prompt-lighting")), $("video-prompt-lighting")],
+    ["音效", editorText($("video-prompt-sound")), $("video-prompt-sound")],
+    ["動作", editorText($("video-prompt-action")), $("video-prompt-action")],
+    ["對白", editorText($("video-prompt-dialogue")), $("video-prompt-dialogue")],
   ];
-  const block = fields.filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("\n");
-  if (!block) return;
+  const populated = fields.filter(([, value]) => value);
+  if (!populated.length) return;
   const prompt = $("video-prompt");
-  prompt.value = prompt.value.trim() ? `${prompt.value.trimEnd()}\n\n${block}\n\n` : `${block}\n\n`;
+  populated.forEach(([label, value, editor]) => appendEditorLine(prompt, label, value, editor ? [...editor.childNodes] : null));
+  prompt.append(document.createElement("br"), document.createElement("br"));
   $("video-prompt-builder-form").reset();
+  document.querySelectorAll("#video-prompt-builder-dialog .resource-editor").forEach(clearEditor);
   $("video-prompt-builder-dialog").close();
   syncDraftStatus();
   prompt.focus();
@@ -480,7 +830,8 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["video-prompt", "open-character-template", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
+  for (const id of ["open-character-template", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
+  document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
   syncGenerateAvailability();
@@ -653,7 +1004,7 @@ function videoFilename(date = new Date()) {
 }
 
 async function generateVideo() {
-  const videoDetails = $("video-prompt").value.trim();
+  const videoDetails = editorText($("video-prompt"));
   const prompt = [videoDetails, characterTemplateText()].filter(Boolean).join("\n\n");
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
@@ -728,7 +1079,6 @@ function confirmVideoGeneration(event) {
   void generateVideo();
 }
 
-$("video-prompt").addEventListener("input", syncDraftStatus);
 $("open-character-template").addEventListener("click", openCharacterTemplate);
 $("add-character").addEventListener("click", () => openCharacterEditor());
 $("close-character-template").addEventListener("click", () => $("character-template-dialog").close());
@@ -740,20 +1090,40 @@ $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder)
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
 $("cancel-video-prompt-builder").addEventListener("click", () => {
   hideCharacterMentionMenu();
+  hideResourceMentionMenu();
   $("video-prompt-builder-dialog").close();
 });
-$("video-prompt-builder-dialog").addEventListener("close", hideCharacterMentionMenu);
+$("video-prompt-builder-dialog").addEventListener("close", () => {
+  hideCharacterMentionMenu();
+  hideResourceMentionMenu();
+});
 $("video-prompt-builder-dialog").addEventListener("pointerdown", event => {
   if (characterMentionTarget && !$("character-mention-menu").contains(event.target) && event.target !== characterMentionTarget) hideCharacterMentionMenu();
 });
 $("video-prompt-builder-dialog").addEventListener("scroll", () => {
   if (characterMentionTarget) positionCharacterMentionMenu(characterMentionTarget, $("character-mention-menu").childElementCount);
+  if (resourceMentionTarget) positionResourceMentionMenu(resourceMentionTarget, $("resource-mention-menu").childElementCount);
 });
-document.querySelectorAll(".video-prompt-builder-fields .text-input").forEach(field => {
-  field.setAttribute("aria-autocomplete", "list");
-  field.setAttribute("aria-expanded", "false");
-  field.addEventListener("input", event => showCharacterMentionMenu(event.currentTarget));
-  field.addEventListener("keydown", handleCharacterMentionKeydown);
+document.querySelectorAll(".resource-editor").forEach(editor => {
+  editor.setAttribute("aria-autocomplete", "list");
+  editor.setAttribute("aria-expanded", "false");
+  editor.addEventListener("input", handleResourceEditorInput);
+  editor.addEventListener("keydown", event => {
+    if (!$("resource-mention-menu").hidden) handleResourceMentionKeydown(event);
+    else if (editor.closest("#video-prompt-builder-dialog")) handleCharacterMentionKeydown(event);
+    if (!event.defaultPrevented && editor.classList.contains("resource-editor-single") && event.key === "Enter") event.preventDefault();
+  });
+  editor.addEventListener("paste", handlePlainTextPaste);
+});
+$("video-resource-input").addEventListener("change", event => void addVideoResources([...event.currentTarget.files]));
+$("close-video-resource-preview").addEventListener("click", () => $("video-resource-preview-dialog").close());
+$("video-resource-preview-dialog").addEventListener("close", stopResourcePreview);
+document.addEventListener("click", event => {
+  const token = event.target.closest?.(".resource-token");
+  if (token) openResourcePreview(token.dataset.resourceId);
+});
+document.addEventListener("pointerdown", event => {
+  if (resourceMentionTarget && !$("resource-mention-menu").contains(event.target) && !event.target.closest?.(".resource-editor")) hideResourceMentionMenu();
 });
 $("video-model").addEventListener("change", syncModelDetails);
 $("video-resolution").addEventListener("change", syncResultHeading);
@@ -818,6 +1188,8 @@ window.addEventListener("pagehide", () => {
   releaseVideo();
   characterPreviewUrls.forEach(url => URL.revokeObjectURL(url));
   characterPreviewUrls.clear();
+  releaseResourceUrls();
+  stopResourcePreview();
 });
 
 syncModelDetails();

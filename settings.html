@@ -33,10 +33,6 @@
               <span class="settings-nav-icon" aria-hidden="true">◐</span>
               <span><strong>介面</strong><small>模式與佈景主題</small></span>
             </button>
-            <button class="settings-nav-link" type="button" role="tab" data-settings-panel="model-manager" aria-controls="model-manager" aria-selected="false">
-              <span class="settings-nav-icon" aria-hidden="true">◇</span>
-              <span><strong>模型管理</strong><small>查看與清除 AI 模型</small></span>
-            </button>
             <button class="settings-nav-link" type="button" role="tab" data-settings-panel="api-key-manager" aria-controls="api-key-manager" aria-selected="false">
               <span class="settings-nav-icon" aria-hidden="true">⌁</span>
               <span><strong>金鑰管理</strong><small>查看與刪除 API KEY</small></span>
@@ -44,6 +40,10 @@
             <button class="settings-nav-link" type="button" role="tab" data-settings-panel="cache-manager" aria-controls="cache-manager" aria-selected="false">
               <span class="settings-nav-icon" aria-hidden="true">▣</span>
               <span><strong>快取管理</strong><small>整理各頁面的媒體檔案</small></span>
+            </button>
+            <button class="settings-nav-link" type="button" role="tab" data-settings-panel="model-manager" aria-controls="model-manager" aria-selected="false">
+              <span class="settings-nav-icon" aria-hidden="true">◇</span>
+              <span><strong>模型管理</strong><small>查看與清除 AI 模型</small></span>
             </button>
           </nav>
         </aside>
@@ -81,7 +81,7 @@
 
           <section id="model-manager" class="panel settings-panel model-manager" role="tabpanel" aria-labelledby="model-manager-title" hidden>
             <div class="model-manager-header">
-              <div class="section-title"><span>02</span><h2 id="model-manager-title">模型管理</h2></div>
+              <div class="section-title"><span>04</span><h2 id="model-manager-title">模型管理</h2></div>
               <div class="model-manager-actions"><span id="model-status" class="model-status" role="status" aria-live="polite">正在讀取模型…</span><button id="delete-all-models" class="model-delete-all" type="button" disabled>刪除全部</button></div>
             </div>
             <div class="model-summary"><strong id="model-count">—</strong><span id="model-total-size">正在計算使用容量</span></div>
@@ -95,7 +95,7 @@
           </section>
 
           <section id="api-key-manager" class="panel settings-panel api-key-manager" role="tabpanel" aria-labelledby="api-key-manager-title" hidden>
-            <div class="section-title"><span>03</span><h2 id="api-key-manager-title">金鑰管理</h2></div>
+            <div class="section-title"><span>02</span><h2 id="api-key-manager-title">金鑰管理</h2></div>
             <p class="settings-panel-intro">列出保存在目前瀏覽器 localStorage 的 API KEY。為保護金鑰，畫面只顯示前後各三碼。</p>
             <div id="api-key-list" class="api-key-list" aria-live="polite"></div>
             <div id="api-key-empty" class="model-empty" hidden>
@@ -108,7 +108,7 @@
 
           <section id="cache-manager" class="panel settings-panel cache-manager" role="tabpanel" aria-labelledby="cache-manager-title" hidden>
             <div class="model-manager-header">
-              <div class="section-title"><span>04</span><h2 id="cache-manager-title">快取管理</h2></div>
+              <div class="section-title"><span>03</span><h2 id="cache-manager-title">快取管理</h2></div>
               <div class="model-manager-actions"><span id="cache-status" class="model-status" role="status" aria-live="polite">正在讀取媒體…</span><button id="delete-all-cache" class="model-delete-all" type="button" disabled>刪除全部</button></div>
             </div>
             <p class="settings-panel-intro">依頁面與欄位列出保存在 IndexedDB 的音樂、圖片、字幕及專案素材。AI 模型請至「模型管理」整理。</p>

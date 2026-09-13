@@ -33,6 +33,10 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(html, /data-settings-panel="model-manager"[^>]*aria-selected="false"/);
   assert.match(html, /data-settings-panel="api-key-manager"[^>]*aria-selected="false"/);
   assert.match(html, /data-settings-panel="cache-manager"[^>]*aria-selected="false"/);
+  assert.match(html, /data-settings-panel="interface-settings"[\s\S]*data-settings-panel="api-key-manager"[\s\S]*data-settings-panel="cache-manager"[\s\S]*data-settings-panel="model-manager"/);
+  assert.match(html, /<span>02<\/span><h2 id="api-key-manager-title">金鑰管理<\/h2>/);
+  assert.match(html, /<span>03<\/span><h2 id="cache-manager-title">快取管理<\/h2>/);
+  assert.match(html, /<span>04<\/span><h2 id="model-manager-title">模型管理<\/h2>/);
   assert.match(html, /id="interface-mode"/);
   assert.match(html, /id="interface-theme"/);
   for (const theme of ['lime', 'ocean', 'violet', 'rose', 'amber', 'mint', 'indigo', 'coral', 'magenta', 'silver']) {

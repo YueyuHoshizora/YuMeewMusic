@@ -161,6 +161,13 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
   assert.doesNotMatch(script, /saveStoredValue\("video-generation-resources"|loadStoredValue\("video-generation-resources"/);
   assert.match(script, /createResourceMention\(resource\)/);
+  const mentionStart = script.indexOf("function createResourceMention(resource)");
+  const mentionEnd = script.indexOf("\nfunction selectResourceMention", mentionStart);
+  const mentionFunction = script.slice(mentionStart, mentionEnd);
+  assert.match(mentionFunction, /document\.createElement\("span"\)/);
+  assert.match(mentionFunction, /mention\.setAttribute\("role", "button"\)/);
+  assert.doesNotMatch(mentionFunction, /document\.createElement\("button"\)/);
+  assert.match(script, /event\.target\.matches\?\.\("\.resource-token"\) \? event\.target : null/);
   assert.match(script, /openResourcePreview\(token\.dataset\.resourceId\)/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /video-description-panel"\)\.addEventListener\("toggle",[\s\S]*video-settings-panel"\)\.open = false;[\s\S]*video-result-panel"\)\.open = false/);

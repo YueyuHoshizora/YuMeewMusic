@@ -270,10 +270,11 @@ function setResourceMentionActive(index) {
 }
 
 function createResourceMention(resource) {
-  const mention = document.createElement("button");
-  mention.type = "button";
+  const mention = document.createElement("span");
   mention.className = "resource-token";
   mention.contentEditable = "false";
+  mention.tabIndex = 0;
+  mention.setAttribute("role", "button");
   mention.dataset.resourceId = resource.id;
   mention.title = `預覽 ${resource.referenceName}`;
   mention.textContent = `@${resource.referenceName}`;
@@ -1119,8 +1120,13 @@ $("video-resource-input").addEventListener("change", event => void addVideoResou
 $("close-video-resource-preview").addEventListener("click", () => $("video-resource-preview-dialog").close());
 $("video-resource-preview-dialog").addEventListener("close", stopResourcePreview);
 document.addEventListener("click", event => {
-  const token = event.target.closest?.(".resource-token");
+  const token = event.target.matches?.(".resource-token") ? event.target : null;
   if (token) openResourcePreview(token.dataset.resourceId);
+});
+document.addEventListener("keydown", event => {
+  if (!event.target.matches?.(".resource-token") || !["Enter", " "].includes(event.key)) return;
+  event.preventDefault();
+  openResourcePreview(event.target.dataset.resourceId);
 });
 document.addEventListener("pointerdown", event => {
   if (resourceMentionTarget && !$("resource-mention-menu").contains(event.target) && !event.target.closest?.(".resource-editor")) hideResourceMentionMenu();

@@ -5,7 +5,6 @@ import { convertMediaFile } from "./converter-core.js";
 
 const $ = id => document.getElementById(id);
 const PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
-const LAST_URL_KEY = "yumeew.suno-download.last-url.v1";
 const MAX_AUDIO_BYTES = 300 * 1024 * 1024;
 
 applyTheme(loadSettings().mode, loadSettings().theme);
@@ -93,7 +92,6 @@ async function fetchSuno(event) {
   $("suno-status-badge").textContent = "解析中";
   $("suno-status").textContent = "正在讀取公開 Suno 分享頁…";
   try {
-    localStorage.setItem(LAST_URL_KEY, url);
     const resolveResponse = await fetch(PROXY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -219,5 +217,4 @@ async function applyToMain() {
 $("suno-form").addEventListener("submit", fetchSuno);
 $("suno-download").addEventListener("click", downloadAudio);
 $("suno-apply").addEventListener("click", applyToMain);
-$("suno-url").value = localStorage.getItem(LAST_URL_KEY) || "";
 window.addEventListener("unload", () => { if (audioUrl) URL.revokeObjectURL(audioUrl); });

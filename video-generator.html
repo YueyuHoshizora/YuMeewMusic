@@ -31,6 +31,7 @@
         <div class="video-collapsible-content">
           <div class="video-prompt-field">
             <div class="video-prompt-heading">
+              <button id="open-film-style" class="video-prompt-add video-film-style-button" type="button">全片風格</button>
               <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
@@ -116,6 +117,51 @@
           <button id="close-video-prompt-preview" class="dialog-confirm" type="button">關閉</button>
         </div>
       </div>
+    </dialog>
+
+    <dialog id="film-style-dialog" class="reset-dialog film-style-dialog" aria-labelledby="film-style-title">
+      <form id="film-style-form" method="dialog">
+        <h2 id="film-style-title">全片風格</h2>
+        <p>設定整部影片共用的視覺方向，所有分鏡會沿用這些設定。</p>
+        <div class="film-style-fields">
+          <label for="film-style-primary"><span>主要風格</span>
+            <select id="film-style-primary" class="setting-select">
+              <option value="" selected>不指定</option>
+              <option value="電影寫實">電影寫實</option>
+              <option value="好萊塢商業大片">好萊塢商業大片</option>
+              <option value="獨立電影">獨立電影</option>
+              <option value="藝術電影">藝術電影</option>
+              <option value="黑色電影">黑色電影</option>
+              <option value="紀錄片">紀錄片</option>
+              <option value="動作電影">動作電影</option>
+              <option value="浪漫電影">浪漫電影</option>
+              <option value="驚悚懸疑">驚悚懸疑</option>
+              <option value="恐怖電影">恐怖電影</option>
+              <option value="科幻電影">科幻電影</option>
+              <option value="奇幻電影">奇幻電影</option>
+              <option value="復古膠片">復古膠片</option>
+              <option value="手持紀實">手持紀實</option>
+              <option value="夢幻柔焦">夢幻柔焦</option>
+              <option value="超現實">超現實</option>
+              <option value="音樂錄影帶">音樂錄影帶</option>
+              <option value="動畫電影">動畫電影</option>
+              <option value="港式電影">港式電影</option>
+              <option value="日系電影">日系電影</option>
+              <option value="custom">自訂風格</option>
+            </select>
+          </label>
+          <label id="film-style-primary-custom-wrap" for="film-style-primary-custom" hidden><span>自訂主要風格</span><input id="film-style-primary-custom" class="text-input" type="text" placeholder="輸入自訂電影風格" /></label>
+          <label for="film-style-era"><span>年代質感</span><select id="film-style-era" class="setting-select"><option value="" selected>不指定</option><option value="1920 年代默片">1920 年代默片</option><option value="1950 年代經典電影">1950 年代經典電影</option><option value="1970 年代膠片">1970 年代膠片</option><option value="1980 年代復古">1980 年代復古</option><option value="1990 年代錄影帶">1990 年代錄影帶</option><option value="現代電影">現代電影</option><option value="未來電影">未來電影</option></select></label>
+          <label for="film-style-color"><span>色彩基調</span><select id="film-style-color" class="setting-select"><option value="" selected>不指定</option><option value="自然色彩">自然色彩</option><option value="低飽和">低飽和</option><option value="高飽和">高飽和</option><option value="冷色調">冷色調</option><option value="暖色調">暖色調</option><option value="黑白">黑白</option></select></label>
+          <label for="film-style-texture"><span>畫面質感</span><select id="film-style-texture" class="setting-select"><option value="" selected>不指定</option><option value="乾淨數位">乾淨數位</option><option value="電影膠片">電影膠片</option><option value="粗顆粒">粗顆粒</option><option value="夢幻柔焦">夢幻柔焦</option><option value="銳利細節">銳利細節</option><option value="高對比戲劇感">高對比戲劇感</option></select></label>
+          <label for="film-style-framing"><span>畫面比例感</span><select id="film-style-framing" class="setting-select"><option value="" selected>不指定</option><option value="電影寬銀幕構圖">電影寬銀幕</option><option value="標準電影構圖">標準電影</option><option value="直式短片構圖">直式短片</option></select></label>
+          <label class="film-style-notes" for="film-style-notes"><span>自訂補充</span><textarea id="film-style-notes" class="text-input" rows="4" placeholder="例如：雨夜城市帶有孤獨壓迫感"></textarea></label>
+        </div>
+        <div class="dialog-actions">
+          <button id="cancel-film-style" class="text-button" type="button">取消</button>
+          <button id="apply-film-style" class="dialog-confirm" type="button">套用風格</button>
+        </div>
+      </form>
     </dialog>
 
     <dialog id="video-api-key-dialog" class="reset-dialog" aria-labelledby="video-api-key-dialog-title">

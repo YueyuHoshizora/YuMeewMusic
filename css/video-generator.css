@@ -18,12 +18,23 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-add:hover { background: color-mix(in srgb, var(--primary) 22%, var(--surface)); }
 .video-prompt-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .video-prompt-add:disabled { opacity: .5; cursor: default; }
+.video-film-style-button { margin-right: auto; border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.video-film-style-button.configured { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
 .video-prompt-footer { display: flex; justify-content: flex-start; margin-top: 12px; }
 .video-prompt-preview-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .video-character-template-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .video-prompt-preview-dialog { width: 860px; max-width: none; }
 .video-prompt-preview-dialog h2 { margin-bottom: 16px; }
 .video-prompt-preview-text { min-height: 280px; max-height: 62vh; overflow: auto; box-sizing: border-box; border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--surface); color: var(--foreground); font: 13px/1.75 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+.film-style-dialog { width: 860px; max-width: none; }
+.film-style-dialog > form > p { margin: 5px 0 18px; color: var(--muted); font-size: 12px; }
+.film-style-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+.film-style-fields label { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
+.film-style-fields .setting-select,
+.film-style-fields .text-input { width: 100%; box-sizing: border-box; }
+.film-style-fields label[hidden] { display: none; }
+.film-style-notes { grid-column: 1 / -1; }
+.film-style-notes textarea { min-height: 100px; resize: vertical; font: inherit; line-height: 1.6; }
 .character-template-dialog { width: min(960px, calc(100vw - 80px)); }
 .character-template-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .character-template-heading h2 { margin-bottom: 5px; }

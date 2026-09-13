@@ -37,6 +37,7 @@ const STORYBOARD_ACTIONS = Object.freeze({
   interaction: Object.freeze(["走向另一名角色", "牽手", "握手", "擁抱另一名角色", "追逐", "閃避", "推開另一名角色", "打鬥", "並肩行走", "面對面交談", "將物品交給對方"]),
   environment: Object.freeze(["頭髮隨風飄動", "衣物隨風擺動", "被雨淋濕", "踩出水花", "被強光照亮", "因衝擊後退", "在煙霧中前進", "在水面漂浮", "緩慢下沉"]),
 });
+const EMPTY_FILM_STYLE = Object.freeze({ primary: "", primaryCustom: "", era: "", color: "", texture: "", framing: "", notes: "" });
 
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -45,6 +46,7 @@ let busy = false;
 let allowPageExit = false;
 let promptBuilderMinimized = false;
 let editingStoryboardId = "";
+let filmStyle = { ...EMPTY_FILM_STYLE };
 const storyboards = new Map();
 let generatedVideoBlob = null;
 let generatedVideoUrl = "";
@@ -163,6 +165,42 @@ function openVideoPromptBuilder() {
   resetVideoPromptBuilder();
   $("video-prompt-start").value = nextStoryboardStart();
   showVideoPromptBuilder();
+}
+
+function syncFilmStyleCustom(focus = false) {
+  const custom = $("film-style-primary").value === "custom";
+  $("film-style-primary-custom-wrap").hidden = !custom;
+  if (custom && focus) $("film-style-primary-custom").focus();
+}
+
+function openFilmStyle() {
+  if (busy) return;
+  $("film-style-primary").value = filmStyle.primary;
+  $("film-style-primary-custom").value = filmStyle.primaryCustom;
+  $("film-style-era").value = filmStyle.era;
+  $("film-style-color").value = filmStyle.color;
+  $("film-style-texture").value = filmStyle.texture;
+  $("film-style-framing").value = filmStyle.framing;
+  $("film-style-notes").value = filmStyle.notes;
+  syncFilmStyleCustom();
+  $("film-style-dialog").showModal();
+  $("film-style-primary").focus();
+}
+
+function applyFilmStyle() {
+  filmStyle = {
+    primary: $("film-style-primary").value,
+    primaryCustom: $("film-style-primary-custom").value.trim(),
+    era: $("film-style-era").value,
+    color: $("film-style-color").value,
+    texture: $("film-style-texture").value,
+    framing: $("film-style-framing").value,
+    notes: $("film-style-notes").value.trim(),
+  };
+  const configured = Boolean(filmStyleText());
+  $("open-film-style").classList.toggle("configured", configured);
+  $("open-film-style").textContent = configured ? "全片風格（已設定）" : "全片風格";
+  $("film-style-dialog").close();
 }
 
 function minimizeVideoPromptBuilder() {
@@ -1260,7 +1298,7 @@ function referencedCharacters(videoDetails) {
 
 function characterTemplateText(characters) {
   if (!characters.length) return "";
-  return characters.map((character, index) => {
+  const lines = characters.map((character, index) => {
     const fields = [
       ["名字", character.name],
       ["聲線", character.voice],
@@ -1269,11 +1307,50 @@ function characterTemplateText(characters) {
       ["服裝", character.clothing],
     ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
     return `人物 ${index + 1}：${fields}`;
-  }).filter(line => !line.endsWith("：")).join("\n");
+  }).filter(line => !line.endsWith("："));
+  return lines.length ? `人物設定：\n${lines.join("\n")}` : "";
+}
+
+function filmStyleText() {
+  const primary = filmStyle.primary === "custom" ? filmStyle.primaryCustom : filmStyle.primary;
+  const fields = [
+    ["主要風格", primary],
+    ["年代質感", filmStyle.era],
+    ["色彩基調", filmStyle.color],
+    ["畫面質感", filmStyle.texture],
+    ["畫面比例感", filmStyle.framing],
+    ["自訂補充", filmStyle.notes],
+  ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`);
+  return fields.length ? `全片風格：\n${fields.join("\n")}` : "";
+}
+
+function videoPromptSections() {
+  const details = document.createElement("div");
+  const storyboardText = [];
+  for (const node of $("video-prompt").childNodes) {
+    if (node.nodeType === Node.ELEMENT_NODE && node.matches(".storyboard-block")) storyboardText.push(editorText(node));
+    else details.append(node.cloneNode(true));
+  }
+  return { details: editorText(details), storyboards: storyboardText.join("\n") };
+}
+
+function resourceReferenceText() {
+  const tokens = [...$("video-prompt").querySelectorAll(".resource-token")];
+  const ids = [...new Set(tokens.map(token => token.dataset.resourceId).filter(Boolean))];
+  const lines = ids.map(id => videoResources.find(resource => resource.id === id)).filter(Boolean)
+    .map(resource => `@${resource.referenceName}：${resourceTypeLabel(resource.kind)}`);
+  return lines.length ? `引用資源：\n${lines.join("\n")}` : "";
 }
 
 function completeVideoPrompt(videoDetails = editorText($("video-prompt"))) {
-  return [videoDetails, characterTemplateText(referencedCharacters(videoDetails))].filter(Boolean).join("\n\n");
+  const sections = videoPromptSections();
+  return [
+    filmStyleText(),
+    characterTemplateText(referencedCharacters(videoDetails)),
+    sections.details ? `影片細節：\n${sections.details}` : "",
+    sections.storyboards ? `分鏡內容：\n${sections.storyboards}` : "",
+    resourceReferenceText(),
+  ].filter(Boolean).join("\n\n");
 }
 
 function openVideoPromptPreview() {
@@ -1530,7 +1607,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["open-character-template", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
+  for (const id of ["open-film-style", "open-character-template", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
@@ -1778,6 +1855,10 @@ function confirmVideoGeneration(event) {
 }
 
 $("open-character-template").addEventListener("click", openCharacterTemplate);
+$("open-film-style").addEventListener("click", openFilmStyle);
+$("film-style-primary").addEventListener("change", () => syncFilmStyleCustom(true));
+$("apply-film-style").addEventListener("click", applyFilmStyle);
+$("cancel-film-style").addEventListener("click", () => $("film-style-dialog").close());
 $("add-character").addEventListener("click", () => openCharacterEditor());
 $("close-character-template").addEventListener("click", () => $("character-template-dialog").close());
 $("character-reference").addEventListener("change", event => showCharacterEditorReference(event.currentTarget.files?.[0] || null));

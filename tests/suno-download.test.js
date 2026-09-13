@@ -27,6 +27,7 @@ test("Suno download page resolves, converts, previews and applies public audio",
   assert.match(script, /location\.href = "\.\/index\.html"/);
   assert.doesNotMatch(script, /localStorage\.setItem\([^,]+,\s*(?:audioBlob|audioUrl)/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/suno-download\.html"[^>]*>Suno 下載<\/a>/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/converter\.html"[^>]*>任意轉<\/a>\s*<a class="tool-link" href="\.\/suno-download\.html">Suno 下載<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"suno-download\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"suno-download\.html"/);
 });

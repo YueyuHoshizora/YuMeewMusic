@@ -13,11 +13,12 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /<title>文生影 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
-  assert.match(html, /<textarea id="video-prompt"/);
-  assert.match(html, /for="video-prompt">影片細節<\/label>/);
+  assert.match(html, /<textarea id="video-prompt"[^>]*aria-label="影片細節"/);
   assert.doesNotMatch(html, />影片描述<\/label>|加入影片描述|等待輸入影片描述/);
-  assert.match(html, /class="panel prompt-panel video-description-panel">[\s\S]*id="video-prompt"[\s\S]*<\/section>\s*<section class="panel prompt-panel video-settings-panel">/);
-  assert.match(html, /<h2 class="video-settings-title">生成設定<\/h2>/);
+  assert.match(html, /<details id="video-description-panel" class="panel prompt-panel video-description-panel" open>[\s\S]*<summary[^>]*>影片細節<\/summary>[\s\S]*id="video-prompt"[\s\S]*<\/details>\s*<details id="video-settings-panel" class="panel prompt-panel video-settings-panel">/);
+  assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
+  assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
+  assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>＋<\/button>/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
@@ -48,7 +49,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(css, /body\.text-to-video-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
   assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
-  assert.match(css, /\.video-settings-title\s*\{[^}]*margin:\s*0 0 18px/);
+  assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
@@ -94,6 +95,9 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /retry-save-video"\)\.addEventListener\("click", async \(\) =>/);
   assert.match(script, /loadStoredMedia\("generated-video"\)/);
   assert.match(script, /void restoreLastGeneratedVideo\(\)/);
+  assert.match(script, /showVideoResult\(task\.videoUrl, model\.provider, true\)/);
+  assert.match(script, /if \(expandResult\) \$\("video-result-panel"\)\.open = true/);
+  assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/text-to-video\.html"[^>]*>文生影<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-video\.html"/);

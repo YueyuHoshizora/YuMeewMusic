@@ -293,7 +293,7 @@ async function restoreLastGeneratedVideo() {
   } catch {}
 }
 
-async function showVideoResult(remoteUrl, provider = generatedVideoProvider) {
+async function showVideoResult(remoteUrl, provider = generatedVideoProvider, expandResult = false) {
   releaseVideo();
   generatedVideoRemoteUrl = remoteUrl;
   generatedVideoProvider = provider;
@@ -319,6 +319,7 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider) {
     $("retry-save-video").hidden = false;
   }
   presentVideo();
+  if (expandResult) $("video-result-panel").open = true;
 }
 
 function videoFilename(date = new Date()) {
@@ -367,7 +368,7 @@ async function generateVideo() {
     const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal);
     $("video-generation-lock-title").textContent = "影片已完成，正在載入結果";
     $("video-generation-lock-detail").textContent = "正在準備預覽與下載檔案…";
-    await showVideoResult(task.videoUrl, model.provider);
+    await showVideoResult(task.videoUrl, model.provider, true);
     setStatus(`生成完成 · ${task.resolution || $("video-resolution").value} · ${task.duration || $("video-duration").value} 秒`, "success");
   } catch (error) {
     if (error?.name !== "AbortError") {
@@ -408,6 +409,9 @@ $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialo
 $("generate-video").addEventListener("click", openGenerateConfirmation);
 $("confirm-video-generation-form").addEventListener("submit", confirmVideoGeneration);
 $("cancel-video-generation").addEventListener("click", () => $("confirm-video-generation-dialog").close());
+$("video-settings-panel").addEventListener("toggle", () => {
+  if ($("video-settings-panel").open) $("video-description-panel").open = false;
+});
 
 $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;

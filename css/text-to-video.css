@@ -1,10 +1,19 @@
 body.text-to-video-body { min-width: 1280px; overflow-x: auto; }
 #video-model { display: block; width: 100%; }
 .video-description-panel { margin-bottom: 22px; }
+.video-collapsible-summary { display: flex; align-items: center; gap: 12px; list-style: none; color: var(--foreground); font-size: 17px; font-weight: 800; cursor: pointer; user-select: none; }
+.video-collapsible-summary::-webkit-details-marker { display: none; }
+.video-collapsible-summary::after { content: "⌄"; margin-left: auto; color: var(--primary); font-size: 20px; line-height: 1; transition: transform .2s ease; }
+details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
+.video-collapsible-summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 5px; border-radius: 4px; }
+.video-collapsible-content { margin-top: 18px; }
 .video-prompt-field { margin: 0; }
-.video-settings-title { margin: 0 0 18px; color: var(--foreground); font-size: 17px; }
-.video-prompt-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
-.video-prompt-field .field-label { display: block; margin: 0; }
+.video-prompt-heading { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: 0 0 12px; }
+.video-result-summary { justify-content: flex-start; }
+.video-result-summary::after { margin-left: 0; }
+.video-result-title { display: flex; align-items: center; gap: 10px; }
+.video-result-title > span { display: inline-flex; align-items: center; min-height: 26px; padding: 0 9px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 16%, var(--surface)); color: var(--primary); font-size: 11px; font-weight: 900; }
+.video-result-summary > small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 600; }
 .video-prompt-add { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border: 1px solid var(--primary); border-radius: 8px; background: color-mix(in srgb, var(--primary) 12%, var(--surface)); color: var(--primary); font: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
 .video-prompt-add:hover { background: color-mix(in srgb, var(--primary) 22%, var(--surface)); }
 .video-prompt-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }

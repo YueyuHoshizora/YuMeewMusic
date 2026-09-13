@@ -11,6 +11,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /<title>文生影 · YuMeew<\/title>/);
+  assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<textarea id="video-prompt"/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>＋<\/button>/);
@@ -40,7 +41,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /id="retry-save-video"[^>]*hidden>重新保存影片<\/button>/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
   assert.match(css, /#video-prompt\s*\{[^}]*height:\s*224px/);
-  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*#video-prompt\s*\{[^}]*height:\s*300px/);
+  assert.match(css, /body\.text-to-video-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
+  assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*12px 0 28px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);

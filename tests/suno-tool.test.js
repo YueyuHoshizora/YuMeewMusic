@@ -5,6 +5,7 @@ import { existsSync, readFileSync } from "node:fs";
 test("Suno tool page resolves, converts, previews and applies public audio", () => {
   const html = readFileSync("suno-tool.html", "utf8");
   const script = readFileSync("js/suno-tool.js", "utf8");
+  const source = readFileSync("js/suno-source.js", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
@@ -13,12 +14,12 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(html, /id="suno-player"[^>]*controls/);
   assert.match(html, /id="suno-download"[^>]*>下載音樂（WAV）</);
   assert.match(html, /id="suno-apply"[^>]*>套用到主畫面</);
-  assert.match(script, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
-  assert.match(script, /const m4aBlob = await readAudioResponse\(await fetch\(result\.audioUrl/);
+  assert.match(source, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
+  assert.match(source, /readSunoAudioResponse\(await fetch\(metadata\.audioUrl/);
   assert.match(script, /audioBlob = await convertToWav\(playableBlob\)/);
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
-  assert.match(script, /decryptSunoAudio\(m4aBlob, result\)/);
-  assert.match(script, /crypto\.subtle\.decrypt\(\{ name: "AES-CTR", counter: iv, length: 128 \}/);
+  assert.match(source, /decryptSunoAudio\(encrypted, metadata\)/);
+  assert.match(source, /crypto\.subtle\.decrypt\(\{ name: "AES-CTR", counter: iv, length: 128 \}/);
   assert.match(script, /convertMediaFile\(\{/);
   assert.match(script, /format: "wav"/);
   assert.match(script, /downloadBlob\(audioBlob, fileName\)/);

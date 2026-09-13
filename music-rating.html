@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在瀏覽器內使用 APEX 模型分析目前音樂的音樂性、連貫性、記憶點、清晰度與自然度。" />
+    <title>歌曲評分 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/music-rating.css" />
+    <script type="module" src="./js/music-rating.js"></script>
+  </head>
+  <body class="rating-body">
+    <header class="rating-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SONG RATING</span></a>
+      <span class="local"><i></i>音樂只在瀏覽器內分析</span>
+    </header>
+
+    <main class="rating-main">
+      <section class="rating-heading">
+        <div>
+          <div class="eyebrow">APEX · AI MUSIC EVALUATION</div>
+          <h1>歌曲評分<span>。</span></h1>
+          <p>貼上公開的 Suno 分享連結，下載到瀏覽器後，從作品結構、音樂性、記憶點、混音與自然度提供參考分數。</p>
+        </div>
+        <span id="rating-engine" class="rating-engine">等待音樂</span>
+      </section>
+
+      <div class="rating-mode-switch" role="tablist" aria-label="歌曲評分模式">
+        <button class="active" type="button" role="tab" data-rating-mode="single" aria-selected="true">評分模式</button>
+        <button type="button" role="tab" data-rating-mode="compare" aria-selected="false">比較模式</button>
+      </div>
+
+      <section class="rating-workspace">
+        <article class="panel rating-source">
+          <div class="section-title"><span>01</span><h2 id="rating-source-title">Suno 分享連結</h2></div>
+          <form id="rating-source-form" class="rating-source-form">
+            <label class="field-label" for="rating-suno-url">公開分享連結</label>
+            <div class="rating-url-row">
+              <input id="rating-suno-url" class="text-input" type="url" inputmode="url" autocomplete="url" placeholder="https://suno.com/s/..." required />
+              <button id="rating-fetch" class="export-button" type="submit">取得音樂</button>
+            </div>
+            <p>支援 suno.com/s/… 與 suno.com/song/…；連結不會保存。</p>
+          </form>
+          <div id="rating-file" hidden>
+            <div class="rating-file-heading"><span aria-hidden="true">♫</span><div><strong id="rating-file-name"></strong><em id="rating-artist"></em><small id="rating-file-info"></small></div></div>
+            <audio id="rating-player" controls preload="metadata" aria-label="待評分音樂播放器"></audio>
+          </div>
+          <form id="rating-compare-form" class="rating-source-form" hidden>
+            <label class="field-label" for="rating-suno-url-a">歌曲 A</label>
+            <input id="rating-suno-url-a" class="text-input" type="url" inputmode="url" autocomplete="url" placeholder="https://suno.com/s/..." required />
+            <label class="field-label" for="rating-suno-url-b">歌曲 B</label>
+            <input id="rating-suno-url-b" class="text-input" type="url" inputmode="url" autocomplete="url" placeholder="https://suno.com/s/..." required />
+            <button id="rating-fetch-compare" class="export-button" type="submit">取得兩首音樂</button>
+            <p>兩個連結都不會保存；模型會在瀏覽器中依序分析。</p>
+          </form>
+          <div id="rating-compare-files" class="rating-compare-files" hidden>
+            <article><div class="rating-file-heading"><b>A</b><div><strong id="rating-file-name-a"></strong><em id="rating-artist-a"></em><small id="rating-file-info-a"></small></div></div><audio id="rating-player-a" controls preload="metadata" aria-label="歌曲 A 播放器"></audio></article>
+            <article><div class="rating-file-heading"><b>B</b><div><strong id="rating-file-name-b"></strong><em id="rating-artist-b"></em><small id="rating-file-info-b"></small></div></div><audio id="rating-player-b" controls preload="metadata" aria-label="歌曲 B 播放器"></audio></article>
+          </div>
+        </article>
+
+        <article class="panel rating-process">
+          <div class="section-title"><span>02</span><h2>AI 分析</h2></div>
+          <div class="rating-model"><strong>APEX 正式評分模型</strong><span>量化 MERT 音樂特徵模型約 117 MB，首次下載後保存在 IndexedDB。</span></div>
+          <button id="rating-start" class="export-button" type="button" disabled>開始歌曲評分</button>
+          <progress id="rating-progress" max="100" value="0" hidden></progress>
+          <div class="rating-progress-row"><span id="rating-status" role="status" aria-live="polite">請先貼上公開的 Suno 分享連結。</span><button id="rating-cancel" class="text-button" type="button" hidden>取消分析</button></div>
+          <p id="rating-error" class="rating-error" role="alert" hidden></p>
+        </article>
+      </section>
+
+      <section id="rating-results" class="panel rating-results" hidden>
+        <div class="section-title"><span>03</span><h2>評分結果</h2></div>
+        <div class="rating-summary">
+          <div class="rating-total" aria-label="綜合美學分數"><strong id="rating-total">—</strong><span>/ 100</span></div>
+          <div><div class="eyebrow">OVERALL AESTHETIC SCORE</div><h2 id="rating-verdict">分析完成</h2><p>綜合分數由下列五項 APEX 美學分數等權換算，反映模型對 AI 歌曲的預測，不代表客觀藝術價值。</p></div>
+        </div>
+        <div id="rating-metrics" class="rating-metrics"></div>
+        <div class="rating-popularity">
+          <div><span>串流吸引力</span><strong id="rating-streams">—</strong><small>/ 100</small></div>
+          <div><span>按讚傾向</span><strong id="rating-likes">—</strong><small>/ 100</small></div>
+          <p>受歡迎程度是依模型訓練資料預測的互動傾向，不是實際播放量或按讚數。</p>
+        </div>
+      </section>
+
+      <section id="rating-comparison" class="panel rating-results rating-comparison" hidden>
+        <div class="section-title"><span>03</span><h2>比較結果</h2></div>
+        <div class="comparison-summary"><span id="comparison-winner-mark">A</span><div><div class="eyebrow">HEAD TO HEAD</div><h2 id="comparison-winner">比較完成</h2><p id="comparison-summary-text"></p></div></div>
+        <div id="comparison-songs" class="comparison-songs"></div>
+        <div id="comparison-breakdown" class="comparison-breakdown"></div>
+      </section>
+
+      <section class="panel rating-notes">
+        <div><strong>瀏覽器評分</strong><span>Worker 只解析公開分享頁；音樂由瀏覽器取得，評分時不會再上傳。</span></div>
+        <div><strong>執行方式</strong><span>優先使用 WebGPU；模型不支援時會改用 WASM CPU。</span></div>
+        <div><strong>模型授權</strong><span>APEX 採 Apache-2.0；MERT 權重採 CC BY-NC 4.0，本功能供非商業使用。</span></div>
+      </section>
+    </main>
+  </body>
+</html>

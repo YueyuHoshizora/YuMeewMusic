@@ -28,6 +28,9 @@ export function cachedModelIdentity(key) {
   const text = String(key);
   try {
     const url = new URL(text);
+    if (url.hostname === 'model-proxy.yustellar.idv.tw' && url.pathname.startsWith('/models/')) {
+      return { id: 'yumeew:apex-music-rating', name: 'APEX 歌曲評分', source: 'APEX · MERT-v1-95M' };
+    }
     const parts = url.pathname.split('/').filter(Boolean);
     const resolveAt = parts.indexOf('resolve');
     if (url.hostname === 'huggingface.co' && resolveAt >= 2) {

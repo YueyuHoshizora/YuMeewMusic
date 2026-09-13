@@ -1272,6 +1272,16 @@ function characterTemplateText(characters) {
   }).filter(line => !line.endsWith("：")).join("\n");
 }
 
+function completeVideoPrompt(videoDetails = editorText($("video-prompt"))) {
+  return [videoDetails, characterTemplateText(referencedCharacters(videoDetails))].filter(Boolean).join("\n\n");
+}
+
+function openVideoPromptPreview() {
+  $("video-prompt-preview-text").textContent = completeVideoPrompt() || "目前尚未輸入題詞。";
+  $("video-prompt-preview-dialog").showModal();
+  $("video-prompt-preview-text").focus();
+}
+
 function referencedResources() {
   const tokens = [...$("video-prompt").querySelectorAll(".resource-token")];
   const ids = [...new Set(tokens.map(token => token.dataset.resourceId).filter(Boolean))];
@@ -1718,8 +1728,7 @@ async function generateVideo() {
   try {
     const generation = generationInputs(videoDetails);
     inputs = generation.resources;
-    const characters = generation.characters;
-    const prompt = [videoDetails, characterTemplateText(characters)].filter(Boolean).join("\n\n");
+    const prompt = completeVideoPrompt(videoDetails);
     setStatus(`正在建立 ${model.apiKey} 影片任務…`);
     const payload = await generationPayload(modelId, model, prompt, inputs, generationAbort.signal);
     if (model.provider === "byteplus") {
@@ -1775,6 +1784,8 @@ $("character-reference").addEventListener("change", event => showCharacterEditor
 $("character-editor-form").addEventListener("submit", submitCharacterEditor);
 $("cancel-character-editor").addEventListener("click", () => $("character-editor-dialog").close());
 $("delete-character").addEventListener("click", deleteEditingCharacter);
+$("preview-video-prompt").addEventListener("click", openVideoPromptPreview);
+$("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-preview-dialog").close());
 $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
 $("minimize-video-prompt-builder").addEventListener("click", minimizeVideoPromptBuilder);
 $("restore-video-prompt-builder").addEventListener("click", restoreVideoPromptBuilder);

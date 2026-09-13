@@ -31,6 +31,7 @@
         <div class="video-collapsible-content">
           <div class="video-prompt-field">
             <div class="video-prompt-heading">
+              <button id="preview-video-prompt" class="video-prompt-add video-prompt-preview-button" type="button">預覽題詞</button>
               <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
@@ -104,6 +105,16 @@
       <strong id="video-generation-lock-title">正在建立影片生成任務</strong>
       <p id="video-generation-lock-detail">請保持此頁面開啟，完成時間依服務狀態而定。</p>
     </div>
+
+    <dialog id="video-prompt-preview-dialog" class="reset-dialog video-prompt-preview-dialog" aria-labelledby="video-prompt-preview-title">
+      <div>
+        <h2 id="video-prompt-preview-title">目前題詞</h2>
+        <pre id="video-prompt-preview-text" class="video-prompt-preview-text" tabindex="0" aria-label="目前完整題詞"></pre>
+        <div class="dialog-actions">
+          <button id="close-video-prompt-preview" class="dialog-confirm" type="button">關閉</button>
+        </div>
+      </div>
+    </dialog>
 
     <dialog id="video-api-key-dialog" class="reset-dialog" aria-labelledby="video-api-key-dialog-title">
       <form id="video-api-key-form" method="dialog">

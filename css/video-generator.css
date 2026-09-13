@@ -18,7 +18,11 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-add:hover { background: color-mix(in srgb, var(--primary) 22%, var(--surface)); }
 .video-prompt-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .video-prompt-add:disabled { opacity: .5; cursor: default; }
+.video-prompt-preview-button { margin-right: auto; border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .video-character-template-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.video-prompt-preview-dialog { width: 860px; max-width: none; }
+.video-prompt-preview-dialog h2 { margin-bottom: 16px; }
+.video-prompt-preview-text { min-height: 280px; max-height: 62vh; overflow: auto; box-sizing: border-box; border: 1px solid var(--border); border-radius: 10px; padding: 16px; background: var(--surface); color: var(--foreground); font: 13px/1.75 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
 .character-template-dialog { width: min(960px, calc(100vw - 80px)); }
 .character-template-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .character-template-heading h2 { margin-bottom: 5px; }

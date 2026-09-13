@@ -21,6 +21,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
+  assert.match(html, /id="preview-video-prompt"[^>]*>預覽題詞<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
   assert.match(html, /id="video-resource-title">資源<\/h2>/);
@@ -29,6 +30,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-resource-list"/);
   assert.match(html, /id="resource-mention-menu"[^>]*aria-label="選擇資源"[^>]*hidden/);
   assert.match(html, /id="video-resource-preview-dialog"[^>]*aria-labelledby="video-resource-preview-title"/);
+  assert.match(html, /id="video-prompt-preview-dialog"[^>]*aria-labelledby="video-prompt-preview-title"[\s\S]*<pre id="video-prompt-preview-text"[^>]*aria-label="目前完整題詞"[\s\S]*id="close-video-prompt-preview"/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="add-character"[^>]*>＋ 新增人物<\/button>/);
   assert.match(html, /id="character-editor-dialog"[^>]*aria-labelledby="character-editor-title"/);
@@ -92,6 +94,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*1080px;[^}]*max-width:\s*none/);
+  assert.match(css, /\.video-prompt-preview-button\s*\{[^}]*margin-right:\s*auto/);
+  assert.match(css, /\.video-prompt-preview-text\s*\{[^}]*user-select:\s*text/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*220px/);
   assert.match(css, /\.resource-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*248px/);
@@ -157,6 +161,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /model\.provider === "google"[\s\S]*Google AI Studio Gemini API KEY/);
   assert.match(script, /RESOURCE_UPLOAD_URL = "https:\/\/model-proxy\.yustellar\.idv\.tw\/resources\/upload"/);
   assert.match(script, /function referencedCharacters\(videoDetails\)[\s\S]*videoDetails\.includes\(character\.name\)/);
+  assert.match(script, /function completeVideoPrompt\(videoDetails = editorText\(\$\("video-prompt"\)\)\)[\s\S]*characterTemplateText\(referencedCharacters\(videoDetails\)\)/);
+  assert.match(script, /function openVideoPromptPreview\(\)[\s\S]*video-prompt-preview-text"\)\.textContent = completeVideoPrompt\(\)[\s\S]*showModal\(\)/);
+  assert.match(script, /const prompt = completeVideoPrompt\(videoDetails\)/);
   assert.match(script, /function explainRejectedReference\(message, inputs\)[\s\S]*content\\\[\(\\d\+\)\\\][\s\S]*inputs\[contentIndex - 1\][\s\S]*圖片可能包含真人/);
   assert.match(script, /explainRejectedReference\(error\.message \|\| "影片生成失敗。", inputs\)/);
   assert.match(script, /function referencedResources\(\)[\s\S]*video-prompt"\)\.querySelectorAll\("\.resource-token"\)/);
@@ -218,8 +225,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
-  assert.match(script, /const generation = generationInputs\(videoDetails\);\s*inputs = generation\.resources;\s*const characters = generation\.characters;/);
-  assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(characters\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
+  assert.match(script, /const generation = generationInputs\(videoDetails\);\s*inputs = generation\.resources;\s*const prompt = completeVideoPrompt\(videoDetails\)/);
   assert.doesNotMatch(script, /saveStoredValue\("video-generation-resources"|loadStoredValue\("video-generation-resources"/);
   assert.match(script, /createResourceMention\(resource\)/);
   const mentionStart = script.indexOf("function createResourceMention(resource)");

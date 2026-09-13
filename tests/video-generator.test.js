@@ -63,7 +63,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*min\(820px, calc\(100vw - 80px\)\)/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(css, /\.character-template-item\s*\{[^}]*grid-template-columns:\s*72px minmax\(0, 1fr\)/);
+  assert.match(css, /\.character-template-list\s*\{[^}]*grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.character-template-item\s*\{[^}]*flex-direction:\s*column/);
+  assert.match(css, /\.character-template-item img,[\s\S]*?\.character-thumbnail-placeholder\s*\{[^}]*width:\s*100%[^}]*aspect-ratio:\s*4 \/ 5/);
+  assert.match(css, /\.character-template-item strong\s*\{[^}]*text-align:\s*center/);
   assert.match(globalCss, /\.dialog-confirm\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*background:\s*transparent/);
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /label\[for="video-prompt-action"\]\s*\{[^}]*align-self:\s*start/);

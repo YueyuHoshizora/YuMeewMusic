@@ -210,17 +210,49 @@ function downloadAudio() {
   $("suno-status").textContent = `WAV 已開始下載 · ${formatBytes(audioBlob.size)}`;
 }
 
-async function transcriptionWav() {
+async function decodeDownloadedAudio() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  if (!AudioContextClass || !OfflineContextClass) throw Error("此瀏覽器無法建立字幕辨識用音訊。");
+  if (!AudioContextClass) throw Error("此瀏覽器無法解析字幕辨識用音訊。");
   const context = new AudioContextClass();
-  let decoded;
-  try { decoded = await context.decodeAudioData(await audioBlob.arrayBuffer()); }
+  try { return await context.decodeAudioData(await audioBlob.arrayBuffer()); }
   finally { await context.close().catch(() => {}); }
-  const offline = new OfflineContextClass(1, Math.ceil(decoded.duration * 16000), 16000);
+}
+
+function separateVocals(buffer) {
+  return new Promise((resolve, reject) => {
+    const left = Float32Array.from(buffer.getChannelData(0));
+    const right = Float32Array.from(buffer.numberOfChannels > 1 ? buffer.getChannelData(1) : buffer.getChannelData(0));
+    const worker = new Worker(new URL("./vocal-separator-worker.js", import.meta.url), { type: "module" });
+    const finish = (callback, value) => { worker.terminate(); callback(value); };
+    worker.addEventListener("error", event => finish(reject, Error(event.message || "Spleeter 處理程序發生錯誤。")), { once: true });
+    worker.addEventListener("message", event => {
+      const data = event.data || {};
+      if (data.type === "status" || data.type === "gpu-fallback") $("suno-status").textContent = data.text;
+      else if (data.type === "progress") {
+        $("suno-progress").value = Math.max(3, Math.min(55, data.value * .55));
+        $("suno-status").textContent = data.text || "正在分離人聲…";
+      } else if (data.type === "complete") finish(resolve, data);
+      else if (data.type === "error") finish(reject, Error(data.text || "Spleeter 無法產生人聲。"));
+    });
+    worker.postMessage({ type: "separate", mode: "fast", model: "spleeter", left: left.buffer, right: right.buffer }, [left.buffer, right.buffer]);
+  });
+}
+
+async function transcriptionWav() {
+  const decoded = await decodeDownloadedAudio();
+  $("suno-status").textContent = "正在使用 Spleeter 分離人聲；模型會使用 IndexedDB 快取…";
+  const separated = await separateVocals(decoded);
+  if (!(separated.vocalsLeft instanceof Float32Array) || !(separated.vocalsRight instanceof Float32Array))
+    throw Error("Spleeter 沒有產生可用的人聲軌道。");
+  const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!OfflineContextClass) throw Error("此瀏覽器無法建立字幕辨識用的 16 kHz 音訊。");
+  const length = Math.min(separated.vocalsLeft.length, separated.vocalsRight.length);
+  const vocals = new AudioBuffer({ length, numberOfChannels: 2, sampleRate: decoded.sampleRate });
+  vocals.copyToChannel(separated.vocalsLeft.subarray(0, length), 0);
+  vocals.copyToChannel(separated.vocalsRight.subarray(0, length), 1);
+  const offline = new OfflineContextClass(1, Math.ceil(vocals.duration * 16000), 16000);
   const source = offline.createBufferSource();
-  source.buffer = decoded;
+  source.buffer = vocals;
   source.connect(offline.destination);
   source.start();
   const buffer = await offline.startRendering();
@@ -231,7 +263,7 @@ async function transcriptionWav() {
     resolution: "1080",
     fps: "60",
     signal: new AbortController().signal,
-    onProgress(value) { $("suno-progress").value = 15 + value * .25; },
+    onProgress(value) { $("suno-progress").value = 56 + value * .14; },
   });
   return { wav, duration: buffer.duration };
 }
@@ -246,10 +278,10 @@ async function downloadSrt() {
   setError();
   $("suno-srt-download").textContent = "正在產生…";
   $("suno-progress").value = 10;
-  $("suno-status").textContent = "正在建立單聲道、16 kHz、16-bit PCM 辨識音訊…";
+  $("suno-status").textContent = "正在準備 Spleeter 人聲分離…";
   try {
     const { wav, duration } = await transcriptionWav();
-    $("suno-progress").value = 45;
+    $("suno-progress").value = 72;
     $("suno-status").textContent = "正在依照 Suno 公開歌詞產生字幕時間碼…";
     const form = new FormData();
     form.append("audio", wav, fileName.replace(/\.wav$/i, "-subtitle.wav"));

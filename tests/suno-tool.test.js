@@ -21,6 +21,8 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
   assert.match(script, /decryptSunoAudio\(m4aBlob, result\)/);
   assert.match(script, /lyrics-transcriber\.yustellar\.idv\.tw/);
+  assert.match(script, /new Worker\(new URL\("\.\/vocal-separator-worker\.js", import\.meta\.url\)/);
+  assert.match(script, /model: "spleeter"/);
   assert.match(script, /form\.append\("lyrics", lyricsForAlignment\(lyrics\)\)/);
   assert.match(script, /!\/\^\\\[\[\^\\\]\]\+\\\]\$\/\.test\(line\)/);
   assert.match(script, /line\.replace\(\/\\\(\[\^\)\]\*\\\)\|（\[\^）\]\*）\/g, ""\)/);

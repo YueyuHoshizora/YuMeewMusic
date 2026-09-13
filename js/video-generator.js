@@ -1084,6 +1084,14 @@ function apiError(body, fallback = "", provider = "minimax") {
   return fallback ? message || fallback : "";
 }
 
+function explainRejectedReference(message, inputs) {
+  if (!/may contain real person/i.test(message)) return message;
+  const contentIndex = Number(message.match(/content\[(\d+)\]/i)?.[1]);
+  const input = Number.isInteger(contentIndex) && contentIndex > 0 ? inputs[contentIndex - 1] : null;
+  const reference = input?.referenceName || (Number.isInteger(contentIndex) ? `content[${contentIndex}]` : "其中一張參考圖片");
+  return `BytePlus 拒絕了 ${reference}，因為圖片可能包含真人。請移除該引用，或改用不含真人的參考圖後再試。`;
+}
+
 async function fetchJson(url, options, provider = "minimax") {
   const response = await fetch(url, options);
   let body;
@@ -1237,10 +1245,13 @@ async function generateVideo() {
   showError();
   setBusy(true);
   generationAbort = new AbortController();
+  let inputs = [];
   $("video-generation-lock-title").textContent = "正在建立影片生成任務";
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
-    const { resources: inputs, characters } = generationInputs(videoDetails);
+    const generation = generationInputs(videoDetails);
+    inputs = generation.resources;
+    const characters = generation.characters;
     const prompt = [videoDetails, characterTemplateText(characters)].filter(Boolean).join("\n\n");
     setStatus(`正在建立 ${model.apiKey} 影片任務…`);
     const payload = await generationPayload(modelId, model, prompt, inputs, generationAbort.signal);
@@ -1269,7 +1280,7 @@ async function generateVideo() {
     if (error?.name !== "AbortError") {
       const message = error instanceof TypeError
         ? "瀏覽器無法連線至影片生成服務，請稍後再試。"
-        : error.message || "影片生成失敗。";
+        : explainRejectedReference(error.message || "影片生成失敗。", inputs);
       showError(message);
       setStatus("影片生成失敗", "error");
     }

@@ -119,6 +119,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /model\.provider === "google"[\s\S]*Google AI Studio Gemini API KEY/);
   assert.match(script, /RESOURCE_UPLOAD_URL = "https:\/\/model-proxy\.yustellar\.idv\.tw\/resources\/upload"/);
   assert.match(script, /function referencedCharacters\(videoDetails\)[\s\S]*videoDetails\.includes\(character\.name\)/);
+  assert.match(script, /function explainRejectedReference\(message, inputs\)[\s\S]*content\\\[\(\\d\+\)\\\][\s\S]*inputs\[contentIndex - 1\][\s\S]*圖片可能包含真人/);
+  assert.match(script, /explainRejectedReference\(error\.message \|\| "影片生成失敗。", inputs\)/);
   assert.match(script, /function referencedResources\(\)[\s\S]*video-prompt"\)\.querySelectorAll\("\.resource-token"\)/);
   assert.match(script, /referenceName: `人物「\$\{character\.name\}」`/);
   assert.match(script, /async function uploadGenerationInputs\(inputs, signal\)/);
@@ -178,7 +180,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
-  assert.match(script, /const \{ resources: inputs, characters \} = generationInputs\(videoDetails\)/);
+  assert.match(script, /const generation = generationInputs\(videoDetails\);\s*inputs = generation\.resources;\s*const characters = generation\.characters;/);
   assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(characters\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
   assert.doesNotMatch(script, /saveStoredValue\("video-generation-resources"|loadStoredValue\("video-generation-resources"/);
   assert.match(script, /createResourceMention\(resource\)/);

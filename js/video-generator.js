@@ -16,6 +16,7 @@ const GOOGLE_VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/google/vide
 const GOOGLE_CREATE_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/generate`;
 const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
 const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
+const RESOURCE_UPLOAD_URL = "https://model-proxy.yustellar.idv.tw/resources/upload";
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
@@ -52,6 +53,7 @@ let activeResourcePreviewUrl = "";
 let resourceMentionTarget = null;
 let resourceMentionMatch = null;
 let resourceMentionActiveIndex = 0;
+const uploadedResourceCache = new WeakMap();
 
 function editorText(editor) {
   return String(editor?.innerText || editor?.textContent || "").replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
@@ -764,10 +766,16 @@ async function restoreCharacterTemplates() {
   } catch {}
 }
 
-function characterTemplateText() {
-  const enabledCharacters = characterTemplates.filter(character => character.enabled !== false);
-  if (!enabledCharacters.length) return "";
-  return enabledCharacters.map((character, index) => {
+function referencedCharacters(videoDetails) {
+  return characterTemplates.filter(character => character.enabled !== false
+    && character.name
+    && character.referenceImage
+    && videoDetails.includes(character.name));
+}
+
+function characterTemplateText(characters) {
+  if (!characters.length) return "";
+  return characters.map((character, index) => {
     const fields = [
       ["名字", character.name],
       ["聲線", character.voice],
@@ -777,6 +785,156 @@ function characterTemplateText() {
     ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
     return `人物 ${index + 1}：${fields}`;
   }).filter(line => !line.endsWith("：")).join("\n");
+}
+
+function referencedResources() {
+  const tokens = [...$("video-prompt").querySelectorAll(".resource-token")];
+  const ids = [...new Set(tokens.map(token => token.dataset.resourceId).filter(Boolean))];
+  const missing = ids.filter(id => !videoResources.some(resource => resource.id === id));
+  if (missing.length) throw Error("影片細節中有引用已刪除的資源，請先移除紅色引用標籤。");
+  return ids.map(id => videoResources.find(resource => resource.id === id));
+}
+
+function generationInputs(videoDetails) {
+  const resources = referencedResources().map(resource => ({
+    kind: resource.kind,
+    file: resource.file,
+    referenceName: `@${resource.referenceName}`,
+    duration: resource.duration,
+  }));
+  const characters = referencedCharacters(videoDetails);
+  resources.push(...characters.map(character => ({
+    kind: "image",
+    file: character.referenceImage,
+    referenceName: `人物「${character.name}」`,
+    duration: null,
+  })));
+  return { resources, characters };
+}
+
+function resourceMimeType(input) {
+  if (input.file.type) return input.file.type;
+  const extension = String(input.file.name || "").split(".").pop()?.toLowerCase();
+  const mimeTypes = {
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", heic: "image/heic", heif: "image/heif",
+    mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", aac: "audio/aac", flac: "audio/flac", ogg: "audio/ogg", opus: "audio/ogg",
+    mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", m4v: "video/x-m4v", mkv: "video/x-matroska",
+  };
+  return mimeTypes[extension] || `${input.kind}/octet-stream`;
+}
+
+function validateGenerationInputs(modelId, model, inputs) {
+  if (!inputs.length) return;
+  const counts = kind => inputs.filter(input => input.kind === kind).length;
+  if (model.provider === "google") {
+    if (inputs.some(input => input.kind !== "image")) throw Error("Veo 3.1 目前只接受圖片資源，請移除音頻與影片引用。");
+    if (inputs.length > 3) throw Error("Veo 3.1 最多可使用 3 張引用圖片（包含人物參考圖）。");
+    const totalBytes = inputs.reduce((sum, input) => sum + input.file.size, 0);
+    if (totalBytes > 18 * 1024 * 1024) throw Error("Veo 3.1 引用圖片合計不可超過 18 MB，請縮小圖片後再試。");
+    return;
+  }
+  if (modelId === "MiniMax-H3-Max") {
+    if (inputs.length !== 1 || inputs[0].kind !== "image") throw Error("MiniMax H3 Max 只支援 1 張圖片作為首幀；多張圖片、音頻與影片引用請改用 MiniMax H3。");
+    return;
+  }
+  if (counts("image") > 9) throw Error(`${model.label} 最多可使用 9 張引用圖片（包含人物參考圖）。`);
+  if (counts("video") > 3) throw Error(`${model.label} 最多可使用 3 個引用影片。`);
+  if (counts("audio") > 3) throw Error(`${model.label} 最多可使用 3 個引用音頻。`);
+  for (const input of inputs) {
+    const maximum = input.kind === "image" ? 30 : input.kind === "audio" ? 15 : 50;
+    if (input.file.size > maximum * 1024 * 1024) throw Error(`${input.referenceName} 超過 ${maximum} MB 的模型輸入限制。`);
+    if (model.provider === "minimax" && input.kind !== "image" && Number.isFinite(input.duration) && (input.duration < 2 || input.duration > 15)) {
+      throw Error(`${input.referenceName} 長度必須介於 2～15 秒。`);
+    }
+  }
+}
+
+function referenceGuide(inputs) {
+  const counters = { image: 0, audio: 0, video: 0 };
+  const labels = { image: "張參考圖片", audio: "個參考音頻", video: "個參考影片" };
+  if (!inputs.length) return "";
+  return `參考素材對應：${inputs.map(input => {
+    counters[input.kind] += 1;
+    return `第 ${counters[input.kind]} ${labels[input.kind]}是 ${input.referenceName}`;
+  }).join("；")}`;
+}
+
+function fileBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || "").split(",", 2)[1] || "");
+    reader.onerror = () => reject(Error(`無法讀取 ${file.name || "引用圖片"}。`));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadGenerationInputs(inputs, signal) {
+  const urls = [];
+  for (let index = 0; index < inputs.length; index += 1) {
+    const input = inputs[index];
+    const cached = uploadedResourceCache.get(input.file);
+    if (cached?.expiresAt > Date.now() + 5 * 60 * 1000) {
+      urls.push(cached.url);
+      continue;
+    }
+    $("video-generation-lock-title").textContent = "正在上傳引用資源";
+    $("video-generation-lock-detail").textContent = `${index + 1}／${inputs.length} · ${input.referenceName}`;
+    setStatus(`正在上傳引用資源 ${index + 1}／${inputs.length}…`);
+    const uploadUrl = `${RESOURCE_UPLOAD_URL}?name=${encodeURIComponent(input.file.name || input.referenceName)}`;
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      headers: { "Content-Type": resourceMimeType(input) },
+      body: input.file,
+      cache: "no-store",
+      signal,
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok || !body.url) throw Error(body.message || body.error || `${input.referenceName} 上傳失敗（${response.status}）。`);
+    const uploaded = { url: body.url, expiresAt: Number(body.expiresAt) || Date.now() + 60 * 60 * 1000 };
+    uploadedResourceCache.set(input.file, uploaded);
+    urls.push(uploaded.url);
+  }
+  return urls;
+}
+
+async function generationPayload(modelId, model, prompt, inputs, signal) {
+  validateGenerationInputs(modelId, model, inputs);
+  const guidedPrompt = [prompt, referenceGuide(inputs)].filter(Boolean).join("\n\n");
+  const duration = model.provider === "google" && inputs.length ? 8 : Number($("video-duration").value);
+  if (model.provider === "google") {
+    if (inputs.length) $("video-duration").value = "8";
+    const referenceImages = await Promise.all(inputs.map(async input => ({
+      image: { inlineData: { mimeType: resourceMimeType(input), data: await fileBase64(input.file) } },
+      referenceType: "asset",
+    })));
+    return {
+      model: modelId,
+      instances: [{ prompt: guidedPrompt, ...(referenceImages.length ? { referenceImages } : {}) }],
+      parameters: {
+        sampleCount: 1,
+        resolution: $("video-resolution").value,
+        durationSeconds: duration,
+        aspectRatio: $("video-ratio").value,
+      },
+    };
+  }
+
+  const urls = await uploadGenerationInputs(inputs, signal);
+  const content = [{ type: "text", text: guidedPrompt }, ...inputs.map((input, index) => {
+    const type = `${input.kind}_url`;
+    return {
+      type,
+      [type]: { url: urls[index] },
+      role: modelId === "MiniMax-H3-Max" ? "first_frame" : `reference_${input.kind}`,
+    };
+  })];
+  return {
+    model: modelId,
+    content,
+    resolution: $("video-resolution").value,
+    duration,
+    ratio: modelId === "MiniMax-H3-Max" && inputs.length ? "adaptive" : $("video-ratio").value,
+  };
 }
 
 function replaceOptions(select, values, selected) {
@@ -1052,7 +1210,6 @@ function videoFilename(date = new Date()) {
 
 async function generateVideo() {
   const videoDetails = editorText($("video-prompt"));
-  const prompt = [videoDetails, characterTemplateText()].filter(Boolean).join("\n\n");
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const apiKey = getApiKey(modelId)?.value || "";
@@ -1063,23 +1220,10 @@ async function generateVideo() {
   $("video-generation-lock-title").textContent = "正在建立影片生成任務";
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
+    const { resources: inputs, characters } = generationInputs(videoDetails);
+    const prompt = [videoDetails, characterTemplateText(characters)].filter(Boolean).join("\n\n");
     setStatus(`正在建立 ${model.apiKey} 影片任務…`);
-    const payload = model.provider === "google" ? {
-      model: modelId,
-      instances: [{ prompt }],
-      parameters: {
-        sampleCount: 1,
-        resolution: $("video-resolution").value,
-        durationSeconds: Number($("video-duration").value),
-        aspectRatio: $("video-ratio").value,
-      },
-    } : {
-      model: modelId,
-      content: [{ type: "text", text: prompt }],
-      resolution: $("video-resolution").value,
-      duration: Number($("video-duration").value),
-      ratio: $("video-ratio").value,
-    };
+    const payload = await generationPayload(modelId, model, prompt, inputs, generationAbort.signal);
     if (model.provider === "byteplus") {
       payload.generate_audio = true;
       payload.watermark = false;

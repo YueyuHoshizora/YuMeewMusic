@@ -23,6 +23,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="open-video-prompt-builder"[^>]*>加入分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
   assert.match(html, /id="video-resource-title">資源<\/h2>/);
+  assert.match(html, /生成時只會暫存實際引用的資源，2 小時後自動刪除/);
   assert.match(html, /id="video-resource-input"[^>]*accept="image\/\*,audio\/\*,video\/\*"[^>]*multiple/);
   assert.match(html, /id="video-resource-list"/);
   assert.match(html, /id="resource-mention-menu"[^>]*aria-label="選擇資源"[^>]*hidden/);
@@ -109,7 +110,16 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /model\.durations \|\| Array\.from/);
   assert.match(script, /const ratios = model\.ratios \|\| VIDEO_RATIOS/);
   assert.match(script, /model\.provider === "google"[\s\S]*Google AI Studio Gemini API KEY/);
-  assert.match(script, /content: \[\{ type: "text", text: prompt \}\]/);
+  assert.match(script, /RESOURCE_UPLOAD_URL = "https:\/\/model-proxy\.yustellar\.idv\.tw\/resources\/upload"/);
+  assert.match(script, /function referencedCharacters\(videoDetails\)[\s\S]*videoDetails\.includes\(character\.name\)/);
+  assert.match(script, /function referencedResources\(\)[\s\S]*video-prompt"\)\.querySelectorAll\("\.resource-token"\)/);
+  assert.match(script, /referenceName: `人物「\$\{character\.name\}」`/);
+  assert.match(script, /async function uploadGenerationInputs\(inputs, signal\)/);
+  assert.match(script, /body: input\.file/);
+  assert.match(script, /role: modelId === "MiniMax-H3-Max" \? "first_frame" : `reference_\$\{input\.kind\}`/);
+  assert.match(script, /referenceImages = await Promise\.all/);
+  assert.match(script, /image: \{ inlineData: \{ mimeType: resourceMimeType\(input\), data: await fileBase64\(input\.file\) \} \}/);
+  assert.match(script, /Veo 3\.1 最多可使用 3 張引用圖片（包含人物參考圖）/);
   assert.doesNotMatch(script, /AUTOCOMPLETE_URL|requestCompletedPrompt|enhance-video-prompt/);
   assert.match(script, /JSON\.stringify\(\{ apiKey, taskId \}\)/);
   assert.match(script, /body: JSON\.stringify\(\{\s*apiKey,\s*payload,/);
@@ -131,7 +141,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /task\.response\?\.generateVideoResponse\?\.generatedSamples\?\.\[0\]\?\.video\?\.uri/);
   assert.match(script, /payload\.generate_audio = true/);
   assert.match(script, /payload\.watermark = false/);
-  assert.match(script, /instances: \[\{ prompt \}\][\s\S]*sampleCount: 1[\s\S]*durationSeconds:[\s\S]*aspectRatio:/);
+  assert.match(script, /instances: \[\{ prompt: guidedPrompt,[\s\S]*sampleCount: 1[\s\S]*durationSeconds:[\s\S]*aspectRatio:/);
   assert.match(script, /provider === "google" \? \{ apiKey \} : \{\}/);
   assert.match(script, /generate-video"\)\.addEventListener\("click", openGenerateConfirmation\)/);
   assert.match(script, /confirm-video-generation-form"\)\.addEventListener\("submit", confirmVideoGeneration\)/);
@@ -158,7 +168,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
-  assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
+  assert.match(script, /const \{ resources: inputs, characters \} = generationInputs\(videoDetails\)/);
+  assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(characters\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
   assert.doesNotMatch(script, /saveStoredValue\("video-generation-resources"|loadStoredValue\("video-generation-resources"/);
   assert.match(script, /createResourceMention\(resource\)/);
   const mentionStart = script.indexOf("function createResourceMention(resource)");

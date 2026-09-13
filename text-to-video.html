@@ -27,7 +27,7 @@
         <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待輸入影片描述</span>
       </section>
 
-      <section class="panel prompt-panel">
+      <section class="panel prompt-panel video-description-panel">
         <div class="video-prompt-field">
           <div class="video-prompt-heading">
             <label class="field-label" for="video-prompt">影片描述</label>
@@ -35,6 +35,10 @@
           </div>
           <textarea id="video-prompt" placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></textarea>
         </div>
+      </section>
+
+      <section class="panel prompt-panel video-settings-panel">
+        <h2 class="video-settings-title">生成設定</h2>
         <div class="video-output-options">
           <label for="video-resolution"><span>解析度</span><select id="video-resolution" class="setting-select"><option value="768P" selected>768P</option><option value="2K">2K</option></select></label>
           <label for="video-duration"><span>影片長度</span><select id="video-duration" class="setting-select"></select></label>

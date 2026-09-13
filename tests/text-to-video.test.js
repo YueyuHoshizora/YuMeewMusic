@@ -14,6 +14,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<textarea id="video-prompt"/);
+  assert.match(html, /class="panel prompt-panel video-description-panel">[\s\S]*id="video-prompt"[\s\S]*<\/section>\s*<section class="panel prompt-panel video-settings-panel">/);
+  assert.match(html, /<h2 class="video-settings-title">生成設定<\/h2>/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>＋<\/button>/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
@@ -43,7 +45,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(css, /#video-prompt\s*\{[^}]*height:\s*224px/);
   assert.match(css, /body\.text-to-video-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
   assert.doesNotMatch(css, /@media \(max-width:/);
-  assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*12px 0 28px/);
+  assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
+  assert.match(css, /\.video-settings-title\s*\{[^}]*margin:\s*0 0 18px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
   assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}\\n\\n` : `\$\{block\}\\n\\n`/);

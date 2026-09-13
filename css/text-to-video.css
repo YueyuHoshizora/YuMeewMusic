@@ -1,6 +1,8 @@
 body.text-to-video-body { min-width: 1280px; overflow-x: auto; }
 #video-model { display: block; width: 100%; }
-.video-prompt-field { margin: 12px 0 28px; }
+.video-description-panel { margin-bottom: 22px; }
+.video-prompt-field { margin: 0; }
+.video-settings-title { margin: 0 0 18px; color: var(--foreground); font-size: 17px; }
 .video-prompt-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
 .video-prompt-field .field-label { display: block; margin: 0; }
 .video-prompt-add { display: grid; place-items: center; width: 32px; height: 32px; flex: 0 0 auto; border: 1px solid var(--primary); border-radius: 8px; background: color-mix(in srgb, var(--primary) 12%, var(--surface)); color: var(--primary); font: inherit; font-size: 22px; line-height: 1; cursor: pointer; }
@@ -10,7 +12,7 @@ body.text-to-video-body { min-width: 1280px; overflow-x: auto; }
 #video-prompt { display: block; width: 100%; height: 224px; resize: vertical; box-sizing: border-box; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; line-height: 1.7; }
 #video-prompt::placeholder { color: var(--muted); }
 #video-prompt:focus { border-color: var(--primary); outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent); }
-.video-output-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+.video-output-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 0; }
 .video-output-options label { display: grid; gap: 7px; color: var(--foreground); font-size: 12px; font-weight: 700; }
 .video-output-options select { width: 100%; }
 .reset-dialog #video-api-key-source,

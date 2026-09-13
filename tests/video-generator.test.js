@@ -20,7 +20,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
-  assert.match(html, /id="open-video-prompt-builder"[^>]*>增加場景<\/button>/);
+  assert.match(html, /id="open-video-prompt-builder"[^>]*>加入分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="add-character"[^>]*>＋ 新增人物<\/button>/);
@@ -30,6 +30,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /參考圖（必填）[\s\S]*id="character-reference"[^>]*required/);
   assert.match(html, /id="character-reference"[\s\S]*id="character-voice"[\s\S]*id="character-tone"[\s\S]*id="character-style"[\s\S]*id="character-clothing"/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
+  assert.match(html, /<h2 id="video-prompt-builder-title">分鏡內容<\/h2>/);
   assert.match(html, /id="video-prompt-builder-form"[\s\S]*<button class="dialog-confirm" type="submit">加入分鏡<\/button>/);
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);

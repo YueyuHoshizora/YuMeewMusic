@@ -87,31 +87,64 @@ function submitVideoPromptBuilder(event) {
 async function persistCharacterTemplates() {
   if (characterTemplates.length) await saveStoredValue("video-character-templates", { characters: characterTemplates, updatedAt: Date.now() });
   else await deleteStoredValue("video-character-templates");
-  $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
+  syncCharacterTemplateButton();
 }
 
 function createCharacterThumbnail(character, index) {
-  const button = document.createElement("button");
-  button.className = "character-template-item";
-  button.type = "button";
+  const card = document.createElement("article");
+  card.className = `character-template-item${character.enabled === false ? " disabled" : ""}`;
+  const editButton = document.createElement("button");
+  editButton.className = "character-template-edit";
+  editButton.type = "button";
+  editButton.setAttribute("aria-label", `編輯人物「${character.name || `人物 ${index + 1}`}」`);
   if (character.referenceImage) {
     const image = document.createElement("img");
     const url = URL.createObjectURL(character.referenceImage);
     characterPreviewUrls.add(url);
     image.src = url;
     image.alt = "";
-    button.append(image);
+    editButton.append(image);
   } else {
     const placeholder = document.createElement("span");
     placeholder.className = "character-thumbnail-placeholder";
     placeholder.textContent = (character.name || "人").slice(0, 1);
-    button.append(placeholder);
+    editButton.append(placeholder);
   }
   const name = document.createElement("strong");
   name.textContent = character.name || `人物 ${index + 1}`;
-  button.append(name);
-  button.addEventListener("click", () => openCharacterEditor(index));
-  return button;
+  editButton.append(name);
+  editButton.addEventListener("click", () => openCharacterEditor(index));
+  const toggle = document.createElement("button");
+  toggle.className = "character-template-toggle";
+  toggle.type = "button";
+  toggle.setAttribute("aria-pressed", String(character.enabled !== false));
+  toggle.textContent = character.enabled === false ? "啟用" : "禁用";
+  toggle.addEventListener("click", () => void toggleCharacterTemplate(index));
+  card.append(editButton, toggle);
+  return card;
+}
+
+function syncCharacterTemplateButton() {
+  const enabledCount = characterTemplates.filter(character => character.enabled !== false).length;
+  $("open-character-template").textContent = characterTemplates.length
+    ? `人物模板 (啟用 ${enabledCount}/${characterTemplates.length})`
+    : "人物模板";
+}
+
+async function toggleCharacterTemplate(index) {
+  const character = characterTemplates[index];
+  if (!character) return;
+  const previous = character.enabled !== false;
+  character.enabled = !previous;
+  renderCharacterTemplates();
+  try {
+    await persistCharacterTemplates();
+    setStatus(`已${character.enabled ? "啟用" : "停用"}人物「${character.name}」`, "success");
+  } catch {
+    character.enabled = previous;
+    renderCharacterTemplates();
+    setStatus("人物啟用狀態無法保存到瀏覽器", "error");
+  }
 }
 
 function renderCharacterTemplates() {
@@ -119,7 +152,7 @@ function renderCharacterTemplates() {
   characterPreviewUrls.clear();
   $("character-template-list").replaceChildren(...characterTemplates.map(createCharacterThumbnail));
   $("character-template-empty").hidden = Boolean(characterTemplates.length);
-  $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
+  syncCharacterTemplateButton();
 }
 
 function showCharacterEditorReference(file) {
@@ -168,6 +201,7 @@ async function submitCharacterEditor(event) {
     tone: $("character-tone").value.trim(),
     voice: $("character-voice").value.trim(),
     clothing: $("character-clothing").value.trim(),
+    enabled: editingCharacterIndex >= 0 ? characterTemplates[editingCharacterIndex]?.enabled !== false : false,
   };
   if (!character.name || !character.referenceImage) {
     $("character-reference").setCustomValidity(character.referenceImage ? "" : "請選擇人物參考圖。");
@@ -206,14 +240,15 @@ async function restoreCharacterTemplates() {
   try {
     const stored = await loadStoredValue("video-character-templates");
     if (!Array.isArray(stored?.characters)) return;
-    characterTemplates = stored.characters;
+    characterTemplates = stored.characters.map(character => ({ ...character, enabled: character.enabled !== false }));
     renderCharacterTemplates();
   } catch {}
 }
 
 function characterTemplateText() {
-  if (!characterTemplates.length) return "";
-  return characterTemplates.map((character, index) => {
+  const enabledCharacters = characterTemplates.filter(character => character.enabled !== false);
+  if (!enabledCharacters.length) return "";
+  return enabledCharacters.map((character, index) => {
     const fields = [
       ["名字", character.name],
       ["聲線", character.voice],

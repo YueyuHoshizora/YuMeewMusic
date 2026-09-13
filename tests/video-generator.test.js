@@ -65,8 +65,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-template-list\s*\{[^}]*grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-template-item\s*\{[^}]*flex-direction:\s*column/);
-  assert.match(css, /\.character-template-item img,[\s\S]*?\.character-thumbnail-placeholder\s*\{[^}]*width:\s*100%[^}]*aspect-ratio:\s*4 \/ 5/);
-  assert.match(css, /\.character-template-item strong\s*\{[^}]*text-align:\s*center/);
+  assert.match(css, /\.character-template-edit img,[\s\S]*?\.character-thumbnail-placeholder\s*\{[^}]*width:\s*100%[^}]*aspect-ratio:\s*4 \/ 5/);
+  assert.match(css, /\.character-template-edit strong\s*\{[^}]*text-align:\s*center/);
+  assert.match(css, /\.character-template-toggle\[aria-pressed="false"\]/);
   assert.match(globalCss, /\.dialog-confirm\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*background:\s*transparent/);
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /label\[for="video-prompt-action"\]\s*\{[^}]*align-self:\s*start/);
@@ -120,7 +121,11 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /saveStoredValue\("video-character-templates", \{ characters: characterTemplates, updatedAt: Date\.now\(\) \}\)/);
   assert.match(script, /loadStoredValue\("video-character-templates"\)/);
   assert.match(script, /window\.confirm\(`確定刪除「\$\{name\}」？刪除後將同步移除保存的人物模板。`\)/);
-  assert.match(script, /button\.addEventListener\("click", \(\) => openCharacterEditor\(index\)\)/);
+  assert.match(script, /editButton\.addEventListener\("click", \(\) => openCharacterEditor\(index\)\)/);
+  assert.match(script, /toggle\.addEventListener\("click", \(\) => void toggleCharacterTemplate\(index\)\)/);
+  assert.match(script, /toggle\.textContent = character\.enabled === false \? "啟用" : "禁用"/);
+  assert.match(script, /enabled:\s*editingCharacterIndex >= 0 \? characterTemplates\[editingCharacterIndex\]\?\.enabled !== false : false/);
+  assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false\)/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
   assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);

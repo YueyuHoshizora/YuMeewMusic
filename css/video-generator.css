@@ -24,12 +24,17 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .character-template-heading h2 { margin-bottom: 5px; }
 .character-template-heading p { font-size: 13px; }
 .character-template-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
-.character-template-item { display: flex; min-width: 0; flex-direction: column; align-items: stretch; gap: 10px; border: 1px solid var(--border); border-radius: 11px; padding: 10px; background: var(--surface); color: var(--foreground); font: inherit; cursor: pointer; }
-.character-template-item:hover { border-color: var(--primary); background: var(--hover); }
-.character-template-item:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.character-template-item img,
+.character-template-item { display: flex; min-width: 0; flex-direction: column; align-items: stretch; gap: 10px; border: 1px solid var(--border); border-radius: 11px; padding: 10px; background: var(--surface); color: var(--foreground); }
+.character-template-item:hover { border-color: var(--primary); }
+.character-template-edit { display: flex; min-width: 0; flex-direction: column; align-items: stretch; gap: 10px; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.character-template-edit:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.character-template-edit img,
 .character-thumbnail-placeholder { display: grid; width: 100%; aspect-ratio: 4 / 5; place-items: center; overflow: hidden; border-radius: 8px; background: var(--tint); color: var(--primary-text); font-size: 30px; object-fit: cover; }
-.character-template-item strong { overflow: hidden; font-size: 14px; line-height: 1.35; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.character-template-edit strong { overflow: hidden; font-size: 14px; line-height: 1.35; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.character-template-toggle { width: 100%; border: 1px solid var(--primary); border-radius: 7px; padding: 6px 8px; background: transparent; color: var(--primary-text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.character-template-toggle:hover { background: var(--tint); }
+.character-template-toggle[aria-pressed="false"] { border-color: var(--border); color: var(--muted); }
+.character-template-item.disabled .character-template-edit { opacity: .5; filter: grayscale(.7); }
 .character-editor-dialog { width: min(760px, calc(100vw - 80px)); }
 .character-editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin-top: 18px; }
 .character-editor-fields label { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 12px; font-weight: 700; }

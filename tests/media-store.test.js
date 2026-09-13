@@ -123,7 +123,7 @@ test("media cache entries identify their page and field and can be cleared", asy
   assert.equal(entries.find(entry => entry.key === "audio").field, "音樂檔案");
   assert.equal(entries.find(entry => entry.key === "generated-image").page, "文生圖");
   assert.equal(entries.find(entry => entry.key === "generated-image").size, generated.size);
-  assert.equal(entries.find(entry => entry.key === "generated-video").page, "文生影");
+  assert.equal(entries.find(entry => entry.key === "generated-video").page, "影像產生器");
   await deleteStoredEntry("audio", database);
   entries = await listStoredEntries(database);
   assert.deepEqual(entries.map(entry => entry.key), ["generated-image", "generated-video"]);

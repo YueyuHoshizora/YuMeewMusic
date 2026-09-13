@@ -10,7 +10,7 @@
 
 主畫面頂部的「文生圖」會開啟獨立的 AI 圖片生成頁面。模型選單目前預設為 Flux.2 Klein 4B（`flux-2-klein-4b`），其 API KEY 類型顯示為 `Free`；各模型透過獨立的 call function 對應其後端呼叫方式，方便後續加入採用不同 API 的模型。使用者可先輸入多個詞，以 POST JSON 的 `prompt` 欄位呼叫 `/autocomplete`，再由「組成題詞」將回傳結果覆寫至圖片描述框；圖片生成只會在點擊「生成圖片」後，以 `prompt` 與布林值 `enhance` 呼叫 `/generate`，生成 1280 × 720 JPEG。「文字轉譯成Prompt」預設開啟，會要求服務將輸入文字翻譯並整理成較標準的繪圖提示詞。最後一次生成結果會獨立保存到 IndexedDB，下次進入文生圖時自動恢復，並可直接下載；只有使用者按下「套用主畫面背景」時，才會取代主畫面的背景素材。此功能只會把文字題詞與選項傳送至對應的圖片服務，本機媒體不會隨請求上傳。
 
-主畫面頂部的「文生影」會開啟獨立的 AI 影片生成頁面。介面包含影片描述、模型、API KEY、影片預覽、下載及套用主畫面背景等區域；影片描述會直接送交所選模型。模型選單包含 MiniMax H3（`MiniMax-H3`）及 MiniMax H3 Max（`MiniMax-H3-Max`），可分別保存 API KEY，也能從其他模型複製既有金鑰。前端依 MiniMax Video Generation V2 規格建立任務並輪詢結果：H3 可選 768P／2K 與 4～15 秒，H3 Max 可選 480P／768P 與 5～15 秒，兩者皆提供 21:9、16:9、4:3、1:1、3:4、9:16。生成完成後會把 MP4 保存到 IndexedDB，下次進入文生影時自動恢復；也可下載或套用為主畫面背景素材。
+主畫面頂部的「影像產生器」會開啟獨立的 AI 影片生成頁面。介面包含影片細節、生成設定、API KEY、影片預覽、下載及套用主畫面背景等區域。模型選單包含 MiniMax H3（`MiniMax-H3`）及 MiniMax H3 Max（`MiniMax-H3-Max`），可分別保存 API KEY，也能從其他模型複製既有金鑰。前端依 MiniMax Video Generation V2 規格建立任務並輪詢結果：H3 可選 768P／2K 與 4～15 秒，H3 Max 可選 480P／768P 與 5～15 秒，兩者皆提供 21:9、16:9、4:3、1:1、3:4、9:16。生成完成後會把 MP4 保存到 IndexedDB，下次進入影像產生器時自動恢復；也可下載或套用為主畫面背景素材。
 
 主畫面頂部的「人聲分離」會開啟獨立的瀏覽器端 AI 工具，並預設從 IndexedDB 帶入主畫面目前保存的音樂；沒有保存音樂時仍可另外選擇檔案。工具可將最長 8 分鐘、150 MB 以內的音樂分離為人聲與伴奏。預設使用輕量 Spleeter 2-stems（兩個模型合計約 75 MB），另可選原本的 BS PolarFormer 高品質模型（約 201 MB）。輕量模型優先縮短處理時間，但可能殘留更多伴奏，約 11 kHz 以上頻段保留於伴奏。功能優先使用 FP32 WebGPU 模型，無法使用時自動改以 WASM CPU 執行；程式會轉換 FP16 模型輸出並攔截無效數值與全靜音結果，GPU 輸出無效時會自動改用 WASM CPU 重新處理。完成後會產生人聲與伴奏兩個同步動畫頻譜，使用共用的播放鍵與播放位置同時播放；每條音軌仍有獨立 MUTE、-10～+10 dB／0.3 dB 步進的音量，以及 −24～+24 dB 的低、中、高音三段 EQ（300 Hz 低頻棚架、1 kHz 寬中頻、3 kHz 高頻棚架），並透過 Web Audio 即時套用於聲音與頻譜。設定會保存在瀏覽器並套用於試聽。可下載未經調整的獨立人聲／伴奏，也可將目前 MUTE、音量與 EQ 套用到兩軌後重新混合，經整體峰值保護後下載 44.1 kHz、16-bit 立體聲 WAV。「套用到主畫面」會將同一份混合 WAV 保存到 IndexedDB、取代主畫面的音樂並自動返回，媒體不會上傳。第一次執行會從 Hugging Face 下載所選模型（Spleeter 使用 FP32；BS PolarFormer 的 CPU 回退使用 FP16），並保存到 `yumeew-ai-models-v1` IndexedDB。舊版 Cache Storage 中的模型會在首次使用時自動移入 IndexedDB。同一頁面後續分離還會沿用已建立的 GPU／CPU 模型工作階段，避免再次載入與暖機。選擇的音樂、PCM 資料與分離結果都不會上傳。
 
@@ -166,13 +166,13 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `video-editor.html` | 「影片編輯」影片與圖片圖層時間軸編輯器；每個非鎖定圖層可直接上下排序，套用時顯示 0%～100% 進度，完成後會把主畫面節奏特效改為「無」 |
 | `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
 | `text-to-image.html` | 多模型 AI 文生圖頁面 |
-| `text-to-video.html` | AI 文生影頁面與模型串接預留介面 |
+| `video-generator.html` | AI 影像產生器頁面與模型串接介面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
 | `css/subtitle-editor.css` | 字幕編輯器、音訊波形與字幕色帶樣式 |
 | `css/converter.css` | 任意轉頁面配置與狀態樣式 |
 | `css/video-editor.css` | 影片編輯的預覽、圖層清單與時間軸樣式 |
 | `css/text-to-image.css` | 文生圖輸入、生成狀態與圖片預覽樣式 |
-| `css/text-to-video.css` | 文生影提示詞與影片預覽補充樣式 |
+| `css/video-generator.css` | 影像產生器影片細節與預覽補充樣式 |
 | `js/app.js` | 本機讀檔、播放、互動與狀態管理 |
 | `js/subtitle-editor.js` | 字幕清單、色帶拖曳、Spleeter 人聲辨識、SRT 下載與覆寫保存 |
 | `js/visualizer.js` | FFT、動畫、歌曲資訊與字幕繪製 |
@@ -182,7 +182,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `js/video-editor.js`、`js/video-editor-core.js` | 影片編輯的圖層、預覽、時間軸、音訊混合與套用主畫面流程 |
 | `js/vocal-separator.js`、`js/vocal-separator-worker.js`、`js/vocal-separator-core.js` | 人聲分離介面、背景推論與音訊 DSP／WAV 輸出 |
 | `js/text-to-image.js` | Worker 呼叫、圖片下載與主畫面背景保存 |
-| `js/text-to-video.js` | 文生影介面狀態與後續模型串接入口 |
+| `js/video-generator.js` | 影像產生器介面狀態與模型串接入口 |
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |
 | `js/trim.js`、`js/trim-time.js`、`js/trim-range.js` | 音訊裁剪、時間解析與拖曳範圍計算 |
 | `js/subtitles.js` | 字幕解析與時間對應 |

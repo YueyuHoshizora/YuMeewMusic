@@ -1,4 +1,4 @@
-body.text-to-video-body { min-width: 1280px; overflow-x: auto; }
+body.video-generator-body { min-width: 1280px; overflow-x: auto; }
 #video-model { display: block; width: 100%; }
 .video-description-panel { margin-bottom: 22px; }
 .video-collapsible-summary { display: flex; align-items: center; gap: 12px; list-style: none; color: var(--foreground); font-size: 17px; font-weight: 800; cursor: pointer; user-select: none; }

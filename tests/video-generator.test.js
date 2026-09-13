@@ -2,15 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
-test("text-to-video page provides a model-ready generation workspace", () => {
-  const html = readFileSync("text-to-video.html", "utf8");
-  const script = readFileSync("js/text-to-video.js", "utf8");
-  const css = readFileSync("css/text-to-video.css", "utf8");
+test("video generator page provides a model-ready generation workspace", () => {
+  const html = readFileSync("video-generator.html", "utf8");
+  const script = readFileSync("js/video-generator.js", "utf8");
+  const css = readFileSync("css/video-generator.css", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
-  assert.match(html, /<title>文生影 · YuMeew<\/title>/);
+  assert.match(html, /<title>影像產生器 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<textarea id="video-prompt"[^>]*aria-label="影片細節"/);
@@ -46,7 +46,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /id="retry-save-video"[^>]*hidden>重新保存影片<\/button>/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
   assert.match(css, /#video-prompt\s*\{[^}]*height:\s*224px/);
-  assert.match(css, /body\.text-to-video-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
+  assert.match(css, /body\.video-generator-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
   assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
@@ -99,7 +99,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(script, /if \(expandResult\) \$\("video-result-panel"\)\.open = true/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/text-to-video\.html"[^>]*>文生影<\/a>/);
-  assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-video\.html"/);
-  assert.match(readFileSync("scripts/serve.js", "utf8"), /"text-to-video\.html"/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影像產生器<\/a>/);
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"video-generator\.html"/);
+  assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-generator\.html"/);
 });

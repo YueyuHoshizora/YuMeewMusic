@@ -7,7 +7,7 @@ const ENTRY_DETAILS = Object.freeze({
   image: { page: "主畫面", field: "背景素材" },
   subtitle: { page: "主畫面／字幕編輯器", field: "字幕檔案" },
   "generated-image": { page: "文生圖", field: "最後生成結果" },
-  "generated-video": { page: "文生影", field: "最後生成結果" },
+  "generated-video": { page: "影像產生器", field: "最後生成結果" },
   "image-video-project": { page: "圖轉影片", field: "素材專案" },
 });
 

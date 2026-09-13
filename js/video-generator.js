@@ -50,6 +50,7 @@ function setStatus(text, mode = "") {
 function showError(text = "") {
   $("video-generation-error").textContent = text;
   $("video-generation-error").hidden = !text;
+  $("google-quota-help").hidden = !text.includes("Google Veo 額度或速率限制");
 }
 
 function syncGenerateAvailability() {
@@ -384,6 +385,9 @@ function apiError(body, fallback = "", provider = "minimax") {
   }
   if (code === 2013 && /TokenPlan|Credit.*MiniMax-H3/i.test(message)) {
     return "目前使用的 MiniMax Token Plan／Credit Key 不支援 H3 系列（2013）。請改用一般 Pay-as-you-go API KEY，並確認帳戶有足夠餘額。";
+  }
+  if (provider === "google" && (code === 429 || /RESOURCE_EXHAUSTED|quota|rate limit/i.test(message))) {
+    return "Google Veo 額度或速率限制已用盡（429）。請檢查目前專案的用量與帳單設定，稍後再試或改用有可用額度的 API KEY。";
   }
   const service = provider === "byteplus" ? "BytePlus" : provider === "google" ? "Google" : "MiniMax";
   if (Number.isFinite(code) && code !== 0) return message ? `${message}（${code}）` : `${service} API 錯誤（${code}）`;

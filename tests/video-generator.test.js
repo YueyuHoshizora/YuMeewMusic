@@ -84,6 +84,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
   assert.match(html, /id="video-api-key-dialog"/);
+  assert.match(html, /id="google-quota-help"[^>]*hidden>[\s\S]*aistudio\.google\.com\/rate-limit[\s\S]*ai\.google\.dev\/gemini-api\/docs\/billing/);
   assert.match(script, /https:\/\/model-proxy\.yustellar\.idv\.tw\/minimax\/video/);
   assert.match(script, /CREATE_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/generate`/);
   assert.match(script, /QUERY_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/query`/);
@@ -110,6 +111,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /目前 MiniMax API KEY 所屬帳戶餘額不足（1008），請充值或更換 API KEY。/);
   assert.match(script, /code === 2013 && \/TokenPlan\|Credit\.\*MiniMax-H3\/i\.test\(message\)/);
   assert.match(script, /目前使用的 MiniMax Token Plan／Credit Key 不支援 H3 系列（2013）/);
+  assert.match(script, /provider === "google" && \(code === 429 \|\| \/RESOURCE_EXHAUSTED\|quota\|rate limit\/i\.test\(message\)\)/);
+  assert.match(script, /Google Veo 額度或速率限制已用盡（429）/);
+  assert.match(script, /google-quota-help"\)\.hidden = !text\.includes\("Google Veo 額度或速率限制"\)/);
   assert.match(html, /MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援/);
   assert.match(script, /apiError\(body, response\.ok \? "" : `\$\{service\} API 回傳 \$\{response\.status\}`, provider\)/);
   assert.match(script, /async function pollVideoTask\(taskId, apiKey, model, signal\)/);

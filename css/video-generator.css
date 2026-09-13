@@ -53,6 +53,9 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-output-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 0; }
 .video-output-options label { display: grid; gap: 7px; color: var(--foreground); font-size: 12px; font-weight: 700; }
 .video-output-options select { width: 100%; }
+.google-quota-help { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 8px 0 0; font-size: 12px; }
+.google-quota-help[hidden] { display: none; }
+.google-quota-help a { color: var(--primary-text); font-weight: 700; text-underline-offset: 3px; }
 .reset-dialog #video-api-key-source,
 .reset-dialog #video-api-key-input { width: 100%; box-sizing: border-box; }
 .reset-dialog #video-api-key-input { font-family: monospace; }

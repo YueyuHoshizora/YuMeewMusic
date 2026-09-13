@@ -18,7 +18,7 @@ test("song rating uses all five aesthetic dimensions equally", () => {
 });
 
 test("song rating page is linked and deployable", () => {
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/music-rating\.html"[^>]*>歌曲評分<\/a>/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/converter\.html"[^>]*>任意轉<\/a>\s*<a class="tool-link" href="\.\/music-rating\.html">歌曲評分<\/a>/);
   assert.match(readFileSync("music-rating.html", "utf8"), /APEX 正式評分模型/);
   assert.match(readFileSync("music-rating.html", "utf8"), /id="rating-suno-url"[^>]*https:\/\/suno\.com\/s\/\.\.\./);
   const script = readFileSync("js/music-rating.js", "utf8");

@@ -15,10 +15,12 @@ test("Suno download page resolves, converts, previews and applies public audio",
   assert.match(html, /id="suno-apply"[^>]*>套用到主畫面</);
   assert.match(script, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
   assert.match(script, /const m4aBlob = await readAudioResponse\(await fetch\(result\.audioUrl/);
-  assert.match(script, /audioBlob = await convertToWav\(m4aBlob\)/);
+  assert.match(script, /audioBlob = await convertToWav\(playableBlob\)/);
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
-  assert.match(script, /decodeAudioData\(await blob\.arrayBuffer\(\)\)/);
-  assert.match(script, /encodeStereoWav\(left, right, decoded\.sampleRate\)/);
+  assert.match(script, /decryptSunoAudio\(m4aBlob, result\)/);
+  assert.match(script, /crypto\.subtle\.decrypt\(\{ name: "AES-CTR", counter: iv, length: 128 \}/);
+  assert.match(script, /convertMediaFile\(\{/);
+  assert.match(script, /format: "wav"/);
   assert.match(script, /downloadBlob\(audioBlob, fileName\)/);
   assert.match(script, /new File\(\[audioBlob\], fileName, \{ type: "audio\/wav"/);
   assert.match(script, /saveStoredMedia\("audio", file\)/);

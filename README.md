@@ -28,7 +28,7 @@
 
 一般媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成，沒有雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。全站所有遠端模型檔都統一自動保存到 `yumeew-ai-models-v1` IndexedDB：Spleeter 與 BS PolarFormer 第一次由瀏覽器從 Hugging Face 下載，之後可直接使用本機快取，音樂不會傳送至 Hugging Face。AI 圖片與影片生成、AI 字幕辨識及 Suno 公開連結解析需要網路服務：生成頁會傳送使用者輸入的描述與引用資源；字幕辨識會先在瀏覽器用 Spleeter 分離人聲，再把衍生的人聲軌轉為單聲道、16 kHz、16-bit PCM WAV 並傳送至 `lyrics-transcriber.yustellar.idv.tw`，原始音樂與原有字幕不會上傳；Suno Worker 只解析公開分享頁，音訊由瀏覽器直接讀取。
 
-「Suno 下載」可貼上公開的 `suno.com/s/…` 或 `suno.com/song/…` 分享連結。`model-proxy` Worker 只讀取公開分享頁並回傳歌曲名稱、作者、封面與官方 M4A CDN 網址；音樂檔由使用者的瀏覽器直接向 Suno CDN 下載，Worker 不會代理或保存音樂內容。M4A 取得後會立即在瀏覽器解碼成 16-bit PCM 立體聲 WAV，播放器、下載及「套用到主畫面」都使用同一份 WAV；選擇套用後才會把 WAV 保存到本機 IndexedDB 並取代目前音樂。
+「Suno 下載」可貼上公開的 `suno.com/s/…` 或 `suno.com/song/…` 分享連結。`model-proxy` Worker 只讀取公開分享頁，並回傳歌曲資料、官方 M4A CDN 網址及短效匿名播放授權；音樂檔仍由使用者的瀏覽器直接向 Suno CDN 下載，Worker 不會代理或保存音樂內容。遇到目前的加密 `m4a-opus` 串流時，瀏覽器會先以 Web Crypto 在本機解密，再透過 Mediabunny 轉成 16-bit PCM 立體聲 WAV。播放器、下載及「套用到主畫面」都使用同一份 WAV；選擇套用後才會把 WAV 保存到本機 IndexedDB 並取代目前音樂。
 
 主畫面頂端的「設定」會開啟獨立設定頁面，各項功能排列在左側導覽列。「介面」可選擇日間／夜間模式，以及青檸、海藍、紫羅蘭、玫瑰、琥珀、薄荷、靛青、珊瑚、洋紅、銀灰十種佈景，變更會立即預覽並保存；主畫面不再顯示模式與佈景選單。「模型管理」會列出 IndexedDB 中每套 AI 模型的名稱、來源、合計容量與快取檔案數。可逐一刪除模型或刪除全部模型；每次刪除前都會提示下次使用時必須重新下載。「快取管理」依頁面與欄位列出 IndexedDB 中的音樂、背景素材、字幕、圖轉影片專案及文生圖最後生成結果，顯示檔名、類型與容量，並提供個別刪除及全部清除。媒體快取與 AI 模型分開管理。
 

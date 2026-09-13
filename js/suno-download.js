@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { saveStoredMedia } from "./media-store.js";
-import { encodeStereoWav } from "./vocal-separator-core.js";
+import { convertMediaFile } from "./converter-core.js";
 
 const $ = id => document.getElementById(id);
 const PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
@@ -72,7 +72,7 @@ async function readAudioResponse(response) {
     }
     chunks.push(value);
     const progress = contentLength ? Math.round(received / contentLength * 100) : 0;
-    $("suno-progress").value = Math.max(10, Math.min(99, progress));
+    $("suno-progress").value = Math.max(10, Math.min(70, 10 + progress * 0.6));
     $("suno-status").textContent = contentLength
       ? `正在下載音樂 ${progress}% · ${formatBytes(received)} / ${formatBytes(contentLength)}`
       : `正在下載音樂 · 已接收 ${formatBytes(received)}`;
@@ -105,10 +105,12 @@ async function fetchSuno(event) {
     $("suno-fetch").textContent = "正在下載…";
     $("suno-status").textContent = "已找到音樂，正在從 Suno CDN 下載…";
     const m4aBlob = await readAudioResponse(await fetch(result.audioUrl, { cache: "no-store" }));
-    $("suno-progress").value = 99;
+    $("suno-progress").value = 70;
+    const playableBlob = result.encrypted ? await decryptSunoAudio(m4aBlob, result) : m4aBlob;
+    $("suno-progress").value = 75;
     $("suno-fetch").textContent = "正在轉換…";
     $("suno-status").textContent = "M4A 已下載，正在瀏覽器中轉換為 16-bit PCM WAV…";
-    audioBlob = await convertToWav(m4aBlob);
+    audioBlob = await convertToWav(playableBlob);
     audioUrl = URL.createObjectURL(audioBlob);
     fileName = safeFileName(result.title);
     $("suno-player").src = audioUrl;
@@ -148,17 +150,44 @@ function downloadBlob(blob, name) {
 }
 
 async function convertToWav(blob) {
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw Error("此瀏覽器不支援音訊解碼，無法轉換 WAV。");
-  const context = new AudioContextClass();
-  try {
-    const decoded = await context.decodeAudioData(await blob.arrayBuffer());
-    const left = decoded.getChannelData(0);
-    const right = decoded.numberOfChannels > 1 ? decoded.getChannelData(1) : left;
-    return encodeStereoWav(left, right, decoded.sampleRate);
-  } finally {
-    await context.close().catch(() => {});
-  }
+  const file = new File([blob], "suno-source.m4a", { type: blob.type || "audio/mp4" });
+  return convertMediaFile({
+    file,
+    format: "wav",
+    inputKind: "audio",
+    hasAudio: true,
+    audioChannels: 2,
+    onProgress(value) { $("suno-progress").value = 75 + value * 0.24; },
+  });
+}
+
+function base64Bytes(value) {
+  try { return Uint8Array.from(atob(value), character => character.charCodeAt(0)); }
+  catch { throw Error("Suno 播放授權格式不正確。"); }
+}
+
+async function decryptSunoAudio(blob, result) {
+  const rights = result.playbackRights;
+  if (!rights?.key || !rights?.iv || !rights?.glt || !result.songId) throw Error("無法取得這首歌的公開播放授權。");
+  const text = new TextEncoder();
+  const digest = await crypto.subtle.digest("SHA-256", text.encode(rights.glt));
+  const userKey = await crypto.subtle.importKey("raw", digest, { name: "AES-GCM" }, false, ["decrypt"]);
+  const unwrap = async value => {
+    const wrapped = base64Bytes(value);
+    if (wrapped.length <= 12) throw Error("Suno 播放授權內容不完整。");
+    return new Uint8Array(await crypto.subtle.decrypt({
+      name: "AES-GCM",
+      iv: wrapped.slice(0, 12),
+      additionalData: text.encode(result.songId),
+    }, userKey, wrapped.slice(12)));
+  };
+  const [rawKey, iv] = await Promise.all([unwrap(rights.key), unwrap(rights.iv)]);
+  if (iv.length !== 16) throw Error("Suno 音訊初始向量格式不正確。");
+  const contentKey = await crypto.subtle.importKey("raw", rawKey, { name: "AES-CTR" }, false, ["decrypt"]);
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-CTR", counter: iv, length: 128 }, contentKey, await blob.arrayBuffer());
+  const bytes = new Uint8Array(decrypted);
+  if (bytes.length < 12 || String.fromCharCode(...bytes.slice(4, 8)) !== "ftyp") throw Error("Suno 音訊解密後不是可辨識的 M4A。");
+  return new Blob([bytes], { type: "audio/mp4" });
 }
 
 function downloadAudio() {

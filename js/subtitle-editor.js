@@ -91,7 +91,7 @@ function setRecognitionBusy(value) {
   $('recognition-language').disabled = value;
   $('recognition-lyrics').disabled = value;
   $('cancel-recognition').hidden = !value;
-  $('return-to-main').disabled = value;
+  $('return-to-main').setAttribute('aria-disabled', String(value));
   for (const className of ['editor-player', 'editor-workspace', 'editor-actions']) {
     const element = document.querySelector(`.${className}`);
     if (element) element.inert = value;
@@ -621,7 +621,9 @@ $('replace-subtitles-confirm').addEventListener('click', () => {
 });
 $('download-subtitles').addEventListener('click', downloadSrt);
 $('save-subtitles').addEventListener('click', saveAndReturn);
-$('return-to-main').addEventListener('click', () => {
+$('return-to-main').addEventListener('click', event => {
+  event.preventDefault();
+  if (recognition.busy) return;
   if (!$('return-dialog').open) $('return-dialog').showModal();
 });
 $('return-dialog-cancel').addEventListener('click', () => $('return-dialog').close());

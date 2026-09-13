@@ -99,7 +99,7 @@ test("影片編輯 exposes a movable dynamic layer and locked text overlays", ()
   assert.equal((html.match(/id="(?:enter|exit)-duration"[^>]*value="0\.5"/g) || []).length, 2);
   assert.equal((html.match(/<option value="rgb-glitch">RGB 色差故障<\/option>/g) || []).length, 2);
   assert.equal((html.match(/<option value="none">無<\/option>/g) || []).length, 2);
-  assert.equal((html.match(/data-confirm-return/g) || []).length, 2);
+  assert.equal((html.match(/data-confirm-return/g) || []).length, 1);
   assert.match(script, /window\.confirm\("返回主畫面則不會保留所有修改結果，是否確定？"\)/);
   assert.match(script, /loadStoredMedia\("subtitle"\)/);
   assert.match(script, /loadStoredMedia\("audio"\)/);

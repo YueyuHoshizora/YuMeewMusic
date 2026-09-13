@@ -1,6 +1,5 @@
 body.separator-body { min-width: 1000px; }
 .separator-header { justify-content: space-between; }
-.separator-header .converter-back { text-decoration: none; }
 .separator-main { width: min(1180px, calc(100% - 64px)); margin: 0 auto; padding: 34px 0 48px; }
 .separator-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 25px; }
 .separator-heading p { max-width: 760px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }

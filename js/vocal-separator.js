@@ -14,6 +14,7 @@ const $ = id => document.getElementById(id);
 const MAX_FILE_SIZE = 150 * 1024 * 1024;
 const selectedModelSize = () => $("separator-model").value === "polarformer" ? 201 : 75;
 const TRACK_SETTINGS_KEY = "yumeew.separator.track-eq.v1";
+const AUTOTUNE_SETTINGS_KEY = "yumeew.separator.autotune.v1";
 const TRACK_NAMES = ["vocals", "instrumental"];
 const EQ_BANDS = ["bass", "mid", "treble"];
 const restored = loadSettings();
@@ -27,7 +28,10 @@ let mixing = false;
 let modelReady = false;
 let originalUrl = "";
 let vocalsBlob = null;
+let originalVocalsBlob = null;
 let instrumentalBlob = null;
+let autotuneWorker = null;
+let autotuning = false;
 const resultUrls = { vocals: "", instrumental: "" };
 let trackAudioContext = null;
 const trackAudioNodes = {};
@@ -52,7 +56,33 @@ function loadTrackSettings() {
   }));
 }
 
+function loadAutotuneSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(AUTOTUNE_SETTINGS_KEY) || "{}");
+    return {
+      scale: ["chromatic", "major", "minor"].includes(saved.scale) ? saved.scale : "chromatic",
+      tonic: Math.max(0, Math.min(11, Number(saved.tonic) || 0)),
+      strength: Math.max(0, Math.min(100, Number.isFinite(Number(saved.strength)) ? Number(saved.strength) : 100)),
+    };
+  } catch {
+    return { scale: "chromatic", tonic: 0, strength: 100 };
+  }
+}
+
 const trackSettings = loadTrackSettings();
+const autotuneSettings = loadAutotuneSettings();
+
+function saveAutotuneSettings() {
+  try { localStorage.setItem(AUTOTUNE_SETTINGS_KEY, JSON.stringify(autotuneSettings)); } catch {}
+}
+
+function applyAutotuneSettings() {
+  $("autotune-scale").value = autotuneSettings.scale;
+  $("autotune-tonic").value = String(autotuneSettings.tonic);
+  $("autotune-tonic").disabled = autotuneSettings.scale === "chromatic" || autotuning;
+  $("autotune-strength").value = String(autotuneSettings.strength);
+  $("autotune-strength-value").textContent = `${Math.round(autotuneSettings.strength)}%`;
+}
 
 function saveTrackSettings() {
   try {
@@ -247,7 +277,10 @@ function clearResults() {
     if (resultUrls[key]) URL.revokeObjectURL(resultUrls[key]);
     resultUrls[key] = "";
   }
-  vocalsBlob = instrumentalBlob = null;
+  autotuneWorker?.terminate();
+  autotuneWorker = null;
+  autotuning = false;
+  vocalsBlob = originalVocalsBlob = instrumentalBlob = null;
   for (const track of TRACK_NAMES) {
     const audio = $(`separator-${track}`);
     audio.pause();
@@ -255,6 +288,19 @@ function clearResults() {
     audio.load();
   }
   $("separator-results").hidden = true;
+}
+
+function useVocalsBlob(blob, tuned = false) {
+  if (resultUrls.vocals) URL.revokeObjectURL(resultUrls.vocals);
+  vocalsBlob = blob;
+  resultUrls.vocals = URL.createObjectURL(blob);
+  const audio = $("separator-vocals");
+  audio.pause();
+  audio.src = resultUrls.vocals;
+  audio.load();
+  $("autotune-state").textContent = tuned ? "已套用" : "尚未套用";
+  $("autotune-restore").hidden = !tuned;
+  $("autotune-start").textContent = tuned ? "重新自動調音" : "自動調音";
 }
 
 async function decodeFile(file) {
@@ -377,11 +423,11 @@ function handleWorkerMessage(event) {
   $("separator-progress").value = 99;
   setTimeout(() => {
     try {
-      vocalsBlob = encodeStereoWav(data.vocalsLeft, data.vocalsRight);
+      originalVocalsBlob = encodeStereoWav(data.vocalsLeft, data.vocalsRight);
+      vocalsBlob = originalVocalsBlob;
       instrumentalBlob = encodeStereoWav(data.instrumentalLeft, data.instrumentalRight);
-      resultUrls.vocals = URL.createObjectURL(vocalsBlob);
       resultUrls.instrumental = URL.createObjectURL(instrumentalBlob);
-      $("separator-vocals").src = resultUrls.vocals;
+      useVocalsBlob(originalVocalsBlob);
       $("separator-instrumental").src = resultUrls.instrumental;
       setupSeparatedPlayback(data.vocalsLeft.length / SEPARATOR_SAMPLE_RATE);
       $("separator-results").hidden = false;
@@ -392,6 +438,83 @@ function handleWorkerMessage(event) {
       finishWithError(error?.message || "建立輸出檔案時記憶體不足。");
     }
   }, 0);
+}
+
+function setAutotuneBusy(value) {
+  autotuning = value;
+  $("autotune-start").disabled = value;
+  $("autotune-restore").disabled = value;
+  $("autotune-scale").disabled = value;
+  $("autotune-tonic").disabled = value || autotuneSettings.scale === "chromatic";
+  $("autotune-strength").disabled = value;
+  $("download-vocals").disabled = value;
+  $("separated-play").disabled = value;
+  $("separator-drop").disabled = value;
+  $("separator-start").disabled = value || !sourceFile;
+  $("download-mix").disabled = value || mixing;
+  $("apply-mix-main").disabled = value || mixing;
+  $("autotune-progress").hidden = !value;
+  if (!value) applyAutotuneSettings();
+}
+
+async function startAutotune() {
+  if (!originalVocalsBlob || autotuning || mixing) return;
+  pauseSeparatedPlayback();
+  showError();
+  setAutotuneBusy(true);
+  $("autotune-progress").value = 0;
+  $("autotune-state").textContent = "處理中";
+  $("autotune-status").textContent = "正在分析人聲音高…";
+  try {
+    const buffer = await originalVocalsBlob.arrayBuffer();
+    autotuneWorker?.terminate();
+    autotuneWorker = new Worker(new URL("./vocal-autotune-worker.js", import.meta.url), { type: "module" });
+    autotuneWorker.addEventListener("message", handleAutotuneMessage);
+    autotuneWorker.addEventListener("error", event => finishAutotuneWithError(event.message || "自動調音處理程序發生錯誤。"));
+    autotuneWorker.postMessage({ type: "tune", buffer, options: autotuneSettings }, [buffer]);
+  } catch (error) {
+    finishAutotuneWithError(error?.message || "無法開始自動調音。需要較多記憶體，請關閉其他分頁後再試。");
+  }
+}
+
+function handleAutotuneMessage(event) {
+  const data = event.data || {};
+  if (data.type === "progress") {
+    $("autotune-progress").value = data.value;
+    $("autotune-status").textContent = data.value < 35
+      ? `正在偵測音高 ${data.value}%`
+      : `正在校正人聲 ${data.value}%`;
+    return;
+  }
+  if (data.type === "error") {
+    finishAutotuneWithError(data.text);
+    return;
+  }
+  if (data.type !== "complete") return;
+  const tunedBlob = new Blob([data.buffer], { type: "audio/wav" });
+  useVocalsBlob(tunedBlob, true);
+  autotuneWorker?.terminate();
+  autotuneWorker = null;
+  setAutotuneBusy(false);
+  $("autotune-progress").value = 100;
+  $("autotune-status").textContent = "調音完成；同步播放、下載與重新混合皆已改用調音後人聲。";
+  $("separator-status").textContent = "自動調音完成，可立即同步試聽。";
+}
+
+function finishAutotuneWithError(text) {
+  autotuneWorker?.terminate();
+  autotuneWorker = null;
+  setAutotuneBusy(false);
+  $("autotune-state").textContent = vocalsBlob !== originalVocalsBlob ? "已套用" : "尚未套用";
+  $("autotune-status").textContent = text || "自動調音失敗。";
+}
+
+function restoreOriginalVocals() {
+  if (!originalVocalsBlob || autotuning) return;
+  pauseSeparatedPlayback();
+  useVocalsBlob(originalVocalsBlob, false);
+  $("autotune-status").textContent = "已恢復分離後的原始人聲。";
+  $("separator-status").textContent = "已恢復原始人聲。";
 }
 
 function finish() {
@@ -514,6 +637,22 @@ $("separator-start").addEventListener("click", startSeparation);
 $("separator-cancel").addEventListener("click", cancel);
 $("download-vocals").addEventListener("click", () => download(vocalsBlob, "vocals"));
 $("download-instrumental").addEventListener("click", () => download(instrumentalBlob, "instrumental"));
+$("autotune-start").addEventListener("click", startAutotune);
+$("autotune-restore").addEventListener("click", restoreOriginalVocals);
+$("autotune-scale").addEventListener("change", event => {
+  autotuneSettings.scale = event.target.value;
+  saveAutotuneSettings();
+  applyAutotuneSettings();
+});
+$("autotune-tonic").addEventListener("change", event => {
+  autotuneSettings.tonic = Number(event.target.value) || 0;
+  saveAutotuneSettings();
+});
+$("autotune-strength").addEventListener("input", event => {
+  autotuneSettings.strength = Number(event.target.value) || 0;
+  $("autotune-strength-value").textContent = `${Math.round(autotuneSettings.strength)}%`;
+  saveAutotuneSettings();
+});
 $("download-mix").addEventListener("click", downloadMix);
 $("apply-mix-main").addEventListener("click", applyMixToMain);
 $("separated-play").addEventListener("click", toggleSeparatedPlayback);
@@ -552,14 +691,16 @@ for (const track of TRACK_NAMES) {
   });
 }
 window.addEventListener("beforeunload", event => {
-  if (!working && !mixing) return;
+  if (!working && !mixing && !autotuning) return;
   event.preventDefault();
   event.returnValue = "";
 });
 window.addEventListener("unload", () => {
   worker?.terminate();
+  autotuneWorker?.terminate();
   trackAudioContext?.close().catch(() => {});
   if (originalUrl) URL.revokeObjectURL(originalUrl);
   for (const url of Object.values(resultUrls)) if (url) URL.revokeObjectURL(url);
 });
+applyAutotuneSettings();
 void restoreMainAudio();

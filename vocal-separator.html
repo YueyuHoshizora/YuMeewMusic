@@ -79,6 +79,26 @@
             </div>
             <audio id="separator-vocals" preload="auto"></audio>
             <canvas id="vocals-spectrum" class="track-spectrum" width="480" height="104" aria-label="人聲即時頻譜"></canvas>
+            <div class="autotune-panel">
+              <div class="autotune-heading"><strong>自動調音</strong><span id="autotune-state">尚未套用</span></div>
+              <div class="autotune-controls">
+                <label for="autotune-scale">音階
+                  <select id="autotune-scale"><option value="chromatic">自動半音階</option><option value="major">大調</option><option value="minor">小調</option></select>
+                </label>
+                <label for="autotune-tonic">主音
+                  <select id="autotune-tonic" disabled><option value="0">C</option><option value="1">C♯ / D♭</option><option value="2">D</option><option value="3">D♯ / E♭</option><option value="4">E</option><option value="5">F</option><option value="6">F♯ / G♭</option><option value="7">G</option><option value="8">G♯ / A♭</option><option value="9">A</option><option value="10">A♯ / B♭</option><option value="11">B</option></select>
+                </label>
+                <label class="autotune-strength" for="autotune-strength">強度 <output id="autotune-strength-value">100%</output>
+                  <input id="autotune-strength" type="range" min="0" max="100" step="1" value="100" />
+                </label>
+              </div>
+              <div class="autotune-actions">
+                <button id="autotune-start" class="export-button" type="button">自動調音</button>
+                <button id="autotune-restore" class="text-button" type="button" hidden>恢復原始人聲</button>
+              </div>
+              <progress id="autotune-progress" max="100" value="0" hidden></progress>
+              <p id="autotune-status" class="autotune-status" role="status">偵測音高後校正到最近音符；所有處理都在瀏覽器內完成。</p>
+            </div>
             <p class="separator-original-label">EQ 音色調整：−24～+24 dB</p>
             <div class="track-eq" role="group" aria-label="人聲音量與 EQ">
               <label for="vocals-volume">音量 <output id="vocals-volume-value">0.0 dB</output></label>

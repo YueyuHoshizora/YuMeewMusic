@@ -13,6 +13,7 @@ import {
   reconstructVocals,
   separatorFilename,
 } from "../js/vocal-separator-core.js";
+import { autoTuneStereoWav, correctionRatio } from "../js/vocal-autotune-core.js";
 
 test("vocal separator page exposes its complete local workflow", () => {
   const html = readFileSync("vocal-separator.html", "utf8");
@@ -29,6 +30,11 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /id="apply-mix-main"[^>]*>套用到主畫面</);
   assert.match(html, /id="separated-play"[^>]*>▶ 同步播放</);
   assert.match(html, /id="vocals-spectrum"[^>]*aria-label="人聲即時頻譜"/);
+  assert.match(html, /id="autotune-start"[^>]*>自動調音</);
+  assert.match(html, /id="autotune-scale"/);
+  assert.match(html, /id="autotune-tonic"[^>]*disabled/);
+  assert.match(html, /id="autotune-strength"[^>]*min="0"[^>]*max="100"/);
+  assert.match(html, /id="autotune-restore"[^>]*hidden>恢復原始人聲</);
   assert.match(html, /id="instrumental-spectrum"[^>]*aria-label="伴奏即時頻譜"/);
   assert.match(html, /單次最長 8 分鐘、150 MB/);
   assert.match(script, /150 \* 1024 \* 1024/);
@@ -66,6 +72,33 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/vocal-separator\.html"[^>]*>人聲分離<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"vocal-separator\.html"/);
   assert.doesNotMatch(script, /sendBeacon|XMLHttpRequest|WebSocket/);
+  assert.match(script, /new Worker\(new URL\("\.\/vocal-autotune-worker\.js"/);
+  assert.match(script, /useVocalsBlob\(tunedBlob, true\)/);
+  assert.match(script, /mixSeparatedWav\(vocalsBlob, instrumentalBlob/);
+});
+
+test("automatic tuning moves detected vocals to the selected note without changing duration", async () => {
+  const sampleRate = 44100;
+  const sourcePitch = 448;
+  const samples = Float32Array.from({ length: sampleRate * 2 }, (_, index) =>
+    0.45 * Math.sin(2 * Math.PI * sourcePitch * index / sampleRate));
+  const source = encodeStereoWav(samples, samples, sampleRate);
+  const tuned = autoTuneStereoWav(await source.arrayBuffer(), { scale: "chromatic", strength: 100, smoothing: 20 });
+  assert.equal(tuned.byteLength, source.size);
+
+  const view = new DataView(tuned);
+  const crossings = [];
+  for (let frame = sampleRate / 2; frame < sampleRate * 1.5; frame++) {
+    const previous = view.getInt16(44 + (frame - 1) * 4, true);
+    const current = view.getInt16(44 + frame * 4, true);
+    if (previous < 0 && current >= 0) crossings.push(frame);
+  }
+  const periods = crossings.slice(1).map((frame, index) => frame - crossings[index]);
+  const meanPeriod = periods.reduce((sum, period) => sum + period, 0) / periods.length;
+  const outputPitch = sampleRate / meanPeriod;
+  assert.ok(outputPitch > 436 && outputPitch < 443, `expected about 440 Hz, received ${outputPitch}`);
+  assert.ok(Math.abs(correctionRatio(448) - 440 / 448) < 1e-9);
+  assert.equal(correctionRatio(440, { strength: 100 }), 1);
 });
 
 test("float16 model output converts to numeric PCM values", () => {

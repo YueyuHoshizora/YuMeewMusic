@@ -113,12 +113,13 @@ test("image-to-video project data can be stored beside the rendered background f
 test("video character templates preserve their reference images in IndexedDB", async () => {
   const database = memoryIndexedDb();
   const referenceImage = new TestFile(["portrait"], "hero.png", { type: "image/png", lastModified: 999 });
-  const project = { characters: [{ name: "小雨", referenceImage, style: "動畫", tone: "溫柔", clothing: "藍色外套" }], updatedAt: 123 };
+  const project = { characters: [{ name: "小雨", referenceImage, style: "動畫", tone: "溫柔", voice: "清亮", clothing: "藍色外套" }], updatedAt: 123 };
   await saveStoredValue("video-character-templates", project, database);
   const restored = await loadStoredValue("video-character-templates", database);
   assert.equal(restored.characters[0].name, "小雨");
   assert.equal(restored.characters[0].referenceImage.name, "hero.png");
   assert.equal(restored.characters[0].referenceImage.size, referenceImage.size);
+  assert.equal(restored.characters[0].voice, "清亮");
 });
 
 test("media cache entries identify their page and field and can be cleared", async () => {

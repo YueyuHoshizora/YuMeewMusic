@@ -144,6 +144,7 @@ function openCharacterEditor(index = -1) {
   $("character-reference").value = "";
   $("character-style").value = character?.style || "";
   $("character-tone").value = character?.tone || "";
+  $("character-voice").value = character?.voice || "";
   $("character-clothing").value = character?.clothing || "";
   $("delete-character").hidden = !character;
   showCharacterEditorReference(character?.referenceImage || null);
@@ -163,6 +164,7 @@ async function submitCharacterEditor(event) {
     referenceImage: editingCharacterReference,
     style: $("character-style").value.trim(),
     tone: $("character-tone").value.trim(),
+    voice: $("character-voice").value.trim(),
     clothing: $("character-clothing").value.trim(),
   };
   if (!character.name) return;
@@ -210,6 +212,7 @@ function characterTemplateText() {
       ["名字", character.name],
       ["風格", character.style],
       ["口氣", character.tone],
+      ["聲線", character.voice],
       ["服裝", character.clothing],
     ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
     return `人物 ${index + 1}：${fields}`;

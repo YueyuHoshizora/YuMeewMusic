@@ -33,7 +33,6 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .character-editor-dialog { width: min(760px, calc(100vw - 80px)); }
 .character-editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin-top: 18px; }
 .character-editor-fields label { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 12px; font-weight: 700; }
-.character-editor-fields label:last-child { grid-column: 1 / -1; }
 .character-editor-fields .text-input { width: 100%; box-sizing: border-box; }
 .character-remove { border: 0; background: transparent; color: var(--error-text); font: inherit; font-size: 13px; cursor: pointer; }
 .character-editor-actions .character-remove { margin-right: auto; }

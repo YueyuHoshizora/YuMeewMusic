@@ -211,7 +211,63 @@
             <div id="video-prompt-camera-custom" class="text-input resource-editor resource-editor-single video-camera-custom" contenteditable="true" role="textbox" aria-label="自訂運鏡" data-placeholder="輸入自訂運鏡，也可使用 @ 資源或 # 人物" hidden></div>
           </div>
           <label><span>視角</span><div id="video-prompt-view" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="視角" data-placeholder="例如：低角度仰視主體"></div></label>
-          <label><span>燈光</span><div id="video-prompt-lighting" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="燈光" data-placeholder="例如：柔和的金色逆光"></div></label>
+          <div class="video-prompt-lighting-field">
+            <span>燈光</span>
+            <select id="video-prompt-lighting" class="setting-select" aria-label="燈光類型">
+              <option value="" selected>選擇燈光類型</option>
+              <optgroup label="方向與人物布光">
+                <option value="正面主光">正面主光</option>
+                <option value="柔和補光">柔和補光</option>
+                <option value="背光">背光</option>
+                <option value="左側光">左側光</option>
+                <option value="右側光">右側光</option>
+                <option value="頂光">頂光</option>
+                <option value="底光">底光</option>
+                <option value="輪廓光">輪廓光</option>
+              </optgroup>
+              <optgroup label="自然光與環境光">
+                <option value="柔光">柔光</option>
+                <option value="硬光">硬光</option>
+                <option value="窗戶光">窗戶光</option>
+                <option value="百葉窗光影">百葉窗光影</option>
+                <option value="黃金時刻陽光">黃金時刻陽光</option>
+                <option value="藍色時刻暮光">藍色時刻暮光</option>
+                <option value="月光">月光</option>
+                <option value="燭光">燭光</option>
+                <option value="霓虹燈光">霓虹燈光</option>
+                <option value="車燈掃過">車燈掃過</option>
+              </optgroup>
+              <optgroup label="電影風格布光">
+                <option value="三點布光">三點布光</option>
+                <option value="高調布光">高調布光</option>
+                <option value="低調布光">低調布光</option>
+                <option value="倫勃朗光">倫勃朗光</option>
+                <option value="蝴蝶光">蝴蝶光</option>
+                <option value="分割光">分割光</option>
+                <option value="側逆光">側逆光</option>
+                <option value="剪影">剪影</option>
+                <option value="明暗對照">明暗對照</option>
+                <option value="實景光源">實景光源</option>
+                <option value="體積光">體積光</option>
+                <option value="舞台追光">舞台追光</option>
+              </optgroup>
+              <option value="custom">自訂燈光（開放輸入）</option>
+            </select>
+            <div class="video-lighting-selects">
+              <select id="video-prompt-lighting-temperature" class="setting-select" aria-label="燈光色溫" disabled>
+                <option value="暖色">暖色</option>
+                <option value="" selected>中性色溫</option>
+                <option value="冷色">冷色</option>
+              </select>
+              <select id="video-prompt-lighting-intensity" class="setting-select" aria-label="燈光強度" disabled>
+                <option value="微弱的">微弱</option>
+                <option value="柔和的">柔和</option>
+                <option value="" selected>正常強度</option>
+                <option value="強烈的">強烈</option>
+              </select>
+            </div>
+            <div id="video-prompt-lighting-custom" class="text-input resource-editor resource-editor-single video-lighting-custom" contenteditable="true" role="textbox" aria-label="自訂燈光" data-placeholder="輸入自訂燈光，也可使用 @ 資源或 # 人物" hidden></div>
+          </div>
           <label><span>音效</span><div id="video-prompt-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="音效" data-placeholder="例如：雨聲與遠方的雷聲"></div></label>
           <label class="video-prompt-action-field"><span>動作</span><div id="video-prompt-action" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="動作" data-placeholder="例如：角色抬頭望向天空"></div></label>
           <label><span>對白</span><div id="video-prompt-dialogue" class="text-input resource-editor resource-editor-multiline" contenteditable="true" role="textbox" aria-label="對白" aria-multiline="true" data-placeholder="例如：今晚的星光真美。"></div></label>

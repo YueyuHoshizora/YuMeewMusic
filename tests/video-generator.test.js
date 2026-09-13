@@ -42,13 +42,17 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-prompt-builder-form"[\s\S]*<button class="dialog-confirm" type="submit">加入分鏡<\/button>/);
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span><input id="video-prompt-time"/);
-  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-view", "視角"], ["video-prompt-lighting", "燈光"], ["video-prompt-sound", "音效"], ["video-prompt-action", "動作"], ["video-prompt-dialogue", "對白"]]) {
+  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-view", "視角"], ["video-prompt-sound", "音效"], ["video-prompt-action", "動作"], ["video-prompt-dialogue", "對白"]]) {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
   assert.match(html, /<span>鏡頭<\/span>[\s\S]*id="video-prompt-camera"[\s\S]*<optgroup label="基本運鏡">[\s\S]*<optgroup label="跟拍與環繞">[\s\S]*<optgroup label="電影感運鏡">/);
   assert.match(html, /id="video-prompt-camera"[\s\S]*<option value="custom">自訂運鏡（開放輸入）<\/option>[\s\S]*id="video-prompt-camera-speed"/);
   assert.match(html, /id="video-prompt-camera-custom"[^>]*resource-editor[^>]*hidden/);
   assert.match(script, /function cameraPromptField\(\)[\s\S]*motion !== "custom"[\s\S]*editorText\(editor\)/);
+  assert.match(html, /<span>燈光<\/span>[\s\S]*id="video-prompt-lighting"[\s\S]*<optgroup label="方向與人物布光">[\s\S]*<optgroup label="自然光與環境光">[\s\S]*<optgroup label="電影風格布光">/);
+  assert.match(html, /id="video-prompt-lighting"[\s\S]*<option value="custom">自訂燈光（開放輸入）<\/option>[\s\S]*id="video-prompt-lighting-temperature"[\s\S]*id="video-prompt-lighting-intensity"/);
+  assert.match(html, /id="video-prompt-lighting-custom"[^>]*resource-editor[^>]*hidden/);
+  assert.match(script, /function lightingPromptField\(\)[\s\S]*const prefix = `\$\{intensity\}\$\{temperature\}`[\s\S]*lighting !== "custom"/);
   assert.doesNotMatch(html, /id="video-prompt-time"[^>]*resource-editor/);
   assert.doesNotMatch(html, /id="video-prompt"[^>]*maxlength=/);
   assert.match(html, /id="video-resolution"/);

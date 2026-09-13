@@ -151,6 +151,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-builder-fields label,
 .video-prompt-time-fields label,
 .video-prompt-camera-field,
+.video-prompt-view-field,
 .video-prompt-lighting-field { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .video-prompt-builder-fields .video-prompt-action-field { align-self: start; }
 .video-prompt-builder-fields .text-input { width: 100%; box-sizing: border-box; }
@@ -159,6 +160,20 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-camera-selects .setting-select { width: 100%; min-width: 0; }
 .video-camera-custom { margin-top: 2px; }
 .video-camera-custom[hidden] { display: none; }
+.video-view-selects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.video-view-selects .setting-select,
+.video-viewpoint-character .setting-select { width: 100%; min-width: 0; }
+.video-view-custom[hidden],
+.video-viewpoint-character[hidden] { display: none; }
+.video-view-caption { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.video-view-subjects { display: flex; min-height: 38px; flex-wrap: wrap; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 8px; padding: 6px; background: var(--input); }
+.video-view-subjects-empty { padding: 2px 5px; color: var(--muted); font-size: 11px; font-weight: 500; }
+.video-prompt-builder-fields .video-view-subject { position: relative; display: block; }
+.video-view-subject input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.video-view-subject span { display: block; border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; background: var(--card); color: var(--muted); font-size: 11px; cursor: pointer; }
+.video-view-subject input:checked + span { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
+.video-view-subject input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+.video-viewpoint-character { margin-top: 3px; }
 .video-lighting-selects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .video-lighting-selects .setting-select,
 .video-prompt-lighting-field > .setting-select { width: 100%; min-width: 0; }

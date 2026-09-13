@@ -140,7 +140,9 @@ function showVideoPromptBuilder() {
 function resetVideoPromptBuilder() {
   $("video-prompt-builder-form").reset();
   document.querySelectorAll("#video-prompt-builder-dialog .resource-editor").forEach(clearEditor);
+  renderStoryboardCharacterControls([], "");
   syncCameraControls();
+  syncViewControls();
   syncLightingControls();
   editingStoryboardId = "";
   $("submit-video-prompt-builder").textContent = "加入分鏡";
@@ -170,6 +172,55 @@ function syncCameraControls(focusCustom = false) {
   $("video-prompt-camera-speed").disabled = !$("video-prompt-camera").value;
   $("video-prompt-camera-custom").hidden = !custom;
   if (custom && focusCustom) $("video-prompt-camera-custom").focus();
+}
+
+function selectedStoryboardSubjects() {
+  return [...$("video-prompt-view-subjects").querySelectorAll("input:checked")].map(input => input.value);
+}
+
+function renderStoryboardCharacterControls(selectedSubjects = selectedStoryboardSubjects(), viewpoint = $("video-prompt-viewpoint-character").value) {
+  const enabledCharacters = characterTemplates.filter(character => character.enabled !== false && character.name);
+  const subjects = $("video-prompt-view-subjects");
+  if (!enabledCharacters.length) {
+    const empty = document.createElement("span");
+    empty.className = "video-view-subjects-empty";
+    empty.textContent = "尚無已啟用人物";
+    subjects.replaceChildren(empty);
+  } else {
+    subjects.replaceChildren(...enabledCharacters.map(character => {
+      const label = document.createElement("label");
+      label.className = "video-view-subject";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.value = character.name;
+      input.checked = selectedSubjects.includes(character.name);
+      const text = document.createElement("span");
+      text.textContent = character.name;
+      label.append(input, text);
+      return label;
+    }));
+  }
+  const viewpointSelect = $("video-prompt-viewpoint-character");
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = "選擇視點角色（選填）";
+  viewpointSelect.replaceChildren(placeholder, ...enabledCharacters.map(character => {
+    const option = document.createElement("option");
+    option.value = character.name;
+    option.textContent = character.name;
+    return option;
+  }));
+  viewpointSelect.value = enabledCharacters.some(character => character.name === viewpoint) ? viewpoint : "";
+}
+
+function syncViewControls(focusCustom = false) {
+  const angle = $("video-prompt-view-angle").value;
+  const custom = angle === "custom";
+  const needsViewpoint = ["第一人稱視角", "越肩視角"].includes(angle);
+  $("video-prompt-view-custom").hidden = !custom;
+  $("video-prompt-viewpoint-wrap").hidden = !needsViewpoint;
+  if (!needsViewpoint) $("video-prompt-viewpoint-character").value = "";
+  if (custom && focusCustom) $("video-prompt-view-custom").focus();
 }
 
 function cameraPromptField() {
@@ -692,7 +743,7 @@ function prefixedNodes(prefix, html) {
 function removeStoredStoryboardReference(storyboardId, field, resourceId) {
   const draft = storyboards.get(storyboardId);
   if (!draft) return;
-  const property = field === "camera" ? "cameraCustom" : field === "lighting" ? "lightingCustom" : field;
+  const property = field === "camera" ? "cameraCustom" : field === "view" ? "viewCustom" : field === "lighting" ? "lightingCustom" : field;
   if (!(property in draft)) return;
   const template = document.createElement("template");
   template.innerHTML = draft[property] || "";
@@ -711,7 +762,11 @@ function collectStoryboardDraft() {
     start: $("video-prompt-start").value,
     end: $("video-prompt-end").value,
     scene: editorSnapshot("video-prompt-scene"),
-    view: editorSnapshot("video-prompt-view"),
+    shotSize: $("video-prompt-shot-size").value,
+    viewAngle: $("video-prompt-view-angle").value,
+    viewCustom: editorSnapshot("video-prompt-view-custom"),
+    viewSubjects: selectedStoryboardSubjects(),
+    viewpointCharacter: $("video-prompt-viewpoint-character").value,
     sound: editorSnapshot("video-prompt-sound"),
     action: editorSnapshot("video-prompt-action"),
     dialogue: editorSnapshot("video-prompt-dialogue"),
@@ -739,6 +794,28 @@ function roundedStoryboardTime(value) {
   return String(Math.round(Number(value) * 10) / 10);
 }
 
+function viewPromptField(draft) {
+  const customText = htmlText(draft.viewCustom);
+  const angle = draft.viewAngle === "custom" ? customText : draft.viewAngle;
+  const parts = [
+    draft.shotSize,
+    angle,
+    draft.viewpointCharacter ? `視點角色：${draft.viewpointCharacter}` : "",
+    draft.viewSubjects?.length ? `畫面主體：${draft.viewSubjects.join("、")}` : "",
+  ].filter(Boolean);
+  const value = parts.join("、");
+  if (draft.viewAngle !== "custom" || !customText) return [value, null];
+  const prefix = [draft.shotSize].filter(Boolean).join("、");
+  const suffix = [
+    draft.viewpointCharacter ? `視點角色：${draft.viewpointCharacter}` : "",
+    draft.viewSubjects?.length ? `畫面主體：${draft.viewSubjects.join("、")}` : "",
+  ].filter(Boolean).join("、");
+  const nodes = htmlNodes(draft.viewCustom);
+  if (prefix) nodes.unshift(document.createTextNode(`${prefix}、`));
+  if (suffix) nodes.push(document.createTextNode(`、${suffix}`));
+  return [value, nodes];
+}
+
 function storyboardFields(draft) {
   const cameraPrefix = draft.cameraSpeed || "";
   const cameraCustomText = htmlText(draft.cameraCustom);
@@ -748,11 +825,12 @@ function storyboardFields(draft) {
   const lightingCustomText = htmlText(draft.lightingCustom);
   const lightingText = draft.lighting === "custom" ? `${lightingPrefix}${lightingPrefix ? " " : ""}${lightingCustomText}` : draft.lighting ? `${lightingPrefix}${draft.lighting}` : "";
   const lightingNodes = draft.lighting === "custom" && lightingCustomText ? prefixedNodes(lightingPrefix, draft.lightingCustom) : null;
+  const [viewText, viewNodes] = viewPromptField(draft);
   return [
     ["時間", draft.start !== "" && draft.end !== "" ? formatStoryboardTime(draft.start, draft.end) : ""],
     ["場景", htmlText(draft.scene), htmlNodes(draft.scene)],
     ["鏡頭", cameraText, cameraNodes],
-    ["視角", htmlText(draft.view), htmlNodes(draft.view)],
+    ["視角", viewText, viewNodes],
     ["燈光", lightingText, lightingNodes],
     ["音效", htmlText(draft.sound), htmlNodes(draft.sound)],
     ["動作", htmlText(draft.action), htmlNodes(draft.action)],
@@ -836,15 +914,20 @@ function editStoryboard(id) {
   editingStoryboardId = id;
   $("video-prompt-start").value = draft.start;
   $("video-prompt-end").value = draft.end;
-  for (const [field, html] of [["scene", draft.scene], ["view", draft.view], ["sound", draft.sound], ["action", draft.action], ["dialogue", draft.dialogue]]) restoreEditorHtml(`video-prompt-${field}`, html);
+  for (const [field, html] of [["scene", draft.scene], ["sound", draft.sound], ["action", draft.action], ["dialogue", draft.dialogue]]) restoreEditorHtml(`video-prompt-${field}`, html);
   $("video-prompt-camera").value = draft.camera;
   $("video-prompt-camera-speed").value = draft.cameraSpeed;
   restoreEditorHtml("video-prompt-camera-custom", draft.cameraCustom);
+  $("video-prompt-shot-size").value = draft.shotSize;
+  $("video-prompt-view-angle").value = draft.viewAngle;
+  restoreEditorHtml("video-prompt-view-custom", draft.viewCustom);
+  renderStoryboardCharacterControls(draft.viewSubjects, draft.viewpointCharacter);
   $("video-prompt-lighting").value = draft.lighting;
   $("video-prompt-lighting-temperature").value = draft.lightingTemperature;
   $("video-prompt-lighting-intensity").value = draft.lightingIntensity;
   restoreEditorHtml("video-prompt-lighting-custom", draft.lightingCustom);
   syncCameraControls();
+  syncViewControls();
   syncLightingControls();
   $("submit-video-prompt-builder").textContent = "儲存分鏡";
   showVideoPromptBuilder();
@@ -976,6 +1059,7 @@ function renderCharacterTemplates() {
   $("character-template-list").replaceChildren(...characterTemplates.map(createCharacterThumbnail));
   $("character-template-empty").hidden = Boolean(characterTemplates.length);
   syncCharacterTemplateButton();
+  renderStoryboardCharacterControls();
 }
 
 function showCharacterEditorReference(file) {
@@ -1596,6 +1680,7 @@ $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder)
 $("minimize-video-prompt-builder").addEventListener("click", minimizeVideoPromptBuilder);
 $("restore-video-prompt-builder").addEventListener("click", restoreVideoPromptBuilder);
 $("video-prompt-camera").addEventListener("change", () => syncCameraControls(true));
+$("video-prompt-view-angle").addEventListener("change", () => syncViewControls(true));
 $("video-prompt-lighting").addEventListener("change", () => syncLightingControls(true));
 for (const input of [$("video-prompt-start"), $("video-prompt-end")]) {
   input.addEventListener("keydown", event => {
@@ -1641,6 +1726,8 @@ document.querySelectorAll(".resource-editor").forEach(editor => {
   editor.addEventListener("paste", handlePlainTextPaste);
 });
 syncCameraControls();
+renderStoryboardCharacterControls();
+syncViewControls();
 syncLightingControls();
 $("video-resource-input").addEventListener("change", event => void addVideoResources([...event.currentTarget.files]));
 $("close-video-resource-preview").addEventListener("click", () => $("video-resource-preview-dialog").close());

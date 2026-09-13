@@ -216,7 +216,62 @@
             </div>
             <div id="video-prompt-camera-custom" class="text-input resource-editor resource-editor-single video-camera-custom" contenteditable="true" role="textbox" aria-label="自訂運鏡" data-placeholder="輸入自訂運鏡，也可使用 @ 資源或 # 人物" hidden></div>
           </div>
-          <label><span>視角</span><div id="video-prompt-view" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="視角" data-placeholder="例如：低角度仰視主體"></div></label>
+          <div class="video-prompt-view-field">
+            <span>視角</span>
+            <div class="video-view-selects">
+              <select id="video-prompt-shot-size" class="setting-select" aria-label="景別">
+                <option value="" selected>選擇景別</option>
+                <option value="大遠景">大遠景</option>
+                <option value="遠景">遠景</option>
+                <option value="全景">全景</option>
+                <option value="中遠景">中遠景</option>
+                <option value="中景">中景</option>
+                <option value="中近景">中近景</option>
+                <option value="近景">近景</option>
+                <option value="特寫">特寫</option>
+                <option value="大特寫">大特寫</option>
+                <option value="微距特寫">微距特寫</option>
+              </select>
+              <select id="video-prompt-view-angle" class="setting-select" aria-label="觀看角度">
+                <option value="" selected>選擇觀看角度</option>
+                <optgroup label="高度與俯仰">
+                  <option value="平視">平視</option>
+                  <option value="高角度俯拍">高角度俯拍</option>
+                  <option value="低角度仰拍">低角度仰拍</option>
+                  <option value="正上方俯視">正上方俯視</option>
+                  <option value="鳥瞰視角">鳥瞰視角</option>
+                  <option value="地面視角">地面視角</option>
+                  <option value="蟲視角">蟲視角</option>
+                  <option value="航拍視角">航拍視角</option>
+                </optgroup>
+                <optgroup label="觀看方向">
+                  <option value="正面視角">正面視角</option>
+                  <option value="四分之三側面">四分之三側面</option>
+                  <option value="側面視角">側面視角</option>
+                  <option value="背面視角">背面視角</option>
+                  <option value="背後跟隨視角">背後跟隨視角</option>
+                  <option value="第一人稱視角">第一人稱視角</option>
+                  <option value="越肩視角">越肩視角</option>
+                </optgroup>
+                <optgroup label="特殊視角">
+                  <option value="荷蘭角">荷蘭角</option>
+                  <option value="魚眼視角">魚眼視角</option>
+                  <option value="廣角透視">廣角透視</option>
+                  <option value="長焦壓縮視角">長焦壓縮視角</option>
+                  <option value="鏡面反射視角">鏡面反射視角</option>
+                  <option value="監視器視角">監視器視角</option>
+                </optgroup>
+                <option value="custom">自訂視角（開放輸入）</option>
+              </select>
+            </div>
+            <div id="video-prompt-view-custom" class="text-input resource-editor resource-editor-single video-view-custom" contenteditable="true" role="textbox" aria-label="自訂視角" data-placeholder="輸入自訂視角，也可使用 @ 資源或 # 人物" hidden></div>
+            <span class="video-view-caption">畫面主體（可複選）</span>
+            <div id="video-prompt-view-subjects" class="video-view-subjects" aria-label="選擇畫面主體"></div>
+            <label id="video-prompt-viewpoint-wrap" class="video-viewpoint-character" for="video-prompt-viewpoint-character" hidden>
+              <span>視點角色</span>
+              <select id="video-prompt-viewpoint-character" class="setting-select" aria-label="視點角色"></select>
+            </label>
+          </div>
           <div class="video-prompt-lighting-field">
             <span>燈光</span>
             <select id="video-prompt-lighting" class="setting-select" aria-label="燈光類型">

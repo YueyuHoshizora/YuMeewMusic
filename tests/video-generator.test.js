@@ -44,13 +44,18 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-start"><span>開始時間（秒）<\/span><input id="video-prompt-start"[^>]*type="number"[^>]*min="0"[^>]*step="0\.1"[^>]*required/);
   assert.match(html, /for="video-prompt-end"><span>結束時間（秒）<\/span><input id="video-prompt-end"[^>]*type="number"[^>]*min="0"[^>]*step="0\.1"[^>]*required/);
-  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-view", "視角"], ["video-prompt-sound", "音效"], ["video-prompt-action", "動作"], ["video-prompt-dialogue", "對白"]]) {
+  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-sound", "音效"], ["video-prompt-action", "動作"], ["video-prompt-dialogue", "對白"]]) {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
   assert.match(html, /<span>鏡頭<\/span>[\s\S]*id="video-prompt-camera"[\s\S]*<optgroup label="基本運鏡">[\s\S]*<optgroup label="跟拍與環繞">[\s\S]*<optgroup label="電影感運鏡">/);
   assert.match(html, /id="video-prompt-camera"[\s\S]*<option value="custom">自訂運鏡（開放輸入）<\/option>[\s\S]*id="video-prompt-camera-speed"/);
   assert.match(html, /id="video-prompt-camera-custom"[^>]*resource-editor[^>]*hidden/);
   assert.match(script, /function cameraPromptField\(\)[\s\S]*motion !== "custom"[\s\S]*editorText\(editor\)/);
+  assert.match(html, /<span>視角<\/span>[\s\S]*id="video-prompt-shot-size"[\s\S]*大遠景[\s\S]*微距特寫/);
+  assert.match(html, /id="video-prompt-view-angle"[\s\S]*<optgroup label="高度與俯仰">[\s\S]*<optgroup label="觀看方向">[\s\S]*<optgroup label="特殊視角">[\s\S]*value="custom">自訂視角（開放輸入）/);
+  assert.match(html, /id="video-prompt-view-custom"[^>]*resource-editor[^>]*hidden/);
+  assert.match(html, /id="video-prompt-view-subjects"[^>]*aria-label="選擇畫面主體"/);
+  assert.match(html, /id="video-prompt-viewpoint-wrap"[^>]*hidden>[\s\S]*id="video-prompt-viewpoint-character"/);
   assert.match(html, /<span>燈光<\/span>[\s\S]*id="video-prompt-lighting"[\s\S]*<optgroup label="方向與人物布光">[\s\S]*<optgroup label="自然光與環境光">[\s\S]*<optgroup label="電影風格布光">/);
   assert.match(html, /id="video-prompt-lighting"[\s\S]*<option value="custom">自訂燈光（開放輸入）<\/option>[\s\S]*id="video-prompt-lighting-temperature"[\s\S]*id="video-prompt-lighting-intensity"/);
   assert.match(html, /id="video-prompt-lighting-custom"[^>]*resource-editor[^>]*hidden/);
@@ -97,12 +102,16 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(globalCss, /\.dialog-confirm\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*background:\s*transparent/);
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /\.video-prompt-builder-fields \.video-prompt-action-field\s*\{[^}]*align-self:\s*start/);
+  assert.match(css, /\.video-view-subjects\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /window\.confirm\("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
   assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
   assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
-  assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*cameraSpeed:[\s\S]*lightingIntensity:/);
+  assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*shotSize:[\s\S]*viewSubjects: selectedStoryboardSubjects\(\)[\s\S]*viewpointCharacter:[\s\S]*lightingIntensity:/);
+  assert.match(script, /function renderStoryboardCharacterControls\([\s\S]*character\.enabled !== false[\s\S]*input\.type = "checkbox"[\s\S]*選擇視點角色（選填）/);
+  assert.match(script, /function syncViewControls\([\s\S]*\["第一人稱視角", "越肩視角"\]\.includes\(angle\)/);
+  assert.match(script, /function viewPromptField\(draft\)[\s\S]*視點角色：[\s\S]*畫面主體：[\s\S]*viewCustom/);
   assert.match(script, /function nextStoryboardStart\(\)[\s\S]*storyboards\.get\(last\.dataset\.storyboardId\)\?\.end \|\| "0"/);
   assert.match(script, /function formatStoryboardTime\(start, end\)[\s\S]*`\$\{Number\(start\)\}-\$\{Number\(end\)\}s`/);
   assert.match(script, /function createStoryboardBlock\(draft\)[\s\S]*storyboard-card-action[\s\S]*editStoryboard\(draft\.id\)/);

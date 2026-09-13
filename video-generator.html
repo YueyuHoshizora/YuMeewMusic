@@ -32,7 +32,7 @@
           <div class="video-prompt-field">
             <div class="video-prompt-heading">
               <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
-              <button id="open-video-prompt-builder" class="video-prompt-add" type="button">加入分鏡</button>
+              <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
             <div id="video-prompt" class="resource-editor" contenteditable="true" role="textbox" aria-label="影片細節" aria-multiline="true" data-placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></div>
           </div>
@@ -158,7 +158,10 @@
 
     <dialog id="video-prompt-builder-dialog" class="reset-dialog video-prompt-builder-dialog" aria-labelledby="video-prompt-builder-title">
       <form id="video-prompt-builder-form" method="dialog">
-        <h2 id="video-prompt-builder-title">分鏡內容</h2>
+        <div class="video-prompt-builder-heading">
+          <h2 id="video-prompt-builder-title">分鏡內容</h2>
+          <button id="minimize-video-prompt-builder" class="dialog-confirm video-prompt-builder-minimize" type="button" aria-label="縮小分鏡內容視窗">縮小</button>
+        </div>
         <div class="video-prompt-builder-fields">
           <label for="video-prompt-time"><span>時間</span><input id="video-prompt-time" class="text-input" type="text" placeholder="例如：0–5 秒" /></label>
           <label><span>場景</span><div id="video-prompt-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="場景" data-placeholder="例如：繁星閃爍的夜空下"></div></label>
@@ -278,6 +281,10 @@
         </div>
       </form>
     </dialog>
+
+    <button id="restore-video-prompt-builder" class="video-prompt-builder-minimized" type="button" aria-label="重新開啟分鏡內容視窗" hidden>
+      <span>分鏡內容</span><small>繼續編輯</small>
+    </button>
 
     <div id="character-mention-menu" class="character-mention-menu" role="listbox" aria-label="選擇已啟用人物" hidden></div>
     <div id="resource-mention-menu" class="resource-mention-menu" role="listbox" aria-label="選擇資源" hidden></div>

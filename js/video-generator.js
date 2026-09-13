@@ -34,6 +34,7 @@ applyTheme(settings.mode, settings.theme);
 
 let busy = false;
 let allowPageExit = false;
+let promptBuilderMinimized = false;
 let generatedVideoBlob = null;
 let generatedVideoUrl = "";
 let generatedVideoRemoteUrl = "";
@@ -134,8 +135,24 @@ function openVideoPromptBuilder() {
   if (busy) return;
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
+  promptBuilderMinimized = false;
+  $("restore-video-prompt-builder").hidden = true;
+  $("open-video-prompt-builder").disabled = true;
+  $("video-prompt-builder-dialog").returnValue = "";
   $("video-prompt-builder-dialog").showModal();
   $("video-prompt-time").focus();
+}
+
+function minimizeVideoPromptBuilder() {
+  hideCharacterMentionMenu();
+  hideResourceMentionMenu();
+  promptBuilderMinimized = true;
+  $("video-prompt-builder-dialog").close("minimized");
+}
+
+function restoreVideoPromptBuilder() {
+  if (busy || !promptBuilderMinimized) return;
+  openVideoPromptBuilder();
 }
 
 function syncCameraControls(focusCustom = false) {
@@ -1100,6 +1117,8 @@ function setBusy(value, showLock = value) {
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
   for (const id of ["open-character-template", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
+  $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
+  $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
@@ -1353,6 +1372,8 @@ $("character-editor-form").addEventListener("submit", submitCharacterEditor);
 $("cancel-character-editor").addEventListener("click", () => $("character-editor-dialog").close());
 $("delete-character").addEventListener("click", deleteEditingCharacter);
 $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
+$("minimize-video-prompt-builder").addEventListener("click", minimizeVideoPromptBuilder);
+$("restore-video-prompt-builder").addEventListener("click", restoreVideoPromptBuilder);
 $("video-prompt-camera").addEventListener("change", () => syncCameraControls(true));
 $("video-prompt-lighting").addEventListener("change", () => syncLightingControls(true));
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
@@ -1364,6 +1385,10 @@ $("cancel-video-prompt-builder").addEventListener("click", () => {
 $("video-prompt-builder-dialog").addEventListener("close", () => {
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
+  const minimized = $("video-prompt-builder-dialog").returnValue === "minimized";
+  promptBuilderMinimized = minimized;
+  $("restore-video-prompt-builder").hidden = !minimized;
+  $("open-video-prompt-builder").disabled = busy || minimized;
 });
 $("video-prompt-builder-dialog").addEventListener("pointerdown", event => {
   if (characterMentionTarget && !$("character-mention-menu").contains(event.target) && event.target !== characterMentionTarget) hideCharacterMentionMenu();

@@ -21,7 +21,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
-  assert.match(html, /id="open-video-prompt-builder"[^>]*>加入分鏡<\/button>/);
+  assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
   assert.match(html, /id="video-resource-title">資源<\/h2>/);
   assert.match(html, /生成時只會暫存實際引用的資源，2 小時後自動刪除/);
@@ -38,6 +38,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="character-reference"[\s\S]*id="character-voice"[\s\S]*id="character-tone"[\s\S]*id="character-style"[\s\S]*id="character-clothing"/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
   assert.match(html, /<h2 id="video-prompt-builder-title">分鏡內容<\/h2>/);
+  assert.match(html, /id="minimize-video-prompt-builder"[^>]*>縮小<\/button>/);
+  assert.match(html, /id="restore-video-prompt-builder"[^>]*hidden>[\s\S]*分鏡內容[\s\S]*繼續編輯/);
   assert.match(html, /id="video-prompt-builder-form"[\s\S]*<button class="dialog-confirm" type="submit">加入分鏡<\/button>/);
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span><input id="video-prompt-time"/);
@@ -52,6 +54,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-prompt-lighting"[\s\S]*<option value="custom">自訂燈光（開放輸入）<\/option>[\s\S]*id="video-prompt-lighting-temperature"[\s\S]*id="video-prompt-lighting-intensity"/);
   assert.match(html, /id="video-prompt-lighting-custom"[^>]*resource-editor[^>]*hidden/);
   assert.match(script, /function lightingPromptField\(\)[\s\S]*const prefix = `\$\{intensity\}\$\{temperature\}`[\s\S]*lighting !== "custom"/);
+  assert.match(script, /function minimizeVideoPromptBuilder\(\)[\s\S]*promptBuilderMinimized = true;[\s\S]*\.close\("minimized"\)/);
+  assert.match(script, /function restoreVideoPromptBuilder\(\)[\s\S]*openVideoPromptBuilder\(\)/);
+  assert.match(script, /const minimized = \$\("video-prompt-builder-dialog"\)\.returnValue === "minimized";[\s\S]*\$\("open-video-prompt-builder"\)\.disabled = busy \|\| minimized/);
   assert.doesNotMatch(html, /id="video-prompt-time"[^>]*resource-editor/);
   assert.doesNotMatch(html, /id="video-prompt"[^>]*maxlength=/);
   assert.match(html, /id="video-resolution"/);

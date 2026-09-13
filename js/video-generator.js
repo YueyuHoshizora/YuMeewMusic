@@ -16,9 +16,9 @@ const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
 const VIDEO_MODELS = Object.freeze({
   "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15 }),
-  "MiniMax-H3-Max": Object.freeze({ label: "MiniMax H3 Max", provider: "minimax", apiKey: "MiniMax", resolutions: ["480P", "768P"], defaultResolution: "768P", minimumDuration: 5, maximumDuration: 15 }),
-  "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "720p", minimumDuration: 4, maximumDuration: 30 }),
-  "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "720p", minimumDuration: 4, maximumDuration: 15 }),
+  "MiniMax-H3-Max": Object.freeze({ label: "MiniMax H3 Max", provider: "minimax", apiKey: "MiniMax", resolutions: ["480P", "768P"], defaultResolution: "480P", minimumDuration: 5, maximumDuration: 15 }),
+  "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 15 }),
+  "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 30 }),
 });
 
 const settings = loadSettings();

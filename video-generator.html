@@ -330,7 +330,44 @@
             <div id="video-prompt-lighting-custom" class="text-input resource-editor resource-editor-single video-lighting-custom" contenteditable="true" role="textbox" aria-label="自訂燈光" data-placeholder="輸入自訂燈光，也可使用 @ 資源或 # 人物" hidden></div>
           </div>
           <label><span>音效</span><div id="video-prompt-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="音效" data-placeholder="例如：雨聲與遠方的雷聲"></div></label>
-          <label class="video-prompt-action-field"><span>動作</span><div id="video-prompt-action" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="動作" data-placeholder="例如：角色抬頭望向天空"></div></label>
+          <div class="video-prompt-action-field">
+            <span>動作</span>
+            <div class="video-action-selects">
+              <select id="video-prompt-action-character" class="setting-select" aria-label="執行角色"></select>
+              <select id="video-prompt-action-category" class="setting-select" aria-label="動作類別">
+                <option value="" selected>選擇動作類別</option>
+                <option value="movement">基本移動</option>
+                <option value="gaze">頭部與視線</option>
+                <option value="expression">表情</option>
+                <option value="gesture">手勢與肢體</option>
+                <option value="object">物件互動</option>
+                <option value="interaction">人物互動</option>
+                <option value="environment">環境反應</option>
+              </select>
+              <select id="video-prompt-action-type" class="setting-select" aria-label="動作內容" disabled>
+                <option value="" selected>選擇動作內容</option>
+              </select>
+              <select id="video-prompt-action-style" class="setting-select" aria-label="速度或力度">
+                <option value="" selected>正常速度／力度</option>
+                <option value="緩慢地">緩慢</option>
+                <option value="快速地">快速</option>
+                <option value="輕柔地">輕柔</option>
+                <option value="強烈地">強烈</option>
+                <option value="小心翼翼地">小心翼翼</option>
+                <option value="猶豫地">猶豫</option>
+                <option value="有節奏地">有節奏</option>
+                <option value="突然">突然</option>
+                <option value="逐漸加速地">逐漸加速</option>
+                <option value="逐漸減速地">逐漸減速</option>
+                <option value="以慢動作">慢動作</option>
+              </select>
+            </div>
+            <div id="video-prompt-action-custom" class="text-input resource-editor resource-editor-single video-action-custom" contenteditable="true" role="textbox" aria-label="自訂動作" data-placeholder="輸入自訂動作，也可使用 @ 資源或 # 人物" hidden></div>
+            <span class="video-action-caption">目標／物件</span>
+            <div id="video-prompt-action-target" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="動作目標或物件" data-placeholder="目標／物件，可使用 @ 資源或 # 人物"></div>
+            <span class="video-action-caption">動作補充</span>
+            <div id="video-prompt-action-detail" class="text-input resource-editor resource-editor-multiline" contenteditable="true" role="textbox" aria-label="動作補充" aria-multiline="true" data-placeholder="補充連續動作或細節"></div>
+          </div>
           <label><span>對白</span><div id="video-prompt-dialogue" class="text-input resource-editor resource-editor-multiline" contenteditable="true" role="textbox" aria-label="對白" aria-multiline="true" data-placeholder="例如：今晚的星光真美。"></div></label>
         </div>
         <div class="dialog-actions">

@@ -154,6 +154,11 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-view-field,
 .video-prompt-lighting-field { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .video-prompt-builder-fields .video-prompt-action-field { align-self: start; }
+.video-prompt-action-field { display: grid; align-content: start; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
+.video-action-selects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.video-action-selects .setting-select { width: 100%; min-width: 0; }
+.video-action-custom[hidden] { display: none; }
+.video-action-caption { margin-top: 2px; color: var(--muted); font-size: 11px; }
 .video-prompt-builder-fields .text-input { width: 100%; box-sizing: border-box; }
 .video-prompt-builder-fields textarea { min-height: 88px; resize: vertical; font: inherit; line-height: 1.6; }
 .video-camera-selects { display: grid; grid-template-columns: minmax(0, 1fr) 112px; gap: 8px; }

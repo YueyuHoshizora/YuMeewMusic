@@ -30,6 +30,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /參考圖（必填）[\s\S]*id="character-reference"[^>]*required/);
   assert.match(html, /id="character-reference"[\s\S]*id="character-voice"[\s\S]*id="character-tone"[\s\S]*id="character-style"[\s\S]*id="character-clothing"/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
+  assert.match(html, /id="video-prompt-builder-form"[\s\S]*<button class="dialog-confirm" type="submit">加入分鏡<\/button>/);
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
   assert.match(html, /for="video-prompt-scene"><span>場景<\/span>/);

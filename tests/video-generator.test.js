@@ -169,6 +169,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(mentionFunction, /document\.createElement\("button"\)/);
   assert.match(script, /event\.target\.matches\?\.\("\.resource-token"\) \? event\.target : null/);
   assert.match(script, /openResourcePreview\(token\.dataset\.resourceId\)/);
+  assert.match(script, /function removeResourceMention\(token, editor = token\.closest\("\.resource-editor"\)\)/);
+  assert.match(script, /function resourceMentionBesideCaret\(editor, direction\)/);
+  assert.match(script, /\["Backspace", "Delete"\]\.includes\(event\.key\)/);
+  assert.match(script, /if \(removeResourceMentionAtCaret\(event, editor\)\) return/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /video-description-panel"\)\.addEventListener\("toggle",[\s\S]*video-settings-panel"\)\.open = false;[\s\S]*video-result-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);

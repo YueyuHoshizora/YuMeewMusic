@@ -276,9 +276,55 @@ function createResourceMention(resource) {
   mention.tabIndex = 0;
   mention.setAttribute("role", "button");
   mention.dataset.resourceId = resource.id;
-  mention.title = `預覽 ${resource.referenceName}`;
+  mention.title = `預覽 ${resource.referenceName}；按 Backspace 或 Delete 移除引用`;
   mention.textContent = `@${resource.referenceName}`;
   return mention;
+}
+
+function removeResourceMention(token, editor = token.closest(".resource-editor")) {
+  if (!editor || !token.matches(".resource-token")) return false;
+  const parent = token.parentNode;
+  const tokenIndex = [...parent.childNodes].indexOf(token);
+  const spacer = token.nextSibling;
+  if (spacer?.nodeType === Node.TEXT_NODE && spacer.data.startsWith(" ")) spacer.deleteData(0, 1);
+  if (spacer?.nodeType === Node.TEXT_NODE && !spacer.data) spacer.remove();
+  token.remove();
+
+  editor.focus();
+  const range = document.createRange();
+  range.setStart(parent, Math.min(tokenIndex, parent.childNodes.length));
+  range.collapse(true);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  editor.dispatchEvent(new Event("input", { bubbles: true }));
+  return true;
+}
+
+function resourceMentionBesideCaret(editor, direction) {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || !selection.isCollapsed || !editor.contains(selection.anchorNode)) return null;
+  const node = selection.anchorNode;
+  const offset = selection.anchorOffset;
+  let candidate = null;
+  if (node === editor || node?.nodeType === Node.ELEMENT_NODE) {
+    candidate = direction < 0 ? node.childNodes[offset - 1] : node.childNodes[offset];
+  } else if (node?.nodeType === Node.TEXT_NODE) {
+    const nearbyText = direction < 0 ? node.data.slice(0, offset) : node.data.slice(offset);
+    if (!nearbyText.trim()) candidate = direction < 0 ? node.previousSibling : node.nextSibling;
+  }
+  return candidate?.nodeType === Node.ELEMENT_NODE && candidate.matches(".resource-token") ? candidate : null;
+}
+
+function removeResourceMentionAtCaret(event, editor) {
+  if (!event.isComposing && ["Backspace", "Delete"].includes(event.key)) {
+    const token = resourceMentionBesideCaret(editor, event.key === "Backspace" ? -1 : 1);
+    if (token) {
+      event.preventDefault();
+      return removeResourceMention(token, editor);
+    }
+  }
+  return false;
 }
 
 function selectResourceMention(resource) {
@@ -1110,6 +1156,7 @@ document.querySelectorAll(".resource-editor").forEach(editor => {
   editor.setAttribute("aria-expanded", "false");
   editor.addEventListener("input", handleResourceEditorInput);
   editor.addEventListener("keydown", event => {
+    if (removeResourceMentionAtCaret(event, editor)) return;
     if (!$("resource-mention-menu").hidden) handleResourceMentionKeydown(event);
     else if (editor.closest("#video-prompt-builder-dialog")) handleCharacterMentionKeydown(event);
     if (!event.defaultPrevented && editor.classList.contains("resource-editor-single") && event.key === "Enter") event.preventDefault();
@@ -1124,7 +1171,13 @@ document.addEventListener("click", event => {
   if (token) openResourcePreview(token.dataset.resourceId);
 });
 document.addEventListener("keydown", event => {
-  if (!event.target.matches?.(".resource-token") || !["Enter", " "].includes(event.key)) return;
+  if (!event.target.matches?.(".resource-token")) return;
+  if (["Backspace", "Delete"].includes(event.key)) {
+    event.preventDefault();
+    removeResourceMention(event.target);
+    return;
+  }
+  if (!["Enter", " "].includes(event.key)) return;
   event.preventDefault();
   openResourcePreview(event.target.dataset.resourceId);
 });

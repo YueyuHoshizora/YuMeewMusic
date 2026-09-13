@@ -114,6 +114,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.film-style-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.video-prompt-preview-text\s*\{[^}]*user-select:\s*text/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.video-prompt-builder-column\s*\{[^}]*align-content:\s*start;[^}]*gap:\s*14px/);
   assert.match(css, /\.character-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*220px/);
   assert.match(css, /\.resource-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*248px/);
   assert.match(css, /\.resource-token\s*\{[^}]*cursor:\s*pointer/);
@@ -140,6 +141,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function dialogueSpeakerSelect\(selected = ""\)[\s\S]*__narrator__[\s\S]*character\.enabled !== false/);
   assert.match(script, /function dialogueSpeakerSelect\(selected = ""\)[\s\S]*video-dialogue-speaker/);
   assert.match(script, /function createDialogueRow\(dialogue = \{\}\)[\s\S]*口氣／情緒[\s\S]*video-dialogue-text[\s\S]*向上移動對話[\s\S]*向下移動對話[\s\S]*刪除對話/);
+  assert.match(script, /function syncDialogueOrderButtons\(\)[\s\S]*data-dialogue-action="up"[\s\S]*disabled = index === 0[\s\S]*data-dialogue-action="down"[\s\S]*disabled = index === rows\.length - 1/);
+  assert.match(script, /function renderDialogueRows\(dialogues = \[\]\)/);
+  assert.match(script, /function arrangeVideoPromptBuilderFields\(\)[\s\S]*left\.append\([\s\S]*video-prompt-time-fields[\s\S]*video-prompt-camera-field[\s\S]*video-prompt-view-field[\s\S]*video-prompt-sound[\s\S]*right\.append\([\s\S]*video-prompt-scene[\s\S]*video-prompt-lighting-field[\s\S]*video-prompt-action-field/);
+  assert.match(script, /draft\.dialogues\?\.length \? draft\.dialogues : draft\.dialogue \? \[\{ speaker: "", emotion: "", text: draft\.dialogue \}\] : \[\]/);
   assert.match(script, /function dialoguePromptField\(dialogues = \[\]\)[\s\S]*__narrator__[\s\S]*旁白[\s\S]*dialogues/);
   assert.match(script, /function validateDialogueRows\(form\)[\s\S]*請選擇說話者或旁白/);
   assert.match(script, /function renderStoryboardCharacterControls\([\s\S]*character\.enabled !== false[\s\S]*input\.type = "checkbox"[\s\S]*選擇視點角色（選填）/);

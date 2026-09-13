@@ -164,6 +164,26 @@ function resetVideoPromptBuilder() {
   $("submit-video-prompt-builder").textContent = "加入分鏡";
 }
 
+function arrangeVideoPromptBuilderFields() {
+  const fields = $("video-prompt-builder-dialog").querySelector(".video-prompt-builder-fields");
+  const left = document.createElement("div");
+  const right = document.createElement("div");
+  left.className = "video-prompt-builder-column video-prompt-builder-column-left";
+  right.className = "video-prompt-builder-column video-prompt-builder-column-right";
+  left.append(
+    fields.querySelector(".video-prompt-time-fields"),
+    fields.querySelector(".video-prompt-camera-field"),
+    fields.querySelector(".video-prompt-view-field"),
+    $("video-prompt-sound").closest("label"),
+  );
+  right.append(
+    $("video-prompt-scene").closest("label"),
+    fields.querySelector(".video-prompt-lighting-field"),
+    fields.querySelector(".video-prompt-action-field"),
+  );
+  fields.prepend(left, right);
+}
+
 function openVideoPromptBuilder() {
   if (busy) return;
   resetVideoPromptBuilder();
@@ -322,6 +342,14 @@ function dialogueAction(label, text, handler, kind = "") {
   return button;
 }
 
+function syncDialogueOrderButtons() {
+  const rows = [...$("video-dialogue-list").querySelectorAll(".video-dialogue-row")];
+  rows.forEach((row, index) => {
+    row.querySelector('[data-dialogue-action="up"]').disabled = index === 0;
+    row.querySelector('[data-dialogue-action="down"]').disabled = index === rows.length - 1;
+  });
+}
+
 function createDialogueRow(dialogue = {}) {
   const row = document.createElement("div");
   row.className = "video-dialogue-row";
@@ -349,20 +377,23 @@ function createDialogueRow(dialogue = {}) {
   setupResourceEditor(text);
   const actions = document.createElement("div");
   actions.className = "video-dialogue-actions";
-  actions.append(
-    dialogueAction("向上移動對話", "↑", () => {
-      const previous = row.previousElementSibling;
-      if (previous) row.parentElement.insertBefore(row, previous);
-    }),
-    dialogueAction("向下移動對話", "↓", () => {
-      const next = row.nextElementSibling;
-      if (next) row.parentElement.insertBefore(next, row);
-    }),
-    dialogueAction("刪除對話", "×", () => {
-      row.remove();
-      syncDialogueEmptyState();
-    }, "remove"),
-  );
+  const moveUp = dialogueAction("向上移動對話", "↑", () => {
+    const previous = row.previousElementSibling;
+    if (previous) row.parentElement.insertBefore(row, previous);
+    syncDialogueOrderButtons();
+  });
+  moveUp.dataset.dialogueAction = "up";
+  const moveDown = dialogueAction("向下移動對話", "↓", () => {
+    const next = row.nextElementSibling;
+    if (next) row.parentElement.insertBefore(next, row);
+    syncDialogueOrderButtons();
+  });
+  moveDown.dataset.dialogueAction = "down";
+  const remove = dialogueAction("刪除對話", "×", () => {
+    row.remove();
+    syncDialogueEmptyState();
+  }, "remove");
+  actions.append(moveUp, moveDown, remove);
   row.append(speaker, emotion, text, actions);
   return row;
 }
@@ -372,6 +403,7 @@ function syncDialogueEmptyState() {
   let empty = list.querySelector(".video-dialogue-empty");
   if (list.querySelector(".video-dialogue-row")) {
     empty?.remove();
+    syncDialogueOrderButtons();
     return;
   }
   if (!empty) {
@@ -382,7 +414,7 @@ function syncDialogueEmptyState() {
   }
 }
 
-function renderDialogueRows(dialogues = [{}]) {
+function renderDialogueRows(dialogues = []) {
   const rows = dialogues.map(createDialogueRow);
   $("video-dialogue-list").replaceChildren(...rows);
   syncDialogueEmptyState();
@@ -1218,7 +1250,7 @@ function editStoryboard(id) {
   $("video-prompt-view-angle").value = draft.viewAngle;
   restoreEditorHtml("video-prompt-view-custom", draft.viewCustom);
   renderStoryboardCharacterControls(draft.viewSubjects, draft.viewpointCharacter, draft.actionCharacter);
-  renderDialogueRows(draft.dialogues?.length ? draft.dialogues : draft.dialogue ? [{ speaker: "", emotion: "", text: draft.dialogue }] : [{}]);
+  renderDialogueRows(draft.dialogues?.length ? draft.dialogues : draft.dialogue ? [{ speaker: "", emotion: "", text: draft.dialogue }] : []);
   $("video-prompt-action-category").value = draft.actionCategory;
   syncActionControls(draft.actionType);
   $("video-prompt-action-style").value = draft.actionStyle;
@@ -2417,9 +2449,8 @@ $("video-prompt-action-category").addEventListener("change", () => syncActionCon
 $("video-prompt-action-type").addEventListener("change", event => syncActionControls(event.currentTarget.value, true));
 $("video-prompt-lighting").addEventListener("change", () => syncLightingControls(true));
 $("add-video-dialogue").addEventListener("click", () => {
-  const empty = $("video-dialogue-list").querySelector(".video-dialogue-empty");
-  empty?.remove();
   $("video-dialogue-list").append(createDialogueRow());
+  syncDialogueEmptyState();
 });
 for (const input of [$("video-prompt-start"), $("video-prompt-end")]) {
   input.addEventListener("keydown", event => {
@@ -2452,6 +2483,7 @@ $("video-prompt-builder-dialog").addEventListener("scroll", () => {
   if (characterMentionTarget) positionCharacterMentionMenu(characterMentionTarget, $("character-mention-menu").childElementCount);
   if (resourceMentionTarget) positionResourceMentionMenu(resourceMentionTarget, $("resource-mention-menu").childElementCount);
 });
+arrangeVideoPromptBuilderFields();
 syncCameraControls();
 renderStoryboardCharacterControls();
 renderDialogueRows();

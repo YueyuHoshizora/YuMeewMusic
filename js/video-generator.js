@@ -33,6 +33,7 @@ const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 
 let busy = false;
+let allowPageExit = false;
 let generatedVideoBlob = null;
 let generatedVideoUrl = "";
 let generatedVideoRemoteUrl = "";
@@ -118,6 +119,15 @@ function syncGenerateAvailability() {
 function syncDraftStatus() {
   if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
+}
+
+function confirmPageExit(event) {
+  if (allowPageExit) return;
+  if (!window.confirm("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？")) {
+    event.preventDefault();
+    return;
+  }
+  allowPageExit = true;
 }
 
 function openVideoPromptBuilder() {
@@ -1448,6 +1458,7 @@ $("apply-video-background").addEventListener("click", async () => {
     const file = new File([generatedVideoBlob], videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
     await saveStoredMedia("image", file);
     await deleteStoredValue("image-video-project").catch(() => {});
+    allowPageExit = true;
     window.location.href = "./";
   } catch (error) {
     showError(error.message || "無法保存影片到瀏覽器。");
@@ -1456,6 +1467,12 @@ $("apply-video-background").addEventListener("click", async () => {
   }
 });
 
+document.querySelector("[data-confirm-return]").addEventListener("click", confirmPageExit);
+window.addEventListener("beforeunload", event => {
+  if (allowPageExit) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
 window.addEventListener("pagehide", () => {
   generationAbort?.abort();
   releaseVideo();

@@ -13,8 +13,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /<title>影片生成器 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
-  assert.match(html, /<a class="brand" href="\.\/" aria-label="返回 YuMeew 主畫面"/);
-  assert.doesNotMatch(html, /data-confirm-return/);
+  assert.match(html, /<a class="brand" href="\.\/" data-confirm-return/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<div id="video-prompt"[^>]*class="resource-editor"[^>]*contenteditable="true"[^>]*aria-label="影片細節"/);
   assert.doesNotMatch(html, />影片描述<\/label>|加入影片描述|等待輸入影片描述/);
@@ -93,8 +92,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /\.video-prompt-builder-fields \.video-prompt-action-field\s*\{[^}]*align-self:\s*start/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
-  assert.doesNotMatch(script, /confirmPageExit|beforeunload|allowPageExit|離開影片生成器/);
-  assert.match(script, /window\.location\.href = "\.\/"/);
+  assert.match(script, /window\.confirm\("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
+  assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
+  assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /const fields = \[\s*\["時間", \$\("video-prompt-time"\)\.value\.trim\(\)\],\s*\["場景", editorText/);
   assert.match(script, /populated\.forEach\(\(\[label, value, source\]\) => \{[\s\S]*Array\.isArray\(source\)[\s\S]*appendEditorLine\(prompt, label, value, nodes\)/);

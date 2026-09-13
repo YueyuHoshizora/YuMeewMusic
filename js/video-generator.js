@@ -176,11 +176,11 @@ function arrangeVideoPromptBuilderFields() {
     fields.querySelector(".video-prompt-camera-field"),
     fields.querySelector(".video-prompt-view-field"),
     fields.querySelector(".video-prompt-lighting-field"),
-    $("video-prompt-sound").closest("label"),
   );
   right.append(
     $("video-prompt-scene").closest("label"),
     fields.querySelector(".video-prompt-action-field"),
+    $("video-prompt-sound").closest("label"),
   );
   fields.prepend(left, right);
 }

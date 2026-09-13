@@ -144,7 +144,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function syncDialogueOrderButtons\(\)[\s\S]*data-dialogue-action="up"[\s\S]*disabled = index === 0[\s\S]*data-dialogue-action="down"[\s\S]*disabled = index === rows\.length - 1/);
   assert.match(script, /function renderDialogueRows\(dialogues = \[\]\)/);
   assert.match(script, /function escapedTextHtml\(text\)[\s\S]*holder\.textContent = text \|\| ""/);
-  assert.match(script, /function arrangeVideoPromptBuilderFields\(\)[\s\S]*left\.append\([\s\S]*video-prompt-time-fields[\s\S]*video-prompt-camera-field[\s\S]*video-prompt-view-field[\s\S]*video-prompt-lighting-field[\s\S]*video-prompt-sound[\s\S]*right\.append\([\s\S]*video-prompt-scene[\s\S]*video-prompt-action-field/);
+  assert.match(script, /function arrangeVideoPromptBuilderFields\(\)[\s\S]*left\.append\([\s\S]*video-prompt-time-fields[\s\S]*video-prompt-camera-field[\s\S]*video-prompt-view-field[\s\S]*video-prompt-lighting-field[\s\S]*right\.append\([\s\S]*video-prompt-scene[\s\S]*video-prompt-action-field[\s\S]*video-prompt-sound/);
   assert.match(script, /draft\.dialogues\?\.length \? draft\.dialogues : draft\.dialogue \? \[\{ speaker: "", emotion: "", text: draft\.dialogue \}\] : \[\]/);
   assert.match(script, /function dialoguePromptField\(dialogues = \[\]\)[\s\S]*__narrator__[\s\S]*旁白[\s\S]*dialogues/);
   assert.match(script, /function validateDialogueRows\(form\)[\s\S]*請選擇說話者或旁白/);

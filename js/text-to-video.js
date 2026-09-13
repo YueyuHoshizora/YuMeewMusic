@@ -48,7 +48,7 @@ function syncGenerateAvailability() {
 }
 
 function syncDraftStatus() {
-  if (!busy) setStatus($("video-prompt").value.trim() ? "影片描述已輸入" : "等待輸入影片描述");
+  if (!busy) setStatus($("video-prompt").value.trim() ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
 }
 

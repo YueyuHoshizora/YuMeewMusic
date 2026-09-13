@@ -24,13 +24,13 @@
           <h1>把文字變成影像<span>。</span></h1>
           <p>輸入場景、鏡頭運動、主體動作、風格與光線，準備生成一段 AI 影片。</p>
         </div>
-        <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待輸入影片描述</span>
+        <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待輸入影片細節</span>
       </section>
 
       <section class="panel prompt-panel video-description-panel">
         <div class="video-prompt-field">
           <div class="video-prompt-heading">
-            <label class="field-label" for="video-prompt">影片描述</label>
+            <label class="field-label" for="video-prompt">影片細節</label>
             <button id="open-video-prompt-builder" class="video-prompt-add" type="button" aria-label="加入分鏡描述" title="加入分鏡描述">＋</button>
           </div>
           <textarea id="video-prompt" placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></textarea>
@@ -70,7 +70,7 @@
       <section class="panel result-panel">
         <div class="result-heading"><div class="section-title"><span id="result-video-resolution">768P</span><h2>生成結果</h2></div><small id="result-video-ratio">16:9 · MP4</small></div>
         <div id="generated-video-frame" class="generated-image-frame generated-video-frame" aria-label="生成影片預覽區">
-          <div id="empty-video-result" class="empty-result"><span aria-hidden="true">▶</span><strong>生成的影片會出現在這裡</strong><small>輸入描述並設定 API KEY 後即可開始生成</small></div>
+          <div id="empty-video-result" class="empty-result"><span aria-hidden="true">▶</span><strong>生成的影片會出現在這裡</strong><small>輸入影片細節並設定 API KEY 後即可開始生成</small></div>
           <video id="generated-video" controls playsinline hidden></video>
         </div>
         <div class="result-actions">
@@ -118,7 +118,7 @@
         </div>
         <div class="dialog-actions">
           <button id="cancel-video-prompt-builder" class="text-button" type="button">取消</button>
-          <button class="dialog-confirm" type="submit">加入影片描述</button>
+          <button class="dialog-confirm" type="submit">加入影片細節</button>
         </div>
       </form>
     </dialog>

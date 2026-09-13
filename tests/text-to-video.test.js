@@ -14,6 +14,8 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<textarea id="video-prompt"/);
+  assert.match(html, /for="video-prompt">影片細節<\/label>/);
+  assert.doesNotMatch(html, />影片描述<\/label>|加入影片描述|等待輸入影片描述/);
   assert.match(html, /class="panel prompt-panel video-description-panel">[\s\S]*id="video-prompt"[\s\S]*<\/section>\s*<section class="panel prompt-panel video-settings-panel">/);
   assert.match(html, /<h2 class="video-settings-title">生成設定<\/h2>/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>＋<\/button>/);
@@ -48,6 +50,7 @@ test("text-to-video page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
   assert.match(css, /\.video-settings-title\s*\{[^}]*margin:\s*0 0 18px/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
+  assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);
   assert.match(script, /prompt\.value = prompt\.value\.trim\(\) \? `\$\{prompt\.value\.trimEnd\(\)\}\\n\\n\$\{block\}\\n\\n` : `\$\{block\}\\n\\n`/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);

@@ -738,7 +738,12 @@ header {
 .reset-dialog h2 { margin: 0 0 14px; font-size: 22px; }
 .reset-dialog p { margin: 0; font-size: 16px; line-height: 1.8; color: var(--muted); }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
-.reset-confirm { border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); padding: 9px 16px; font-size: 14px; }
+.dialog-confirm { border: 1px solid var(--primary); border-radius: 8px; padding: 9px 16px; background: transparent; color: var(--primary-text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.dialog-confirm:hover { background: var(--tint); }
+.dialog-confirm:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.reset-confirm { border: 1px solid var(--error); border-radius: 8px; background: transparent; color: var(--error-text); padding: 9px 16px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.reset-confirm:hover { background: var(--error-surface); }
+.reset-confirm:focus-visible { outline: 2px solid var(--error); outline-offset: 2px; }
 
 /* Keep only the preview docked; let every rhythm option expand with the page. */
 

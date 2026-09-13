@@ -6,6 +6,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   const html = readFileSync("video-generator.html", "utf8");
   const script = readFileSync("js/video-generator.js", "utf8");
   const css = readFileSync("css/video-generator.css", "utf8");
+  const globalCss = readFileSync("css/style.css", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
@@ -61,6 +62,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*min\(820px, calc\(100vw - 80px\)\)/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-template-item\s*\{[^}]*grid-template-columns:\s*72px minmax\(0, 1fr\)/);
+  assert.match(globalCss, /\.dialog-confirm\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*background:\s*transparent/);
+  assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /label\[for="video-prompt-action"\]\s*\{[^}]*align-self:\s*start/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);

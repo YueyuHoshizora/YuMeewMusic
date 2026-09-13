@@ -113,7 +113,7 @@
     </dialog>
 
     <dialog id="character-template-dialog" class="reset-dialog character-template-dialog" aria-labelledby="character-template-title">
-      <form id="character-template-form" method="dialog">
+      <div>
         <div class="character-template-heading">
           <div><h2 id="character-template-title">人物模板</h2><p>建立影片中會出現的人物設定。</p></div>
           <button id="add-character" class="video-prompt-add" type="button">＋ 新增人物</button>
@@ -121,8 +121,25 @@
         <div id="character-template-list" class="character-template-list"></div>
         <p id="character-template-empty" class="character-template-empty">尚未建立人物，請點選「新增人物」。</p>
         <div class="dialog-actions">
-          <button id="cancel-character-template" class="text-button" type="button">取消</button>
-          <button class="dialog-confirm" type="submit">儲存人物模板</button>
+          <button id="close-character-template" class="dialog-confirm" type="button">關閉</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="character-editor-dialog" class="reset-dialog character-editor-dialog" aria-labelledby="character-editor-title">
+      <form id="character-editor-form" method="dialog">
+        <h2 id="character-editor-title">新增人物</h2>
+        <div class="character-editor-fields">
+          <label for="character-name"><span>名字</span><input id="character-name" class="text-input" type="text" placeholder="例如：小雨" required /></label>
+          <label for="character-reference"><span>參考圖</span><input id="character-reference" class="text-input character-reference-input" type="file" accept="image/*" /><span class="character-reference-meta"><img id="character-reference-preview" class="character-reference-preview" alt="人物參考圖預覽" hidden /><small id="character-reference-name">尚未選擇圖片</small></span></label>
+          <label for="character-style"><span>風格</span><input id="character-style" class="text-input" type="text" placeholder="例如：日系動畫、寫實電影感" /></label>
+          <label for="character-tone"><span>口氣</span><input id="character-tone" class="text-input" type="text" placeholder="例如：溫柔、冷靜而堅定" /></label>
+          <label for="character-clothing"><span>服裝</span><input id="character-clothing" class="text-input" type="text" placeholder="例如：深藍色長外套與白色圍巾" /></label>
+        </div>
+        <div class="dialog-actions character-editor-actions">
+          <button id="delete-character" class="character-remove" type="button" hidden>刪除人物</button>
+          <button id="cancel-character-editor" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">儲存人物</button>
         </div>
       </form>
     </dialog>

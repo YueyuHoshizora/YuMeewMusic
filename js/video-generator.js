@@ -32,6 +32,8 @@ let generatedVideoProvider = "minimax";
 let generationAbort = null;
 let characterTemplates = [];
 const characterPreviewUrls = new Set();
+let editingCharacterIndex = -1;
+let editingCharacterReference = null;
 
 function setStatus(text, mode = "") {
   $("video-generation-status").textContent = text;
@@ -82,97 +84,113 @@ function submitVideoPromptBuilder(event) {
   prompt.focus();
 }
 
-function syncCharacterCards() {
-  const cards = [...$("character-template-list").querySelectorAll(".character-template-card")];
-  cards.forEach((card, index) => { card.querySelector(".character-card-heading strong").textContent = `人物 ${index + 1}`; });
-  $("character-template-empty").hidden = Boolean(cards.length);
-}
-
-function setCharacterReference(card, file) {
-  const preview = card.querySelector(".character-reference-preview");
-  const label = card.querySelector(".character-reference-meta small");
-  if (card.dataset.previewUrl) { URL.revokeObjectURL(card.dataset.previewUrl); characterPreviewUrls.delete(card.dataset.previewUrl); }
-  delete card.dataset.previewUrl;
-  card.referenceImage = file || null;
-  preview.hidden = true;
-  preview.removeAttribute("src");
-  label.textContent = "尚未選擇圖片";
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  characterPreviewUrls.add(url);
-  card.dataset.previewUrl = url;
-  preview.src = url;
-  preview.hidden = false;
-  label.textContent = file.name || "人物參考圖";
-}
-
-function collectCharacterTemplates() {
-  return [...$("character-template-list").querySelectorAll(".character-template-card")].map(card => ({
-    name: card.querySelector(".character-name").value.trim(),
-    referenceImage: card.referenceImage || null,
-    style: card.querySelector(".character-style").value.trim(),
-    tone: card.querySelector(".character-tone").value.trim(),
-    clothing: card.querySelector(".character-clothing").value.trim(),
-  })).filter(character => character.name || character.referenceImage || character.style || character.tone || character.clothing);
-}
-
 async function persistCharacterTemplates() {
-  characterTemplates = collectCharacterTemplates();
   if (characterTemplates.length) await saveStoredValue("video-character-templates", { characters: characterTemplates, updatedAt: Date.now() });
   else await deleteStoredValue("video-character-templates");
   $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
 }
 
-function addCharacterCard(template = {}, shouldFocus = true) {
-  const card = document.createElement("article");
-  card.className = "character-template-card";
-  card.innerHTML = `
-    <div class="character-card-heading"><strong></strong><button class="character-remove" type="button">－ 刪除</button></div>
-    <div class="character-fields">
-      <label><span>名字</span><input class="text-input character-name" type="text" placeholder="例如：小雨" /></label>
-      <label><span>參考圖</span><input class="text-input character-reference-input" type="file" accept="image/*" /><span class="character-reference-meta"><img class="character-reference-preview" alt="人物參考圖預覽" hidden /><small>尚未選擇圖片</small></span></label>
-      <label><span>風格</span><input class="text-input character-style" type="text" placeholder="例如：日系動畫、寫實電影感" /></label>
-      <label><span>口氣</span><input class="text-input character-tone" type="text" placeholder="例如：溫柔、冷靜而堅定" /></label>
-      <label><span>服裝</span><input class="text-input character-clothing" type="text" placeholder="例如：深藍色長外套與白色圍巾" /></label>
-    </div>`;
-  card.querySelector(".character-name").value = template.name || "";
-  card.querySelector(".character-style").value = template.style || "";
-  card.querySelector(".character-tone").value = template.tone || "";
-  card.querySelector(".character-clothing").value = template.clothing || "";
-  setCharacterReference(card, template.referenceImage || null);
-  card.querySelector(".character-remove").addEventListener("click", async () => {
-    const name = card.querySelector(".character-name").value.trim() || "這個人物";
-    if (!window.confirm(`確定刪除「${name}」？刪除後將同步移除保存的人物模板。`)) return;
-    if (card.dataset.previewUrl) { URL.revokeObjectURL(card.dataset.previewUrl); characterPreviewUrls.delete(card.dataset.previewUrl); }
-    card.remove();
-    syncCharacterCards();
-    try { await persistCharacterTemplates(); }
-    catch { setStatus("人物模板刪除後無法同步保存", "error"); }
-  });
-  card.querySelector(".character-reference-input").addEventListener("change", event => {
-    const file = event.currentTarget.files?.[0];
-    setCharacterReference(card, file || null);
-  });
-  $("character-template-list").append(card);
-  syncCharacterCards();
-  if (shouldFocus) card.querySelector(".character-name").focus();
+function createCharacterThumbnail(character, index) {
+  const button = document.createElement("button");
+  button.className = "character-template-item";
+  button.type = "button";
+  if (character.referenceImage) {
+    const image = document.createElement("img");
+    const url = URL.createObjectURL(character.referenceImage);
+    characterPreviewUrls.add(url);
+    image.src = url;
+    image.alt = "";
+    button.append(image);
+  } else {
+    const placeholder = document.createElement("span");
+    placeholder.className = "character-thumbnail-placeholder";
+    placeholder.textContent = (character.name || "人").slice(0, 1);
+    button.append(placeholder);
+  }
+  const name = document.createElement("strong");
+  name.textContent = character.name || `人物 ${index + 1}`;
+  button.append(name);
+  button.addEventListener("click", () => openCharacterEditor(index));
+  return button;
+}
+
+function renderCharacterTemplates() {
+  characterPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  characterPreviewUrls.clear();
+  $("character-template-list").replaceChildren(...characterTemplates.map(createCharacterThumbnail));
+  $("character-template-empty").hidden = Boolean(characterTemplates.length);
+  $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
+}
+
+function showCharacterEditorReference(file) {
+  const preview = $("character-reference-preview");
+  editingCharacterReference = file || null;
+  preview.hidden = true;
+  preview.removeAttribute("src");
+  $("character-reference-name").textContent = "尚未選擇圖片";
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  characterPreviewUrls.add(url);
+  preview.src = url;
+  preview.hidden = false;
+  $("character-reference-name").textContent = file.name || "人物參考圖";
+}
+
+function openCharacterEditor(index = -1) {
+  editingCharacterIndex = index;
+  const character = index >= 0 ? characterTemplates[index] : null;
+  $("character-editor-title").textContent = character ? "編輯人物" : "新增人物";
+  $("character-name").value = character?.name || "";
+  $("character-reference").value = "";
+  $("character-style").value = character?.style || "";
+  $("character-tone").value = character?.tone || "";
+  $("character-clothing").value = character?.clothing || "";
+  $("delete-character").hidden = !character;
+  showCharacterEditorReference(character?.referenceImage || null);
+  $("character-editor-dialog").showModal();
+  $("character-name").focus();
 }
 
 function openCharacterTemplate() {
   if (busy) return;
-  if (!$("character-template-list").children.length) addCharacterCard();
   $("character-template-dialog").showModal();
-  $("character-template-list").querySelector(".character-name")?.focus();
 }
 
-async function submitCharacterTemplate(event) {
+async function submitCharacterEditor(event) {
   event.preventDefault();
+  const character = {
+    name: $("character-name").value.trim(),
+    referenceImage: editingCharacterReference,
+    style: $("character-style").value.trim(),
+    tone: $("character-tone").value.trim(),
+    clothing: $("character-clothing").value.trim(),
+  };
+  if (!character.name) return;
+  if (editingCharacterIndex >= 0) characterTemplates[editingCharacterIndex] = character;
+  else characterTemplates.push(character);
   try {
     await persistCharacterTemplates();
-    $("character-template-dialog").close();
-    setStatus(characterTemplates.length ? `已保存 ${characterTemplates.length} 個人物模板` : "人物模板已清空", "success");
+    renderCharacterTemplates();
+    $("character-editor-dialog").close();
+    setStatus(`已保存人物「${character.name}」`, "success");
   } catch {
     setStatus("人物模板無法保存到瀏覽器", "error");
+  }
+}
+
+async function deleteEditingCharacter() {
+  if (editingCharacterIndex < 0) return;
+  const character = characterTemplates[editingCharacterIndex];
+  const name = character?.name || "這個人物";
+  if (!window.confirm(`確定刪除「${name}」？刪除後將同步移除保存的人物模板。`)) return;
+  characterTemplates.splice(editingCharacterIndex, 1);
+  try {
+    await persistCharacterTemplates();
+    renderCharacterTemplates();
+    $("character-editor-dialog").close();
+    setStatus(`已刪除人物「${name}」`, "success");
+  } catch {
+    setStatus("人物模板刪除後無法同步保存", "error");
   }
 }
 
@@ -181,8 +199,7 @@ async function restoreCharacterTemplates() {
     const stored = await loadStoredValue("video-character-templates");
     if (!Array.isArray(stored?.characters)) return;
     characterTemplates = stored.characters;
-    characterTemplates.forEach(character => addCharacterCard(character, false));
-    $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
+    renderCharacterTemplates();
   } catch {}
 }
 
@@ -520,9 +537,12 @@ function confirmVideoGeneration(event) {
 
 $("video-prompt").addEventListener("input", syncDraftStatus);
 $("open-character-template").addEventListener("click", openCharacterTemplate);
-$("add-character").addEventListener("click", () => addCharacterCard());
-$("character-template-form").addEventListener("submit", submitCharacterTemplate);
-$("cancel-character-template").addEventListener("click", () => $("character-template-dialog").close());
+$("add-character").addEventListener("click", () => openCharacterEditor());
+$("close-character-template").addEventListener("click", () => $("character-template-dialog").close());
+$("character-reference").addEventListener("change", event => showCharacterEditorReference(event.currentTarget.files?.[0] || null));
+$("character-editor-form").addEventListener("submit", submitCharacterEditor);
+$("cancel-character-editor").addEventListener("click", () => $("character-editor-dialog").close());
+$("delete-character").addEventListener("click", deleteEditingCharacter);
 $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
 $("cancel-video-prompt-builder").addEventListener("click", () => $("video-prompt-builder-dialog").close());

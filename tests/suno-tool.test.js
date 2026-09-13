@@ -21,7 +21,9 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
   assert.match(script, /decryptSunoAudio\(m4aBlob, result\)/);
   assert.match(script, /lyrics-transcriber\.yustellar\.idv\.tw/);
-  assert.match(script, /form\.append\("lyrics", lyrics\)/);
+  assert.match(script, /form\.append\("lyrics", lyricsForAlignment\(lyrics\)\)/);
+  assert.match(script, /!\/\^\\\[\[\^\\\]\]\+\\\]\$\/\.test\(line\)/);
+  assert.match(script, /line\.replace\(\/\\\(\[\^\)\]\*\\\)\|（\[\^）\]\*）\/g, ""\)/);
   assert.match(script, /form\.append\("duration", String\(duration\)\)/);
   assert.match(script, /crypto\.subtle\.decrypt\(\{ name: "AES-CTR", counter: iv, length: 128 \}/);
   assert.match(script, /convertMediaFile\(\{/);

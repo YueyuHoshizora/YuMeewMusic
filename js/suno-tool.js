@@ -22,6 +22,13 @@ function safeFileName(title) {
   return `${base || "suno-music"}.wav`;
 }
 
+function lyricsForAlignment(value) {
+  return String(value || "").split(/\r?\n/)
+    .map(line => line.replace(/\([^)]*\)|（[^）]*）/g, "").trim())
+    .filter(line => line && !/^\[[^\]]+\]$/.test(line))
+    .join("\n");
+}
+
 function formatBytes(bytes) {
   return bytes < 1024 ** 2 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 ** 2).toFixed(2)} MB`;
 }
@@ -247,11 +254,15 @@ async function downloadSrt() {
     const form = new FormData();
     form.append("audio", wav, fileName.replace(/\.wav$/i, "-subtitle.wav"));
     form.append("language", $("suno-srt-language").value);
-    form.append("lyrics", lyrics);
+    form.append("lyrics", lyricsForAlignment(lyrics));
     form.append("duration", String(duration));
     const response = await fetch("https://lyrics-transcriber.yustellar.idv.tw", { method: "POST", body: form });
     const srt = await response.text();
-    if (!response.ok) throw Error(srt.trim().slice(0, 300) || `字幕服務回應錯誤（HTTP ${response.status}）。`);
+    if (!response.ok) {
+      let serviceError = "";
+      try { serviceError = JSON.parse(srt)?.error || ""; } catch {}
+      throw Error(serviceError || srt.trim().slice(0, 300) || `字幕服務回應錯誤（HTTP ${response.status}）。`);
+    }
     if (!parseSubtitles(srt, "srt").cues.length) throw Error("字幕服務沒有回傳有效的 SRT。");
     const srtName = fileName.replace(/\.wav$/i, ".srt");
     downloadBlob(new Blob([srt], { type: "application/x-subrip;charset=utf-8" }), srtName);

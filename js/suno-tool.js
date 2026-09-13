@@ -2,6 +2,8 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { saveStoredMedia } from "./media-store.js";
 import { convertMediaFile } from "./converter-core.js";
+import { encodeMedia } from "./export.js";
+import { parseSubtitles } from "./subtitles.js";
 
 const $ = id => document.getElementById(id);
 const PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
@@ -12,6 +14,7 @@ applyTheme(loadSettings().mode, loadSettings().theme);
 let audioBlob = null;
 let audioUrl = "";
 let fileName = "suno-music.wav";
+let lyrics = "";
 let busy = false;
 
 function safeFileName(title) {
@@ -35,6 +38,8 @@ function setBusy(value) {
   $("suno-url").disabled = value;
   $("suno-fetch").disabled = value;
   $("suno-download").disabled = value;
+  $("suno-srt-download").disabled = value;
+  $("suno-srt-language").disabled = value;
   $("suno-apply").disabled = value;
   $("suno-progress").hidden = !value;
 }
@@ -46,6 +51,7 @@ function clearAudio() {
   if (audioUrl) URL.revokeObjectURL(audioUrl);
   audioUrl = "";
   audioBlob = null;
+  lyrics = "";
   $("suno-result").hidden = true;
   $("suno-cover").removeAttribute("src");
   $("suno-cover").hidden = true;
@@ -109,6 +115,7 @@ async function fetchSuno(event) {
     $("suno-fetch").textContent = "正在轉換…";
     $("suno-status").textContent = "M4A 已下載，正在瀏覽器中轉換為 16-bit PCM WAV…";
     audioBlob = await convertToWav(playableBlob);
+    lyrics = String(result.lyrics || "").trim();
     audioUrl = URL.createObjectURL(audioBlob);
     fileName = safeFileName(result.title);
     $("suno-player").src = audioUrl;
@@ -196,6 +203,71 @@ function downloadAudio() {
   $("suno-status").textContent = `WAV 已開始下載 · ${formatBytes(audioBlob.size)}`;
 }
 
+async function transcriptionWav() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  if (!AudioContextClass || !OfflineContextClass) throw Error("此瀏覽器無法建立字幕辨識用音訊。");
+  const context = new AudioContextClass();
+  let decoded;
+  try { decoded = await context.decodeAudioData(await audioBlob.arrayBuffer()); }
+  finally { await context.close().catch(() => {}); }
+  const offline = new OfflineContextClass(1, Math.ceil(decoded.duration * 16000), 16000);
+  const source = offline.createBufferSource();
+  source.buffer = decoded;
+  source.connect(offline.destination);
+  source.start();
+  const buffer = await offline.startRendering();
+  const wav = await encodeMedia({
+    format: "wav",
+    buffer,
+    settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
+    resolution: "1080",
+    fps: "60",
+    signal: new AbortController().signal,
+    onProgress(value) { $("suno-progress").value = 15 + value * .25; },
+  });
+  return { wav, duration: buffer.duration };
+}
+
+async function downloadSrt() {
+  if (!audioBlob || busy) return;
+  if (!lyrics) {
+    setError("這個 Suno 公開頁面沒有可用的歌詞文字，無法產生 SRT。");
+    return;
+  }
+  setBusy(true);
+  setError();
+  $("suno-srt-download").textContent = "正在產生…";
+  $("suno-progress").value = 10;
+  $("suno-status").textContent = "正在建立單聲道、16 kHz、16-bit PCM 辨識音訊…";
+  try {
+    const { wav, duration } = await transcriptionWav();
+    $("suno-progress").value = 45;
+    $("suno-status").textContent = "正在依照 Suno 公開歌詞產生字幕時間碼…";
+    const form = new FormData();
+    form.append("audio", wav, fileName.replace(/\.wav$/i, "-subtitle.wav"));
+    form.append("language", $("suno-srt-language").value);
+    form.append("lyrics", lyrics);
+    form.append("duration", String(duration));
+    const response = await fetch("https://lyrics-transcriber.yustellar.idv.tw", { method: "POST", body: form });
+    const srt = await response.text();
+    if (!response.ok) throw Error(srt.trim().slice(0, 300) || `字幕服務回應錯誤（HTTP ${response.status}）。`);
+    if (!parseSubtitles(srt, "srt").cues.length) throw Error("字幕服務沒有回傳有效的 SRT。");
+    const srtName = fileName.replace(/\.wav$/i, ".srt");
+    downloadBlob(new Blob([srt], { type: "application/x-subrip;charset=utf-8" }), srtName);
+    $("suno-progress").value = 100;
+    $("suno-status-badge").className = "suno-status-badge ready";
+    $("suno-status-badge").textContent = "字幕完成";
+    $("suno-status").textContent = `${srtName} 已開始下載。`;
+  } catch (error) {
+    setError(error?.message || "無法產生 SRT 字幕。");
+    $("suno-status").textContent = "音樂仍可播放與下載，請稍後再試字幕功能。";
+  } finally {
+    setBusy(false);
+    $("suno-srt-download").textContent = "產生並下載 SRT";
+  }
+}
+
 async function applyToMain() {
   if (!audioBlob || busy) return;
   setBusy(true);
@@ -216,5 +288,6 @@ async function applyToMain() {
 
 $("suno-form").addEventListener("submit", fetchSuno);
 $("suno-download").addEventListener("click", downloadAudio);
+$("suno-srt-download").addEventListener("click", downloadSrt);
 $("suno-apply").addEventListener("click", applyToMain);
 window.addEventListener("unload", () => { if (audioUrl) URL.revokeObjectURL(audioUrl); });

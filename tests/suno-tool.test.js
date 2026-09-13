@@ -12,12 +12,17 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(html, /id="suno-url"[^>]*placeholder="https:\/\/suno\.com\/s\/\.\.\."/);
   assert.match(html, /id="suno-player"[^>]*controls/);
   assert.match(html, /id="suno-download"[^>]*>下載音樂（WAV）</);
+  assert.match(html, /id="suno-srt-download"[^>]*>產生並下載 SRT</);
+  assert.match(html, /id="suno-srt-language"/);
   assert.match(html, /id="suno-apply"[^>]*>套用到主畫面</);
   assert.match(script, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
   assert.match(script, /const m4aBlob = await readAudioResponse\(await fetch\(result\.audioUrl/);
   assert.match(script, /audioBlob = await convertToWav\(playableBlob\)/);
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
   assert.match(script, /decryptSunoAudio\(m4aBlob, result\)/);
+  assert.match(script, /lyrics-transcriber\.yustellar\.idv\.tw/);
+  assert.match(script, /form\.append\("lyrics", lyrics\)/);
+  assert.match(script, /form\.append\("duration", String\(duration\)\)/);
   assert.match(script, /crypto\.subtle\.decrypt\(\{ name: "AES-CTR", counter: iv, length: 128 \}/);
   assert.match(script, /convertMediaFile\(\{/);
   assert.match(script, /format: "wav"/);

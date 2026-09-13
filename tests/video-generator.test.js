@@ -107,7 +107,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function formatStoryboardTime\(start, end\)[\s\S]*`\$\{Number\(start\)\}-\$\{Number\(end\)\}s`/);
   assert.match(script, /function createStoryboardBlock\(draft\)[\s\S]*storyboard-card-action[\s\S]*editStoryboard\(draft\.id\)/);
   assert.match(script, /function editStoryboard\(id\)[\s\S]*restoreEditorHtml[\s\S]*"儲存分鏡"/);
-  assert.match(script, /function duplicateStoryboard\(id\)[\s\S]*structuredClone\(source\)/);
+  assert.match(script, /function duplicateStoryboard\(id\)[\s\S]*structuredClone\(source\)[\s\S]*duration = Number\(source\.end\) - Number\(source\.start\)[\s\S]*copy\.start = roundedStoryboardTime\(source\.end\)[\s\S]*copy\.end = roundedStoryboardTime\(Number\(copy\.start\) \+ duration\)/);
   assert.match(script, /function deleteStoryboard\(id\)[\s\S]*確定刪除這個分鏡/);
   assert.match(script, /existing\.replaceWith\(block\)[\s\S]*refreshStoryboardLabels\(\)/);
   assert.match(script, /endInput\.setCustomValidity\(Number\(draft\.end\) > Number\(draft\.start\)[\s\S]*reportValidity\(\)/);

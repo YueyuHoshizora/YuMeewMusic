@@ -735,6 +735,10 @@ function formatStoryboardTime(start, end) {
   return `${Number(start)}-${Number(end)}s`;
 }
 
+function roundedStoryboardTime(value) {
+  return String(Math.round(Number(value) * 10) / 10);
+}
+
 function storyboardFields(draft) {
   const cameraPrefix = draft.cameraSpeed || "";
   const cameraCustomText = htmlText(draft.cameraCustom);
@@ -853,6 +857,9 @@ function duplicateStoryboard(id) {
   if (!source || !sourceBlock) return;
   const copy = structuredClone(source);
   copy.id = globalThis.crypto?.randomUUID?.() || `storyboard-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const duration = Number(source.end) - Number(source.start);
+  copy.start = roundedStoryboardTime(source.end);
+  copy.end = roundedStoryboardTime(Number(copy.start) + duration);
   storyboards.set(copy.id, copy);
   sourceBlock.after(createStoryboardBlock(copy));
   refreshStoryboardLabels();

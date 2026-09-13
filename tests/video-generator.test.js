@@ -86,6 +86,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /const fields = \[\s*\["時間", \$\("video-prompt-time"\)\.value\.trim\(\)\],\s*\["場景", editorText/);
   assert.match(script, /populated\.forEach\(\(\[label, value, editor\]\) => appendEditorLine/);
+  assert.match(script, /if \(editorText\(editor\)\) editor\.append\(document\.createElement\("br"\)\);/);
+  assert.doesNotMatch(script, /prompt\.append\(document\.createElement\("br"\), document\.createElement\("br"\)\)/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*defaultResolution: "480P"[^}]*minimumDuration: 5[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-0-260128": Object\.freeze\(\{[^}]*label: "Seedance 2\.0"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p", "1080p", "4k"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 15/);

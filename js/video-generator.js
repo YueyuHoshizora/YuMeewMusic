@@ -92,7 +92,7 @@ function replaceMentionText(match, replacement) {
 }
 
 function appendEditorLine(editor, label, value, nodes = null) {
-  if (editorText(editor)) editor.append(document.createElement("br"), document.createElement("br"));
+  if (editorText(editor)) editor.append(document.createElement("br"));
   editor.append(document.createTextNode(`${label}：`));
   if (nodes) editor.append(...nodes.map(node => node.cloneNode(true)));
   else editor.append(document.createTextNode(value));
@@ -597,7 +597,6 @@ function submitVideoPromptBuilder(event) {
   if (!populated.length) return;
   const prompt = $("video-prompt");
   populated.forEach(([label, value, editor]) => appendEditorLine(prompt, label, value, editor ? [...editor.childNodes] : null));
-  prompt.append(document.createElement("br"), document.createElement("br"));
   $("video-prompt-builder-form").reset();
   document.querySelectorAll("#video-prompt-builder-dialog .resource-editor").forEach(clearEditor);
   $("video-prompt-builder-dialog").close();

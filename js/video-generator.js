@@ -597,6 +597,7 @@ function submitVideoPromptBuilder(event) {
   if (!populated.length) return;
   const prompt = $("video-prompt");
   populated.forEach(([label, value, editor]) => appendEditorLine(prompt, label, value, editor ? [...editor.childNodes] : null));
+  prompt.append(document.createElement("br"));
   $("video-prompt-builder-form").reset();
   document.querySelectorAll("#video-prompt-builder-dialog .resource-editor").forEach(clearEditor);
   $("video-prompt-builder-dialog").close();

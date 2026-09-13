@@ -149,12 +149,9 @@ function showCharacterMentionMenu(target) {
     option.type = "button";
     option.setAttribute("role", "option");
     option.setAttribute("aria-selected", String(index === 0));
-    const avatar = document.createElement("span");
-    avatar.className = "character-mention-avatar";
-    avatar.textContent = character.name.slice(0, 1);
     const name = document.createElement("strong");
     name.textContent = character.name;
-    option.append(avatar, name);
+    option.append(name);
     option.addEventListener("mousedown", event => {
       event.preventDefault();
       selectCharacterMention(character.name);

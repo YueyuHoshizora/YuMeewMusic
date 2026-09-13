@@ -146,6 +146,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /enabled:\s*editingCharacterIndex >= 0 \? characterTemplates\[editingCharacterIndex\]\?\.enabled !== false : false/);
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false\)/);
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false && character\.name\)/);
+  assert.doesNotMatch(script, /character-mention-avatar|character\.name\.slice\(0, 1\)/);
   assert.match(script, /target\.setRangeText\(`\$\{name\} `, characterMentionStart, end, "end"\)/);
   assert.match(script, /field\.addEventListener\("input", event => showCharacterMentionMenu\(event\.currentTarget\)\)/);
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);

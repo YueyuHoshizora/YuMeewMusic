@@ -48,21 +48,13 @@
         </div>
         <audio id="suno-player" controls preload="metadata" aria-label="Suno 音樂播放器"></audio>
         <div class="suno-actions">
-          <label class="suno-language">字幕語言
-            <select id="suno-srt-language" class="select-input">
-              <option value="zh">中文</option>
-              <option value="ja">日文</option>
-              <option value="en">英文</option>
-            </select>
-          </label>
-          <button id="suno-srt-download" class="text-button" type="button">產生並下載 SRT</button>
           <button id="suno-download" class="text-button" type="button">下載音樂（WAV）</button>
           <button id="suno-apply" class="export-button" type="button">套用到主畫面</button>
         </div>
       </section>
 
       <section class="panel suno-notes">
-        <div><strong>公開連結</strong><span>不讀取或保存 Suno 登入資訊；公開歌詞可搭配音訊產生 SRT。</span></div>
+        <div><strong>公開連結</strong><span>僅支援不需登入即可播放的 Suno 分享頁。</span></div>
         <div><strong>本機處理</strong><span>Worker 只解析分享頁；M4A 由瀏覽器直接取得，下載時在本機轉為 16-bit PCM WAV。</span></div>
         <div><strong>套用方式</strong><span>播放器、下載與套用主畫面都使用轉換完成的 WAV；選擇套用後才會保存至 IndexedDB。</span></div>
       </section>

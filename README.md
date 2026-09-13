@@ -28,7 +28,7 @@
 
 一般媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成，沒有雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。全站所有遠端模型檔都統一自動保存到 `yumeew-ai-models-v1` IndexedDB：Spleeter 與 BS PolarFormer 第一次由瀏覽器從 Hugging Face 下載，之後可直接使用本機快取，音樂不會傳送至 Hugging Face。AI 圖片與影片生成、AI 字幕辨識及 Suno 公開連結解析需要網路服務：生成頁會傳送使用者輸入的描述與引用資源；字幕辨識會先在瀏覽器用 Spleeter 分離人聲，再把衍生的人聲軌轉為單聲道、16 kHz、16-bit PCM WAV 並傳送至 `lyrics-transcriber.yustellar.idv.tw`，原始音樂與原有字幕不會上傳；Suno Worker 只解析公開分享頁，音訊由瀏覽器直接讀取。
 
-「Suno 工具」可貼上公開的 `suno.com/s/…` 或 `suno.com/song/…` 分享連結。`model-proxy` Worker 只讀取公開分享頁，並回傳歌曲資料、公開歌詞、官方 M4A CDN 網址及短效匿名播放授權；音樂檔仍由使用者的瀏覽器直接向 Suno CDN 下載，Worker 不會代理或保存音樂內容。遇到目前的加密 `m4a-opus` 串流時，瀏覽器會先以 Web Crypto 在本機解密，再透過 Mediabunny 轉成 16-bit PCM 立體聲 WAV。播放器、下載及「套用到主畫面」都使用同一份 WAV；產生 SRT 時會先在瀏覽器以共用 IndexedDB 模型快取的 Spleeter 分離人聲，再轉成單聲道 16 kHz 辨識音訊，搭配去除段落與括號標記後的公開歌詞呼叫字幕服務。選擇套用後才會把 WAV 保存到本機 IndexedDB 並取代目前音樂。Suno 私人登入權杖不會被讀取或保存。
+「Suno 工具」可貼上公開的 `suno.com/s/…` 或 `suno.com/song/…` 分享連結。`model-proxy` Worker 只讀取公開分享頁，並回傳歌曲資料、官方 M4A CDN 網址及短效匿名播放授權；音樂檔仍由使用者的瀏覽器直接向 Suno CDN 下載，Worker 不會代理或保存音樂內容。遇到目前的加密 `m4a-opus` 串流時，瀏覽器會先以 Web Crypto 在本機解密，再透過 Mediabunny 轉成 16-bit PCM 立體聲 WAV。播放器、下載及「套用到主畫面」都使用同一份 WAV；選擇套用後才會把 WAV 保存到本機 IndexedDB 並取代目前音樂。
 
 Suno 分享連結只保留在當前頁面的輸入框，不會寫入 `localStorage` 或 IndexedDB；重新開啟頁面時輸入框為空白。
 

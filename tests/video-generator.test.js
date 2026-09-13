@@ -53,6 +53,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
+  assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*min\(820px, calc\(100vw - 80px\)\)/);
+  assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /const fields = \[\s*\["時間"[^\]]*\],\s*\["場景"[^\]]*\],\s*\["鏡頭"[^\]]*\],\s*\["視角"[^\]]*\],\s*\["燈光"[^\]]*\],\s*\["音效"[^\]]*\],\s*\["動作"[^\]]*\],\s*\["對白"[^\]]*\]/);

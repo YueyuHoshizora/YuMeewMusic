@@ -27,7 +27,8 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .reset-dialog #video-api-key-source,
 .reset-dialog #video-api-key-input { width: 100%; box-sizing: border-box; }
 .reset-dialog #video-api-key-input { font-family: monospace; }
-.video-prompt-builder-fields { display: grid; gap: 14px; margin: 18px 0 22px; }
+.video-prompt-builder-dialog { width: min(820px, calc(100vw - 80px)); }
+.video-prompt-builder-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; margin: 18px 0 22px; }
 .video-prompt-builder-fields label { display: grid; gap: 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .video-prompt-builder-fields .text-input { width: 100%; box-sizing: border-box; }
 .video-prompt-builder-fields textarea { min-height: 88px; resize: vertical; font: inherit; line-height: 1.6; }

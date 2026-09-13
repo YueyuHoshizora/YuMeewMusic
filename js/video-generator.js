@@ -11,6 +11,10 @@ const BYTEPLUS_VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/byteplus/
 const BYTEPLUS_CREATE_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/generate`;
 const BYTEPLUS_QUERY_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/query`;
 const BYTEPLUS_DOWNLOAD_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/download`;
+const GOOGLE_VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/google/video";
+const GOOGLE_CREATE_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/generate`;
+const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
+const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const $ = id => document.getElementById(id);
@@ -19,7 +23,9 @@ const VIDEO_MODELS = Object.freeze({
   "MiniMax-H3-Max": Object.freeze({ label: "MiniMax H3 Max", provider: "minimax", apiKey: "MiniMax", resolutions: ["480P", "768P"], defaultResolution: "480P", minimumDuration: 5, maximumDuration: 15 }),
   "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 15 }),
   "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 30 }),
+  "veo-3.1-generate-preview": Object.freeze({ label: "Veo 3.1", provider: "google", apiKey: "Google AI Studio", resolutions: ["720p", "1080p"], defaultResolution: "720p", durations: [4, 6, 8], ratios: ["16:9", "9:16"] }),
 });
+const VIDEO_RATIOS = Object.freeze(["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"]);
 
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
@@ -29,6 +35,7 @@ let generatedVideoBlob = null;
 let generatedVideoUrl = "";
 let generatedVideoRemoteUrl = "";
 let generatedVideoProvider = "minimax";
+let generatedVideoApiKey = "";
 let generationAbort = null;
 let characterTemplates = [];
 const characterPreviewUrls = new Set();
@@ -276,9 +283,13 @@ function syncModelDetails() {
   const previousResolution = $("video-resolution").value;
   replaceOptions($("video-resolution"), model.resolutions, model.resolutions.includes(previousResolution) ? previousResolution : model.defaultResolution);
   const previousDuration = Number($("video-duration").value) || 5;
-  const durations = Array.from({ length: model.maximumDuration - model.minimumDuration + 1 }, (_, index) => String(model.minimumDuration + index));
-  replaceOptions($("video-duration"), durations, String(Math.min(model.maximumDuration, Math.max(model.minimumDuration, previousDuration))));
+  const durations = model.durations || Array.from({ length: model.maximumDuration - model.minimumDuration + 1 }, (_, index) => model.minimumDuration + index);
+  const selectedDuration = durations.includes(previousDuration) ? previousDuration : durations[0];
+  replaceOptions($("video-duration"), durations.map(String), String(selectedDuration));
   $("video-duration").querySelectorAll("option").forEach(option => { option.textContent = `${option.value} 秒`; });
+  const ratios = model.ratios || VIDEO_RATIOS;
+  const previousRatio = $("video-ratio").value;
+  replaceOptions($("video-ratio"), ratios, ratios.includes(previousRatio) ? previousRatio : ratios[0]);
   $("video-api-key").textContent = getApiKey(modelId) ? "已設定" : "未設定";
   $("confirm-video-generation-message").textContent = `影片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
   syncResultHeading();
@@ -312,7 +323,9 @@ function openApiKeyDialog() {
   $("video-api-key-dialog-title").textContent = `${model.label} API KEY`;
   $("video-api-key-help").textContent = model.provider === "minimax"
     ? "MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援。金鑰只會保存在目前瀏覽器。"
-    : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
+    : model.provider === "google"
+      ? "請使用 Google AI Studio Gemini API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 Google。"
+      : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
   $("video-api-key-input").value = "";
   $("video-api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("video-api-key-error").hidden = true;
@@ -372,7 +385,7 @@ function apiError(body, fallback = "", provider = "minimax") {
   if (code === 2013 && /TokenPlan|Credit.*MiniMax-H3/i.test(message)) {
     return "目前使用的 MiniMax Token Plan／Credit Key 不支援 H3 系列（2013）。請改用一般 Pay-as-you-go API KEY，並確認帳戶有足夠餘額。";
   }
-  const service = provider === "byteplus" ? "BytePlus" : "MiniMax";
+  const service = provider === "byteplus" ? "BytePlus" : provider === "google" ? "Google" : "MiniMax";
   if (Number.isFinite(code) && code !== 0) return message ? `${message}（${code}）` : `${service} API 錯誤（${code}）`;
   return fallback ? message || fallback : "";
 }
@@ -383,11 +396,11 @@ async function fetchJson(url, options, provider = "minimax") {
   try {
     body = await response.json();
   } catch {
-    const service = provider === "byteplus" ? "BytePlus" : "MiniMax";
+    const service = provider === "byteplus" ? "BytePlus" : provider === "google" ? "Google" : "MiniMax";
     if (!response.ok) throw Error(`${service} API 回傳 ${response.status}`);
     throw Error(`${service} API 回傳無法解析的資料。`);
   }
-  const service = provider === "byteplus" ? "BytePlus" : "MiniMax";
+  const service = provider === "byteplus" ? "BytePlus" : provider === "google" ? "Google" : "MiniMax";
   const error = apiError(body, response.ok ? "" : `${service} API 回傳 ${response.status}`, provider);
   if (error) throw Error(error);
   return body;
@@ -408,9 +421,9 @@ function wait(ms, signal) {
 }
 
 function providerEndpoints(provider) {
-  return provider === "byteplus"
-    ? { create: BYTEPLUS_CREATE_VIDEO_URL, query: BYTEPLUS_QUERY_VIDEO_URL, download: BYTEPLUS_DOWNLOAD_VIDEO_URL }
-    : { create: CREATE_VIDEO_URL, query: QUERY_VIDEO_URL, download: DOWNLOAD_VIDEO_URL };
+  if (provider === "byteplus") return { create: BYTEPLUS_CREATE_VIDEO_URL, query: BYTEPLUS_QUERY_VIDEO_URL, download: BYTEPLUS_DOWNLOAD_VIDEO_URL };
+  if (provider === "google") return { create: GOOGLE_CREATE_VIDEO_URL, query: GOOGLE_QUERY_VIDEO_URL, download: GOOGLE_DOWNLOAD_VIDEO_URL };
+  return { create: CREATE_VIDEO_URL, query: QUERY_VIDEO_URL, download: DOWNLOAD_VIDEO_URL };
 }
 
 async function pollVideoTask(taskId, apiKey, model, signal) {
@@ -423,9 +436,16 @@ async function pollVideoTask(taskId, apiKey, model, signal) {
       cache: "no-store",
       signal,
     }, model.provider);
-    const task = model.provider === "byteplus" ? result : result?.task;
+    const task = model.provider === "byteplus" || model.provider === "google" ? result : result?.task;
     if (!task) throw Error(`${model.apiKey} 沒有回傳任務資料。`);
-    const taskState = String(task.status || "").toLowerCase();
+    if (model.provider === "google" && task.done) {
+      if (task.error) throw Error(task.error.message || "Google Veo 影片生成失敗。");
+      const videoUrl = task.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
+      if (!videoUrl) throw Error(task.response?.generateVideoResponse?.raiMediaFilteredReasons?.[0] || "Veo 任務完成，但沒有回傳影片網址。");
+      task.videoUrl = videoUrl;
+      return task;
+    }
+    const taskState = model.provider === "google" ? "running" : String(task.status || "").toLowerCase();
     if (taskState === "succeeded") {
       const videoUrl = model.provider === "byteplus" ? task.content?.video_url : task.content?.url;
       if (!videoUrl) throw Error("影片任務完成，但沒有回傳影片網址。");
@@ -451,6 +471,7 @@ function releaseVideo() {
   generatedVideoBlob = null;
   generatedVideoUrl = "";
   generatedVideoRemoteUrl = "";
+  generatedVideoApiKey = "";
   $("retry-save-video").hidden = true;
 }
 
@@ -476,15 +497,16 @@ async function restoreLastGeneratedVideo() {
   } catch {}
 }
 
-async function showVideoResult(remoteUrl, provider = generatedVideoProvider, expandResult = false) {
+async function showVideoResult(remoteUrl, provider = generatedVideoProvider, expandResult = false, apiKey = "") {
   releaseVideo();
   generatedVideoRemoteUrl = remoteUrl;
   generatedVideoProvider = provider;
+  generatedVideoApiKey = apiKey;
   try {
     const response = await fetch(providerEndpoints(provider).download, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: remoteUrl }),
+      body: JSON.stringify({ url: remoteUrl, ...(provider === "google" ? { apiKey } : {}) }),
       cache: "no-store",
     });
     if (!response.ok) throw Error(`影片下載回傳 ${response.status}`);
@@ -526,7 +548,16 @@ async function generateVideo() {
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
     setStatus(`正在建立 ${model.apiKey} 影片任務…`);
-    const payload = {
+    const payload = model.provider === "google" ? {
+      model: modelId,
+      instances: [{ prompt }],
+      parameters: {
+        sampleCount: 1,
+        resolution: $("video-resolution").value,
+        durationSeconds: Number($("video-duration").value),
+        aspectRatio: $("video-ratio").value,
+      },
+    } : {
       model: modelId,
       content: [{ type: "text", text: prompt }],
       resolution: $("video-resolution").value,
@@ -547,12 +578,12 @@ async function generateVideo() {
       cache: "no-store",
       signal: generationAbort.signal,
     }, model.provider);
-    const taskId = model.provider === "byteplus" ? created?.id : created?.task_id;
+    const taskId = model.provider === "byteplus" ? created?.id : model.provider === "google" ? created?.name : created?.task_id;
     if (!taskId) throw Error(`${model.apiKey} 沒有回傳影片任務 ID。`);
     const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal);
     $("video-generation-lock-title").textContent = "影片已完成，正在載入結果";
     $("video-generation-lock-detail").textContent = "正在準備預覽與下載檔案…";
-    await showVideoResult(task.videoUrl, model.provider, true);
+    await showVideoResult(task.videoUrl, model.provider, true, apiKey);
     setStatus(`生成完成 · ${task.resolution || $("video-resolution").value} · ${task.duration || $("video-duration").value} 秒`, "success");
   } catch (error) {
     if (error?.name !== "AbortError") {
@@ -616,10 +647,13 @@ $("download-video").addEventListener("click", () => {
 
 $("retry-save-video").addEventListener("click", async () => {
   if (!generatedVideoRemoteUrl || busy) return;
+  const retryUrl = generatedVideoRemoteUrl;
+  const retryProvider = generatedVideoProvider;
+  const retryApiKey = generatedVideoApiKey;
   setBusy(true, false);
   showError();
   setStatus("正在重新下載並保存影片…");
-  await showVideoResult(generatedVideoRemoteUrl, generatedVideoProvider);
+  await showVideoResult(retryUrl, retryProvider, false, retryApiKey);
   setStatus(generatedVideoBlob ? "影片已保存到瀏覽器" : "影片保存失敗", generatedVideoBlob ? "success" : "error");
   setBusy(false);
 });

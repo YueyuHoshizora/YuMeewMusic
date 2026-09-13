@@ -85,7 +85,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-builder-fields \.video-prompt-action-field\s*\{[^}]*align-self:\s*start/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /window\.confirm\("離開影像產生器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
-  assert.match(script, /window\.addEventListener\("beforeunload", event => \{[\s\S]*hasTransientPageWork\(\)[\s\S]*event\.returnValue = ""/);
+  assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
+  assert.doesNotMatch(script, /hasTransientPageWork/);
   assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /const fields = \[\s*\["時間", \$\("video-prompt-time"\)\.value\.trim\(\)\],\s*\["場景", editorText/);

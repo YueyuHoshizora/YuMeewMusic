@@ -121,15 +121,8 @@ function syncDraftStatus() {
   syncGenerateAvailability();
 }
 
-function hasTransientPageWork() {
-  if (busy || videoResources.length || editorText($("video-prompt"))) return true;
-  if ($("video-prompt-builder-dialog").open || $("character-editor-dialog").open) return true;
-  if ($("video-prompt-time").value.trim()) return true;
-  return [...document.querySelectorAll("#video-prompt-builder-dialog .resource-editor")].some(editor => editorText(editor));
-}
-
 function confirmPageExit(event) {
-  if (allowPageExit || !hasTransientPageWork()) return;
+  if (allowPageExit) return;
   if (!window.confirm("離開影像產生器將不會保留影片細節與本次加入的資源，是否確定？")) {
     event.preventDefault();
     return;
@@ -1421,7 +1414,7 @@ $("apply-video-background").addEventListener("click", async () => {
 
 document.querySelector("[data-confirm-return]").addEventListener("click", confirmPageExit);
 window.addEventListener("beforeunload", event => {
-  if (allowPageExit || !hasTransientPageWork()) return;
+  if (allowPageExit) return;
   event.preventDefault();
   event.returnValue = "";
 });

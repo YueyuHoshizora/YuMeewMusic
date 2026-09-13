@@ -18,10 +18,8 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-add:hover { background: color-mix(in srgb, var(--primary) 22%, var(--surface)); }
 .video-prompt-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .video-prompt-add:disabled { opacity: .5; cursor: default; }
-.video-film-style-button { margin-right: auto; border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .video-film-style-button.configured { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
-.video-prompt-footer { display: flex; justify-content: flex-start; margin-top: 12px; }
-.video-prompt-preview-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.video-prompt-preview-button { margin-right: auto; }
 .video-character-template-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .video-prompt-preview-dialog { width: 860px; max-width: none; }
 .video-prompt-preview-dialog h2 { margin-bottom: 16px; }

@@ -9,6 +9,7 @@ const secondaryPages = [
   "video-editor.html",
   "image-video.html",
   "vocal-separator.html",
+  "suno-download.html",
   "text-to-image.html",
   "video-generator.html",
 ];

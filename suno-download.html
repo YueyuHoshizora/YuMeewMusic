@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="貼上公開 Suno 分享連結，在瀏覽器下載並播放 M4A 音樂，或套用到 YuMeew 主畫面。" />
+    <title>Suno 下載 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/suno-download.css" />
+    <script type="module" src="./js/suno-download.js"></script>
+  </head>
+  <body class="suno-download-body">
+    <header class="suno-download-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SUNO DOWNLOAD</span></a>
+      <span class="local"><i></i>音樂由瀏覽器直接下載</span>
+    </header>
+
+    <main class="suno-download-main">
+      <section class="suno-download-heading">
+        <div>
+          <div class="eyebrow">PUBLIC SUNO LINK</div>
+          <h1>Suno 下載<span>。</span></h1>
+          <p>貼上可公開播放的 Suno 分享連結，解析後會直接在瀏覽器取得 M4A 音樂。</p>
+        </div>
+        <span id="suno-status-badge" class="suno-status-badge">等待連結</span>
+      </section>
+
+      <section class="panel suno-input-panel">
+        <div class="section-title"><span>01</span><h2>貼上分享連結</h2></div>
+        <form id="suno-form" class="suno-form">
+          <label class="field-label" for="suno-url">Suno 分享連結</label>
+          <div class="suno-url-row">
+            <input id="suno-url" class="text-input" type="url" inputmode="url" autocomplete="url" placeholder="https://suno.com/s/..." required />
+            <button id="suno-fetch" class="export-button" type="submit">取得音樂</button>
+          </div>
+        </form>
+        <progress id="suno-progress" max="100" value="0" hidden></progress>
+        <p id="suno-status" class="suno-status" role="status" aria-live="polite">支援 suno.com/s/… 與 suno.com/song/… 公開連結。</p>
+        <p id="suno-error" class="suno-error" role="alert" hidden></p>
+      </section>
+
+      <section id="suno-result" class="panel suno-result" hidden>
+        <div class="section-title"><span>02</span><h2>音樂預覽</h2></div>
+        <div class="suno-song">
+          <img id="suno-cover" alt="Suno 歌曲封面" hidden />
+          <div><strong id="suno-title">Suno 音樂</strong><span id="suno-artist"></span><small id="suno-file-info"></small></div>
+        </div>
+        <audio id="suno-player" controls preload="metadata" aria-label="Suno 音樂播放器"></audio>
+        <div class="suno-actions">
+          <button id="suno-download" class="text-button" type="button">下載音樂（M4A）</button>
+          <button id="suno-apply" class="export-button" type="button">套用到主畫面</button>
+        </div>
+      </section>
+
+      <section class="panel suno-notes">
+        <div><strong>公開連結</strong><span>僅支援不需登入即可播放的 Suno 分享頁。</span></div>
+        <div><strong>本機處理</strong><span>Worker 只解析分享頁；M4A 由瀏覽器直接取得，不會保存到伺服器。</span></div>
+        <div><strong>套用方式</strong><span>選擇套用後，音樂才會保存至本機 IndexedDB 並取代主畫面的音檔。</span></div>
+      </section>
+    </main>
+  </body>
+</html>

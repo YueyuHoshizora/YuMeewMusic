@@ -26,7 +26,9 @@
 
 ## 隱私與檔案限制
 
-一般媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成，沒有雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。全站所有遠端模型檔都統一自動保存到 `yumeew-ai-models-v1` IndexedDB：Spleeter 與 BS PolarFormer 第一次由瀏覽器從 Hugging Face 下載，之後可直接使用本機快取，音樂不會傳送至 Hugging Face。需要網路傳輸的功能只有文生圖與使用者主動啟動的 AI 字幕辨識：文生圖只傳送圖片描述；字幕辨識會先在瀏覽器用 Spleeter 分離人聲，再把衍生的人聲軌轉為單聲道、16 kHz、16-bit PCM WAV 並傳送至 `lyrics-transcriber.yustellar.idv.tw`，原始音樂與原有字幕不會上傳。
+一般媒體讀取、解碼、裁剪、繪製、AI 分離與匯出都在客戶端完成，沒有雲端轉碼或遠端媒體儲存；編碼器、ONNX Runtime 與 WASM 隨網站提供。全站所有遠端模型檔都統一自動保存到 `yumeew-ai-models-v1` IndexedDB：Spleeter 與 BS PolarFormer 第一次由瀏覽器從 Hugging Face 下載，之後可直接使用本機快取，音樂不會傳送至 Hugging Face。AI 圖片與影片生成、AI 字幕辨識及 Suno 公開連結解析需要網路服務：生成頁會傳送使用者輸入的描述與引用資源；字幕辨識會先在瀏覽器用 Spleeter 分離人聲，再把衍生的人聲軌轉為單聲道、16 kHz、16-bit PCM WAV 並傳送至 `lyrics-transcriber.yustellar.idv.tw`，原始音樂與原有字幕不會上傳；Suno Worker 只解析公開分享頁，音訊由瀏覽器直接讀取。
+
+「Suno 下載」可貼上公開的 `suno.com/s/…` 或 `suno.com/song/…` 分享連結。`model-proxy` Worker 只讀取公開分享頁並回傳歌曲名稱、作者、封面與官方 M4A CDN 網址；音樂檔由使用者的瀏覽器直接向 Suno CDN 下載並建立播放器，Worker 不會代理或保存音樂內容。使用者可下載 M4A，或主動選擇「套用到主畫面」，將檔案保存到本機 IndexedDB 並取代目前音樂。
 
 主畫面頂端的「設定」會開啟獨立設定頁面，各項功能排列在左側導覽列。「介面」可選擇日間／夜間模式，以及青檸、海藍、紫羅蘭、玫瑰、琥珀、薄荷、靛青、珊瑚、洋紅、銀灰十種佈景，變更會立即預覽並保存；主畫面不再顯示模式與佈景選單。「模型管理」會列出 IndexedDB 中每套 AI 模型的名稱、來源、合計容量與快取檔案數。可逐一刪除模型或刪除全部模型；每次刪除前都會提示下次使用時必須重新下載。「快取管理」依頁面與欄位列出 IndexedDB 中的音樂、背景素材、字幕、圖轉影片專案及文生圖最後生成結果，顯示檔名、類型與容量，並提供個別刪除及全部清除。媒體快取與 AI 模型分開管理。
 
@@ -167,12 +169,14 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `vocal-separator.html` | WebGPU／WASM 人聲與伴奏分離工具 |
 | `text-to-image.html` | 多模型 AI 文生圖頁面 |
 | `video-generator.html` | AI 影像產生器頁面與模型串接介面 |
+| `suno-download.html` | 公開 Suno 分享連結解析、M4A 試聽與下載頁面 |
 | `css/style.css` | 桌面配置、主題與介面樣式 |
 | `css/subtitle-editor.css` | 字幕編輯器、音訊波形與字幕色帶樣式 |
 | `css/converter.css` | 任意轉頁面配置與狀態樣式 |
 | `css/video-editor.css` | 影片編輯的預覽、圖層清單與時間軸樣式 |
 | `css/text-to-image.css` | 文生圖輸入、生成狀態與圖片預覽樣式 |
 | `css/video-generator.css` | 影像產生器影片細節與預覽補充樣式 |
+| `css/suno-download.css` | Suno 下載頁面的表單、進度與歌曲卡片樣式 |
 | `js/app.js` | 本機讀檔、播放、互動與狀態管理 |
 | `js/subtitle-editor.js` | 字幕清單、色帶拖曳、Spleeter 人聲辨識、SRT 下載與覆寫保存 |
 | `js/visualizer.js` | FFT、動畫、歌曲資訊與字幕繪製 |
@@ -183,6 +187,7 @@ MP4／MOV／WebM 匯出會針對輸出編碼、尺寸、位元率與影格率偵
 | `js/vocal-separator.js`、`js/vocal-separator-worker.js`、`js/vocal-separator-core.js` | 人聲分離介面、背景推論與音訊 DSP／WAV 輸出 |
 | `js/text-to-image.js` | Worker 呼叫、圖片下載與主畫面背景保存 |
 | `js/video-generator.js` | 影像產生器介面狀態與模型串接入口 |
+| `js/suno-download.js` | Suno 分享解析、瀏覽器串流下載與套用主畫面流程 |
 | `js/video-acceleration.js` | 硬體編碼偏好偵測與回退 |
 | `js/trim.js`、`js/trim-time.js`、`js/trim-range.js` | 音訊裁剪、時間解析與拖曳範圍計算 |
 | `js/subtitles.js` | 字幕解析與時間對應 |

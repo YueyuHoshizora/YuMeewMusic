@@ -1,0 +1,166 @@
+import { applyTheme } from "./themes.js";
+import { loadSettings } from "./settings.js";
+import { saveStoredMedia } from "./media-store.js";
+
+const $ = id => document.getElementById(id);
+const PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
+const LAST_URL_KEY = "yumeew.suno-download.last-url.v1";
+const MAX_AUDIO_BYTES = 300 * 1024 * 1024;
+
+applyTheme(loadSettings().mode, loadSettings().theme);
+
+let audioBlob = null;
+let audioUrl = "";
+let fileName = "suno-music.m4a";
+let busy = false;
+
+function safeFileName(title) {
+  const base = String(title || "suno-music").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 120);
+  return `${base || "suno-music"}.m4a`;
+}
+
+function formatBytes(bytes) {
+  return bytes < 1024 ** 2 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+}
+
+function setError(message = "") {
+  $("suno-error").textContent = message;
+  $("suno-error").hidden = !message;
+  $("suno-status-badge").classList.toggle("error", Boolean(message));
+  if (message) $("suno-status-badge").textContent = "無法取得";
+}
+
+function setBusy(value) {
+  busy = value;
+  $("suno-url").disabled = value;
+  $("suno-fetch").disabled = value;
+  $("suno-download").disabled = value;
+  $("suno-apply").disabled = value;
+  $("suno-progress").hidden = !value;
+}
+
+function clearAudio() {
+  $("suno-player").pause();
+  $("suno-player").removeAttribute("src");
+  $("suno-player").load();
+  if (audioUrl) URL.revokeObjectURL(audioUrl);
+  audioUrl = "";
+  audioBlob = null;
+  $("suno-result").hidden = true;
+  $("suno-cover").removeAttribute("src");
+  $("suno-cover").hidden = true;
+}
+
+async function readAudioResponse(response) {
+  if (!response.ok) throw Error(`音樂下載失敗（${response.status}）`);
+  const contentType = response.headers.get("Content-Type") || "";
+  if (!/^audio\//i.test(contentType)) throw Error("取得的內容不是可播放的音樂檔案。");
+  const contentLength = Number(response.headers.get("Content-Length")) || 0;
+  if (contentLength > MAX_AUDIO_BYTES) throw Error("音樂檔案超過 300 MB，無法套用到主畫面。");
+  if (!response.body) return response.blob();
+  const reader = response.body.getReader();
+  const chunks = [];
+  let received = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    received += value.byteLength;
+    if (received > MAX_AUDIO_BYTES) {
+      await reader.cancel();
+      throw Error("音樂檔案超過 300 MB，已停止下載。");
+    }
+    chunks.push(value);
+    const progress = contentLength ? Math.round(received / contentLength * 100) : 0;
+    $("suno-progress").value = Math.max(10, Math.min(99, progress));
+    $("suno-status").textContent = contentLength
+      ? `正在下載音樂 ${progress}% · ${formatBytes(received)} / ${formatBytes(contentLength)}`
+      : `正在下載音樂 · 已接收 ${formatBytes(received)}`;
+  }
+  return new Blob(chunks, { type: contentType || "audio/mp4" });
+}
+
+async function fetchSuno(event) {
+  event.preventDefault();
+  if (busy) return;
+  const url = $("suno-url").value.trim();
+  clearAudio();
+  setError();
+  setBusy(true);
+  $("suno-progress").value = 4;
+  $("suno-fetch").textContent = "正在解析…";
+  $("suno-status-badge").className = "suno-status-badge";
+  $("suno-status-badge").textContent = "解析中";
+  $("suno-status").textContent = "正在讀取公開 Suno 分享頁…";
+  try {
+    localStorage.setItem(LAST_URL_KEY, url);
+    const resolveResponse = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    const result = await resolveResponse.json().catch(() => ({}));
+    if (!resolveResponse.ok) throw Error(result.error || result.message || `分享連結解析失敗（${resolveResponse.status}）`);
+    $("suno-progress").value = 10;
+    $("suno-fetch").textContent = "正在下載…";
+    $("suno-status").textContent = "已找到音樂，正在從 Suno CDN 下載…";
+    audioBlob = await readAudioResponse(await fetch(result.audioUrl, { cache: "no-store" }));
+    audioUrl = URL.createObjectURL(audioBlob);
+    fileName = safeFileName(result.title);
+    $("suno-player").src = audioUrl;
+    $("suno-player").load();
+    $("suno-title").textContent = result.title || "Suno 音樂";
+    $("suno-artist").textContent = result.artist || "";
+    $("suno-artist").hidden = !result.artist;
+    $("suno-file-info").textContent = `${fileName} · ${formatBytes(audioBlob.size)}`;
+    if (result.imageUrl) {
+      $("suno-cover").src = result.imageUrl;
+      $("suno-cover").hidden = false;
+    }
+    $("suno-result").hidden = false;
+    $("suno-progress").value = 100;
+    $("suno-status-badge").className = "suno-status-badge ready";
+    $("suno-status-badge").textContent = "準備完成";
+    $("suno-status").textContent = "M4A 已下載至瀏覽器，可播放、下載或套用到主畫面。";
+  } catch (error) {
+    clearAudio();
+    setError(error?.message || "目前無法取得這首 Suno 音樂。");
+    $("suno-status").textContent = "請確認連結可公開播放後再試一次。";
+  } finally {
+    setBusy(false);
+    $("suno-fetch").textContent = "取得音樂";
+  }
+}
+
+function downloadAudio() {
+  if (!audioBlob) return;
+  const link = document.createElement("a");
+  link.href = audioUrl;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+async function applyToMain() {
+  if (!audioBlob || busy) return;
+  setBusy(true);
+  $("suno-apply").textContent = "正在保存…";
+  setError();
+  try {
+    const file = new File([audioBlob], fileName, { type: audioBlob.type || "audio/mp4", lastModified: Date.now() });
+    await saveStoredMedia("audio", file);
+    void navigator.storage?.persist?.().catch(() => false);
+    $("suno-status").textContent = "音樂已保存，正在返回主畫面…";
+    location.href = "./index.html";
+  } catch (error) {
+    setError(error?.message || "無法將音樂保存到主畫面。");
+    setBusy(false);
+    $("suno-apply").textContent = "套用到主畫面";
+  }
+}
+
+$("suno-form").addEventListener("submit", fetchSuno);
+$("suno-download").addEventListener("click", downloadAudio);
+$("suno-apply").addEventListener("click", applyToMain);
+$("suno-url").value = localStorage.getItem(LAST_URL_KEY) || "";
+window.addEventListener("unload", () => { if (audioUrl) URL.revokeObjectURL(audioUrl); });

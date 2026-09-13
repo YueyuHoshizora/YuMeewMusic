@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="貼上公開 Suno 分享連結，在瀏覽器下載並播放 M4A 音樂，或套用到 YuMeew 主畫面。" />
+    <meta name="description" content="貼上公開 Suno 分享連結，在瀏覽器播放音樂、轉換下載 WAV，或套用到 YuMeew 主畫面。" />
     <title>Suno 下載 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -36,7 +36,7 @@
           </div>
         </form>
         <progress id="suno-progress" max="100" value="0" hidden></progress>
-        <p id="suno-status" class="suno-status" role="status" aria-live="polite">支援 suno.com/s/… 與 suno.com/song/… 公開連結。</p>
+        <p id="suno-status" class="suno-status" role="status" aria-live="polite">支援 suno.com/s/… 與 suno.com/song/… 公開連結；下載時會在瀏覽器轉換為 WAV。</p>
         <p id="suno-error" class="suno-error" role="alert" hidden></p>
       </section>
 
@@ -48,14 +48,14 @@
         </div>
         <audio id="suno-player" controls preload="metadata" aria-label="Suno 音樂播放器"></audio>
         <div class="suno-actions">
-          <button id="suno-download" class="text-button" type="button">下載音樂（M4A）</button>
+          <button id="suno-download" class="text-button" type="button">下載音樂（WAV）</button>
           <button id="suno-apply" class="export-button" type="button">套用到主畫面</button>
         </div>
       </section>
 
       <section class="panel suno-notes">
         <div><strong>公開連結</strong><span>僅支援不需登入即可播放的 Suno 分享頁。</span></div>
-        <div><strong>本機處理</strong><span>Worker 只解析分享頁；M4A 由瀏覽器直接取得，不會保存到伺服器。</span></div>
+        <div><strong>本機處理</strong><span>Worker 只解析分享頁；M4A 由瀏覽器直接取得，下載時在本機轉為 16-bit PCM WAV。</span></div>
         <div><strong>套用方式</strong><span>選擇套用後，音樂才會保存至本機 IndexedDB 並取代主畫面的音檔。</span></div>
       </section>
     </main>

@@ -1,6 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { saveStoredMedia } from "./media-store.js";
+import { encodeStereoWav } from "./vocal-separator-core.js";
 
 const $ = id => document.getElementById(id);
 const PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
@@ -131,14 +132,52 @@ async function fetchSuno(event) {
   }
 }
 
-function downloadAudio() {
-  if (!audioBlob) return;
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = audioUrl;
-  link.download = fileName;
+  link.href = url;
+  link.download = name;
   document.body.append(link);
   link.click();
   link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function convertToWav(blob) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) throw Error("此瀏覽器不支援音訊解碼，無法轉換 WAV。");
+  const context = new AudioContextClass();
+  try {
+    const decoded = await context.decodeAudioData(await blob.arrayBuffer());
+    const left = decoded.getChannelData(0);
+    const right = decoded.numberOfChannels > 1 ? decoded.getChannelData(1) : left;
+    return encodeStereoWav(left, right, decoded.sampleRate);
+  } finally {
+    await context.close().catch(() => {});
+  }
+}
+
+async function downloadAudio() {
+  if (!audioBlob || busy) return;
+  setBusy(true);
+  setError();
+  $("suno-download").textContent = "正在轉換…";
+  $("suno-status-badge").className = "suno-status-badge";
+  $("suno-status-badge").textContent = "轉換中";
+  $("suno-status").textContent = "正在瀏覽器中把 M4A 解碼並轉換為 16-bit PCM WAV…";
+  try {
+    const wav = await convertToWav(audioBlob);
+    downloadBlob(wav, fileName.replace(/\.m4a$/i, ".wav"));
+    $("suno-status-badge").className = "suno-status-badge ready";
+    $("suno-status-badge").textContent = "下載完成";
+    $("suno-status").textContent = `WAV 已建立並開始下載 · ${formatBytes(wav.size)}`;
+  } catch (error) {
+    setError(error?.message || "無法將 M4A 轉換為 WAV。");
+    $("suno-status").textContent = "請確認瀏覽器可正常解碼這首音樂後再試一次。";
+  } finally {
+    setBusy(false);
+    $("suno-download").textContent = "下載音樂（WAV）";
+  }
 }
 
 async function applyToMain() {

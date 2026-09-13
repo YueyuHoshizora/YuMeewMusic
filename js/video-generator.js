@@ -210,9 +210,9 @@ function characterTemplateText() {
   return characterTemplates.map((character, index) => {
     const fields = [
       ["名字", character.name],
-      ["風格", character.style],
-      ["口氣", character.tone],
       ["聲線", character.voice],
+      ["口氣", character.tone],
+      ["風格", character.style],
       ["服裝", character.clothing],
     ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
     return `人物 ${index + 1}：${fields}`;

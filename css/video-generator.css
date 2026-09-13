@@ -85,7 +85,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .reset-dialog #video-api-key-source,
 .reset-dialog #video-api-key-input { width: 100%; box-sizing: border-box; }
 .reset-dialog #video-api-key-input { font-family: monospace; }
-.video-prompt-builder-dialog { width: min(820px, calc(100vw - 80px)); }
+.video-prompt-builder-dialog { width: 1080px; max-width: none; }
 .video-prompt-builder-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .video-prompt-builder-heading h2 { margin: 0; }
 .video-prompt-builder-minimize { padding: 7px 14px; font-size: 12px; }

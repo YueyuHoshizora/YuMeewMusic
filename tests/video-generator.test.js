@@ -88,7 +88,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
-  assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*min\(820px, calc\(100vw - 80px\)\)/);
+  assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*1080px;[^}]*max-width:\s*none/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*220px/);
   assert.match(css, /\.resource-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*248px/);

@@ -10,5 +10,8 @@
     "start": "node scripts/serve.js",
     "test": "node --test"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "GPL-3.0-only"
 }

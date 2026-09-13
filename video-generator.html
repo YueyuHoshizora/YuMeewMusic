@@ -8,8 +8,8 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/text-to-image.css" />
-    <link rel="stylesheet" href="./css/video-generator.css" />
-    <script type="module" src="./js/video-generator.js"></script>
+    <link rel="stylesheet" href="./css/video-generator.css?v=20260914-project-file" />
+    <script type="module" src="./js/video-generator.js?v=20260914-project-file"></script>
   </head>
   <body class="text-to-image-body video-generator-body">
     <header class="text-to-image-header">
@@ -37,6 +37,11 @@
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
             <div id="video-prompt" class="resource-editor" contenteditable="true" role="textbox" aria-label="影片細節" aria-multiline="true" data-placeholder="例如：鏡頭緩慢穿越夜晚的霓虹城市，天空充滿星光，電影感光線，流暢運鏡"></div>
+            <div class="video-project-actions">
+              <button id="export-video-project" class="video-prompt-add video-project-button" type="button">匯出設定</button>
+              <button id="select-video-project" class="video-prompt-add video-project-button" type="button">匯入設定</button>
+              <input id="video-project-input" type="file" accept=".zip,application/octet-stream" hidden />
+            </div>
           </div>
           <section class="video-resource-library" aria-labelledby="video-resource-title">
             <div class="video-resource-heading">
@@ -117,6 +122,39 @@
       </div>
     </dialog>
 
+    <dialog id="export-video-project-dialog" class="reset-dialog video-project-dialog" aria-labelledby="export-video-project-title">
+      <form id="export-video-project-form" method="dialog">
+        <h2 id="export-video-project-title">匯出影片設定</h2>
+        <p>保存影片細節、全片風格、生成選項、分鏡列表與上傳資源。</p>
+        <label class="video-project-check" for="export-active-characters">
+          <input id="export-active-characters" type="checkbox" checked />
+          <span><strong>包含啟用的人物</strong><small id="export-character-count">目前沒有啟用的人物</small></span>
+        </label>
+        <p class="video-project-note">檔案使用 YuMeew 自訂格式並以 .zip 為副檔名，不會進行 ZIP 壓縮。</p>
+        <div class="dialog-actions">
+          <button id="cancel-export-video-project" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">匯出設定</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="import-video-project-dialog" class="reset-dialog video-project-dialog" aria-labelledby="import-video-project-title">
+      <form id="import-video-project-form" method="dialog">
+        <h2 id="import-video-project-title">匯入影片設定</h2>
+        <p id="import-video-project-name" class="video-project-file-name"></p>
+        <div id="import-video-project-summary" class="video-project-summary" aria-label="設定檔內容"></div>
+        <label class="video-project-check" for="import-project-characters">
+          <input id="import-project-characters" type="checkbox" />
+          <span><strong>匯入人物並複寫</strong><small id="import-character-count">保留目前瀏覽器中的人物模板</small></span>
+        </label>
+        <p id="import-video-project-error" class="generation-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-import-video-project" class="text-button" type="button">取消</button>
+          <button id="confirm-import-video-project" class="dialog-confirm" type="submit">匯入設定</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="film-style-dialog" class="reset-dialog film-style-dialog" aria-labelledby="film-style-title">
       <form id="film-style-form" method="dialog">
         <h2 id="film-style-title">全片風格</h2>
@@ -153,6 +191,31 @@
           <label for="film-style-color"><span>色彩基調</span><select id="film-style-color" class="setting-select"><option value="" selected>不指定</option><option value="自然色彩">自然色彩</option><option value="低飽和">低飽和</option><option value="高飽和">高飽和</option><option value="冷色調">冷色調</option><option value="暖色調">暖色調</option><option value="黑白">黑白</option></select></label>
           <label for="film-style-texture"><span>畫面質感</span><select id="film-style-texture" class="setting-select"><option value="" selected>不指定</option><option value="乾淨數位">乾淨數位</option><option value="電影膠片">電影膠片</option><option value="粗顆粒">粗顆粒</option><option value="夢幻柔焦">夢幻柔焦</option><option value="銳利細節">銳利細節</option><option value="高對比戲劇感">高對比戲劇感</option></select></label>
           <label for="film-style-framing"><span>畫面比例感</span><select id="film-style-framing" class="setting-select"><option value="" selected>不指定</option><option value="電影寬銀幕構圖">電影寬銀幕</option><option value="標準電影構圖">標準電影</option><option value="直式短片構圖">直式短片</option></select></label>
+          <label for="film-style-narrator-voice"><span>旁白聲線</span>
+            <select id="film-style-narrator-voice" class="setting-select">
+              <option value="" selected>不指定</option>
+              <optgroup label="女聲">
+                <option value="女聲／溫柔知性">溫柔知性</option>
+                <option value="女聲／清亮自然">清亮自然</option>
+                <option value="女聲／沉穩成熟">沉穩成熟</option>
+                <option value="女聲／甜美活潑">甜美活潑</option>
+                <option value="女聲／冷靜疏離">冷靜疏離</option>
+                <option value="女聲／低沉磁性">低沉磁性</option>
+                <option value="女聲／空靈夢幻">空靈夢幻</option>
+              </optgroup>
+              <optgroup label="男聲">
+                <option value="男聲／沉穩厚實">沉穩厚實</option>
+                <option value="男聲／溫和自然">溫和自然</option>
+                <option value="男聲／清朗青年">清朗青年</option>
+                <option value="男聲／低沉磁性">低沉磁性</option>
+                <option value="男聲／成熟權威">成熟權威</option>
+                <option value="男聲／熱血激昂">熱血激昂</option>
+                <option value="男聲／冷靜克制">冷靜克制</option>
+              </optgroup>
+              <option value="custom">自訂聲線</option>
+            </select>
+          </label>
+          <label id="film-style-narrator-custom-wrap" for="film-style-narrator-custom" hidden><span>自訂旁白聲線</span><input id="film-style-narrator-custom" class="text-input" type="text" placeholder="例如：中性、略帶沙啞的平靜聲線" /></label>
           <label class="film-style-notes" for="film-style-notes"><span>自訂補充</span><textarea id="film-style-notes" class="text-input" rows="4" placeholder="例如：雨夜城市帶有孤獨壓迫感"></textarea></label>
         </div>
         <div class="dialog-actions">
@@ -198,12 +261,45 @@
       <form id="character-editor-form" method="dialog">
         <h2 id="character-editor-title">新增人物</h2>
         <div class="character-editor-fields">
-          <label for="character-name"><span>名字（必填）</span><input id="character-name" class="text-input" type="text" placeholder="例如：小雨" required /></label>
-          <label for="character-reference"><span>參考圖（必填）</span><input id="character-reference" class="text-input character-reference-input" type="file" accept="image/*" required /><span class="character-reference-meta"><img id="character-reference-preview" class="character-reference-preview" alt="人物參考圖預覽" hidden /><small id="character-reference-name">尚未選擇圖片</small></span></label>
-          <label for="character-voice"><span>聲線</span><input id="character-voice" class="text-input" type="text" placeholder="例如：清亮柔和、低沉渾厚" /></label>
-          <label for="character-tone"><span>口氣</span><input id="character-tone" class="text-input" type="text" placeholder="例如：溫柔、冷靜而堅定" /></label>
-          <label for="character-style"><span>風格</span><input id="character-style" class="text-input" type="text" placeholder="例如：日系動畫、寫實電影感" /></label>
-          <label for="character-clothing"><span>服裝</span><input id="character-clothing" class="text-input" type="text" placeholder="例如：深藍色長外套與白色圍巾" /></label>
+          <label class="character-reference-field" for="character-reference"><span>參考圖（必填）</span>
+            <span id="character-reference-box" class="character-reference-box">
+              <input id="character-reference" class="character-reference-input" type="file" accept="image/*" required />
+              <img id="character-reference-preview" class="character-reference-preview" alt="人物參考圖預覽" hidden />
+              <span id="character-reference-placeholder" class="character-reference-placeholder"><strong>＋</strong><span>點選選擇人物參考圖</span><small>支援瀏覽器可讀取的圖片格式</small></span>
+              <small id="character-reference-name" class="character-reference-name">尚未選擇圖片</small>
+            </span>
+          </label>
+          <div class="character-editor-details">
+            <label for="character-name"><span>名字（必填）</span><input id="character-name" class="text-input" type="text" placeholder="例如：小雨" required /></label>
+            <label for="character-voice"><span>聲線</span>
+              <select id="character-voice" class="setting-select">
+                <option value="" selected>不指定</option>
+                <optgroup label="女聲">
+                  <option value="女聲／溫柔知性">溫柔知性</option>
+                  <option value="女聲／清亮自然">清亮自然</option>
+                  <option value="女聲／沉穩成熟">沉穩成熟</option>
+                  <option value="女聲／甜美活潑">甜美活潑</option>
+                  <option value="女聲／冷靜疏離">冷靜疏離</option>
+                  <option value="女聲／低沉磁性">低沉磁性</option>
+                  <option value="女聲／空靈夢幻">空靈夢幻</option>
+                </optgroup>
+                <optgroup label="男聲">
+                  <option value="男聲／沉穩厚實">沉穩厚實</option>
+                  <option value="男聲／溫和自然">溫和自然</option>
+                  <option value="男聲／清朗青年">清朗青年</option>
+                  <option value="男聲／低沉磁性">低沉磁性</option>
+                  <option value="男聲／成熟權威">成熟權威</option>
+                  <option value="男聲／熱血激昂">熱血激昂</option>
+                  <option value="男聲／冷靜克制">冷靜克制</option>
+                </optgroup>
+                <option value="custom">自訂聲線</option>
+              </select>
+            </label>
+            <label id="character-voice-custom-wrap" for="character-voice-custom" hidden><span>自訂聲線</span><input id="character-voice-custom" class="text-input" type="text" placeholder="例如：中性、略帶沙啞的平靜聲線" /></label>
+            <label for="character-tone"><span>口氣</span><input id="character-tone" class="text-input" type="text" placeholder="例如：溫柔、冷靜而堅定" /></label>
+            <label for="character-style"><span>風格</span><input id="character-style" class="text-input" type="text" placeholder="例如：日系動畫、寫實電影感" /></label>
+            <label for="character-clothing"><span>服裝</span><input id="character-clothing" class="text-input" type="text" placeholder="例如：深藍色長外套與白色圍巾" /></label>
+          </div>
         </div>
         <div class="dialog-actions character-editor-actions">
           <button id="delete-character" class="character-remove" type="button" hidden>刪除人物</button>
@@ -425,7 +521,10 @@
             <span class="video-action-caption">動作補充</span>
             <div id="video-prompt-action-detail" class="text-input resource-editor resource-editor-multiline" contenteditable="true" role="textbox" aria-label="動作補充" aria-multiline="true" data-placeholder="補充連續動作或細節"></div>
           </div>
-          <label><span>對白</span><div id="video-prompt-dialogue" class="text-input resource-editor resource-editor-multiline" contenteditable="true" role="textbox" aria-label="對白" aria-multiline="true" data-placeholder="例如：今晚的星光真美。"></div></label>
+          <div class="video-dialogue-field">
+            <div class="video-dialogue-heading"><span>人物與對話</span><button id="add-video-dialogue" class="video-dialogue-add" type="button">＋ 新增對話</button></div>
+            <div id="video-dialogue-list" class="video-dialogue-list"></div>
+          </div>
         </div>
         <div class="dialog-actions">
           <button id="cancel-video-prompt-builder" class="text-button" type="button">取消</button>

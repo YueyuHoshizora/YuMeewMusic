@@ -25,6 +25,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(html, /video-prompt-footer/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
+  assert.match(html, /id="video-prompt"[\s\S]*class="video-project-actions"[\s\S]*id="export-video-project"[^>]*>匯出設定<\/button>[\s\S]*id="select-video-project"[^>]*>匯入設定<\/button>/);
+  assert.match(html, /id="video-project-input"[^>]*accept="\.zip,application\/octet-stream"[^>]*hidden/);
+  assert.match(html, /id="export-video-project-dialog"[\s\S]*id="export-active-characters"[^>]*checked[\s\S]*包含啟用的人物/);
+  assert.match(html, /id="import-video-project-dialog"[\s\S]*id="import-project-characters"[\s\S]*匯入人物並複寫/);
   assert.match(html, /id="video-resource-title">資源<\/h2>/);
   assert.match(html, /生成時只會暫存實際引用的資源，2 小時後自動刪除/);
   assert.match(html, /id="video-resource-input"[^>]*accept="image\/\*,audio\/\*,video\/\*"[^>]*multiple/);
@@ -35,14 +39,18 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
   assert.match(html, /id="apply-film-style"[^>]*type="button"[^>]*>套用風格<\/button>/);
-  for (const id of ["film-style-primary", "film-style-primary-custom", "film-style-era", "film-style-color", "film-style-texture", "film-style-framing", "film-style-notes"]) assert.match(html, new RegExp(`id="${id}"`));
+  for (const id of ["film-style-primary", "film-style-primary-custom", "film-style-era", "film-style-color", "film-style-texture", "film-style-framing", "film-style-narrator-voice", "film-style-narrator-custom", "film-style-notes"]) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /id="film-style-primary"[\s\S]*value="電影寫實"[\s\S]*value="音樂錄影帶"[\s\S]*value="custom">自訂風格/);
+  assert.match(html, /id="film-style-narrator-voice"[\s\S]*<optgroup label="女聲">[\s\S]*女聲／溫柔知性[\s\S]*<optgroup label="男聲">[\s\S]*男聲／沉穩厚實[\s\S]*value="custom">自訂聲線/);
   assert.match(html, /id="add-character"[^>]*>＋ 新增人物<\/button>/);
   assert.match(html, /id="character-editor-dialog"[^>]*aria-labelledby="character-editor-title"/);
-  for (const id of ["character-name", "character-reference", "character-style", "character-tone", "character-voice", "character-clothing", "delete-character"]) assert.ok(ids.includes(id), id);
+  for (const id of ["character-name", "character-reference", "character-style", "character-tone", "character-voice", "character-voice-custom", "character-clothing", "delete-character"]) assert.ok(ids.includes(id), id);
   assert.match(html, /名字（必填）[\s\S]*id="character-name"[^>]*required/);
   assert.match(html, /參考圖（必填）[\s\S]*id="character-reference"[^>]*required/);
-  assert.match(html, /id="character-reference"[\s\S]*id="character-voice"[\s\S]*id="character-tone"[\s\S]*id="character-style"[\s\S]*id="character-clothing"/);
+  assert.match(html, /id="character-reference-box"[\s\S]*id="character-reference"[\s\S]*id="character-reference-preview"[\s\S]*id="character-reference-placeholder"[\s\S]*點選選擇人物參考圖/);
+  assert.match(css, /\.character-reference-box \{[^}]*aspect-ratio: 4 \/ 3/);
+  assert.match(html, /id="character-reference"[\s\S]*id="character-voice"[\s\S]*id="character-voice-custom"[\s\S]*id="character-tone"[\s\S]*id="character-style"[\s\S]*id="character-clothing"/);
+  assert.match(html, /id="character-voice"[\s\S]*<optgroup label="女聲">[\s\S]*女聲／溫柔知性[\s\S]*<optgroup label="男聲">[\s\S]*男聲／沉穩厚實[\s\S]*value="custom">自訂聲線/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
   assert.match(html, /<h2 id="video-prompt-builder-title">分鏡內容<\/h2>/);
   assert.match(html, /id="minimize-video-prompt-builder"[^>]*>縮小<\/button>/);
@@ -51,9 +59,11 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-start"><span>開始時間（秒）<\/span><input id="video-prompt-start"[^>]*type="number"[^>]*min="0"[^>]*step="0\.1"[^>]*required/);
   assert.match(html, /for="video-prompt-end"><span>結束時間（秒）<\/span><input id="video-prompt-end"[^>]*type="number"[^>]*min="0"[^>]*step="0\.1"[^>]*required/);
-  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-sound", "音效"], ["video-prompt-dialogue", "對白"]]) {
+  for (const [id, label] of [["video-prompt-scene", "場景"], ["video-prompt-sound", "音效"]]) {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
+  assert.match(html, /<span>人物與對話<\/span>[\s\S]*id="add-video-dialogue"[^>]*>＋ 新增對話<\/button>[\s\S]*id="video-dialogue-list"/);
+  assert.doesNotMatch(html, /id="video-prompt-dialogue"|<span>對白<\/span>/);
   assert.match(html, /<span>鏡頭<\/span>[\s\S]*id="video-prompt-camera"[\s\S]*<optgroup label="基本運鏡">[\s\S]*<optgroup label="跟拍與環繞">[\s\S]*<optgroup label="電影感運鏡">/);
   assert.match(html, /id="video-prompt-camera"[\s\S]*<option value="custom">自訂運鏡（開放輸入）<\/option>[\s\S]*id="video-prompt-camera-speed"/);
   assert.match(html, /id="video-prompt-camera-custom"[^>]*resource-editor[^>]*hidden/);
@@ -117,6 +127,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(globalCss, /\.reset-confirm\s*\{[^}]*border:\s*1px solid var\(--error\)[^}]*background:\s*transparent/);
   assert.match(css, /\.video-prompt-builder-fields \.video-prompt-action-field\s*\{[^}]*align-self:\s*start/);
   assert.match(css, /\.video-action-selects\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.video-dialogue-row\s*\{[^}]*grid-template-columns:\s*170px 180px minmax\(0, 1fr\) auto/);
+  assert.match(css, /\.video-dialogue-field\s*\{[^}]*grid-column:\s*1 \/ -1/);
   assert.match(css, /\.video-view-subjects\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /window\.confirm\("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
@@ -124,6 +136,12 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*shotSize:[\s\S]*viewSubjects: selectedStoryboardSubjects\(\)[\s\S]*viewpointCharacter:[\s\S]*actionCharacter:[\s\S]*actionDetail:[\s\S]*lightingIntensity:/);
+  assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*dialogues: collectDialogueRows\(\)/);
+  assert.match(script, /function dialogueSpeakerSelect\(selected = ""\)[\s\S]*__narrator__[\s\S]*character\.enabled !== false/);
+  assert.match(script, /function dialogueSpeakerSelect\(selected = ""\)[\s\S]*video-dialogue-speaker/);
+  assert.match(script, /function createDialogueRow\(dialogue = \{\}\)[\s\S]*口氣／情緒[\s\S]*video-dialogue-text[\s\S]*向上移動對話[\s\S]*向下移動對話[\s\S]*刪除對話/);
+  assert.match(script, /function dialoguePromptField\(dialogues = \[\]\)[\s\S]*__narrator__[\s\S]*旁白[\s\S]*dialogues/);
+  assert.match(script, /function validateDialogueRows\(form\)[\s\S]*請選擇說話者或旁白/);
   assert.match(script, /function renderStoryboardCharacterControls\([\s\S]*character\.enabled !== false[\s\S]*input\.type = "checkbox"[\s\S]*選擇視點角色（選填）/);
   assert.match(script, /function syncViewControls\([\s\S]*\["第一人稱視角", "越肩視角"\]\.includes\(angle\)/);
   assert.match(script, /function viewPromptField\(draft\)[\s\S]*視點角色：[\s\S]*畫面主體：[\s\S]*viewCustom/);
@@ -168,7 +186,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /model\.provider === "google"[\s\S]*Google AI Studio Gemini API KEY/);
   assert.match(script, /RESOURCE_UPLOAD_URL = "https:\/\/model-proxy\.yustellar\.idv\.tw\/resources\/upload"/);
   assert.match(script, /function referencedCharacters\(videoDetails\)[\s\S]*videoDetails\.includes\(character\.name\)/);
-  assert.match(script, /function filmStyleText\(\)[\s\S]*主要風格[\s\S]*畫面比例感[\s\S]*全片風格：/);
+  assert.match(script, /function filmStyleText\(\)[\s\S]*主要風格[\s\S]*畫面比例感[\s\S]*旁白聲線[\s\S]*全片風格：/);
   assert.match(script, /function characterTemplateText\(characters\)[\s\S]*人物設定：/);
   assert.match(script, /function videoPromptSections\(\)[\s\S]*\.storyboard-block[\s\S]*storyboards:/);
   assert.match(script, /function resourceReferenceText\(\)[\s\S]*引用資源：/);
@@ -222,6 +240,13 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /loadStoredValue\("video-character-templates"\)/);
   assert.match(script, /window\.confirm\(`確定刪除「\$\{name\}」？刪除後將同步移除保存的人物模板。`\)/);
   assert.match(script, /editButton\.addEventListener\("click", \(\) => openCharacterEditor\(index\)\)/);
+  assert.match(script, /function setCharacterVoice\(value = ""\)[\s\S]*presetExists[\s\S]*"custom"[\s\S]*character-voice-custom/);
+  assert.match(script, /function showCharacterEditorReference\(file\)[\s\S]*character-reference-placeholder[\s\S]*classList\.add\("has-image"\)/);
+  assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
+  assert.match(script, /function sanitizedImportedHtml\(html\)[\s\S]*resource-token[\s\S]*createResourceMention/);
+  assert.match(script, /async function importVideoProject\(event\)[\s\S]*persistCharacterTemplates[\s\S]*renderVideoResources[\s\S]*createStoryboardBlock/);
+  assert.match(script, /function characterVoiceValue\(\)[\s\S]*character-voice-custom/);
+  assert.match(script, /voice: characterVoiceValue\(\)/);
   assert.match(script, /toggle\.addEventListener\("click", \(\) => void toggleCharacterTemplate\(index\)\)/);
   assert.match(script, /toggle\.textContent = character\.enabled === false \? "啟用" : "禁用"/);
   assert.match(script, /enabled:\s*editingCharacterIndex >= 0 \? characterTemplates\[editingCharacterIndex\]\?\.enabled !== false : false/);

@@ -20,6 +20,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>增加場景<\/button>/);
+  assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
+  assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
+  assert.match(html, /id="add-character"[^>]*>＋ 新增人物<\/button>/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
   assert.match(html, /for="video-prompt-scene"><span>場景<\/span>/);
@@ -102,6 +105,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /void restoreLastGeneratedVideo\(\)/);
   assert.match(script, /showVideoResult\(task\.videoUrl, model\.provider, true\)/);
   assert.match(script, /if \(expandResult\) \$\("video-result-panel"\)\.open = true/);
+  assert.match(script, /saveStoredValue\("video-character-templates", \{ characters: characterTemplates, updatedAt: Date\.now\(\) \}\)/);
+  assert.match(script, /loadStoredValue\("video-character-templates"\)/);
+  assert.match(script, /window\.confirm\(`確定刪除「\$\{name\}」？刪除後將同步移除保存的人物模板。`\)/);
+  assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影像產生器<\/a>/);

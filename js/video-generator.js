@@ -1,6 +1,6 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
+import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
@@ -30,6 +30,8 @@ let generatedVideoUrl = "";
 let generatedVideoRemoteUrl = "";
 let generatedVideoProvider = "minimax";
 let generationAbort = null;
+let characterTemplates = [];
+const characterPreviewUrls = new Set();
 
 function setStatus(text, mode = "") {
   $("video-generation-status").textContent = text;
@@ -78,6 +80,123 @@ function submitVideoPromptBuilder(event) {
   $("video-prompt-builder-dialog").close();
   syncDraftStatus();
   prompt.focus();
+}
+
+function syncCharacterCards() {
+  const cards = [...$("character-template-list").querySelectorAll(".character-template-card")];
+  cards.forEach((card, index) => { card.querySelector(".character-card-heading strong").textContent = `人物 ${index + 1}`; });
+  $("character-template-empty").hidden = Boolean(cards.length);
+}
+
+function setCharacterReference(card, file) {
+  const preview = card.querySelector(".character-reference-preview");
+  const label = card.querySelector(".character-reference-meta small");
+  if (card.dataset.previewUrl) { URL.revokeObjectURL(card.dataset.previewUrl); characterPreviewUrls.delete(card.dataset.previewUrl); }
+  delete card.dataset.previewUrl;
+  card.referenceImage = file || null;
+  preview.hidden = true;
+  preview.removeAttribute("src");
+  label.textContent = "尚未選擇圖片";
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  characterPreviewUrls.add(url);
+  card.dataset.previewUrl = url;
+  preview.src = url;
+  preview.hidden = false;
+  label.textContent = file.name || "人物參考圖";
+}
+
+function collectCharacterTemplates() {
+  return [...$("character-template-list").querySelectorAll(".character-template-card")].map(card => ({
+    name: card.querySelector(".character-name").value.trim(),
+    referenceImage: card.referenceImage || null,
+    style: card.querySelector(".character-style").value.trim(),
+    tone: card.querySelector(".character-tone").value.trim(),
+    clothing: card.querySelector(".character-clothing").value.trim(),
+  })).filter(character => character.name || character.referenceImage || character.style || character.tone || character.clothing);
+}
+
+async function persistCharacterTemplates() {
+  characterTemplates = collectCharacterTemplates();
+  if (characterTemplates.length) await saveStoredValue("video-character-templates", { characters: characterTemplates, updatedAt: Date.now() });
+  else await deleteStoredValue("video-character-templates");
+  $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
+}
+
+function addCharacterCard(template = {}, shouldFocus = true) {
+  const card = document.createElement("article");
+  card.className = "character-template-card";
+  card.innerHTML = `
+    <div class="character-card-heading"><strong></strong><button class="character-remove" type="button">－ 刪除</button></div>
+    <div class="character-fields">
+      <label><span>名字</span><input class="text-input character-name" type="text" placeholder="例如：小雨" /></label>
+      <label><span>參考圖</span><input class="text-input character-reference-input" type="file" accept="image/*" /><span class="character-reference-meta"><img class="character-reference-preview" alt="人物參考圖預覽" hidden /><small>尚未選擇圖片</small></span></label>
+      <label><span>風格</span><input class="text-input character-style" type="text" placeholder="例如：日系動畫、寫實電影感" /></label>
+      <label><span>口氣</span><input class="text-input character-tone" type="text" placeholder="例如：溫柔、冷靜而堅定" /></label>
+      <label><span>服裝</span><input class="text-input character-clothing" type="text" placeholder="例如：深藍色長外套與白色圍巾" /></label>
+    </div>`;
+  card.querySelector(".character-name").value = template.name || "";
+  card.querySelector(".character-style").value = template.style || "";
+  card.querySelector(".character-tone").value = template.tone || "";
+  card.querySelector(".character-clothing").value = template.clothing || "";
+  setCharacterReference(card, template.referenceImage || null);
+  card.querySelector(".character-remove").addEventListener("click", async () => {
+    const name = card.querySelector(".character-name").value.trim() || "這個人物";
+    if (!window.confirm(`確定刪除「${name}」？刪除後將同步移除保存的人物模板。`)) return;
+    if (card.dataset.previewUrl) { URL.revokeObjectURL(card.dataset.previewUrl); characterPreviewUrls.delete(card.dataset.previewUrl); }
+    card.remove();
+    syncCharacterCards();
+    try { await persistCharacterTemplates(); }
+    catch { setStatus("人物模板刪除後無法同步保存", "error"); }
+  });
+  card.querySelector(".character-reference-input").addEventListener("change", event => {
+    const file = event.currentTarget.files?.[0];
+    setCharacterReference(card, file || null);
+  });
+  $("character-template-list").append(card);
+  syncCharacterCards();
+  if (shouldFocus) card.querySelector(".character-name").focus();
+}
+
+function openCharacterTemplate() {
+  if (busy) return;
+  if (!$("character-template-list").children.length) addCharacterCard();
+  $("character-template-dialog").showModal();
+  $("character-template-list").querySelector(".character-name")?.focus();
+}
+
+async function submitCharacterTemplate(event) {
+  event.preventDefault();
+  try {
+    await persistCharacterTemplates();
+    $("character-template-dialog").close();
+    setStatus(characterTemplates.length ? `已保存 ${characterTemplates.length} 個人物模板` : "人物模板已清空", "success");
+  } catch {
+    setStatus("人物模板無法保存到瀏覽器", "error");
+  }
+}
+
+async function restoreCharacterTemplates() {
+  try {
+    const stored = await loadStoredValue("video-character-templates");
+    if (!Array.isArray(stored?.characters)) return;
+    characterTemplates = stored.characters;
+    characterTemplates.forEach(character => addCharacterCard(character, false));
+    $("open-character-template").textContent = characterTemplates.length ? `人物模板 (${characterTemplates.length})` : "人物模板";
+  } catch {}
+}
+
+function characterTemplateText() {
+  if (!characterTemplates.length) return "";
+  return characterTemplates.map((character, index) => {
+    const fields = [
+      ["名字", character.name],
+      ["風格", character.style],
+      ["口氣", character.tone],
+      ["服裝", character.clothing],
+    ].filter(([, value]) => value).map(([label, value]) => `${label}：${value}`).join("；");
+    return `人物 ${index + 1}：${fields}`;
+  }).filter(line => !line.endsWith("：")).join("\n");
 }
 
 function replaceOptions(select, values, selected) {
@@ -172,7 +291,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["video-prompt", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
+  for (const id of ["video-prompt", "open-character-template", "open-video-prompt-builder", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key"]) $(id).disabled = value;
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
   syncGenerateAvailability();
@@ -333,11 +452,12 @@ function videoFilename(date = new Date()) {
 }
 
 async function generateVideo() {
-  const prompt = $("video-prompt").value.trim();
+  const videoDetails = $("video-prompt").value.trim();
+  const prompt = [videoDetails, characterTemplateText()].filter(Boolean).join("\n\n");
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const apiKey = getApiKey(modelId)?.value || "";
-  if (!prompt || !apiKey || busy) return;
+  if (!videoDetails || !apiKey || busy) return;
   showError();
   setBusy(true);
   generationAbort = new AbortController();
@@ -399,6 +519,10 @@ function confirmVideoGeneration(event) {
 }
 
 $("video-prompt").addEventListener("input", syncDraftStatus);
+$("open-character-template").addEventListener("click", openCharacterTemplate);
+$("add-character").addEventListener("click", () => addCharacterCard());
+$("character-template-form").addEventListener("submit", submitCharacterTemplate);
+$("cancel-character-template").addEventListener("click", () => $("character-template-dialog").close());
 $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
 $("cancel-video-prompt-builder").addEventListener("click", () => $("video-prompt-builder-dialog").close());
@@ -455,8 +579,11 @@ $("apply-video-background").addEventListener("click", async () => {
 window.addEventListener("pagehide", () => {
   generationAbort?.abort();
   releaseVideo();
+  characterPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  characterPreviewUrls.clear();
 });
 
 syncModelDetails();
 syncDraftStatus();
+void restoreCharacterTemplates();
 void restoreLastGeneratedVideo();

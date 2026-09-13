@@ -30,6 +30,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /參考圖（必填）[\s\S]*id="character-reference"[^>]*required/);
   assert.match(html, /id="character-reference"[\s\S]*id="character-voice"[\s\S]*id="character-tone"[\s\S]*id="character-style"[\s\S]*id="character-clothing"/);
   assert.match(html, /id="video-prompt-builder-dialog"[^>]*aria-labelledby="video-prompt-builder-title"/);
+  assert.match(html, /id="character-mention-menu"[^>]*role="listbox"[^>]*aria-label="選擇已啟用人物"[^>]*hidden/);
   assert.match(html, /for="video-prompt-time"><span>時間<\/span>/);
   assert.match(html, /for="video-prompt-scene"><span>場景<\/span>/);
   assert.match(html, /for="video-prompt-camera"><span>鏡頭<\/span>/);
@@ -64,6 +65,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*min\(820px, calc\(100vw - 80px\)\)/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.character-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*220px/);
   assert.match(css, /\.character-template-list\s*\{[^}]*grid-template-columns:\s*repeat\(5, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.character-template-item\s*\{[^}]*flex-direction:\s*column/);
   assert.match(css, /\.character-template-edit img,[\s\S]*?\.character-thumbnail-placeholder\s*\{[^}]*width:\s*100%[^}]*aspect-ratio:\s*4 \/ 5/);
@@ -142,6 +144,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /toggle\.textContent = character\.enabled === false \? "啟用" : "禁用"/);
   assert.match(script, /enabled:\s*editingCharacterIndex >= 0 \? characterTemplates\[editingCharacterIndex\]\?\.enabled !== false : false/);
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false\)/);
+  assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false && character\.name\)/);
+  assert.match(script, /target\.setRangeText\(`\$\{name\} `, characterMentionStart, end, "end"\)/);
+  assert.match(script, /field\.addEventListener\("input", event => showCharacterMentionMenu\(event\.currentTarget\)\)/);
+  assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
   assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
   assert.match(script, /const prompt = \[videoDetails, characterTemplateText\(\)\]\.filter\(Boolean\)\.join\("\\n\\n"\)/);

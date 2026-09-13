@@ -41,6 +41,9 @@ let characterTemplates = [];
 const characterPreviewUrls = new Set();
 let editingCharacterIndex = -1;
 let editingCharacterReference = null;
+let characterMentionTarget = null;
+let characterMentionStart = -1;
+let characterMentionActiveIndex = 0;
 
 function setStatus(text, mode = "") {
   $("video-generation-status").textContent = text;
@@ -66,12 +69,126 @@ function syncDraftStatus() {
 
 function openVideoPromptBuilder() {
   if (busy) return;
+  hideCharacterMentionMenu();
   $("video-prompt-builder-dialog").showModal();
   $("video-prompt-time").focus();
 }
 
+function hideCharacterMentionMenu() {
+  const menu = $("character-mention-menu");
+  menu.hidden = true;
+  menu.replaceChildren();
+  if (characterMentionTarget) {
+    characterMentionTarget.setAttribute("aria-expanded", "false");
+    characterMentionTarget.removeAttribute("aria-activedescendant");
+  }
+  characterMentionTarget = null;
+  characterMentionStart = -1;
+  characterMentionActiveIndex = 0;
+}
+
+function positionCharacterMentionMenu(target, optionCount) {
+  const menu = $("character-mention-menu");
+  const dialogRect = $("video-prompt-builder-dialog").getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const menuHeight = Math.min(optionCount * 50 + 14, 220);
+  const availableBelow = dialogRect.bottom - targetRect.bottom - 12;
+  const top = availableBelow >= Math.min(menuHeight, 150)
+    ? targetRect.bottom + 6
+    : Math.max(dialogRect.top + 12, targetRect.top - menuHeight - 6);
+  const width = Math.min(Math.max(targetRect.width, 210), dialogRect.width - 24);
+  const left = Math.min(Math.max(targetRect.left, dialogRect.left + 12), dialogRect.right - width - 12);
+  Object.assign(menu.style, { top: `${top}px`, left: `${left}px`, width: `${width}px` });
+}
+
+function setCharacterMentionActive(index) {
+  const options = [...$("character-mention-menu").querySelectorAll(".character-mention-option")];
+  if (!options.length) return;
+  characterMentionActiveIndex = (index + options.length) % options.length;
+  options.forEach((option, optionIndex) => {
+    const active = optionIndex === characterMentionActiveIndex;
+    option.classList.toggle("active", active);
+    option.setAttribute("aria-selected", String(active));
+  });
+  const active = options[characterMentionActiveIndex];
+  characterMentionTarget?.setAttribute("aria-activedescendant", active.id);
+  active.scrollIntoView({ block: "nearest" });
+}
+
+function selectCharacterMention(name) {
+  const target = characterMentionTarget;
+  if (!target || characterMentionStart < 0) return;
+  const end = target.selectionStart ?? target.value.length;
+  target.setRangeText(`${name} `, characterMentionStart, end, "end");
+  hideCharacterMentionMenu();
+  target.focus();
+}
+
+function showCharacterMentionMenu(target) {
+  const caret = target.selectionStart ?? target.value.length;
+  const beforeCaret = target.value.slice(0, caret);
+  const hashIndex = beforeCaret.lastIndexOf("#");
+  const query = hashIndex >= 0 ? beforeCaret.slice(hashIndex + 1) : "";
+  const enabledCharacters = characterTemplates.filter(character => character.enabled !== false && character.name);
+  if (hashIndex < 0 || /[\s#]/u.test(query) || !enabledCharacters.length) {
+    hideCharacterMentionMenu();
+    return;
+  }
+  const matches = enabledCharacters.filter(character => character.name.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+  if (!matches.length) {
+    hideCharacterMentionMenu();
+    return;
+  }
+  characterMentionTarget = target;
+  characterMentionStart = hashIndex;
+  characterMentionActiveIndex = 0;
+  const options = matches.map((character, index) => {
+    const option = document.createElement("button");
+    option.id = `character-mention-option-${index}`;
+    option.className = `character-mention-option${index === 0 ? " active" : ""}`;
+    option.type = "button";
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", String(index === 0));
+    const avatar = document.createElement("span");
+    avatar.className = "character-mention-avatar";
+    avatar.textContent = character.name.slice(0, 1);
+    const name = document.createElement("strong");
+    name.textContent = character.name;
+    option.append(avatar, name);
+    option.addEventListener("mousedown", event => {
+      event.preventDefault();
+      selectCharacterMention(character.name);
+    });
+    option.addEventListener("click", () => selectCharacterMention(character.name));
+    return option;
+  });
+  const menu = $("character-mention-menu");
+  menu.replaceChildren(...options);
+  menu.hidden = false;
+  target.setAttribute("aria-expanded", "true");
+  target.setAttribute("aria-controls", "character-mention-menu");
+  target.setAttribute("aria-activedescendant", options[0].id);
+  positionCharacterMentionMenu(target, options.length);
+}
+
+function handleCharacterMentionKeydown(event) {
+  if ($("character-mention-menu").hidden) return;
+  const options = [...$("character-mention-menu").querySelectorAll(".character-mention-option")];
+  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    event.preventDefault();
+    setCharacterMentionActive(characterMentionActiveIndex + (event.key === "ArrowDown" ? 1 : -1));
+  } else if (event.key === "Enter" && options[characterMentionActiveIndex]) {
+    event.preventDefault();
+    options[characterMentionActiveIndex].dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    hideCharacterMentionMenu();
+  }
+}
+
 function submitVideoPromptBuilder(event) {
   event.preventDefault();
+  hideCharacterMentionMenu();
   const fields = [
     ["時間", $("video-prompt-time").value.trim()],
     ["場景", $("video-prompt-scene").value.trim()],
@@ -624,7 +741,23 @@ $("cancel-character-editor").addEventListener("click", () => $("character-editor
 $("delete-character").addEventListener("click", deleteEditingCharacter);
 $("open-video-prompt-builder").addEventListener("click", openVideoPromptBuilder);
 $("video-prompt-builder-form").addEventListener("submit", submitVideoPromptBuilder);
-$("cancel-video-prompt-builder").addEventListener("click", () => $("video-prompt-builder-dialog").close());
+$("cancel-video-prompt-builder").addEventListener("click", () => {
+  hideCharacterMentionMenu();
+  $("video-prompt-builder-dialog").close();
+});
+$("video-prompt-builder-dialog").addEventListener("close", hideCharacterMentionMenu);
+$("video-prompt-builder-dialog").addEventListener("pointerdown", event => {
+  if (characterMentionTarget && !$("character-mention-menu").contains(event.target) && event.target !== characterMentionTarget) hideCharacterMentionMenu();
+});
+$("video-prompt-builder-dialog").addEventListener("scroll", () => {
+  if (characterMentionTarget) positionCharacterMentionMenu(characterMentionTarget, $("character-mention-menu").childElementCount);
+});
+document.querySelectorAll(".video-prompt-builder-fields .text-input").forEach(field => {
+  field.setAttribute("aria-autocomplete", "list");
+  field.setAttribute("aria-expanded", "false");
+  field.addEventListener("input", event => showCharacterMentionMenu(event.currentTarget));
+  field.addEventListener("keydown", handleCharacterMentionKeydown);
+});
 $("video-model").addEventListener("change", syncModelDetails);
 $("video-resolution").addEventListener("change", syncResultHeading);
 $("video-ratio").addEventListener("change", syncResultHeading);

@@ -1580,7 +1580,7 @@ function videoPromptSections() {
     }
     else details.append(node.cloneNode(true));
   }
-  return { details: editorText(details), storyboards: storyboardText.join("\n") };
+  return { details: editorText(details), storyboards: storyboardText.join("\n\n") };
 }
 
 function promptVideoDetails() {

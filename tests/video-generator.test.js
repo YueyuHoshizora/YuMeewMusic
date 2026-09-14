@@ -203,7 +203,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function referencedCharacters\(videoDetails\)[\s\S]*videoDetails\.includes\(character\.name\)/);
   assert.match(script, /function filmStyleText\(\)[\s\S]*主要風格[\s\S]*畫面比例感[\s\S]*旁白聲線[\s\S]*全片風格：/);
   assert.match(script, /function characterTemplateText\(characters\)[\s\S]*人物設定：/);
-  assert.match(script, /function videoPromptSections\(\)[\s\S]*\.storyboard-block[\s\S]*\[data-field="summary"\][\s\S]*\.remove\(\)[\s\S]*storyboards:/);
+  assert.match(script, /function videoPromptSections\(\)[\s\S]*\.storyboard-block[\s\S]*\[data-field="summary"\][\s\S]*\.remove\(\)[\s\S]*storyboardText\.join\("\\n\\n"\)/);
   assert.match(script, /async function generateVideo\(\)[\s\S]*const videoDetails = promptVideoDetails\(\)/);
   assert.match(script, /function resourceReferenceText\(\)[\s\S]*引用資源：/);
   assert.match(script, /function completeVideoPrompt\(videoDetails = promptVideoDetails\(\)\)[\s\S]*filmStyleText\(\),[\s\S]*characterTemplateText\(referencedCharacters\(videoDetails\)\),[\s\S]*影片細節：[\s\S]*分鏡內容：[\s\S]*resourceReferenceText\(\)/);

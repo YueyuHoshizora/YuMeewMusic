@@ -32,7 +32,6 @@ const VIDEO_HISTORY_LIMIT = 10;
 const $ = id => document.getElementById(id);
 const VIDEO_MODELS = Object.freeze({
   "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15 }),
-  "MiniMax-H3-Max": Object.freeze({ label: "MiniMax H3 Max", provider: "minimax", apiKey: "MiniMax", resolutions: ["480P", "768P"], defaultResolution: "480P", minimumDuration: 5, maximumDuration: 15 }),
   "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 15 }),
   "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 30 }),
   "veo-3.1-generate-preview": Object.freeze({ label: "Veo 3.1", provider: "google", apiKey: "Google AI Studio", resolutions: ["720p", "1080p"], defaultResolution: "720p", durations: [4, 6, 8], ratios: ["16:9", "9:16"] }),
@@ -3274,10 +3273,6 @@ function validateGenerationInputs(modelId, model, inputs) {
     if (totalBytes > 18 * 1024 * 1024) throw Error("Veo 3.1 引用圖片合計不可超過 18 MB，請縮小圖片後再試。");
     return;
   }
-  if (modelId === "MiniMax-H3-Max") {
-    if (inputs.length !== 1 || inputs[0].kind !== "image") throw Error("MiniMax H3 Max 只支援 1 張圖片作為首幀；多張圖片、音頻與影片引用請改用 MiniMax H3。");
-    return;
-  }
   if (counts("image") > 9) throw Error(`${model.label} 最多可使用 9 張引用圖片（包含人物參考圖）。`);
   if (counts("video") > 3) throw Error(`${model.label} 最多可使用 3 個引用影片。`);
   if (counts("audio") > 3) throw Error(`${model.label} 最多可使用 3 個引用音頻。`);
@@ -3366,7 +3361,7 @@ async function generationPayload(modelId, model, prompt, inputs, signal) {
     return {
       type,
       [type]: { url: urls[index] },
-      role: modelId === "MiniMax-H3-Max" ? "first_frame" : `reference_${input.kind}`,
+      role: `reference_${input.kind}`,
     };
   })];
   return {
@@ -3374,7 +3369,7 @@ async function generationPayload(modelId, model, prompt, inputs, signal) {
     content,
     resolution: $("video-resolution").value,
     duration,
-    ratio: modelId === "MiniMax-H3-Max" && inputs.length ? "adaptive" : $("video-ratio").value,
+    ratio: $("video-ratio").value,
   };
 }
 

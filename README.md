@@ -81,7 +81,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 
 ### 影片生成器
 
-支援 MiniMax H3、MiniMax H3 Max、Seedance 2.0、Seedance 2.5 與 Veo 3.1 Preview。
+支援 MiniMax H3、Seedance 2.0、Seedance 2.5 與 Veo 3.1 Preview。
 
 - 可編寫影片細節、建立分鏡及人物模板。
 - 「新增分鏡」開啟後會暫時鎖定入口；分鏡視窗可縮小並從右下角繼續編輯，輸入內容不會清除。

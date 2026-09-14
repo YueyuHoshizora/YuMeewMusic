@@ -134,7 +134,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-duration"/);
   assert.match(html, /id="video-ratio"/);
   assert.match(html, /id="video-model"[^>]*class="setting-select"[\s\S]*value="MiniMax-H3"[^>]*selected>MiniMax H3<\/option>/);
-  assert.match(html, /value="MiniMax-H3-Max">MiniMax H3 Max<\/option>/);
+  assert.doesNotMatch(html, /MiniMax-H3-Max|MiniMax H3 Max/);
   assert.match(html, /value="dreamina-seedance-2-0-260128">Seedance 2\.0<\/option>\s*<option value="dreamina-seedance-2-5-260628">Seedance 2\.5<\/option>/);
   assert.match(html, /value="veo-3\.1-generate-preview">Veo 3\.1<\/option>/);
   assert.match(html, /id="video-api-key"[^>]*>未設定<\/button>/);
@@ -229,7 +229,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /else prompt\.append\(block\);/);
   assert.doesNotMatch(script, /prompt\.append\(block, document\.createElement\("br"\)\)/);
   assert.match(script, /"MiniMax-H3": Object\.freeze\(\{[^}]*label: "MiniMax H3"[^}]*provider: "minimax"[^}]*resolutions: \["768P", "2K"\][^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
-  assert.match(script, /"MiniMax-H3-Max": Object\.freeze\(\{[^}]*label: "MiniMax H3 Max"[^}]*provider: "minimax"[^}]*resolutions: \["480P", "768P"\][^}]*defaultResolution: "480P"[^}]*minimumDuration: 5[^}]*maximumDuration: 15/);
+  assert.doesNotMatch(script, /MiniMax-H3-Max|MiniMax H3 Max/);
   assert.match(script, /"dreamina-seedance-2-0-260128": Object\.freeze\(\{[^}]*label: "Seedance 2\.0"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p", "1080p", "4k"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-5-260628": Object\.freeze\(\{[^}]*label: "Seedance 2\.5"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 30/);
   assert.match(script, /"veo-3\.1-generate-preview": Object\.freeze\(\{[^}]*label: "Veo 3\.1"[^}]*provider: "google"[^}]*apiKey: "Google AI Studio"[^}]*resolutions: \["720p", "1080p"\][^}]*durations: \[4, 6, 8\][^}]*ratios: \["16:9", "9:16"\]/);
@@ -286,7 +286,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /referenceName: `人物「\$\{character\.name\}」`/);
   assert.match(script, /async function uploadGenerationInputs\(inputs, signal\)/);
   assert.match(script, /body: input\.file/);
-  assert.match(script, /role: modelId === "MiniMax-H3-Max" \? "first_frame" : `reference_\$\{input\.kind\}`/);
+  assert.match(script, /role: `reference_\$\{input\.kind\}`/);
   assert.match(script, /referenceImages = await Promise\.all/);
   assert.match(script, /image: \{ inlineData: \{ mimeType: resourceMimeType\(input\), data: await fileBase64\(input\.file\) \} \}/);
   assert.match(script, /Veo 3\.1 最多可使用 3 張引用圖片（包含人物參考圖）/);

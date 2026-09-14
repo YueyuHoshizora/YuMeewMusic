@@ -40,9 +40,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-resource-preview-dialog"[^>]*aria-labelledby="video-resource-preview-title"/);
   assert.match(html, /id="video-prompt-preview-dialog"[^>]*aria-labelledby="video-prompt-preview-title"[\s\S]*<pre id="video-prompt-preview-text"[^>]*aria-label="目前完整題詞"[\s\S]*id="close-video-prompt-preview"/);
   assert.match(html, /id="inspect-storyboards"[^>]*>檢查分鏡<\/button>/);
-  assert.match(html, /id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>/);
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
-  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
+  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>\s*<button id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
   assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
   assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
   assert.match(script, /const STORYBOARD_CHECKER_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
@@ -152,7 +151,6 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*1080px;[^}]*max-width:\s*none/);
   assert.match(css, /\.video-prompt-add\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*color:\s*var\(--primary\)/);
-  assert.match(css, /\.video-storyboard-time-button\s*\{[^}]*margin-right:\s*auto/);
   assert.match(css, /\.film-style-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.video-prompt-preview-text\s*\{[^}]*user-select:\s*text/);
   assert.match(css, /\.storyboard-inspection-dialog\s*\{[^}]*width:\s*920px/);

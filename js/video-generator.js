@@ -1710,12 +1710,17 @@ function addContinuityWarnings(entries, add) {
   }
 }
 
+function modelDurationOptions(model) {
+  if (!model) return [];
+  return model.durations || Array.from({ length: model.maximumDuration - model.minimumDuration + 1 }, (_, index) => model.minimumDuration + index);
+}
+
 function inspectStoryboardProject() {
   const entries = orderedStoryboardEntries();
   const model = VIDEO_MODELS[$("video-model").value];
   const outputDuration = Number($("video-duration").value) || 0;
   const issues = [];
-  const add = (severity, message, entry = null) => issues.push({ severity, message, storyboardId: entry?.draft.id || "", index: entry ? entry.index : -1 });
+  const add = (severity, message, entry = null, action = null) => issues.push({ severity, message, storyboardId: entry?.draft.id || "", index: entry ? entry.index : -1, action });
   if (!entries.length) add("error", "尚未加入任何分鏡，請先建立至少一張分鏡卡片。");
   let previousEnd = null;
   for (const entry of entries) {
@@ -1748,7 +1753,11 @@ function inspectStoryboardProject() {
     else if (model?.minimumDuration && maxEnd < model.minimumDuration) add("warning", `全部分鏡的時間範圍為 ${maxEnd.toFixed(1)} 秒，短於 ${model.label} 最低 ${model.minimumDuration} 秒。`);
     else if (model?.maximumDuration && maxEnd > model.maximumDuration) add("warning", `全部分鏡的時間範圍為 ${maxEnd.toFixed(1)} 秒，超過 ${model.label} 最高 ${model.maximumDuration} 秒。`);
   }
-  if (maxEnd > outputDuration) add("error", `分鏡時間延伸至 ${maxEnd.toFixed(1)} 秒，超過目前輸出片長 ${outputDuration} 秒。`);
+  if (maxEnd > outputDuration) {
+    const suggestedDuration = modelDurationOptions(model).find(duration => duration >= maxEnd) || null;
+    if (suggestedDuration) add("warning", `分鏡時間延伸至 ${maxEnd.toFixed(1)} 秒，超過目前輸出片長 ${outputDuration} 秒。點選此警告可自動調整為 ${suggestedDuration} 秒。`, null, { type: "fit-duration", duration: suggestedDuration });
+    else add("warning", `分鏡時間延伸至 ${maxEnd.toFixed(1)} 秒，已超過 ${model.label} 可選擇的最長時間，無法自動調整。`);
+  }
   if (entries.length && Number(entries[0].draft.start) > 0) add("warning", `第一張分鏡從 ${Number(entries[0].draft.start).toFixed(1)} 秒開始，片頭會有空檔。`, entries[0]);
   return {
     entries,
@@ -1757,6 +1766,7 @@ function inspectStoryboardProject() {
     warnings: issues.filter(issue => issue.severity === "warning").length,
     maxEnd,
     outputDuration,
+    remainingDuration: outputDuration - maxEnd,
     promptLength: completeVideoPrompt().length,
   };
 }
@@ -1776,6 +1786,11 @@ function renderStoryboardInspection(report) {
     inspectionSummaryItem("最終題詞", `${report.promptLength.toLocaleString()} 字`),
     inspectionSummaryItem("錯誤／提醒", `${report.errors}／${report.warnings}`),
   );
+  const timeRoom = $("storyboard-time-room");
+  timeRoom.classList.toggle("warning", report.remainingDuration < 0);
+  timeRoom.textContent = report.remainingDuration >= 0
+    ? `目前分鏡使用至 ${report.maxEnd.toFixed(1)} 秒，距離 ${report.outputDuration} 秒的輸出片長尚有 ${report.remainingDuration.toFixed(1)} 秒餘裕。`
+    : `目前分鏡已超出輸出片長 ${Math.abs(report.remainingDuration).toFixed(1)} 秒；請點選下方警告自動調整。若超過模型最長時間，仍會保留警告。`;
   const timeline = $("storyboard-inspection-timeline");
   const scale = Math.max(report.maxEnd, report.outputDuration, 1);
   const errorIds = new Set(report.issues.filter(issue => issue.severity === "error").map(issue => issue.storyboardId));
@@ -1799,16 +1814,23 @@ function renderStoryboardInspection(report) {
   }
   const list = document.createElement("ul");
   list.replaceChildren(...report.issues.map(issue => {
-    const item = document.createElement(issue.storyboardId ? "button" : "div");
+    const item = document.createElement(issue.storyboardId || issue.action ? "button" : "div");
     if (item instanceof HTMLButtonElement) item.type = "button";
     item.className = "storyboard-inspection-item";
     item.dataset.severity = issue.severity;
     const marker = document.createElement("strong");
-    marker.textContent = issue.severity === "error" ? "錯誤" : "提醒";
+    marker.textContent = issue.severity === "error" ? "錯誤" : issue.action ? "警告" : "提醒";
     const message = document.createElement("span");
     message.textContent = issue.message;
     item.append(marker, message);
     if (issue.storyboardId) item.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); editStoryboard(issue.storyboardId); });
+    else if (issue.action?.type === "fit-duration") item.addEventListener("click", () => {
+      $("video-duration").value = String(issue.action.duration);
+      syncResultHeading();
+      scheduleAutoDraft();
+      renderStoryboardInspection(inspectStoryboardProject());
+      setStatus(`影片長度已調整為 ${issue.action.duration} 秒`, "success");
+    });
     return item;
   }));
   result.replaceChildren(list);
@@ -2460,7 +2482,7 @@ function syncModelDetails() {
   const previousResolution = $("video-resolution").value;
   replaceOptions($("video-resolution"), model.resolutions, model.resolutions.includes(previousResolution) ? previousResolution : model.defaultResolution);
   const previousDuration = Number($("video-duration").value) || 5;
-  const durations = model.durations || Array.from({ length: model.maximumDuration - model.minimumDuration + 1 }, (_, index) => model.minimumDuration + index);
+  const durations = modelDurationOptions(model);
   const selectedDuration = durations.includes(previousDuration) ? previousDuration : durations[0];
   replaceOptions($("video-duration"), durations.map(String), String(selectedDuration));
   $("video-duration").querySelectorAll("option").forEach(option => { option.textContent = `${option.value} 秒`; });

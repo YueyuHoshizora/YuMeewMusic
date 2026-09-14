@@ -40,7 +40,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-prompt-preview-dialog"[^>]*aria-labelledby="video-prompt-preview-title"[\s\S]*<pre id="video-prompt-preview-text"[^>]*aria-label="目前完整題詞"[\s\S]*id="close-video-prompt-preview"/);
   assert.match(html, /id="inspect-storyboards"[^>]*>檢查分鏡<\/button>/);
   assert.match(html, /id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>/);
-  assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
+  assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
   assert.match(html, /id="apply-film-style"[^>]*type="button"[^>]*>套用風格<\/button>/);
@@ -127,6 +127,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-prompt-preview-text\s*\{[^}]*user-select:\s*text/);
   assert.match(css, /\.storyboard-inspection-dialog\s*\{[^}]*width:\s*920px/);
   assert.match(css, /\.storyboard-timeline-segment\s*\{[^}]*position:\s*absolute/);
+  assert.match(css, /\.storyboard-time-room\s*\{[^}]*background:\s*var\(--tint\)/);
   assert.match(css, /\.video-prompt-builder-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.video-prompt-builder-column\s*\{[^}]*align-content:\s*start;[^}]*gap:\s*14px/);
   assert.match(css, /\.character-mention-menu\s*\{[^}]*position:\s*fixed[^}]*max-height:\s*220px/);
@@ -222,10 +223,14 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function completeVideoPrompt\(videoDetails = promptVideoDetails\(\)\)[\s\S]*filmStyleText\(\),[\s\S]*characterTemplateText\(referencedCharacters\(videoDetails\)\),[\s\S]*影片細節：[\s\S]*分鏡內容：[\s\S]*resourceReferenceText\(\)/);
   assert.match(script, /function openVideoPromptPreview\(\)[\s\S]*video-prompt-preview-text"\)\.textContent = completeVideoPrompt\(\)[\s\S]*showModal\(\)/);
   assert.match(script, /function inspectStoryboardProject\(\)[\s\S]*與上一張分鏡重疊[\s\S]*全部分鏡的時間範圍[\s\S]*短於 \$\{model\.label\} 最低[\s\S]*超過目前輸出片長/);
+  assert.match(script, /if \(maxEnd > outputDuration\) \{[\s\S]*modelDurationOptions\(model\)\.find[\s\S]*type: "fit-duration"[\s\S]*已超過 \$\{model\.label\} 可選擇的最長時間/);
   assert.match(script, /function addContinuityWarnings\(entries, add\)[\s\S]*時間[\s\S]*室內／室外[\s\S]*天氣[\s\S]*燈光色溫[\s\S]*人物連續性/);
   assert.doesNotMatch(script, /\$\{label\} 長度[^\n]*(?:最低|最高|可直接生成的片長)/);
   assert.doesNotMatch(script, /尚未設定動作/);
   assert.match(script, /function renderStoryboardInspection\(report\)[\s\S]*storyboard-timeline-segment[\s\S]*storyboard-inspection-item/);
+  assert.match(script, /remainingDuration:\s*outputDuration - maxEnd/);
+  assert.match(script, /storyboard-time-room[\s\S]*尚有 \$\{report\.remainingDuration\.toFixed\(1\)\} 秒餘裕[\s\S]*請點選下方警告自動調整/);
+  assert.match(script, /issue\.action\?\.type === "fit-duration"[\s\S]*video-duration[\s\S]*renderStoryboardInspection\(inspectStoryboardProject\(\)\)/);
   assert.match(script, /function openGenerateConfirmation\(\)[\s\S]*inspectStoryboardProject\(\)[\s\S]*if \(report\.errors\)[\s\S]*openStoryboardInspection\(report\)/);
   assert.match(script, /const prompt = completeVideoPrompt\(videoDetails\)/);
   assert.match(script, /function explainRejectedReference\(message, inputs\)[\s\S]*content\\\[\(\\d\+\)\\\][\s\S]*inputs\[contentIndex - 1\][\s\S]*圖片可能包含真人/);

@@ -33,6 +33,8 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .storyboard-inspection-summary { display: flex; gap: 10px; margin-bottom: 16px; }
 .storyboard-inspection-summary span { flex: 1; padding: 11px 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--muted); font-size: 12px; }
 .storyboard-inspection-summary strong { display: block; margin-top: 2px; color: var(--foreground); font-size: 18px; }
+.storyboard-time-room { margin: -4px 0 16px; border: 1px solid var(--tint-border); border-radius: 9px; padding: 10px 12px; background: var(--tint); color: var(--primary-text); font-size: 12px; line-height: 1.55; }
+.storyboard-time-room.warning { border-color: color-mix(in srgb, #f3b64b 70%, var(--border)); background: color-mix(in srgb, #f3b64b 12%, var(--surface)); color: var(--foreground); }
 .storyboard-inspection-timeline { position: relative; height: 76px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow: hidden; }
 .storyboard-timeline-segment { position: absolute; top: 15px; height: 46px; min-width: 34px; padding: 0 7px; overflow: hidden; border: 1px solid var(--primary); border-radius: 7px; background: var(--tint); color: var(--foreground); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
 .storyboard-timeline-segment.has-error { border-color: var(--error); background: var(--error-surface); }

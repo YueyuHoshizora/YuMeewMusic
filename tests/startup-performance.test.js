@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 
 const pages = [
   "index.html",
+  "account.html",
   "settings.html",
   "subtitle-editor.html",
   "converter.html",
@@ -80,6 +81,9 @@ test("production build minifies JavaScript and CSS without rewriting source file
   assert.match(build, /from "lightningcss"/);
   assert.ok(packageJson.devDependencies.esbuild);
   assert.ok(packageJson.devDependencies.lightningcss);
+  assert.ok(packageJson.dependencies["@supabase/supabase-js"]);
+  assert.match(build, /bundleJavaScript/);
+  assert.match(build, /vendor\/supabase\.min\.mjs/);
 });
 
 test("GitHub Pages installs and runs the minifying production build", () => {

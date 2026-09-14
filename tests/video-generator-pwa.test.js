@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 const secondaryPages = [
   "index.html",
+  "account.html",
   "settings.html",
   "subtitle-editor.html",
   "converter.html",

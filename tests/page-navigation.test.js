@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const secondaryPages = [
+  "account.html",
   "settings.html",
   "subtitle-editor.html",
   "converter.html",

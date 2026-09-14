@@ -12,7 +12,14 @@ YuMeew 是以純 HTML、CSS 與原生 JavaScript 製作的瀏覽器音樂視覺�
 - 可加入歌曲資訊、字幕和個人識別，並直接繪入輸出影片。
 - 可輸出 MP4、MOV、WebM、MP3、M4A、FLAC 與 WAV。
 - 常用設定與媒體可保存在目前瀏覽器，重新開啟後繼續使用。
-- 不需要帳號，網站本體可由 GitHub Pages 靜態部署。
+- 支援 Supabase Auth 與 Google OAuth 會員登入，可查看剩餘額度、儲值紀錄與消費紀錄。
+- 網站本體可由 GitHub Pages 靜態部署；本機媒體仍保存在使用者的瀏覽器。
+
+## 會員功能
+
+所有頁面右上角會顯示會員頭像與剩餘額度，點擊即可進入會員中心。未登入時可使用 Google OAuth 登入；會員中心會分別列出儲值及消費紀錄。
+
+會員身分由 Supabase Auth 管理。額度資料表已啟用 Row Level Security，會員只能讀取自己的資料；儲值與扣款必須由可信任的後端使用 `service_role` 呼叫交易函式，前端無法直接改寫餘額。啟用步驟與資料庫 migration 位於 [`supabase`](./supabase) 目錄。
 
 ## 音樂視覺工作室
 

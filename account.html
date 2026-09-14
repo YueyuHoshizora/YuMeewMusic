@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="登入 YuMeew 會員，查看剩餘額度、儲值紀錄與消費紀錄。" />
+    <title>會員中心 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/account.css" />
+    <script type="module" src="./js/account.js"></script>
+    <script type="module" src="./js/member-status.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
+  </head>
+  <body class="account-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備會員中心…</small></div></div>
+    <header class="account-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">MEMBER</span></a>
+    </header>
+    <main class="account-main">
+      <section class="account-heading">
+        <div><div class="eyebrow">MEMBER ACCOUNT</div><h1>會員中心<span>。</span></h1><p>使用 Google 帳號登入，查看目前剩餘額度、儲值與消費紀錄。</p></div>
+        <span id="account-status" class="account-status" role="status" aria-live="polite">正在讀取登入狀態…</span>
+      </section>
+
+      <section id="account-setup" class="panel account-state" hidden>
+        <span class="account-state-icon" aria-hidden="true">⌁</span>
+        <h2>會員服務等待啟用</h2>
+        <p>請在網站設定檔填入 Supabase Project URL 與 Publishable Key，並執行會員資料庫 migration。</p>
+      </section>
+
+      <section id="account-signed-out" class="panel account-state" hidden>
+        <span class="account-state-icon" aria-hidden="true">會</span>
+        <h2>登入 YuMeew 會員</h2>
+        <p>登入後即可在不同裝置使用同一個會員身分，並查看額度與交易紀錄。</p>
+        <button id="google-login" class="google-login" type="button"><span aria-hidden="true">G</span>使用 Google 登入</button>
+      </section>
+
+      <section id="account-signed-in" class="account-dashboard" hidden>
+        <div class="panel member-profile">
+          <div id="account-avatar" class="account-avatar" aria-hidden="true">會</div>
+          <div class="account-identity"><span>目前登入</span><strong id="account-name">YuMeew 會員</strong><small id="account-email"></small></div>
+          <button id="account-logout" class="account-logout" type="button">登出</button>
+        </div>
+        <div class="panel balance-card"><span>剩餘額度</span><strong id="account-balance">—</strong><small>實際扣款與儲值將記錄在下方明細</small></div>
+        <section class="panel ledger-panel">
+          <div class="section-title"><span>01</span><h2>儲值紀錄</h2></div>
+          <div class="ledger-scroll"><table><thead><tr><th>時間</th><th>項目</th><th>額度變動</th><th>剩餘額度</th></tr></thead><tbody id="topup-rows"></tbody></table></div>
+        </section>
+        <section class="panel ledger-panel">
+          <div class="section-title"><span>02</span><h2>消費紀錄</h2></div>
+          <div class="ledger-scroll"><table><thead><tr><th>時間</th><th>項目</th><th>額度變動</th><th>剩餘額度</th></tr></thead><tbody id="consumption-rows"></tbody></table></div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

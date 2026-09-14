@@ -1,0 +1,149 @@
+import { getAuthClient, getCurrentSession, isSupabaseConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth.js";
+import { loadSettings } from "./settings.js";
+import { applyTheme } from "./themes.js";
+
+const appearance = loadSettings();
+applyTheme(appearance.mode, appearance.theme);
+
+const setupPanel = document.getElementById("account-setup");
+const signedOutPanel = document.getElementById("account-signed-out");
+const signedInPanel = document.getElementById("account-signed-in");
+const status = document.getElementById("account-status");
+const loginButton = document.getElementById("google-login");
+const logoutButton = document.getElementById("account-logout");
+const avatar = document.getElementById("account-avatar");
+const name = document.getElementById("account-name");
+const email = document.getElementById("account-email");
+const balance = document.getElementById("account-balance");
+const topupRows = document.getElementById("topup-rows");
+const consumptionRows = document.getElementById("consumption-rows");
+
+const setStatus = (message, error = false) => {
+  status.textContent = message;
+  status.classList.toggle("error", error);
+};
+
+function setVisible(panel) {
+  for (const item of [setupPanel, signedOutPanel, signedInPanel]) item.hidden = item !== panel;
+}
+
+function formatDate(value) {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function renderLedger(container, entries, emptyMessage) {
+  container.replaceChildren();
+  if (!entries.length) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 4;
+    cell.className = "ledger-empty";
+    cell.textContent = emptyMessage;
+    row.append(cell);
+    container.append(row);
+    return;
+  }
+  for (const entry of entries) {
+    const row = document.createElement("tr");
+    const values = [
+      formatDate(entry.created_at),
+      entry.description || ({ topup: "儲值", consumption: "消費", refund: "退款", adjustment: "額度調整" }[entry.kind] || entry.kind),
+      `${entry.amount > 0 ? "+" : ""}${Number(entry.amount).toLocaleString("zh-TW")}`,
+      Number(entry.balance_after).toLocaleString("zh-TW"),
+    ];
+    values.forEach((value, index) => {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      if (index >= 2) cell.className = "ledger-number";
+      row.append(cell);
+    });
+    container.append(row);
+  }
+}
+
+async function loadAccountData(session) {
+  if (!session?.user) {
+    setVisible(signedOutPanel);
+    setStatus("登入後即可查看額度與交易紀錄。");
+    return;
+  }
+  setVisible(signedInPanel);
+  const user = session.user;
+  const metadata = user.user_metadata || {};
+  name.textContent = metadata.full_name || metadata.name || "YuMeew 會員";
+  email.textContent = user.email || "";
+  const avatarUrl = metadata.avatar_url || metadata.picture;
+  avatar.replaceChildren();
+  if (avatarUrl) {
+    const image = new Image();
+    image.src = avatarUrl;
+    image.alt = `${name.textContent}的會員頭像`;
+    image.referrerPolicy = "no-referrer";
+    image.addEventListener("error", () => avatar.replaceChildren(name.textContent.charAt(0)), { once: true });
+    avatar.append(image);
+  } else avatar.textContent = name.textContent.charAt(0);
+
+  setStatus("正在讀取會員資料…");
+  const client = getAuthClient();
+  const [accountResult, ledgerResult] = await Promise.all([
+    client.from("credit_accounts").select("balance, updated_at").eq("user_id", user.id).maybeSingle(),
+    client.from("credit_ledger").select("id, kind, amount, balance_after, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
+  ]);
+  if (accountResult.error || ledgerResult.error) {
+    balance.textContent = "—";
+    renderLedger(topupRows, [], "尚無法讀取儲值紀錄");
+    renderLedger(consumptionRows, [], "尚無法讀取消費紀錄");
+    setStatus("額度資料表尚未建立或目前無法讀取，登入功能仍可使用。", true);
+    return;
+  }
+  balance.textContent = Number(accountResult.data?.balance || 0).toLocaleString("zh-TW");
+  const entries = ledgerResult.data || [];
+  renderLedger(topupRows, entries.filter(item => item.kind === "topup" || item.kind === "refund" || (item.kind === "adjustment" && item.amount > 0)), "目前沒有儲值紀錄");
+  renderLedger(consumptionRows, entries.filter(item => item.kind === "consumption" || (item.kind === "adjustment" && item.amount < 0)), "目前沒有消費紀錄");
+  setStatus("會員資料已更新。");
+}
+
+loginButton.addEventListener("click", async () => {
+  loginButton.disabled = true;
+  setStatus("正在前往 Google 登入…");
+  try {
+    await signInWithGoogle();
+  } catch (error) {
+    loginButton.disabled = false;
+    setStatus(error.message || "無法開啟 Google 登入。", true);
+  }
+});
+
+logoutButton.addEventListener("click", async () => {
+  logoutButton.disabled = true;
+  try {
+    await signOut();
+    setVisible(signedOutPanel);
+    setStatus("已登出會員帳號。");
+  } catch (error) {
+    setStatus(error.message || "登出失敗。", true);
+  } finally {
+    logoutButton.disabled = false;
+  }
+});
+
+async function initialize() {
+  if (!isSupabaseConfigured()) {
+    setVisible(setupPanel);
+    setStatus("等待設定 Supabase 公開連線資訊。");
+    return;
+  }
+  const { session, error } = await getCurrentSession();
+  if (error) setStatus(error.message || "無法讀取登入狀態。", true);
+  await loadAccountData(session);
+  onAuthStateChange(nextSession => void loadAccountData(nextSession));
+}
+
+void initialize();

@@ -16,10 +16,23 @@ if (document.readyState === "loading") {
   finishLoading();
 }
 
-function registerServiceWorker() {
+async function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || ["localhost", "127.0.0.1"].includes(location.hostname)) return;
-  void navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  const controlled = Boolean(navigator.serviceWorker.controller);
+  let reloading = false;
+  const reloadForUpdate = () => {
+    if (!controlled || reloading) return;
+    reloading = true;
+    location.reload();
+  };
+  navigator.serviceWorker.addEventListener("controllerchange", reloadForUpdate, { once: true });
+  try {
+    const registration = await navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
+    await registration.update();
+  } catch {
+    navigator.serviceWorker.removeEventListener("controllerchange", reloadForUpdate);
+  }
 }
 
-if (document.readyState === "complete") registerServiceWorker();
-else window.addEventListener("load", registerServiceWorker, { once: true });
+if (document.readyState === "complete") void registerServiceWorker();
+else window.addEventListener("load", () => void registerServiceWorker(), { once: true });

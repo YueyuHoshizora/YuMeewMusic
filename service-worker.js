@@ -1,6 +1,10 @@
 const CACHE_NAME = "yumeew-static-__BUILD_VERSION__";
 const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image", "worker"]);
 
+self.addEventListener("install", event => {
+  event.waitUntil(self.skipWaiting());
+});
+
 self.addEventListener("activate", event => {
   event.waitUntil((async () => {
     const names = await caches.keys();
@@ -18,7 +22,7 @@ self.addEventListener("fetch", event => {
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       try {
-        const response = await fetch(request);
+        const response = await fetch(request, { cache: "no-store" });
         if (response.ok) void caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone()));
         return response;
       } catch {

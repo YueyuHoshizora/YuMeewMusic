@@ -45,8 +45,15 @@ test("production build installs a versioned same-origin static cache", () => {
   const worker = readFileSync("service-worker.js", "utf8");
   const build = readFileSync("scripts/build.js", "utf8");
   assert.match(worker, /yumeew-static-__BUILD_VERSION__/);
+  assert.match(worker, /install[\s\S]*skipWaiting\(\)/);
   assert.match(worker, /request\.mode === "navigate"/);
+  assert.match(worker, /fetch\(request, \{ cache: "no-store" \}\)/);
   assert.match(worker, /STATIC_DESTINATIONS/);
+  const loader = readFileSync("js/loading-screen.js", "utf8");
+  assert.match(loader, /register\("\.\/service-worker\.js", \{ updateViaCache: "none" \}\)/);
+  assert.match(loader, /location\.reload\(\)/);
+  assert.match(loader, /addEventListener\("controllerchange", reloadForUpdate/);
+  assert.match(loader, /registration\.update\(\)/);
   assert.match(build, /"service-worker\.js"/);
   assert.match(build, /replace\("__BUILD_VERSION__", version\)/);
 });

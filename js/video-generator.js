@@ -1585,6 +1585,7 @@ function reflowStoryboardTimes() {
     redrawStoryboard(draft.id);
   }
   refreshStoryboardLabels();
+  renderStoryboardInspection(inspectStoryboardProject());
   syncDraftStatus();
   setStatus(`已重新接續 ${entries.length} 個分鏡時間`, "success");
 }

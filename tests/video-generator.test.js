@@ -215,7 +215,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /storyboardAction\("up", "向上移動", \(\) => moveStoryboard\(draft\.id, -1\)\)/);
   assert.match(script, /storyboardAction\("down", "向下移動", \(\) => moveStoryboard\(draft\.id, 1\)\)/);
   assert.doesNotMatch(script, /draggable|dragstart|dragover|drag-target/);
-  assert.match(script, /function reflowStoryboardTimes\(\)[\s\S]*重新接續所有分鏡時間[\s\S]*draft\.start = roundedStoryboardTime\(cursor\)[\s\S]*draft\.end = roundedStoryboardTime\(cursor\)/);
+  assert.match(script, /function reflowStoryboardTimes\(\)[\s\S]*重新接續所有分鏡時間[\s\S]*draft\.start = roundedStoryboardTime\(cursor\)[\s\S]*draft\.end = roundedStoryboardTime\(cursor\)[\s\S]*refreshStoryboardLabels\(\)[\s\S]*renderStoryboardInspection\(inspectStoryboardProject\(\)\)/);
   assert.match(script, /summary\.textContent = String\(draft\.summary \|\| ""\)\.trim\(\)/);
   assert.doesNotMatch(script, /function storyboardDisplayFields/);
   assert.match(script, /function editStoryboard\(id\)[\s\S]*video-prompt-summary[\s\S]*restoreEditorHtml[\s\S]*"儲存分鏡"/);

@@ -1625,15 +1625,11 @@ function inspectStoryboardProject() {
     const { draft, index, block } = entry;
     const start = Number(draft.start);
     const end = Number(draft.end);
-    const duration = end - start;
     const label = `分鏡 ${index + 1}`;
     if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) add("error", `${label} 的開始或結束時間無效。`, entry);
     if (previousEnd !== null && start < previousEnd) add("error", `${label} 與上一張分鏡重疊 ${(previousEnd - start).toFixed(1)} 秒。`, entry);
     else if (previousEnd !== null && start > previousEnd) add("warning", `${label} 與上一張分鏡之間有 ${(start - previousEnd).toFixed(1)} 秒空檔。`, entry);
     previousEnd = Number.isFinite(end) ? end : previousEnd;
-    if (model?.durations && !model.durations.includes(duration)) add("warning", `${label} 長度 ${duration.toFixed(1)} 秒，不是 ${model.label} 可直接生成的片長。`, entry);
-    else if (model?.minimumDuration && duration < model.minimumDuration) add("warning", `${label} 長度 ${duration.toFixed(1)} 秒，短於 ${model.label} 單次最低 ${model.minimumDuration} 秒。`, entry);
-    else if (model?.maximumDuration && duration > model.maximumDuration) add("warning", `${label} 長度 ${duration.toFixed(1)} 秒，超過 ${model.label} 單次最高 ${model.maximumDuration} 秒。`, entry);
     if (!htmlText(draft.scene)) add("warning", `${label} 尚未設定場景。`, entry);
     if (!draft.camera && !htmlText(draft.cameraCustom)) add("warning", `${label} 尚未設定鏡頭運動。`, entry);
     if (!draft.actionType && !htmlText(draft.actionCustom) && !htmlText(draft.actionDetail)) add("warning", `${label} 尚未設定動作。`, entry);
@@ -1649,6 +1645,12 @@ function inspectStoryboardProject() {
   const unusedResources = videoResources.filter(resource => !referencedIds.has(resource.id));
   if (unusedResources.length) add("warning", `有 ${unusedResources.length} 個上傳資源尚未被任何分鏡引用。`);
   const maxEnd = entries.reduce((value, entry) => Math.max(value, Number(entry.draft.end) || 0), 0);
+  if (entries.length && maxEnd > 0) {
+    const supportsDuration = model?.durations?.some(duration => Math.abs(duration - maxEnd) < 0.05);
+    if (model?.durations && !supportsDuration) add("warning", `全部分鏡的時間範圍為 ${maxEnd.toFixed(1)} 秒，不是 ${model.label} 可直接生成的片長。`);
+    else if (model?.minimumDuration && maxEnd < model.minimumDuration) add("warning", `全部分鏡的時間範圍為 ${maxEnd.toFixed(1)} 秒，短於 ${model.label} 最低 ${model.minimumDuration} 秒。`);
+    else if (model?.maximumDuration && maxEnd > model.maximumDuration) add("warning", `全部分鏡的時間範圍為 ${maxEnd.toFixed(1)} 秒，超過 ${model.label} 最高 ${model.maximumDuration} 秒。`);
+  }
   if (maxEnd > outputDuration) add("error", `分鏡時間延伸至 ${maxEnd.toFixed(1)} 秒，超過目前輸出片長 ${outputDuration} 秒。`);
   if (entries.length && Number(entries[0].draft.start) > 0) add("warning", `第一張分鏡從 ${Number(entries[0].draft.start).toFixed(1)} 秒開始，片頭會有空檔。`, entries[0]);
   return {

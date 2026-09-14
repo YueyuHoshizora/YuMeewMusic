@@ -31,6 +31,7 @@ test("administrator page manages margin, member top-ups and provider API keys th
   assert.match(html, /id="margin-percent"[^>]*min="0"[^>]*max="99"[^>]*step="0\.01"/);
   assert.match(html, /id="admin-topup-amount"[^>]*step="0\.01"/);
   assert.match(html, /id="billing-model"[\s\S]*value="minimax-h3">MiniMax H3/);
+  assert.match(html, /音效免費部數[\s\S]*音效超過後每部/);
   for (const value of ["0.08", "0.13", "999", "0.00", "5", "0.04"]) assert.match(html, new RegExp(`value="${value.replace(".", "\\.")}"`));
   assert.match(script, /crypto\.randomUUID\(\)/);
   assert.match(script, /getCurrentSession/);

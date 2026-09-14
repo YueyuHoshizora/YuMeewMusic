@@ -90,6 +90,7 @@ let autoDraftTimer = 0;
 let autoDraftResourcesDirty = false;
 let autoDraftSavePromise = Promise.resolve();
 let lastStoryboardAiReport = null;
+let storyboardAiPdfWindow = null;
 
 const MINIMIZABLE_DIALOGS = Object.freeze({
   filmStyle: Object.freeze({ dialog: "film-style-dialog", restore: "restore-film-style", focus: "film-style-primary" }),
@@ -2324,12 +2325,22 @@ function renderStoryboardAiReport(report) {
   $("open-storyboard-ai-pdf").disabled = busy;
 }
 
-async function openStoryboardAiPdf() {
-  if (!lastStoryboardAiReport || busy) return;
+function prepareStoryboardAiPdfWindow() {
   const target = window.open("about:blank", "_blank");
+  if (!target) return null;
+  target.document.title = "AI 分鏡分析中…";
+  target.document.body.textContent = "AI 正在分析分鏡，完成後將在此顯示 PDF 報告…";
+  return target;
+}
+
+async function openStoryboardAiPdf(preparedWindow = null) {
+  if (!lastStoryboardAiReport) return false;
+  const target = preparedWindow && !preparedWindow.closed
+    ? preparedWindow
+    : busy ? null : prepareStoryboardAiPdfWindow();
   if (!target) {
-    setStatus("瀏覽器已封鎖 PDF 視窗", "error");
-    return;
+    setStatus("AI 分析完成；瀏覽器未能自動開啟 PDF，請點擊「開啟 PDF」。", "error");
+    return false;
   }
   target.document.title = "正在建立 AI 分鏡分析報告…";
   target.document.body.textContent = "正在建立 AI 分鏡分析報告…";
@@ -2340,9 +2351,11 @@ async function openStoryboardAiPdf() {
     target.location.replace(url);
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     setStatus("已在新視窗開啟 AI 分析 PDF", "success");
+    return true;
   } catch (error) {
     target.close();
     setStatus(error?.message || "無法建立 AI 分析 PDF", "error");
+    return false;
   } finally {
     $("open-storyboard-ai-pdf").disabled = busy || !lastStoryboardAiReport;
   }
@@ -2380,7 +2393,11 @@ async function waitForStoryboardAiReport(input) {
 
 async function analyzeStoryboardsWithAi() {
   const input = storyboardAiRequest();
-  if (!input.scenes.length || busy) return;
+  if (!input.scenes.length || busy) {
+    if (storyboardAiPdfWindow && !storyboardAiPdfWindow.closed) storyboardAiPdfWindow.close();
+    storyboardAiPdfWindow = null;
+    return;
+  }
   const inspectionDialog = $("storyboard-inspection-dialog");
   const reopenInspection = inspectionDialog.open;
   if (reopenInspection) {
@@ -2391,9 +2408,11 @@ async function analyzeStoryboardsWithAi() {
   $("video-generation-lock-title").textContent = "AI 正在分析分鏡";
   $("video-generation-lock-detail").textContent = `正在檢查 ${input.scenes.length} 個 Scene 的故事、運鏡與連續性…`;
   try {
-    renderStoryboardAiReport(await waitForStoryboardAiReport(input));
-    setStatus("AI 分鏡分析完成", "success");
+    const report = await waitForStoryboardAiReport(input);
+    renderStoryboardAiReport(report);
+    await openStoryboardAiPdf(storyboardAiPdfWindow);
   } catch (error) {
+    if (storyboardAiPdfWindow && !storyboardAiPdfWindow.closed) storyboardAiPdfWindow.close();
     const container = $("storyboard-ai-report");
     lastStoryboardAiReport = null;
     $("open-storyboard-ai-pdf").disabled = true;
@@ -2401,6 +2420,7 @@ async function analyzeStoryboardsWithAi() {
     container.hidden = false;
     setStatus("AI 分鏡分析失敗", "error");
   } finally {
+    storyboardAiPdfWindow = null;
     setBusy(false);
     if (reopenInspection && !inspectionDialog.open) {
       inspectionDialog.returnValue = "";
@@ -2421,6 +2441,7 @@ function openStoryboardAiConfirmation() {
 function confirmStoryboardAiAnalysis(event) {
   event.preventDefault();
   $("storyboard-ai-confirm-dialog").close();
+  storyboardAiPdfWindow = prepareStoryboardAiPdfWindow();
   void analyzeStoryboardsWithAi();
 }
 

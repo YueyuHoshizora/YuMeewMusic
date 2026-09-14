@@ -237,6 +237,8 @@ npm run preview  # 預覽 dist/
 
 第三方套件、模型與生成服務仍適用各自的授權、使用政策及費用規則。
 
+使用本網站前，請閱讀 [YuMeewMusic 隱私權政策](PRIVACY-POLICY.md)。
+
 ## License
 
 YuMeew Music Studio 的專案原始碼採用 [GNU Affero General Public License v3.0](LICENSE)，SPDX 識別碼為 `AGPL-3.0-only`。若修改後透過網路提供服務，必須讓使用者取得該版本的對應原始碼。

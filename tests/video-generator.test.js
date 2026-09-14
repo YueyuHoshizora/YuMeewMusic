@@ -306,7 +306,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(script, /\["最終分鏡：", \.\.\.finalStoryboardFields/);
   assert.match(script, /function removeFinalStoryboard\(\)[\s\S]*window\.confirm\("確定移除最終分鏡？"\)[\s\S]*finalStoryboard = null[\s\S]*renderFinalStoryboardCard\(\)[\s\S]*syncDraftStatus\(\)/);
   assert.match(script, /storyboardAction\("delete", "移除最終分鏡", removeFinalStoryboard\)/);
-  assert.match(script, /function videoPromptSections\(\)[\s\S]*node\.matches\("\.final-storyboard-block"\)[\s\S]*storyboardText\.push\(`Scene/);
+  assert.match(script, /function videoPromptSections\(\)[\s\S]*let finalText = ""[\s\S]*node\.matches\("\.final-storyboard-block"\)[\s\S]*finalText = finalStoryboardPromptText\(\)[\s\S]*if \(finalText\) storyboardText\.push\(`Scene \$\{sceneNumber\}\\n\$\{finalText\}`\)/);
   assert.match(script, /function videoPromptSections\(\)[\s\S]*let sceneNumber = 1[\s\S]*`Scene \$\{sceneNumber\+\+\}\\n\$\{text\}`/);
   assert.match(html, /id="video-auto-draft-status"[^>]*>正在檢查自動儲存草稿…<\/span>/);
   assert.match(script, /saveStoredValue\("video-generator-draft"/);

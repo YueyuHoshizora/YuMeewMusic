@@ -45,6 +45,12 @@ test("member center reads the balance, top-up history and consumption history", 
   assert.match(script, /MAX_TOPUP_TWD = 3_000/);
   assert.match(script, /amount >= MIN_TOPUP_TWD && amount <= MAX_TOPUP_TWD/);
   assert.match(script, /addEventListener\("change", enforceTopupRange\)/);
+  assert.match(script, /TOPUP_PAGE_SIZE = 5/);
+  assert.match(script, /CONSUMPTION_PAGE_SIZE = 10/);
+  assert.match(script, /Date\.parse\(right\.created_at\) - Date\.parse\(left\.created_at\)/);
+  for (const id of ["topup-prev", "topup-page", "topup-next", "consumption-prev", "consumption-page", "consumption-next"]) {
+    assert.match(html, new RegExp(`id="${id}"`));
+  }
   assert.match(script, /amount \/ usdTwdRate \* TOPUP_PAYOUT_RATE/);
   assert.match(script, /Math\.floor\(calculated \* 100\) \/ 100/);
   assert.match(script, /`可取得 \$\{usdFormatter\.format\(total\)\}`/);

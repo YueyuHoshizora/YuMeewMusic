@@ -56,10 +56,20 @@
         <section class="panel ledger-panel">
           <div class="section-title"><span>01</span><h2>儲值紀錄</h2></div>
           <div class="ledger-scroll"><table><thead><tr><th>時間</th><th>項目</th><th>額度變動</th><th>剩餘額度</th></tr></thead><tbody id="topup-rows"></tbody></table></div>
+          <nav class="ledger-pagination" aria-label="儲值紀錄分頁">
+            <button id="topup-prev" type="button" aria-label="上一頁儲值紀錄">上一頁</button>
+            <span id="topup-page" aria-live="polite">共 0 筆</span>
+            <button id="topup-next" type="button" aria-label="下一頁儲值紀錄">下一頁</button>
+          </nav>
         </section>
         <section class="panel ledger-panel">
           <div class="section-title"><span>02</span><h2>消費紀錄</h2></div>
           <div class="ledger-scroll"><table><thead><tr><th>時間</th><th>項目</th><th>額度變動</th><th>剩餘額度</th></tr></thead><tbody id="consumption-rows"></tbody></table></div>
+          <nav class="ledger-pagination" aria-label="消費紀錄分頁">
+            <button id="consumption-prev" type="button" aria-label="上一頁消費紀錄">上一頁</button>
+            <span id="consumption-page" aria-live="polite">共 0 筆</span>
+            <button id="consumption-next" type="button" aria-label="下一頁消費紀錄">下一頁</button>
+          </nav>
         </section>
       </section>
     </main>

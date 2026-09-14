@@ -21,6 +21,30 @@ const topupUsd = document.getElementById("topup-usd");
 const topupExchangeNote = document.getElementById("topup-exchange-note");
 const topupRows = document.getElementById("topup-rows");
 const consumptionRows = document.getElementById("consumption-rows");
+const TOPUP_PAGE_SIZE = 5;
+const CONSUMPTION_PAGE_SIZE = 10;
+const ledgerViews = {
+  topup: {
+    container: topupRows,
+    previous: document.getElementById("topup-prev"),
+    next: document.getElementById("topup-next"),
+    indicator: document.getElementById("topup-page"),
+    pageSize: TOPUP_PAGE_SIZE,
+    page: 1,
+    entries: [],
+    emptyMessage: "目前沒有儲值紀錄",
+  },
+  consumption: {
+    container: consumptionRows,
+    previous: document.getElementById("consumption-prev"),
+    next: document.getElementById("consumption-next"),
+    indicator: document.getElementById("consumption-page"),
+    pageSize: CONSUMPTION_PAGE_SIZE,
+    page: 1,
+    entries: [],
+    emptyMessage: "目前沒有消費紀錄",
+  },
+};
 let usdTwdRate = 0;
 const MIN_TOPUP_TWD = 300;
 const MAX_TOPUP_TWD = 3_000;
@@ -54,34 +78,57 @@ function formatUsd(value, signed = false) {
   return `${amount > 0 ? "+" : "-"}${formatted}`;
 }
 
-function renderLedger(container, entries, emptyMessage) {
-  container.replaceChildren();
-  if (!entries.length) {
+function renderLedgerPage(view) {
+  const totalPages = Math.max(1, Math.ceil(view.entries.length / view.pageSize));
+  view.page = Math.min(Math.max(view.page, 1), totalPages);
+  view.container.replaceChildren();
+  if (!view.entries.length) {
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 4;
     cell.className = "ledger-empty";
-    cell.textContent = emptyMessage;
+    cell.textContent = view.emptyMessage;
     row.append(cell);
-    container.append(row);
-    return;
+    view.container.append(row);
+  } else {
+    const start = (view.page - 1) * view.pageSize;
+    for (const entry of view.entries.slice(start, start + view.pageSize)) {
+      const row = document.createElement("tr");
+      const values = [
+        formatDate(entry.created_at),
+        entry.description || ({ topup: "儲值", consumption: "消費", refund: "退款", adjustment: "額度調整" }[entry.kind] || entry.kind),
+        formatUsd(entry.amount, true),
+        formatUsd(entry.balance_after),
+      ];
+      values.forEach((value, index) => {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        if (index >= 2) cell.className = "ledger-number";
+        row.append(cell);
+      });
+      view.container.append(row);
+    }
   }
-  for (const entry of entries) {
-    const row = document.createElement("tr");
-    const values = [
-      formatDate(entry.created_at),
-      entry.description || ({ topup: "儲值", consumption: "消費", refund: "退款", adjustment: "額度調整" }[entry.kind] || entry.kind),
-      formatUsd(entry.amount, true),
-      formatUsd(entry.balance_after),
-    ];
-    values.forEach((value, index) => {
-      const cell = document.createElement("td");
-      cell.textContent = value;
-      if (index >= 2) cell.className = "ledger-number";
-      row.append(cell);
-    });
-    container.append(row);
-  }
+  view.indicator.textContent = view.entries.length ? `第 ${view.page} / ${totalPages} 頁 · 共 ${view.entries.length} 筆` : "共 0 筆";
+  view.previous.disabled = view.page <= 1;
+  view.next.disabled = view.page >= totalPages;
+}
+
+function setLedgerEntries(type, entries, emptyMessage) {
+  const view = ledgerViews[type];
+  view.entries = [...entries].sort((left, right) => {
+    const timeDifference = Date.parse(right.created_at) - Date.parse(left.created_at);
+    return Number.isNaN(timeDifference) || timeDifference === 0 ? Number(right.id || 0) - Number(left.id || 0) : timeDifference;
+  });
+  view.page = 1;
+  view.emptyMessage = emptyMessage;
+  renderLedgerPage(view);
+}
+
+function changeLedgerPage(type, offset) {
+  const view = ledgerViews[type];
+  view.page += offset;
+  renderLedgerPage(view);
 }
 
 function updateTopupEstimate() {
@@ -144,21 +191,21 @@ async function loadAccountData(session) {
   setStatus("正在讀取會員資料…");
   if (!isMemberApiConfigured()) {
     balance.textContent = "—";
-    renderLedger(topupRows, [], "尚無法讀取儲值紀錄");
-    renderLedger(consumptionRows, [], "尚無法讀取消費紀錄");
+    setLedgerEntries("topup", [], "尚無法讀取儲值紀錄");
+    setLedgerEntries("consumption", [], "尚無法讀取消費紀錄");
     setStatus("D1 會員資料服務尚未設定，登入功能仍可使用。", true);
     return;
   }
   try {
     const account = await fetchMemberAccount(session);
     balance.textContent = formatUsd(account.balance);
-    renderLedger(topupRows, account.topups || [], "目前沒有儲值紀錄");
-    renderLedger(consumptionRows, account.consumption || [], "目前沒有消費紀錄");
+    setLedgerEntries("topup", account.topups || [], "目前沒有儲值紀錄");
+    setLedgerEntries("consumption", account.consumption || [], "目前沒有消費紀錄");
     setStatus("會員資料已更新。");
   } catch (error) {
     balance.textContent = "—";
-    renderLedger(topupRows, [], "尚無法讀取儲值紀錄");
-    renderLedger(consumptionRows, [], "尚無法讀取消費紀錄");
+    setLedgerEntries("topup", [], "尚無法讀取儲值紀錄");
+    setLedgerEntries("consumption", [], "尚無法讀取消費紀錄");
     setStatus(error.message || "目前無法讀取會員資料。", true);
   }
 }
@@ -189,6 +236,10 @@ logoutButton.addEventListener("click", async () => {
 
 topupTwd.addEventListener("input", updateTopupEstimate);
 topupTwd.addEventListener("change", enforceTopupRange);
+ledgerViews.topup.previous.addEventListener("click", () => changeLedgerPage("topup", -1));
+ledgerViews.topup.next.addEventListener("click", () => changeLedgerPage("topup", 1));
+ledgerViews.consumption.previous.addEventListener("click", () => changeLedgerPage("consumption", -1));
+ledgerViews.consumption.next.addEventListener("click", () => changeLedgerPage("consumption", 1));
 
 async function initialize() {
   if (!isSupabaseConfigured()) {

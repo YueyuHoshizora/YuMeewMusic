@@ -85,6 +85,17 @@
       <p>正在把文字轉換成畫面，請稍候…</p>
     </div>
 
+    <dialog id="flux-generation-confirm-dialog" class="reset-dialog" aria-labelledby="flux-generation-confirm-title">
+      <form id="flux-generation-confirm-form" method="dialog">
+        <h2 id="flux-generation-confirm-title">確認生成圖片</h2>
+        <p>此為公共資源，請勿濫用。</p>
+        <div class="dialog-actions">
+          <button id="cancel-flux-generation" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">確定</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="api-key-dialog" class="reset-dialog" aria-labelledby="api-key-dialog-title">
       <form id="api-key-form" method="dialog">
         <h2 id="api-key-dialog-title">輸入 API KEY</h2>

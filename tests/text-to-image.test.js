@@ -32,6 +32,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /id="apply-background"[^>]*disabled/);
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
+  assert.match(html, /id="flux-generation-confirm-dialog"[^>]*aria-labelledby="flux-generation-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-flux-generation"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(css, /\.generated-image-frame:fullscreen/);
   assert.match(css, /\.generated-image-frame\.fullscreen-fallback/);
@@ -59,7 +60,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(html, /文字轉譯成Prompt/);
   assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);
   assert.match(script, /async function callFlux2Klein4B\(\{ prompt, enhance \}\)/);
-  assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?apiKey: "Free"[\s\S]*?call: callFlux2Klein4B/);
+  assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?apiKey: "Free"[\s\S]*?publicResource: true[\s\S]*?call: callFlux2Klein4B/);
   assert.match(script, /"gpt-image-2\.5-sunburst": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Sunburst"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Sunburst/);
   assert.match(script, /"gpt-image-2\.5-flare": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Flare"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Flare/);
   assert.doesNotMatch(script, /model-provider-note|provider: "OpenAI Image API"/);
@@ -77,6 +78,9 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey \}\)/);
+  assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\?\.publicResource[\s\S]*flux-generation-confirm-dialog"\)\.showModal\(\)[\s\S]*generateImage\(\)/);
+  assert.match(script, /function confirmFluxGeneration\(event\)[\s\S]*flux-generation-confirm-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
+  assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*flux-generation-confirm-form"\)\.addEventListener\("submit", confirmFluxGeneration\)/);
   assert.match(html, /id="api-key-input"[^>]*type="password"/);
   assert.match(html, /id="api-key-source"[^>]*class="setting-select"/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);

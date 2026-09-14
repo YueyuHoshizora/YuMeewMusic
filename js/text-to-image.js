@@ -70,6 +70,7 @@ const IMAGE_MODELS = Object.freeze({
   "flux-2-klein-4b": Object.freeze({
     label: "Flux.2 Klein 4B",
     apiKey: "Free",
+    publicResource: true,
     call: callFlux2Klein4B,
   }),
   "gpt-image-2.5-flare": Object.freeze({
@@ -357,6 +358,22 @@ async function generateImage() {
   }
 }
 
+function requestImageGeneration() {
+  if (busy || composing || $("generate-image").disabled) return;
+  const model = IMAGE_MODELS[$("image-model").value];
+  if (model?.publicResource) {
+    $("flux-generation-confirm-dialog").showModal();
+    return;
+  }
+  void generateImage();
+}
+
+function confirmFluxGeneration(event) {
+  event.preventDefault();
+  $("flux-generation-confirm-dialog").close();
+  void generateImage();
+}
+
 $("image-prompt").addEventListener("input", () => {
   $("generate-image").disabled = busy || composing || !$("image-prompt").value.trim();
 });
@@ -373,7 +390,9 @@ $("api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-api-key").addEventListener("click", () => $("api-key-dialog").close());
 
-$("generate-image").addEventListener("click", generateImage);
+$("generate-image").addEventListener("click", requestImageGeneration);
+$("flux-generation-confirm-form").addEventListener("submit", confirmFluxGeneration);
+$("cancel-flux-generation").addEventListener("click", () => $("flux-generation-confirm-dialog").close());
 
 resultFrame.addEventListener("click", () => void toggleResultFullscreen());
 resultFrame.addEventListener("keydown", event => {

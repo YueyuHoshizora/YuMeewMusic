@@ -18,7 +18,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-mode button { min-width: 82px; height: 30px; border: 1px solid transparent; border-radius: 6px; padding: 0 11px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
 .video-prompt-mode button[aria-pressed="true"] { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
 .video-prompt-mode button:hover:not(:disabled) { color: var(--primary-text); }
-.video-prompt-mode button:disabled { cursor: wait; opacity: .5; }
+.video-prompt-mode button:disabled { cursor: not-allowed; opacity: .5; }
 .video-prompt-field { margin: 0; }
 .video-prompt-heading { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: 0 0 12px; }
 .video-result-summary { justify-content: flex-start; }
@@ -29,7 +29,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-add { display: grid; place-items: center; min-width: 88px; height: 32px; flex: 0 0 auto; border: 1px solid var(--primary); border-radius: 8px; padding: 0 14px; background: color-mix(in srgb, var(--primary) 12%, var(--surface)); color: var(--primary); font: inherit; font-size: 13px; font-weight: 800; line-height: 1; cursor: pointer; }
 .video-prompt-add:hover { background: color-mix(in srgb, var(--primary) 22%, var(--surface)); }
 .video-prompt-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.video-prompt-add:disabled { opacity: .5; cursor: default; }
+.video-prompt-add:disabled { opacity: .5; cursor: not-allowed; }
 .video-film-style-button.configured { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
 .video-storyboard-inspect-button { margin-right: auto; }
 .video-character-template-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
@@ -130,7 +130,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-project-check span { display: grid; gap: 4px; }
 .video-project-check strong { font-size: 13px; }
 .video-project-check small { color: var(--muted); font-size: 11px; font-weight: 500; }
-.video-project-check:has(input:disabled) { opacity: .55; cursor: default; }
+.video-project-check:has(input:disabled) { opacity: .55; cursor: not-allowed; }
 .video-project-note { margin: 12px 0 0 !important; }
 .video-project-file-name { overflow: hidden; margin-bottom: 12px !important; color: var(--foreground) !important; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
 .video-project-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-bottom: 12px; }
@@ -287,7 +287,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .storyboard-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; }
 .storyboard-card-action { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--border); border-radius: 7px; padding: 0; background: var(--card); color: var(--muted); }
 .storyboard-card-action:hover { border-color: var(--primary); color: var(--primary-text); }
-.storyboard-card-action:disabled { opacity: .3; cursor: default; }
+.storyboard-card-action:disabled { opacity: .3; cursor: not-allowed; }
 .storyboard-card-action::before { font-size: 13px; font-weight: 800; }
 .storyboard-card-action.edit::before { content: "✎"; }
 .storyboard-card-action.copy::before { content: "⧉"; }
@@ -327,7 +327,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-dialogue-actions { display: grid; grid-template-columns: repeat(3, 28px); gap: 4px; }
 .video-dialogue-action { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--border); border-radius: 6px; padding: 0; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
 .video-dialogue-action:not(:disabled):hover { border-color: var(--primary); color: var(--primary-text); }
-.video-dialogue-action:disabled { opacity: .3; cursor: default; }
+.video-dialogue-action:disabled { opacity: .3; cursor: not-allowed; }
 .video-dialogue-action.remove { color: var(--error-text); }
 .video-prompt-builder-fields .text-input { width: 100%; box-sizing: border-box; }
 .video-prompt-builder-fields textarea { min-height: 88px; resize: vertical; font: inherit; line-height: 1.6; }

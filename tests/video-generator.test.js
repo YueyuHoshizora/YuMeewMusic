@@ -159,6 +159,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-compare-dialog"[\s\S]*id="video-compare-grid"/);
   assert.match(html, /id="video-generation-summary"[^>]*aria-label="生成摘要"/);
   assert.match(css, /#video-prompt\s*\{[^}]*height:\s*560px/);
+  assert.match(css, /\.video-prompt-add:disabled\s*\{[^}]*cursor:\s*not-allowed/);
   assert.match(css, /body\.video-generator-body\s*\{[^}]*min-width:\s*1280px;[^}]*overflow-x:\s*auto/);
   assert.doesNotMatch(css, /@media \(max-width:/);
   assert.match(css, /\.video-prompt-field\s*\{[^}]*margin:\s*0/);

@@ -2927,6 +2927,8 @@ function clearVideoWorkspace() {
 
   storyboards.clear();
   $("video-prompt").replaceChildren();
+  $("video-prompt-text").replaceChildren();
+  promptModeSource = "";
   finalStoryboard = null;
   resetFinalStoryboardEditor();
   videoResources = [];
@@ -2941,7 +2943,7 @@ function clearVideoWorkspace() {
   renderFinalStoryboardCard();
   syncDraftStatus(false);
   scheduleAutoDraft({ resources: true });
-  setStatus("已清除全部分鏡、上傳資源與全片風格", "success");
+  setStatus("已清除題詞、全部分鏡、上傳資源與全片風格", "success");
 }
 
 function projectCountSummary(label, count) {

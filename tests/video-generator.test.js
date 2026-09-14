@@ -360,7 +360,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /async function exportVideoProject\(event\)[\s\S]*await saveAutoDraftNow\(\{ resources: true \}\)[\s\S]*await projectFromStoredDraft\(includeCharacters\)[\s\S]*createVideoProjectFile/);
   assert.match(script, /function sanitizedImportedHtml\(html\)[\s\S]*resource-token[\s\S]*createResourceMention/);
   assert.match(script, /async function importVideoProject\(event\)[\s\S]*persistCharacterTemplates[\s\S]*renderVideoResources[\s\S]*createStoryboardBlock/);
-  assert.match(script, /function clearVideoWorkspace\(\)[\s\S]*window\.confirm\("是否清除所有工作區？"\)[\s\S]*window\.confirm\("是否先匯出檔案？"\)[\s\S]*openVideoProjectExport\(\)[\s\S]*storyboards\.clear\(\)[\s\S]*videoResources = \[\][\s\S]*filmStyle = \{ \.\.\.EMPTY_FILM_STYLE \}[\s\S]*scheduleAutoDraft\(\{ resources: true \}\)/);
+  assert.match(script, /function clearVideoWorkspace\(\)[\s\S]*window\.confirm\("是否清除所有工作區？"\)[\s\S]*window\.confirm\("是否先匯出檔案？"\)[\s\S]*openVideoProjectExport\(\)[\s\S]*storyboards\.clear\(\)[\s\S]*\$\("video-prompt-text"\)\.replaceChildren\(\)[\s\S]*promptModeSource = ""[\s\S]*videoResources = \[\][\s\S]*filmStyle = \{ \.\.\.EMPTY_FILM_STYLE \}[\s\S]*scheduleAutoDraft\(\{ resources: true \}\)/);
   assert.match(script, /\$\("clear-video-resources"\)\.addEventListener\("click", clearVideoWorkspace\)/);
   assert.match(script, /function characterVoiceValue\(\)[\s\S]*character-voice-custom/);
   assert.match(script, /voice: characterVoiceValue\(\)/);

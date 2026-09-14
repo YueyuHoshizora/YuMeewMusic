@@ -42,6 +42,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="inspect-storyboards"[^>]*>檢查分鏡<\/button>/);
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
   assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>\s*<button id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
+  assert.match(html, /id="storyboard-ai-confirm-dialog"[^>]*aria-labelledby="storyboard-ai-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-storyboard-ai"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
   assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
   assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
   assert.match(script, /const STORYBOARD_CHECKER_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
@@ -50,6 +51,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /async function waitForStoryboardAiReport\(input\)[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_URL, input\)[\s\S]*created\.requestId[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_STATUS_URL, \{ requestId \}\)[\s\S]*status\.status === "complete"[\s\S]*10 分鐘/);
   assert.match(script, /function parseStoryboardAiResult\(payload\)[\s\S]*result\.choices\[0\]\?\.message\?\.content[\s\S]*Number\.isFinite\(Number\(result\.overall_score\)\)[\s\S]*AI 分析結果缺少必要的報告欄位/);
   assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*setBusy\(true\)[\s\S]*AI 正在分析分鏡[\s\S]*renderStoryboardAiReport\(await waitForStoryboardAiReport\(input\)\)[\s\S]*setBusy\(false\)/);
+  assert.match(script, /function openStoryboardAiConfirmation\(\)[\s\S]*storyboard-ai-confirm-dialog"\)\.showModal\(\)[\s\S]*function confirmStoryboardAiAnalysis\(event\)[\s\S]*storyboard-ai-confirm-dialog"\)\.close\(\)[\s\S]*analyzeStoryboardsWithAi\(\)/);
+  assert.match(script, /analyze-storyboards-ai"\)\.addEventListener\("click", openStoryboardAiConfirmation\)[\s\S]*storyboard-ai-confirm-form"\)\.addEventListener\("submit", confirmStoryboardAiAnalysis\)/);
   assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*const reopenInspection = inspectionDialog\.open[\s\S]*inspectionDialog\.close\(\)[\s\S]*setBusy\(true\)[\s\S]*setBusy\(false\)[\s\S]*inspectionDialog\.showModal\(\)/);
   assert.match(script, /function renderStoryboardAiReport\(report\)[\s\S]*做得好的地方[\s\S]*需要處理的問題[\s\S]*逐鏡分析[\s\S]*修正版分鏡[\s\S]*生成建議/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);

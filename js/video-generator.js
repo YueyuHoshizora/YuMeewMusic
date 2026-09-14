@@ -2383,6 +2383,17 @@ async function analyzeStoryboardsWithAi() {
   }
 }
 
+function openStoryboardAiConfirmation() {
+  if (busy || $("analyze-storyboards-ai").disabled) return;
+  $("storyboard-ai-confirm-dialog").showModal();
+}
+
+function confirmStoryboardAiAnalysis(event) {
+  event.preventDefault();
+  $("storyboard-ai-confirm-dialog").close();
+  void analyzeStoryboardsWithAi();
+}
+
 function inspectionSummaryItem(label, value) {
   const item = document.createElement("span");
   const strong = document.createElement("strong");
@@ -3821,7 +3832,9 @@ $("restore-video-prompt-preview").addEventListener("click", () => restoreMinimiz
 $("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-preview-dialog").close());
 $("video-prompt-preview-dialog").addEventListener("close", () => syncMinimizedDialog("promptPreview"));
 $("inspect-storyboards").addEventListener("click", () => openStoryboardInspection());
-$("analyze-storyboards-ai").addEventListener("click", () => void analyzeStoryboardsWithAi());
+$("analyze-storyboards-ai").addEventListener("click", openStoryboardAiConfirmation);
+$("storyboard-ai-confirm-form").addEventListener("submit", confirmStoryboardAiAnalysis);
+$("cancel-storyboard-ai").addEventListener("click", () => $("storyboard-ai-confirm-dialog").close());
 $("minimize-storyboard-inspection").addEventListener("click", () => minimizeDialog("storyboardInspection"));
 $("restore-storyboard-inspection").addEventListener("click", () => restoreMinimizedDialog("storyboardInspection"));
 $("reflow-storyboard-times").addEventListener("click", reflowStoryboardTimes);

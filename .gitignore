@@ -38,6 +38,7 @@ next-env.d.ts
 /work/
 /model-proxy/
 /flux-klein/
+/lyrics-transcriber/
 
 # TypeScript build cache
 *.tsbuildinfo

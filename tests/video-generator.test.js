@@ -22,6 +22,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<details id="video-description-panel" class="panel prompt-panel video-description-panel" open>[\s\S]*<summary[^>]*>影片細節<\/summary>[\s\S]*id="video-prompt"[\s\S]*<\/details>\s*<details id="video-settings-panel" class="panel prompt-panel video-settings-panel">/);
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
+  assert.match(html, /class="video-credits"[^>]*aria-labelledby="video-credits-title"[\s\S]*企劃[\s\S]*href="https:\/\/www\.youtube\.com\/@YuStellar"[^>]*>星語<\/a>[\s\S]*技術指導[\s\S]*href="https:\/\/www\.youtube\.com\/@oktrf2000"[^>]*>修卡迪特<\/a>[\s\S]*程式開發[\s\S]*Yueyu Hoshizora[\s\S]*開源專案[\s\S]*Mediabunny[\s\S]*ONNX Runtime Web[\s\S]*專案網站[\s\S]*ezmusic\.yustellar\.idv\.tw[\s\S]*GitHub[\s\S]*YueyuHoshizora\/YuMeewMusic/);
+  assert.match(css, /\.video-credits-track \{[^}]*animation: video-credits-scroll 30s linear infinite[\s\S]*\.video-credits:hover \.video-credits-track,[\s\S]*\.video-credits:focus-within \.video-credits-track \{[^}]*animation-play-state: paused/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*\.video-credits-track \{ animation: none/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
   assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="open-final-storyboard"[^>]*>最終分鏡<\/button>\s*<button id="inspect-storyboards"[^>]*>檢查分鏡<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
   assert.doesNotMatch(html, /video-prompt-footer/);

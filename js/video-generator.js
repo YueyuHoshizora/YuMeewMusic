@@ -26,7 +26,7 @@ const STORYBOARD_CHECKER_POLL_INTERVAL = 3000;
 const STORYBOARD_CHECKER_TIMEOUT = 10 * 60 * 1000;
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
-const VIDEO_HISTORY_LIMIT = 5;
+const VIDEO_HISTORY_LIMIT = 10;
 const $ = id => document.getElementById(id);
 const VIDEO_MODELS = Object.freeze({
   "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15 }),
@@ -3399,7 +3399,6 @@ function setBusy(value, showLock = value) {
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
-  $("send-video-editor").disabled = value || !generatedVideoBlob;
   $("open-video-history").disabled = value || !generationHistory.length;
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
@@ -3698,7 +3697,6 @@ function releaseVideo() {
   generatedVideoRemoteUrl = "";
   generatedVideoApiKey = "";
   generatedVideoMetadata = null;
-  $("send-video-editor").disabled = true;
   $("retry-save-video").hidden = true;
 }
 
@@ -3710,7 +3708,6 @@ function presentVideo() {
   video.load();
   $("download-video").disabled = false;
   $("apply-video-background").disabled = !generatedVideoBlob;
-  $("send-video-editor").disabled = !generatedVideoBlob;
 }
 
 async function restoreLastGeneratedVideo() {
@@ -4117,22 +4114,6 @@ $("video-history-dialog").addEventListener("close", () => releaseUrlSet(historyP
 $("compare-video-history").addEventListener("click", compareSelectedVideos);
 $("close-video-compare").addEventListener("click", () => $("video-compare-dialog").close());
 $("video-compare-dialog").addEventListener("close", () => releaseUrlSet(comparisonPreviewUrls));
-
-$("send-video-editor").addEventListener("click", async () => {
-  if (!generatedVideoBlob || busy) return;
-  setBusy(true);
-  setStatus("正在將影片送到影片編輯器…");
-  try {
-    const file = new File([generatedVideoBlob], generatedVideoMetadata?.name || videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
-    await saveStoredMedia("image", file);
-    await deleteStoredValue("image-video-project").catch(() => {});
-    window.location.href = "./video-editor.html";
-  } catch (error) {
-    showError(error.message || "無法將影片送到影片編輯器。");
-    setStatus("影片交接失敗", "error");
-    setBusy(false);
-  }
-});
 
 $("apply-video-background").addEventListener("click", async () => {
   if (!generatedVideoBlob || busy) return;

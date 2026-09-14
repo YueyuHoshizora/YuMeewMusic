@@ -152,7 +152,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="retry-save-video"[^>]*hidden>重新保存影片<\/button>/);
   assert.match(html, /id="apply-video-background"[^>]*disabled/);
   assert.match(html, /id="open-video-history"[^>]*disabled>生成歷史<\/button>/);
-  assert.match(html, /id="send-video-editor"[^>]*disabled>送到影片編輯器<\/button>/);
+  assert.doesNotMatch(html, /send-video-editor|送到影片編輯器/);
+  assert.match(html, /最多保留最近 10 個版本/);
   assert.match(html, /id="video-history-dialog"[\s\S]*id="video-history-list"[\s\S]*id="compare-video-history"/);
   assert.match(html, /id="video-compare-dialog"[\s\S]*id="video-compare-grid"/);
   assert.match(html, /id="video-generation-summary"[^>]*aria-label="生成摘要"/);
@@ -316,12 +317,12 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /taskState === "succeeded"/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredValue\("video-generation-history", \{ items: generationHistory/);
-  assert.match(script, /VIDEO_HISTORY_LIMIT = 5/);
+  assert.match(script, /VIDEO_HISTORY_LIMIT = 10/);
   assert.match(script, /function compareSelectedVideos\(\)[\s\S]*video-compare-grid/);
   assert.match(script, /saveStoredValue\("video-generation-task", \{ taskId, metadata/);
   assert.match(script, /async function restorePendingGeneration\(\)[\s\S]*pollVideoTask\(pending\.taskId/);
   assert.match(script, /function openGenerateConfirmation\(\)[\s\S]*額度／費用[\s\S]*video-generation-summary/);
-  assert.match(script, /send-video-editor"\)\.addEventListener\("click"[\s\S]*saveStoredMedia\("image", file\)[\s\S]*video-editor\.html/);
+  assert.doesNotMatch(script, /send-video-editor|正在將影片送到影片編輯器|影片交接失敗/);
   assert.match(script, /retry-save-video"\)\.addEventListener\("click", async \(\) =>/);
   assert.match(script, /loadStoredMedia\("generated-video"\)/);
   assert.match(script, /void restoreLastGeneratedVideo\(\)/);

@@ -9,6 +9,10 @@ import { applyTheme } from "./themes.js";
 applyTheme(loadSettings().mode, loadSettings().theme);
 const $ = id => document.getElementById(id);
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+const PROVIDER_BILLING_URLS = Object.freeze({
+  openai: "https://platform.openai.com/settings/organization/billing/overview",
+  minimax: "https://platform.minimax.io/console/recharge-records",
+});
 const state = { session: null, members: [], selectedUserId: "", apiKeys: [], pendingTopup: null, pendingDeleteProvider: "" };
 
 function setStatus(message, error = false) {
@@ -73,10 +77,11 @@ function renderApiKeys() {
     const label = document.createElement("strong");
     label.textContent = record.label;
     heading.append(label);
-    if (record.provider === "openai") {
+    const billingUrl = PROVIDER_BILLING_URLS[record.provider];
+    if (billingUrl) {
       const billing = document.createElement("a");
       billing.className = "api-key-billing";
-      billing.href = "https://platform.openai.com/settings/organization/billing/overview";
+      billing.href = billingUrl;
       billing.target = "_blank";
       billing.rel = "noopener noreferrer";
       billing.textContent = "加值";

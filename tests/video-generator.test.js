@@ -22,7 +22,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
-  assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="preview-video-prompt"[^>]*>預覽題詞<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
+  assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="inspect-storyboards"[^>]*>檢查分鏡<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
   assert.doesNotMatch(html, /video-prompt-footer/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
@@ -113,7 +113,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*1080px;[^}]*max-width:\s*none/);
   assert.match(css, /\.video-prompt-add\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*color:\s*var\(--primary\)/);
-  assert.match(css, /\.video-prompt-preview-button\s*\{[^}]*margin-right:\s*auto/);
+  assert.match(css, /\.video-storyboard-inspect-button\s*\{[^}]*margin-right:\s*auto/);
   assert.match(css, /\.film-style-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.video-prompt-preview-text\s*\{[^}]*user-select:\s*text/);
   assert.match(css, /\.storyboard-inspection-dialog\s*\{[^}]*width:\s*920px/);

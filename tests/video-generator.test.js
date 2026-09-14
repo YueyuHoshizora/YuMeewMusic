@@ -42,6 +42,13 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="inspect-storyboards"[^>]*>檢查分鏡<\/button>/);
   assert.match(html, /id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>/);
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
+  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
+  assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
+  assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
+  assert.match(script, /const STORYBOARD_CHECKER_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
+  assert.match(script, /function storyboardAiRequest\(\)[\s\S]*orderedStoryboardEntries\(\)[\s\S]*storyboardAiScene\(finalStoryboard, scenes\.length \+ 1, true\)[\s\S]*scenes/);
+  assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*setBusy\(true\)[\s\S]*AI 正在分析分鏡[\s\S]*fetch\(STORYBOARD_CHECKER_URL[\s\S]*JSON\.stringify\(input\)[\s\S]*renderStoryboardAiReport\(parseStoryboardAiResult\(payload\)\)[\s\S]*setBusy\(false\)/);
+  assert.match(script, /function renderStoryboardAiReport\(report\)[\s\S]*做得好的地方[\s\S]*需要處理的問題[\s\S]*逐鏡分析[\s\S]*修正版分鏡[\s\S]*生成建議/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
   assert.match(html, /id="final-storyboard-dialog"[^>]*aria-labelledby="final-storyboard-title"[\s\S]*時間會自動接續最後一張分鏡，並延長 1 秒。[\s\S]*id="final-storyboard-scene"[\s\S]*id="final-storyboard-sound"[\s\S]*id="final-storyboard-shot-size"[\s\S]*id="final-storyboard-view-angle"[\s\S]*id="final-storyboard-view-custom"[\s\S]*id="final-storyboard-view-subjects"[\s\S]*id="final-storyboard-viewpoint-character"[\s\S]*id="final-storyboard-camera"[\s\S]*id="final-storyboard-camera-speed"[\s\S]*id="final-storyboard-camera-custom"[\s\S]*id="final-storyboard-actions"/);

@@ -18,6 +18,7 @@ const GOOGLE_CREATE_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/generate`;
 const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
 const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
 const RESOURCE_UPLOAD_URL = "https://model-proxy.yustellar.idv.tw/resources/upload";
+const STORYBOARD_CHECKER_URL = "https://storyboard-checker.yustellar.idv.tw/api/storyboard/check";
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const VIDEO_HISTORY_LIMIT = 5;
@@ -2181,6 +2182,158 @@ function inspectStoryboardProject() {
   };
 }
 
+function storyboardAiCharacters(draft, final = false) {
+  const names = [
+    ...(draft.viewSubjects || []),
+    draft.viewpointCharacter,
+    ...(final ? (draft.actions || []).map(action => action.actionCharacter) : [draft.actionCharacter]),
+    ...(draft.dialogues || []).map(dialogue => dialogue.speaker),
+  ].filter(name => name && name !== "__all__" && name !== "__narrator__");
+  return [...new Set(names)];
+}
+
+function storyboardAiScene(draft, id, final = false) {
+  const fields = final ? finalStoryboardFields(draft) : storyboardFields(draft);
+  const values = Object.fromEntries(fields.map(([label, value]) => [label, value]));
+  const duration = Number(draft.end) - Number(draft.start);
+  const description = fields
+    .filter(([label]) => !["時間", "場景", "鏡頭", "人物與對話"].includes(label))
+    .map(([label, value]) => `${label}：${value}`)
+    .join("\n") || values.場景 || "未提供分鏡內容";
+  return {
+    id,
+    ...(Number.isFinite(duration) && duration > 0 ? { duration } : {}),
+    ...(draft.shotSize ? { shot: draft.shotSize } : {}),
+    ...(values.鏡頭 ? { camera: values.鏡頭 } : {}),
+    description,
+    ...(values["人物與對話"] ? { dialogue: values["人物與對話"] } : {}),
+    ...(values.場景 ? { location: values.場景 } : {}),
+    ...(storyboardAiCharacters(draft, final).length ? { characters: storyboardAiCharacters(draft, final) } : {}),
+  };
+}
+
+function storyboardAiRequest() {
+  const entries = orderedStoryboardEntries();
+  const scenes = entries.map((entry, index) => storyboardAiScene(entry.draft, index + 1));
+  if (finalStoryboard) scenes.push(storyboardAiScene(finalStoryboard, scenes.length + 1, true));
+  const sections = videoPromptSections();
+  const story = [sections.details, filmStyleText()].filter(Boolean).join("\n\n");
+  return { ...(story ? { story } : {}), scenes };
+}
+
+function parseStoryboardAiResult(payload) {
+  if (!payload?.success) throw new Error(payload?.error || "AI 分析服務未回傳結果。");
+  let result = payload.result?.response ?? payload.result;
+  if (typeof result === "string") {
+    const source = result.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    try { result = JSON.parse(source); }
+    catch { throw new Error("AI 分析結果不是有效的報告格式。"); }
+  }
+  if (!result || typeof result !== "object") throw new Error("AI 分析結果內容不完整。");
+  return result;
+}
+
+function reportText(tag, className, value) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  element.textContent = String(value ?? "");
+  return element;
+}
+
+function storyboardAiList(title, values = []) {
+  if (!values.length) return null;
+  const section = reportText("section", "storyboard-ai-section", "");
+  const list = document.createElement("ul");
+  list.replaceChildren(...values.map(value => reportText("li", "", value)));
+  section.append(reportText("h3", "", title), list);
+  return section;
+}
+
+function renderStoryboardAiReport(report) {
+  const container = $("storyboard-ai-report");
+  const statusLabels = { pass: "可直接生成", needs_revision: "建議修改", fail: "需要重整" };
+  const heading = reportText("div", "storyboard-ai-heading", "");
+  heading.append(
+    reportText("span", "storyboard-ai-score", Number.isFinite(Number(report.overall_score)) ? Math.round(Number(report.overall_score)) : "—"),
+    reportText("span", "storyboard-ai-status", statusLabels[report.status] || "分析完成"),
+    reportText("p", "", report.summary || "AI 已完成分鏡分析。"),
+  );
+  const nodes = [heading];
+  const strengths = storyboardAiList("做得好的地方", Array.isArray(report.strengths) ? report.strengths : []);
+  if (strengths) nodes.push(strengths);
+  if (Array.isArray(report.problems) && report.problems.length) {
+    const section = reportText("section", "storyboard-ai-section", "");
+    section.append(reportText("h3", "", "需要處理的問題"));
+    for (const problem of report.problems) {
+      const item = reportText("article", "storyboard-ai-problem", "");
+      item.dataset.severity = problem.severity || "low";
+      const related = problem.related_scene === null || problem.related_scene === undefined ? "" : ` ↔ Scene ${problem.related_scene}`;
+      item.append(
+        reportText("strong", "", `Scene ${problem.scene}${related} · ${problem.severity || "提醒"}`),
+        reportText("p", "", problem.message || ""),
+        reportText("small", "", problem.suggestion ? `建議：${problem.suggestion}` : ""),
+      );
+      section.append(item);
+    }
+    nodes.push(section);
+  }
+  if (Array.isArray(report.scene_reviews) && report.scene_reviews.length) {
+    const section = reportText("section", "storyboard-ai-section", "");
+    const grid = reportText("div", "storyboard-ai-scene-grid", "");
+    for (const review of report.scene_reviews) {
+      const card = reportText("article", "storyboard-ai-scene", "");
+      card.append(
+        reportText("strong", "", `Scene ${review.scene} · ${review.score ?? "—"} 分`),
+        reportText("span", "", `連續性：${review.continuity || "未說明"}`),
+        reportText("span", "", `鏡頭：${review.camera || "未說明"}`),
+        reportText("span", "", `時間：${review.timing || "未說明"}`),
+        reportText("span", "", `生成穩定性：${review.ai_generation || "未說明"}`),
+      );
+      grid.append(card);
+    }
+    section.append(reportText("h3", "", "逐鏡分析"), grid);
+    nodes.push(section);
+  }
+  const corrections = storyboardAiList("修正版分鏡", Array.isArray(report.corrected_scenes) ? report.corrected_scenes.map(scene => {
+    const duration = scene.duration === null || scene.duration === undefined ? "" : ` · ${scene.duration} 秒`;
+    const camera = [scene.shot, scene.camera].filter(Boolean).join("／");
+    return `Scene ${scene.id}${duration}${camera ? ` · ${camera}` : ""}：${scene.description}${scene.reason ? `（原因：${scene.reason}）` : ""}`;
+  }) : []);
+  if (corrections) nodes.push(corrections);
+  const advice = storyboardAiList("生成建議", Array.isArray(report.generation_advice) ? report.generation_advice : []);
+  if (advice) nodes.push(advice);
+  container.replaceChildren(...nodes);
+  container.hidden = false;
+}
+
+async function analyzeStoryboardsWithAi() {
+  const input = storyboardAiRequest();
+  if (!input.scenes.length || busy) return;
+  setBusy(true);
+  $("video-generation-lock-title").textContent = "AI 正在分析分鏡";
+  $("video-generation-lock-detail").textContent = `正在檢查 ${input.scenes.length} 個 Scene 的故事、運鏡與連續性…`;
+  try {
+    const response = await fetch(STORYBOARD_CHECKER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+      cache: "no-store",
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(payload?.error || `AI 分析服務回應錯誤（${response.status}）。`);
+    renderStoryboardAiReport(parseStoryboardAiResult(payload));
+    setStatus("AI 分鏡分析完成", "success");
+  } catch (error) {
+    const container = $("storyboard-ai-report");
+    container.replaceChildren(reportText("p", "storyboard-ai-error", error?.message || "AI 分析失敗，請稍後再試。"));
+    container.hidden = false;
+    setStatus("AI 分鏡分析失敗", "error");
+  } finally {
+    setBusy(false);
+    requestAnimationFrame(() => $("storyboard-ai-report").scrollIntoView({ block: "nearest", behavior: "smooth" }));
+  }
+}
+
 function inspectionSummaryItem(label, value) {
   const item = document.createElement("span");
   const strong = document.createElement("strong");
@@ -2190,6 +2343,7 @@ function inspectionSummaryItem(label, value) {
 }
 
 function renderStoryboardInspection(report) {
+  $("analyze-storyboards-ai").disabled = busy || !report.totalEntries;
   $("storyboard-inspection-summary").replaceChildren(
     inspectionSummaryItem("分鏡", report.totalEntries),
     inspectionSummaryItem("時間範圍", `${report.maxEnd.toFixed(1)} / ${report.outputDuration} 秒`),
@@ -3049,7 +3203,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["open-film-style", "open-final-storyboard", "preview-video-prompt", "inspect-storyboards", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "clear-video-resources", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
+  for (const id of ["open-film-style", "open-final-storyboard", "preview-video-prompt", "inspect-storyboards", "analyze-storyboards-ai", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "clear-video-resources", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
@@ -3618,6 +3772,7 @@ $("restore-video-prompt-preview").addEventListener("click", () => restoreMinimiz
 $("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-preview-dialog").close());
 $("video-prompt-preview-dialog").addEventListener("close", () => syncMinimizedDialog("promptPreview"));
 $("inspect-storyboards").addEventListener("click", () => openStoryboardInspection());
+$("analyze-storyboards-ai").addEventListener("click", () => void analyzeStoryboardsWithAi());
 $("minimize-storyboard-inspection").addEventListener("click", () => minimizeDialog("storyboardInspection"));
 $("restore-storyboard-inspection").addEventListener("click", () => restoreMinimizedDialog("storyboardInspection"));
 $("reflow-storyboard-times").addEventListener("click", reflowStoryboardTimes);

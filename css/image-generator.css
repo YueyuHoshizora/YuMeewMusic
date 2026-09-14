@@ -1,8 +1,8 @@
-body.text-to-image-body { min-width: 0; overflow-x: hidden; }
-.text-to-image-header { justify-content: space-between; min-width: 0; }
-.text-to-image-main { width: min(1180px, 94%); padding-top: 34px; }
-.text-to-image-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 24px; }
-.text-to-image-heading p { max-width: 720px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+body.image-generator-body { min-width: 0; overflow-x: hidden; }
+.image-generator-header { justify-content: space-between; min-width: 0; }
+.image-generator-main { width: min(1180px, 94%); padding-top: 34px; }
+.image-generator-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 24px; }
+.image-generator-heading p { max-width: 720px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .generation-status { max-width: 320px; color: var(--muted); font-size: 13px; text-align: right; }
 .generation-status.success { color: var(--primary-text); }
 .generation-status.error { color: var(--error-text); }
@@ -48,7 +48,7 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 .generated-image-frame:-webkit-full-screen,
 .generated-image-frame.fullscreen-fallback { width: 100vw; height: 100vh; height: 100dvh; border: 0; border-radius: 0; background: #000; aspect-ratio: auto; cursor: zoom-out; }
 .generated-image-frame.fullscreen-fallback { position: fixed; z-index: 2000; inset: 0; }
-.text-to-image-body.result-fullscreen-open { overflow: hidden; }
+.image-generator-body.result-fullscreen-open { overflow: hidden; }
 .empty-result { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; color: var(--muted); text-align: center; }
 .empty-result > span { color: var(--primary); font-size: 30px; animation: idle-glow 2.2s ease-in-out infinite; }
 .empty-result strong { color: var(--foreground); font-size: 15px; font-weight: 600; }
@@ -69,17 +69,17 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 @media (prefers-reduced-motion: reduce) { .generation-loader, .empty-result > span { animation: none; } }
 
 @media (max-width: 800px) {
-  .text-to-image-header {
+  .image-generator-header {
     height: auto;
     min-height: 82px;
     padding: 14px 20px;
     flex-wrap: wrap;
     gap: 12px 18px;
   }
-  .text-to-image-header .brand { flex-shrink: 0; }
-  .text-to-image-main { width: calc(100% - 32px); padding: 24px 0 20px; }
-  .text-to-image-heading { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 18px; }
-  .text-to-image-heading h1 { font-size: 30px; }
+  .image-generator-header .brand { flex-shrink: 0; }
+  .image-generator-main { width: calc(100% - 32px); padding: 24px 0 20px; }
+  .image-generator-heading { align-items: start; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .image-generator-heading h1 { font-size: 30px; }
   .generation-status { max-width: none; text-align: left; }
   .prompt-panel,
   .result-panel { padding: 18px; }
@@ -89,13 +89,13 @@ body.text-to-image-body { min-width: 0; overflow-x: hidden; }
 }
 
 @media (max-width: 560px) {
-  .text-to-image-header { padding-inline: 16px; }
-  .text-to-image-header .brand { font-size: 21px; }
-  .text-to-image-header .brand-icon { width: 34px; height: 34px; }
-  .text-to-image-header .brand-sub { display: none; }
-  .text-to-image-main { width: calc(100% - 24px); padding-top: 20px; }
-  .text-to-image-heading h1 { font-size: 27px; }
-  .text-to-image-heading p { font-size: 13px; }
+  .image-generator-header { padding-inline: 16px; }
+  .image-generator-header .brand { font-size: 21px; }
+  .image-generator-header .brand-icon { width: 34px; height: 34px; }
+  .image-generator-header .brand-sub { display: none; }
+  .image-generator-main { width: calc(100% - 24px); padding-top: 20px; }
+  .image-generator-heading h1 { font-size: 27px; }
+  .image-generator-heading p { font-size: 13px; }
   .prompt-panel,
   .result-panel { padding: 15px; border-radius: 11px; }
   .autocomplete-row { grid-template-columns: 1fr; }

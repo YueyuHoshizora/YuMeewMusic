@@ -12,7 +12,7 @@ const secondaryPages = [
   "vocal-separator.html",
   "music-rating.html",
   "suno-tool.html",
-  "text-to-image.html",
+  "image-generator.html",
 ];
 
 test("only the video generator advertises the installable desktop app", () => {

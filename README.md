@@ -198,7 +198,7 @@ npm run preview  # 預覽 dist/
 ```text
 ├── index.html                 # 音樂視覺工作室
 ├── subtitle-editor.html       # 字幕編輯器
-├── text-to-image.html         # 圖片生成器
+├── image-generator.html         # 圖片生成器
 ├── video-generator.html       # 影片生成器
 ├── vocal-separator.html       # 人聲分離
 ├── image-video.html           # 圖轉影片

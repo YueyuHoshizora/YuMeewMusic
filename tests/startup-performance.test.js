@@ -12,7 +12,7 @@ const pages = [
   "vocal-separator.html",
   "music-rating.html",
   "suno-tool.html",
-  "text-to-image.html",
+  "image-generator.html",
   "video-generator.html",
 ];
 
@@ -41,7 +41,7 @@ test("every page presents and dismisses the shared feature loading screen", () =
 });
 
 test("large saved media restores outside the initial render path", () => {
-  for (const file of ["js/app.js", "js/video-editor.js", "js/vocal-separator.js", "js/text-to-image.js", "js/video-generator.js"]) {
+  for (const file of ["js/app.js", "js/video-editor.js", "js/vocal-separator.js", "js/image-generator.js", "js/video-generator.js"]) {
     assert.match(readFileSync(file, "utf8"), /requestIdleCallback/, file);
   }
   const generator = readFileSync("js/video-generator.js", "utf8");

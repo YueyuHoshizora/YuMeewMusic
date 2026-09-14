@@ -2,10 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
-test("text-to-image page exposes generation, download and background actions", () => {
-  const html = readFileSync("text-to-image.html", "utf8");
-  const script = readFileSync("js/text-to-image.js", "utf8");
-  const css = readFileSync("css/text-to-image.css", "utf8");
+test("image-generator page exposes generation, download and background actions", () => {
+  const html = readFileSync("image-generator.html", "utf8");
+  const script = readFileSync("js/image-generator.js", "utf8");
+  const css = readFileSync("css/image-generator.css", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
   assert.match(html, /<title>圖片生成器 · YuMeew<\/title>/);
@@ -38,7 +38,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(css, /\.generated-image-frame:fullscreen/);
   assert.match(css, /\.generated-image-frame\.fullscreen-fallback/);
-  assert.match(css, /body\.text-to-image-body\s*\{[^}]*min-width:\s*0/);
+  assert.match(css, /body\.image-generator-body\s*\{[^}]*min-width:\s*0/);
   assert.match(css, /@media \(max-width:\s*800px\)/);
   assert.match(css, /\.prompt-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 210px/);
   assert.match(css, /\.generation-options\s*\{[^}]*grid-template-columns:\s*minmax\(190px, 300px\) 200px/);
@@ -116,9 +116,9 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /void restoreLastGeneratedImage\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   const mainHtml = readFileSync("index.html", "utf8");
-  assert.match(mainHtml, /href="\.\/text-to-image\.html"[^>]*>圖片生成器<\/a>/);
-  assert.match(readFileSync("scripts/serve.js", "utf8"), /"text-to-image\.html"/);
-  assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-image\.html"/);
+  assert.match(mainHtml, /href="\.\/image-generator\.html"[^>]*>圖片生成器<\/a>/);
+  assert.match(readFileSync("scripts/serve.js", "utf8"), /"image-generator\.html"/);
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"image-generator\.html"/);
 });
 
 test("GitHub Pages build preserves the official custom domain", () => {

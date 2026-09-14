@@ -1,5 +1,5 @@
 const installButton = document.getElementById("install-video-generator");
-const brandLink = document.querySelector(".text-to-image-header .brand");
+const brandLink = document.querySelector(".image-generator-header .brand");
 
 const mobileUserAgent = navigator.userAgentData
   ? navigator.userAgentData.mobile

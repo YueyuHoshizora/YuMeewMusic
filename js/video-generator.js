@@ -19,6 +19,9 @@ const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
 const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
 const RESOURCE_UPLOAD_URL = "https://model-proxy.yustellar.idv.tw/resources/upload";
 const STORYBOARD_CHECKER_URL = "https://storyboard-checker.yustellar.idv.tw/api/storyboard/check";
+const STORYBOARD_CHECKER_STATUS_URL = `${STORYBOARD_CHECKER_URL}/status`;
+const STORYBOARD_CHECKER_POLL_INTERVAL = 3000;
+const STORYBOARD_CHECKER_TIMEOUT = 10 * 60 * 1000;
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
 const VIDEO_HISTORY_LIMIT = 5;
@@ -2306,6 +2309,36 @@ function renderStoryboardAiReport(report) {
   container.hidden = false;
 }
 
+async function storyboardCheckerRequest(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.success) throw new Error(payload?.error || `AI 分析服務回應錯誤（${response.status}）。`);
+  return payload;
+}
+
+async function waitForStoryboardAiReport(input) {
+  const created = await storyboardCheckerRequest(STORYBOARD_CHECKER_URL, input);
+  if (created.status === "complete" || created.result) return parseStoryboardAiResult(created);
+  const requestId = created.requestId;
+  if (!requestId) throw new Error("AI 分析服務沒有回傳任務編號。");
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < STORYBOARD_CHECKER_TIMEOUT) {
+    await new Promise(resolve => setTimeout(resolve, STORYBOARD_CHECKER_POLL_INTERVAL));
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    $("video-generation-lock-title").textContent = "AI 正在分析分鏡";
+    $("video-generation-lock-detail").textContent = `任務已排入佇列 · 已等待 ${elapsed} 秒`;
+    const status = await storyboardCheckerRequest(STORYBOARD_CHECKER_STATUS_URL, { requestId });
+    if (status.status === "complete" || status.result) return parseStoryboardAiResult(status);
+    if (["failed", "cancelled", "expired"].includes(status.status)) throw new Error("AI 分鏡分析任務未能完成。");
+  }
+  throw new Error("AI 分鏡分析等待超過 10 分鐘，請稍後重新嘗試。");
+}
+
 async function analyzeStoryboardsWithAi() {
   const input = storyboardAiRequest();
   if (!input.scenes.length || busy) return;
@@ -2319,15 +2352,7 @@ async function analyzeStoryboardsWithAi() {
   $("video-generation-lock-title").textContent = "AI 正在分析分鏡";
   $("video-generation-lock-detail").textContent = `正在檢查 ${input.scenes.length} 個 Scene 的故事、運鏡與連續性…`;
   try {
-    const response = await fetch(STORYBOARD_CHECKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
-      cache: "no-store",
-    });
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(payload?.error || `AI 分析服務回應錯誤（${response.status}）。`);
-    renderStoryboardAiReport(parseStoryboardAiResult(payload));
+    renderStoryboardAiReport(await waitForStoryboardAiReport(input));
     setStatus("AI 分鏡分析完成", "success");
   } catch (error) {
     const container = $("storyboard-ai-report");

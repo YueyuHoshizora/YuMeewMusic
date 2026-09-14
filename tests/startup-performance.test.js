@@ -24,8 +24,12 @@ test("every page presents and dismisses the shared feature loading screen", () =
     assert.match(html, /src="\.\/js\/loading-screen\.js"/, page);
   }
   const script = readFileSync("js/loading-screen.js", "utf8");
+  const css = readFileSync("css/style.css", "utf8");
   assert.match(script, /DOMContentLoaded/);
   assert.match(script, /classList\.add\("is-complete"\)/);
+  assert.match(css, /\.feature-loading\s*\{[^}]*radial-gradient\([^}]*var\(--primary\)/s);
+  assert.match(css, /\.feature-loading-card\s*\{[^}]*background:\s*linear-gradient\([^}]*var\(--primary\)/s);
+  assert.match(css, /\.feature-loading-card strong\s*\{[^}]*color:\s*var\(--primary-text\)/s);
 });
 
 test("large saved media restores outside the initial render path", () => {

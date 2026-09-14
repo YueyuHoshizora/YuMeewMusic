@@ -61,7 +61,9 @@ body {
   z-index: 100000;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--background) 94%, transparent);
+  background:
+    radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--primary) 18%, transparent) 0, transparent 38%),
+    color-mix(in srgb, var(--background) 96%, var(--primary) 4%);
   backdrop-filter: blur(12px);
   opacity: 1;
   visibility: visible;
@@ -79,12 +81,13 @@ body {
   justify-items: center;
   gap: 9px;
   color: var(--foreground);
-  background: var(--card);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--primary) 10%, var(--card)), var(--card) 68%);
   border: 1px solid var(--tint-border);
   border-radius: 18px;
-  box-shadow: 0 24px 70px rgb(0 0 0 / 28%);
+  box-shadow: 0 24px 70px color-mix(in srgb, var(--primary) 16%, rgb(0 0 0 / 32%));
 }
 .feature-loading-card strong {
+  color: var(--primary-text);
   font-size: 17px;
   letter-spacing: 0.08em;
 }

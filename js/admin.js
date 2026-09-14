@@ -68,11 +68,23 @@ function renderApiKeys() {
     row.className = "api-key-row";
     const provider = document.createElement("div");
     provider.className = "api-key-provider";
+    const heading = document.createElement("div");
+    heading.className = "api-key-provider-heading";
     const label = document.createElement("strong");
     label.textContent = record.label;
+    heading.append(label);
+    if (record.provider === "openai") {
+      const billing = document.createElement("a");
+      billing.className = "api-key-billing";
+      billing.href = "https://platform.openai.com/settings/organization/billing/overview";
+      billing.target = "_blank";
+      billing.rel = "noopener noreferrer";
+      billing.textContent = "加值";
+      heading.append(billing);
+    }
     const status = document.createElement("small");
     status.textContent = record.configured ? `已設定 ${record.masked}` : "未設定";
-    provider.append(label, status);
+    provider.append(heading, status);
     const input = document.createElement("input");
     input.type = "password";
     input.autocomplete = "new-password";

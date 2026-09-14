@@ -35,7 +35,7 @@ test("member center reads the balance, top-up history and consumption history", 
   const html = readFileSync("account.html", "utf8");
   const script = readFileSync("js/account.js", "utf8");
   for (const label of ["剩餘額度", "儲值紀錄", "消費紀錄", "使用 Google 登入", "臺灣銀行美元即期匯率"]) assert.match(html, new RegExp(label));
-  assert.match(html, /id="topup-twd"[^>]*type="number"[^>]*value="1000"[^>]*inputmode="numeric"/);
+  assert.match(html, /id="topup-twd"[^>]*type="number"[^>]*min="100"[^>]*step="100"[^>]*value="1000"[^>]*inputmode="numeric"/);
   assert.match(html, /id="topup-usd">可取得 \$—/);
   assert.match(html, /id="account-topup"[^>]*disabled>儲值<\/button>/);
   assert.match(script, /fetchMemberAccount/);

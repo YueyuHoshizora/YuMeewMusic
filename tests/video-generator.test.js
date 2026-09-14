@@ -340,6 +340,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /async function submitCharacterEditor\(event\)[\s\S]*const duplicateName = characterNameExists\(character\.name, editingCharacterIndex\)[\s\S]*"人物名稱不可重複。"[\s\S]*\|\| duplicateName/);
   assert.match(script, /影片設定檔包含重複的人物名稱。/);
   assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*finalStoryboard:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
+  assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*editorMode: promptEditorMode[\s\S]*promptTextHtml: \$\("video-prompt-text"\)\.innerHTML[\s\S]*promptText: editorText\(\$\("video-prompt-text"\)\)/);
+  assert.match(script, /function restoreProjectEditorMode\(metadata = \{\}\)[\s\S]*metadata\.editorMode[\s\S]*savedText \? "prompt" : "storyboard"[\s\S]*syncPromptModeUi\(\)/);
+  assert.match(script, /async function restoreAutoDraft\(\)[\s\S]*restoreProjectEditorMode\(metadata\)/);
+  assert.match(script, /async function importVideoProject\(event\)[\s\S]*匯入設定將會複寫目前的所有資料，是否確認？[\s\S]*restoreProjectEditorMode\(metadata\)/);
   assert.match(script, /import \{ createStoryboardCardsPdf \} from "\.\/storyboard-pdf\.js"/);
   assert.match(script, /function storyboardPdfProject\(\)[\s\S]*orderedStoryboardEntries\(\)[\s\S]*finalStoryboardFields[\s\S]*storyboardFields[\s\S]*const characters = referencedCharacters\(promptVideoDetails\(\)\)[\s\S]*referenceImage[\s\S]*voice:[\s\S]*tone:[\s\S]*style:[\s\S]*clothing:[\s\S]*const resources = referencedResources\(\)/);
   assert.match(script, /async function exportStoryboardPdf\(\)[\s\S]*createStoryboardCardsPdf\(storyboardPdfProject\(\)\)[\s\S]*downloadBlob\(pdf, storyboardPdfFilename\(\)\)/);

@@ -2653,6 +2653,7 @@ function videoProjectMetadata(includeCharacters, binaries) {
     createdAt: new Date().toISOString(),
     editorMode: promptEditorMode,
     promptTextHtml: $("video-prompt-text").innerHTML,
+    promptText: editorText($("video-prompt-text")),
     videoDetailsHtml: videoDetailsHtml(),
     filmStyle: { ...filmStyle },
     storyboards: storyboardOrder,
@@ -2791,6 +2792,7 @@ async function restoreAutoDraft() {
       prompt.append(createStoryboardBlock(draftItem));
     });
     finalStoryboard = normalizedFinalStoryboard(metadata.finalStoryboard);
+    restoreProjectEditorMode(metadata);
     refreshStoryboardLabels();
     renderStoryboardCharacterControls();
     restoreGenerationSettings(metadata.generation);
@@ -3033,6 +3035,19 @@ function sanitizedImportedHtml(html) {
   return holder.innerHTML;
 }
 
+function restoreProjectEditorMode(metadata = {}) {
+  const safeHtml = sanitizedImportedHtml(metadata.promptTextHtml);
+  const holder = document.createElement("div");
+  holder.innerHTML = safeHtml;
+  const savedText = editorText(holder) || String(metadata.promptText || "").trim();
+  const explicitMode = ["prompt", "storyboard"].includes(metadata.editorMode) ? metadata.editorMode : "";
+  promptEditorMode = explicitMode || (savedText ? "prompt" : "storyboard");
+  if (safeHtml) $("video-prompt-text").innerHTML = safeHtml;
+  else fillPromptEditor(savedText);
+  promptModeSource = promptEditorMode === "prompt" ? editorText($("video-prompt-text")) : "";
+  syncPromptModeUi();
+}
+
 function normalizedStoryboard(raw) {
   const start = Number(raw?.start);
   const end = Number(raw?.end);
@@ -3198,6 +3213,7 @@ async function importVideoProject(event) {
       prompt.append(createStoryboardBlock(draft));
     });
     finalStoryboard = normalizedFinalStoryboard(metadata.finalStoryboard);
+    restoreProjectEditorMode(metadata);
     refreshStoryboardLabels();
     if (nextCharacters) renderCharacterTemplates();
     else renderStoryboardCharacterControls();

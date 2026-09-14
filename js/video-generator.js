@@ -1940,14 +1940,15 @@ function finalStoryboardPromptText() {
 function videoPromptSections() {
   const details = document.createElement("div");
   const storyboardText = [];
+  let sceneNumber = 1;
   for (const node of $("video-prompt").childNodes) {
     if (node.nodeType === Node.ELEMENT_NODE && node.matches(".final-storyboard-block")) {
       const text = finalStoryboardPromptText();
-      if (text) storyboardText.push(text);
+      if (text) storyboardText.push(`Scene ${sceneNumber++}\n${text}`);
     }
     else if (node.nodeType === Node.ELEMENT_NODE && node.matches(".storyboard-block")) {
       const text = storyboardPromptText(storyboards.get(node.dataset.storyboardId));
-      if (text) storyboardText.push(text);
+      if (text) storyboardText.push(`Scene ${sceneNumber++}\n${text}`);
     }
     else details.append(node.cloneNode(true));
   }

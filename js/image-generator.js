@@ -1,6 +1,6 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
+import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
 import { getApiKey, listApiKeys, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 
@@ -8,6 +8,7 @@ const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
+const IMAGE_HISTORY_LIMIT = 10;
 const $ = id => document.getElementById(id);
 
 async function callFlux2Klein4B({ prompt, enhance }) {
@@ -94,6 +95,8 @@ let generatedBlob = null;
 let generatedUrl = "";
 let busy = false;
 let composing = false;
+let generationHistory = [];
+const historyPreviewUrls = new Set();
 const resultFrame = $("generated-image-frame");
 
 const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
@@ -235,6 +238,7 @@ function setBusy(value) {
   $("generate-image").disabled = value || composing || !$("image-prompt").value.trim();
   $("download-image").disabled = value || !generatedBlob;
   $("apply-background").disabled = value || !generatedBlob;
+  syncHistoryButton();
 }
 
 function setComposing(value) {
@@ -330,6 +334,61 @@ async function restoreLastGeneratedImage() {
   } catch {}
 }
 
+function historyTime(value) {
+  return new Intl.DateTimeFormat("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(value));
+}
+
+function syncHistoryButton() {
+  $("open-image-history").textContent = generationHistory.length ? `生成歷史（${generationHistory.length}）` : "生成歷史";
+  $("open-image-history").disabled = busy || !generationHistory.length;
+}
+
+async function loadGenerationHistory() {
+  const saved = await loadStoredValue("image-generation-history").catch(() => null);
+  generationHistory = Array.isArray(saved?.items) ? saved.items.filter(item => item?.blob?.size).slice(0, IMAGE_HISTORY_LIMIT) : [];
+  syncHistoryButton();
+}
+
+async function saveGenerationHistory(blob, prompt, modelId) {
+  await loadGenerationHistory();
+  generationHistory.unshift({ id: crypto.randomUUID?.() || `image-${Date.now()}`, blob, prompt, modelId, modelLabel: IMAGE_MODELS[modelId]?.label || modelId, createdAt: Date.now() });
+  generationHistory = generationHistory.slice(0, IMAGE_HISTORY_LIMIT);
+  await saveStoredValue("image-generation-history", { items: generationHistory, updatedAt: Date.now() });
+  syncHistoryButton();
+}
+
+function releaseHistoryUrls() {
+  historyPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  historyPreviewUrls.clear();
+}
+
+async function deleteHistoryImage(id) {
+  const record = generationHistory.find(item => item.id === id);
+  if (!record || !confirm(`確定刪除 ${historyTime(record.createdAt)} 的生成圖片？`)) return;
+  generationHistory = generationHistory.filter(item => item.id !== id);
+  if (generationHistory.length) await saveStoredValue("image-generation-history", { items: generationHistory, updatedAt: Date.now() });
+  else await deleteStoredValue("image-generation-history");
+  renderImageHistory();
+  syncHistoryButton();
+}
+
+function renderImageHistory() {
+  releaseHistoryUrls();
+  $("image-history-list").replaceChildren(...generationHistory.map(record => {
+    const card = document.createElement("article"); card.className = "image-history-card";
+    const image = document.createElement("img"); const url = URL.createObjectURL(record.blob); historyPreviewUrls.add(url); image.src = url; image.alt = record.prompt || "生成圖片";
+    const info = document.createElement("div"); info.className = "image-history-card-info";
+    const title = document.createElement("strong"); title.textContent = record.modelLabel || "生成圖片";
+    const meta = document.createElement("small"); meta.textContent = historyTime(record.createdAt);
+    const prompt = document.createElement("p"); prompt.textContent = record.prompt || "";
+    const actions = document.createElement("div"); actions.className = "image-history-card-actions";
+    const load = document.createElement("button"); load.type = "button"; load.textContent = "載入"; load.addEventListener("click", async () => { await displayGeneratedImage(record.blob, true); $("image-history-dialog").close(); });
+    const download = document.createElement("button"); download.type = "button"; download.textContent = "下載"; download.addEventListener("click", () => { const link = document.createElement("a"); link.href = url; link.download = imageFilename(); link.click(); });
+    const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "刪除"; remove.addEventListener("click", () => void deleteHistoryImage(record.id));
+    actions.append(load, download, remove); info.append(title, meta, prompt, actions); card.append(image, info); return card;
+  }));
+}
+
 function isQuotaError(statusCode, detail) {
   return statusCode === 429 || /(?:quota|neuron|daily limit|rate limit|too many requests|limit exceeded|額度|用量上限)/i.test(detail);
 }
@@ -366,6 +425,7 @@ async function generateImage() {
     const result = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
     await displayGeneratedImage(result);
     const cachedFile = new File([result], imageFilename(), { type: result.type || "image/jpeg", lastModified: Date.now() });
+    await saveGenerationHistory(result, prompt, modelId).catch(() => showError("圖片已生成，但無法保存生成歷史。"));
     await saveStoredMedia("generated-image", cachedFile).catch(() => {
       showError("圖片已生成，但瀏覽器無法保存最後一次生成結果。");
     });
@@ -419,6 +479,9 @@ $("cancel-api-key").addEventListener("click", () => $("api-key-dialog").close())
 $("generate-image").addEventListener("click", requestImageGeneration);
 $("flux-generation-confirm-form").addEventListener("submit", confirmFluxGeneration);
 $("cancel-flux-generation").addEventListener("click", () => $("flux-generation-confirm-dialog").close());
+$("open-image-history").addEventListener("click", () => { renderImageHistory(); $("image-history-dialog").showModal(); });
+$("close-image-history").addEventListener("click", () => $("image-history-dialog").close());
+$("image-history-dialog").addEventListener("close", releaseHistoryUrls);
 
 resultFrame.addEventListener("click", () => void toggleResultFullscreen());
 resultFrame.addEventListener("keydown", event => {
@@ -461,6 +524,7 @@ $("apply-background").addEventListener("click", async () => {
 window.addEventListener("pagehide", () => {
   closeFullscreenFallback();
   releaseImage();
+  releaseHistoryUrls();
 });
 
 function restoreWhenIdle(task) {
@@ -468,4 +532,7 @@ function restoreWhenIdle(task) {
   if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
   else setTimeout(run, 0);
 }
-restoreWhenIdle(() => void restoreLastGeneratedImage());
+restoreWhenIdle(() => {
+  void restoreLastGeneratedImage();
+  void loadGenerationHistory();
+});

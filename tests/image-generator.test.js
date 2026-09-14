@@ -32,6 +32,8 @@ test("image-generator page exposes generation, download and background actions",
   assert.doesNotMatch(html, /每日早上 8 點（台灣時間）重置額度/);
   assert.match(html, /id="download-image"[^>]*disabled/);
   assert.match(html, /id="apply-background"[^>]*disabled/);
+  assert.match(html, /id="open-image-history"[^>]*disabled>生成歷史<\/button>/);
+  assert.match(html, /id="image-history-dialog"[\s\S]*最多保留最近 10 張圖片/);
   assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(html, /id="flux-generation-confirm-dialog"[^>]*aria-labelledby="flux-generation-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-flux-generation"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
@@ -116,6 +118,11 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredMedia\("generated-image", cachedFile\)/);
   assert.match(script, /loadStoredMedia\("generated-image"\)/);
+  assert.match(script, /const IMAGE_HISTORY_LIMIT = 10/);
+  assert.match(script, /saveStoredValue\("image-generation-history"/);
+  assert.match(script, /loadStoredValue\("image-generation-history"\)/);
+  assert.match(script, /async function saveGenerationHistory\(blob, prompt, modelId\)[\s\S]*slice\(0, IMAGE_HISTORY_LIMIT\)/);
+  assert.match(script, /open-image-history"\)\.addEventListener/);
   assert.match(script, /void restoreLastGeneratedImage\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   const mainHtml = readFileSync("index.html", "utf8");

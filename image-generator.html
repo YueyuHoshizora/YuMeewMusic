@@ -75,9 +75,10 @@
         </div>
         <div class="result-actions">
           <button id="download-image" class="reset-settings" type="button" disabled>↓ 下載圖片</button>
+          <button id="open-image-history" class="reset-settings" type="button" disabled>生成歷史</button>
           <button id="apply-background" class="export-button" type="button" disabled>套用主畫面背景 →</button>
         </div>
-        <p class="result-storage-note">生成結果只暫存在目前分頁；只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材。</p>
+        <p class="result-storage-note">瀏覽器會保存最近 10 張生成圖片；只有按下「套用主畫面背景」才會取代主畫面的背景素材。</p>
       </section>
     </main>
 
@@ -96,6 +97,11 @@
           <button class="dialog-confirm" type="submit">確定</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="image-history-dialog" class="reset-dialog image-history-dialog" aria-labelledby="image-history-title">
+      <div class="image-history-heading"><div><h2 id="image-history-title">生成歷史</h2><p>最多保留最近 10 張圖片。</p></div><button id="close-image-history" class="dialog-confirm" type="button">關閉</button></div>
+      <div id="image-history-list" class="image-history-list"></div>
     </dialog>
 
     <dialog id="api-key-dialog" class="reset-dialog" aria-labelledby="api-key-dialog-title">

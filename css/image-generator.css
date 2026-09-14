@@ -22,6 +22,20 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
 .api-key-input-label { display: block; margin: 18px 0 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .api-key-credit-option { display: flex; align-items: center; gap: 9px; margin-top: 18px; color: var(--foreground); font-size: 13px; font-weight: 700; cursor: pointer; }
 .api-key-credit-option input { width: 17px; height: 17px; accent-color: var(--primary); }
+.image-history-dialog { width: min(1040px, calc(100vw - 48px)); }
+.image-history-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.image-history-heading p { margin-top: 5px; color: var(--muted); font-size: 12px; }
+.image-history-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-height: 68vh; margin-top: 18px; overflow-y: auto; }
+.image-history-card { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--surface); }
+.image-history-card > img { width: 180px; aspect-ratio: 16 / 9; border-radius: 7px; background: #050608; object-fit: contain; }
+.image-history-card-info { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.image-history-card-info small { color: var(--muted); font-size: 11px; }
+.image-history-card-info p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--foreground); font-size: 11px; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.image-history-card-actions { display: flex; gap: 8px; margin-top: auto; }
+.image-history-card-actions button { border: 1px solid var(--primary); border-radius: 7px; padding: 6px 9px; background: transparent; color: var(--primary-text); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+@media (max-width: 800px) {
+  .image-history-list { grid-template-columns: 1fr; }
+}
 .reset-dialog #api-key-source { width: 100%; box-sizing: border-box; }
 .reset-dialog #api-key-input { width: 100%; box-sizing: border-box; font-family: monospace; }
 #image-prompt { display: block; width: 100%; height: 112px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; line-height: 1.7; }

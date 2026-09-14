@@ -6,6 +6,7 @@ import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLa
 import { createVideoProjectFile, readVideoProjectFile } from "./video-project-file.js";
 import { createStoryboardReportPdf } from "./pdf-export.js";
 import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
+import { clientIdentityHeaders } from "./client-identity.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -2382,7 +2383,7 @@ async function openStoryboardAiPdf(preparedWindow = null) {
 async function storyboardCheckerRequest(url, body) {
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...clientIdentityHeaders() },
     body: JSON.stringify(body),
     cache: "no-store",
   });

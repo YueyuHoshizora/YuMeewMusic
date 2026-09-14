@@ -5,6 +5,7 @@ import { formatSubtitleTime, generatedSubtitleFilename, parseSubtitleTime, parse
 import { createUndoHistory } from './undo-history.js';
 import { encodeMedia } from './export.js';
 import { SEPARATOR_MAX_DURATION } from './vocal-separator-core.js';
+import { clientIdentityHeaders } from './client-identity.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('editor-audio');
@@ -147,6 +148,7 @@ async function uploadVocals(wav, audioDuration, run) {
   form.append('duration', String(audioDuration));
   const response = await fetch('https://lyrics-transcriber.yustellar.idv.tw', {
     method: 'POST',
+    headers: clientIdentityHeaders(),
     body: form,
     signal: recognition.controller.signal,
   });

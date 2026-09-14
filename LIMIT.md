@@ -6,11 +6,11 @@
 
 | 功能 | Worker／路徑 | 限額 | 計數方式 |
 | --- | --- | --- | --- |
-| Flux 圖片生成 | `flux-klein` `POST /generate` | 每 2 分鐘 1 次 | 用戶端 IP；Durable Object 精確冷卻 |
-| Flux 題詞補全 | `flux-klein` `POST /autocomplete` | 每分鐘 10 次 | 用戶端 IP；Workers Rate Limiting Binding |
-| 分鏡 AI 分析 | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | 用戶端 IP；Durable Object 精確冷卻 |
-| 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | 用戶端 IP；Workers Rate Limiting Binding |
-| Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | 用戶端 IP；Workers Rate Limiting Binding |
+| Flux 圖片生成 | `flux-klein` `POST /generate` | 每 2 分鐘 1 次 | 瀏覽器識別碼＋IP；Durable Object 精確冷卻 |
+| Flux 題詞補全 | `flux-klein` `POST /autocomplete` | 每分鐘 10 次 | 瀏覽器識別碼＋IP；Workers Rate Limiting Binding |
+| 分鏡 AI 分析 | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | 瀏覽器識別碼＋IP；Durable Object 精確冷卻 |
+| 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | 瀏覽器識別碼＋IP；Workers Rate Limiting Binding |
+| Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | 瀏覽器識別碼＋IP；Workers Rate Limiting Binding |
 
 所有 `OPTIONS` 預檢、健康檢查、模型與短效資源讀取、影片生成任務、狀態查詢及下載目前不計入上述限額。
 
@@ -89,6 +89,8 @@ Suno 限速 Binding：`SUNO_RATE_LIMITER`，namespace `7132501`，`10 / 60 秒`�
 
 - Workers Rate Limiting Binding 的計數器由 Cloudflare 各節點維護，適合限制突發流量，但不是精確計費系統。
 - 2 分鐘與 5 分鐘限制使用 SQLite Durable Objects，避免 60 秒週期無法表達較長冷卻時間。
-- 用戶端 IP 由 `CF-Connecting-IP` 取得。同一個公司、學校或共用網路可能共用限額。
+- 前端首次使用時產生 32 位隨機瀏覽器識別碼，保存在本站 `localStorage`，並透過 `X-YuMeew-Client-ID` 傳送。識別碼不包含姓名、Email 或裝置資料。
+- 限流鍵由 `CF-Connecting-IP` 與瀏覽器識別碼共同組成，讓共用公司、學校或家庭網路的不同瀏覽器分開計數；清除網站資料後雖會產生新識別碼，IP 仍會保留在組合鍵中。
+- Worker 只接受 32 位十六進位識別碼；缺少或格式錯誤時使用 `anonymous`，避免任意標頭內容直接成為限流鍵。
 - `Origin` 限制與頻率限制分開運作。請求必須先通過正式網站來源檢查。
 - 修改數值時，需同步更新 Worker 程式、`wrangler.jsonc`、測試與本文件。

@@ -1,3 +1,5 @@
+import { clientIdentityHeaders } from "./client-identity.js";
+
 export const SUNO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
 export const SUNO_MAX_AUDIO_BYTES = 300 * 1024 * 1024;
 
@@ -58,7 +60,7 @@ export async function readSunoAudioResponse(response, { maxBytes = SUNO_MAX_AUDI
 export async function resolveSunoAudio(url, { onProgress } = {}) {
   const response = await fetch(SUNO_PROXY_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...clientIdentityHeaders() },
     body: JSON.stringify({ url }),
   });
   const metadata = await response.json().catch(() => ({}));

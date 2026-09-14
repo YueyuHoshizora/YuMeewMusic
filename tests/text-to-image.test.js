@@ -56,6 +56,8 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /https:\/\/api\.openai\.com\/v1\/images\/generations/);
   assert.match(script, /method:\s*"POST"/);
   assert.match(script, /"Content-Type":\s*"application\/json"/);
+  assert.match(script, /import \{ clientIdentityHeaders \} from "\.\/client-identity\.js"/);
+  assert.equal((script.match(/\.\.\.clientIdentityHeaders\(\)/g) || []).length, 2);
   assert.match(html, /id="enhance-prompt"[^>]*type="checkbox"[^>]*checked/);
   assert.match(html, /文字轉譯成Prompt/);
   assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);

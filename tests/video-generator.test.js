@@ -49,6 +49,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
   assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
   assert.match(script, /const STORYBOARD_CHECKER_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
+  assert.match(script, /function storyboardCheckerRequest\(url, body\)[\s\S]*\.\.\.clientIdentityHeaders\(\)/);
   assert.match(script, /function storyboardAiRequest\(\)[\s\S]*orderedStoryboardEntries\(\)[\s\S]*storyboardAiScene\(finalStoryboard, scenes\.length \+ 1, true\)[\s\S]*scenes/);
   assert.match(script, /const STORYBOARD_CHECKER_STATUS_URL = `\$\{STORYBOARD_CHECKER_URL\}\/status`/);
   assert.match(script, /async function waitForStoryboardAiReport\(input\)[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_URL, input\)[\s\S]*created\.requestId[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_STATUS_URL, \{ requestId \}\)[\s\S]*status\.status === "complete"[\s\S]*10 分鐘/);

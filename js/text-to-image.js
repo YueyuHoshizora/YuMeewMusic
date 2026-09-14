@@ -2,6 +2,7 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, saveStoredMedia } from "./media-store.js";
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
+import { clientIdentityHeaders } from "./client-identity.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
@@ -15,6 +16,7 @@ async function callFlux2Klein4B({ prompt, enhance }) {
     headers: {
       Accept: "image/jpeg,image/*",
       "Content-Type": "application/json",
+      ...clientIdentityHeaders(),
     },
     body: JSON.stringify({ prompt, enhance }),
     cache: "no-store",
@@ -259,7 +261,7 @@ async function composePrompt() {
   try {
     const response = await fetch(AUTOCOMPLETE_URL, {
       method: "POST",
-      headers: { Accept: "application/json,text/plain", "Content-Type": "application/json" },
+      headers: { Accept: "application/json,text/plain", "Content-Type": "application/json", ...clientIdentityHeaders() },
       body: JSON.stringify({ prompt }),
       cache: "no-store",
     });

@@ -50,6 +50,7 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(html, /id="cancel-recognition"[^>]*hidden/);
   assert.match(script, /\$\('cancel-recognition'\)\.hidden = !value/);
   assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.yustellar\.idv\.tw'/);
+  assert.match(script, /headers: clientIdentityHeaders\(\)/);
   assert.equal((script.match(/\bfetch\s*\(/g) || []).length, 1);
   assert.match(script, /parseSubtitles\(text, 'srt'\)/);
   assert.match(script, /MAX_RECOGNITION_FILE_SIZE = 150 \* 1024 \* 1024/);

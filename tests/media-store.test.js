@@ -157,3 +157,13 @@ test("video generator draft and its media resources persist in IndexedDB", async
   assert.equal(entries.find(entry => entry.key === "video-generator-draft").field, "自動儲存草稿");
   assert.equal(entries.find(entry => entry.key === "video-generator-draft-resources").size, resource.size);
 });
+
+test("video generation task and history persist in IndexedDB", async () => {
+  const database = memoryIndexedDb();
+  const video = new Blob(["video-history"], { type: "video/mp4" });
+  await saveStoredValue("video-generation-task", { taskId: "task-1", updatedAt: 200 }, database);
+  await saveStoredValue("video-generation-history", { items: [{ id: "v1", blob: video }], updatedAt: 300 }, database);
+  const entries = await listStoredEntries(database);
+  assert.equal(entries.find(entry => entry.key === "video-generation-task").field, "進行中的生成任務");
+  assert.equal(entries.find(entry => entry.key === "video-generation-history").size, video.size);
+});

@@ -36,6 +36,7 @@
               <button id="open-film-style" class="video-prompt-add video-film-style-button" type="button">全片風格</button>
               <button id="preview-video-prompt" class="video-prompt-add video-prompt-preview-button" type="button">預覽題詞</button>
               <button id="inspect-storyboards" class="video-prompt-add video-storyboard-inspect-button" type="button">檢查分鏡</button>
+              <button id="reflow-storyboard-times" class="video-prompt-add video-storyboard-time-button" type="button">重新接續時間</button>
               <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
@@ -103,6 +104,8 @@
           <div class="result-actions">
             <button id="download-video" class="reset-settings" type="button" disabled>↓ 下載影片</button>
             <button id="retry-save-video" class="reset-settings" type="button" hidden>重新保存影片</button>
+            <button id="open-video-history" class="reset-settings" type="button" disabled>生成歷史</button>
+            <button id="send-video-editor" class="reset-settings" type="button" disabled>送到影片編輯器</button>
             <button id="apply-video-background" class="export-button" type="button" disabled>套用主畫面背景 →</button>
           </div>
           <p class="result-storage-note">最後一次生成結果會保存在目前瀏覽器；可下載 MP4 或套用為主畫面的背景素材。</p>
@@ -578,11 +581,28 @@
       <form id="confirm-video-generation-form" method="dialog">
         <h2 id="confirm-video-generation-title">確認生成影片</h2>
         <p id="confirm-video-generation-message">影片生成會消耗 MiniMax 帳戶額度，是否確定開始生成？</p>
+        <div id="video-generation-summary" class="video-generation-summary" aria-label="生成摘要"></div>
         <div class="dialog-actions">
           <button id="cancel-video-generation" class="text-button" type="button">取消</button>
           <button class="dialog-confirm" type="submit">確認生成</button>
         </div>
       </form>
+    </dialog>
+
+    <dialog id="video-history-dialog" class="reset-dialog video-history-dialog" aria-labelledby="video-history-title">
+      <div>
+        <div class="video-history-heading"><div><h2 id="video-history-title">生成歷史</h2><p>最多保留最近 5 個版本；勾選兩個版本可並排比較。</p></div><button id="close-video-history" class="dialog-confirm" type="button">關閉</button></div>
+        <div id="video-history-list" class="video-history-list"></div>
+        <div class="dialog-actions"><button id="compare-video-history" class="dialog-confirm" type="button" disabled>比較所選版本</button></div>
+      </div>
+    </dialog>
+
+    <dialog id="video-compare-dialog" class="reset-dialog video-compare-dialog" aria-labelledby="video-compare-title">
+      <div>
+        <h2 id="video-compare-title">版本比較</h2>
+        <div id="video-compare-grid" class="video-compare-grid"></div>
+        <div class="dialog-actions"><button id="close-video-compare" class="dialog-confirm" type="button">關閉</button></div>
+      </div>
     </dialog>
   </body>
 </html>

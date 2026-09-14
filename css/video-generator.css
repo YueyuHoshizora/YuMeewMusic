@@ -195,9 +195,12 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .storyboard-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; }
 .storyboard-card-action { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--border); border-radius: 7px; padding: 0; background: var(--card); color: var(--muted); }
 .storyboard-card-action:hover { border-color: var(--primary); color: var(--primary-text); }
+.storyboard-card-action:disabled { opacity: .3; cursor: default; }
 .storyboard-card-action::before { font-size: 13px; font-weight: 800; }
 .storyboard-card-action.edit::before { content: "✎"; }
 .storyboard-card-action.copy::before { content: "⧉"; }
+.storyboard-card-action.up::before { content: "↑"; }
+.storyboard-card-action.down::before { content: "↓"; }
 .storyboard-card-action.delete { color: var(--error-text); }
 .storyboard-card-action.delete::before { content: "×"; font-size: 18px; }
 .storyboard-field { min-height: 21px; font-size: 13px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -286,6 +289,29 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-resource-preview-stage video { display: block; max-width: 100%; max-height: 68vh; object-fit: contain; }
 .video-resource-preview-stage audio { width: min(620px, calc(100% - 40px)); }
 .video-resource-preview-stage [hidden] { display: none; }
+.video-generation-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 16px 0 4px; }
+.video-generation-summary span { display: grid; gap: 3px; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; background: var(--surface); color: var(--muted); font-size: 10px; }
+.video-generation-summary strong { overflow-wrap: anywhere; color: var(--foreground); font-size: 13px; }
+#confirm-video-generation-dialog { width: 700px; max-width: none; }
+.video-history-dialog { width: 1060px; max-width: none; }
+.video-history-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.video-history-heading h2 { margin-bottom: 5px; }
+.video-history-heading p { color: var(--muted); font-size: 12px; }
+.video-history-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-height: 66vh; margin-top: 18px; overflow-y: auto; }
+.video-history-empty { grid-column: 1 / -1; padding: 28px; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); text-align: center; }
+.video-history-card { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 12px; border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: var(--surface); }
+.video-history-card video { width: 180px; aspect-ratio: 16 / 9; border-radius: 7px; background: #050608; object-fit: contain; }
+.video-history-card-info { display: flex; min-width: 0; flex-direction: column; gap: 6px; }
+.video-history-card-info strong { color: var(--foreground); font-size: 13px; }
+.video-history-card-info small { color: var(--muted); font-size: 11px; }
+.video-history-card-actions { display: flex; align-items: center; gap: 8px; margin-top: auto; }
+.video-history-card-actions label { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+.video-history-card-actions button { border: 1px solid var(--primary); border-radius: 7px; padding: 6px 9px; background: transparent; color: var(--primary-text); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; }
+.video-compare-dialog { width: 1180px; max-width: none; }
+.video-compare-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+.video-compare-item { min-width: 0; }
+.video-compare-item video { display: block; width: 100%; max-height: 62vh; border-radius: 10px; background: #050608; }
+.video-compare-item p { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 .generated-video-frame { cursor: default; }
 .generated-video-frame video { display: block; width: 100%; height: 100%; background: #000; object-fit: contain; }
 .generated-video-frame video[hidden] { display: none; }

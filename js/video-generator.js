@@ -20,6 +20,7 @@ const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
 const RESOURCE_UPLOAD_URL = "https://model-proxy.yustellar.idv.tw/resources/upload";
 const POLL_INTERVAL = 5000;
 const POLL_TIMEOUT = 30 * 60 * 1000;
+const VIDEO_HISTORY_LIMIT = 5;
 const $ = id => document.getElementById(id);
 const VIDEO_MODELS = Object.freeze({
   "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15 }),
@@ -55,6 +56,11 @@ let generatedVideoRemoteUrl = "";
 let generatedVideoProvider = "minimax";
 let generatedVideoApiKey = "";
 let generationAbort = null;
+let generatedVideoMetadata = null;
+let generationHistory = [];
+let videoHistorySelection = new Set();
+const historyPreviewUrls = new Set();
+const comparisonPreviewUrls = new Set();
 let characterTemplates = [];
 const characterPreviewUrls = new Set();
 let editingCharacterIndex = -1;
@@ -1186,10 +1192,46 @@ function storyboardAction(kind, label, handler) {
 }
 
 function refreshStoryboardLabels() {
-  document.querySelectorAll("#video-prompt .storyboard-block").forEach((block, index) => {
+  const blocks = [...document.querySelectorAll("#video-prompt .storyboard-block")];
+  blocks.forEach((block, index) => {
     block.dataset.title = `分鏡 ${index + 1}`;
     block.setAttribute("aria-label", `編輯分鏡 ${index + 1}`);
+    block.querySelector(".storyboard-card-action.up").disabled = index === 0;
+    block.querySelector(".storyboard-card-action.down").disabled = index === blocks.length - 1;
   });
+}
+
+function moveStoryboard(id, direction) {
+  if (busy || promptBuilderMinimized) return;
+  const block = document.querySelector(`[data-storyboard-id="${CSS.escape(id)}"]`);
+  const sibling = direction < 0 ? block?.previousElementSibling : block?.nextElementSibling;
+  if (!block || !sibling?.matches(".storyboard-block")) return;
+  if (direction < 0) sibling.before(block);
+  else sibling.after(block);
+  refreshStoryboardLabels();
+  syncDraftStatus();
+}
+
+function redrawStoryboard(id) {
+  const block = document.querySelector(`[data-storyboard-id="${CSS.escape(id)}"]`);
+  const draft = storyboards.get(id);
+  if (block && draft) block.replaceWith(createStoryboardBlock(draft));
+}
+
+function reflowStoryboardTimes() {
+  const entries = orderedStoryboardEntries();
+  if (!entries.length || busy || !window.confirm("將依目前排序從 0 秒開始，重新接續所有分鏡時間，是否繼續？")) return;
+  let cursor = 0;
+  for (const { draft } of entries) {
+    const duration = Math.max(.1, Number(draft.end) - Number(draft.start) || .1);
+    draft.start = roundedStoryboardTime(cursor);
+    cursor += duration;
+    draft.end = roundedStoryboardTime(cursor);
+    redrawStoryboard(draft.id);
+  }
+  refreshStoryboardLabels();
+  syncDraftStatus();
+  setStatus(`已重新接續 ${entries.length} 個分鏡時間`, "success");
 }
 
 function createStoryboardBlock(draft) {
@@ -1202,6 +1244,8 @@ function createStoryboardBlock(draft) {
   const actions = document.createElement("div");
   actions.className = "storyboard-card-actions";
   actions.append(
+    storyboardAction("up", "向上移動", () => moveStoryboard(draft.id, -1)),
+    storyboardAction("down", "向下移動", () => moveStoryboard(draft.id, 1)),
     storyboardAction("edit", "編輯分鏡", () => editStoryboard(draft.id)),
     storyboardAction("copy", "複製分鏡", () => duplicateStoryboard(draft.id)),
     storyboardAction("delete", "刪除分鏡", () => deleteStoryboard(draft.id)),
@@ -1569,14 +1613,20 @@ function filmStyleText() {
   return fields.length ? `全片風格：\n${fields.join("\n")}` : "";
 }
 
+function storyboardPromptText(draft) {
+  if (!draft) return "";
+  return storyboardFields(draft)
+    .map(([label, value]) => `${label}：${value}`)
+    .join("\n");
+}
+
 function videoPromptSections() {
   const details = document.createElement("div");
   const storyboardText = [];
   for (const node of $("video-prompt").childNodes) {
     if (node.nodeType === Node.ELEMENT_NODE && node.matches(".storyboard-block")) {
-      const promptBlock = node.cloneNode(true);
-      promptBlock.querySelector('[data-field="summary"]')?.remove();
-      storyboardText.push(editorText(promptBlock));
+      const text = storyboardPromptText(storyboards.get(node.dataset.storyboardId));
+      if (text) storyboardText.push(text);
     }
     else details.append(node.cloneNode(true));
   }
@@ -1621,6 +1671,43 @@ function orderedStoryboardEntries() {
   })).filter(entry => entry.draft);
 }
 
+function storyboardCharacterNames(draft) {
+  const enabled = characterTemplates.filter(character => character.enabled !== false && character.name).map(character => character.name);
+  const text = storyboardPromptText(draft);
+  return new Set(enabled.filter(name => text.includes(name)));
+}
+
+function continuityProfile(draft) {
+  const text = storyboardPromptText(draft);
+  const firstMatch = values => values.find(value => text.includes(value)) || "";
+  const clothing = text.match(/(?:穿著|身穿)([^，。；\n]{1,30})/u)?.[1]?.trim() || "";
+  return {
+    time: firstMatch(["清晨", "白天", "正午", "黃昏", "夜晚", "深夜"]),
+    place: firstMatch(["室內", "室外"]),
+    weather: firstMatch(["晴天", "雨天", "下雨", "雪天", "下雪"]),
+    temperature: draft.lightingTemperature || firstMatch(["暖色", "冷色"]),
+    clothing,
+    characters: storyboardCharacterNames(draft),
+  };
+}
+
+function addContinuityWarnings(entries, add) {
+  const labels = { time: "時間", place: "室內／室外", weather: "天氣", temperature: "燈光色溫" };
+  for (let index = 1; index < entries.length; index += 1) {
+    const previous = continuityProfile(entries[index - 1].draft);
+    const current = continuityProfile(entries[index].draft);
+    const sharedCharacters = [...current.characters].filter(name => previous.characters.has(name));
+    for (const [field, label] of Object.entries(labels)) {
+      if (previous[field] && current[field] && previous[field] !== current[field]) {
+        add("warning", `分鏡 ${index} 到分鏡 ${index + 1} 的${label}由「${previous[field]}」變為「${current[field]}」，請確認是否為預期轉換。`, entries[index]);
+      }
+    }
+    if (sharedCharacters.length && previous.clothing && current.clothing && previous.clothing !== current.clothing) {
+      add("warning", `人物「${sharedCharacters.join("、")}」在相鄰分鏡中的服裝描述不同，請確認人物連續性。`, entries[index]);
+    }
+  }
+}
+
 function inspectStoryboardProject() {
   const entries = orderedStoryboardEntries();
   const model = VIDEO_MODELS[$("video-model").value];
@@ -1648,6 +1735,7 @@ function inspectStoryboardProject() {
       .filter(name => name && name !== "__all__" && name !== "__narrator__");
     for (const name of new Set(characterNames)) if (!enabledNames.has(name)) add("warning", `${label} 使用的人物「${name}」目前不存在或已禁用。`, entry);
   }
+  addContinuityWarnings(entries, add);
   const referencedIds = new Set([...$("video-prompt").querySelectorAll(".resource-token")].map(token => token.dataset.resourceId).filter(Boolean));
   const unusedResources = videoResources.filter(resource => !referencedIds.has(resource.id));
   if (unusedResources.length) add("warning", `有 ${unusedResources.length} 個上傳資源尚未被任何分鏡引用。`);
@@ -2446,18 +2534,21 @@ function submitApiKey(event) {
   }
   $("video-api-key-dialog").close();
   syncModelDetails();
+  void restorePendingGeneration();
 }
 
 function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["open-film-style", "preview-video-prompt", "inspect-storyboards", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
+  for (const id of ["open-film-style", "preview-video-prompt", "inspect-storyboards", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
+  $("send-video-editor").disabled = value || !generatedVideoBlob;
+  $("open-video-history").disabled = value || !generationHistory.length;
   syncGenerateAvailability();
 }
 
@@ -2527,8 +2618,7 @@ function providerEndpoints(provider) {
   return { create: CREATE_VIDEO_URL, query: QUERY_VIDEO_URL, download: DOWNLOAD_VIDEO_URL };
 }
 
-async function pollVideoTask(taskId, apiKey, model, signal) {
-  const startedAt = Date.now();
+async function pollVideoTask(taskId, apiKey, model, signal, startedAt = Date.now()) {
   while (Date.now() - startedAt < POLL_TIMEOUT) {
     const result = await fetchJson(providerEndpoints(model.provider).query, {
       method: "POST",
@@ -2540,7 +2630,11 @@ async function pollVideoTask(taskId, apiKey, model, signal) {
     const task = model.provider === "byteplus" || model.provider === "google" ? result : result?.task;
     if (!task) throw Error(`${model.apiKey} 沒有回傳任務資料。`);
     if (model.provider === "google" && task.done) {
-      if (task.error) throw Error(task.error.message || "Google Veo 影片生成失敗。");
+      if (task.error) {
+        const error = Error(task.error.message || "Google Veo 影片生成失敗。");
+        error.terminal = true;
+        throw error;
+      }
       const videoUrl = task.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri;
       if (!videoUrl) throw Error(task.response?.generateVideoResponse?.raiMediaFilteredReasons?.[0] || "Veo 任務完成，但沒有回傳影片網址。");
       task.videoUrl = videoUrl;
@@ -2553,7 +2647,11 @@ async function pollVideoTask(taskId, apiKey, model, signal) {
       task.videoUrl = videoUrl;
       return task;
     }
-    if (["failed", "cancelled", "expired"].includes(taskState)) throw Error(task.error?.message || task.message || `影片生成${taskState === "cancelled" ? "已取消" : taskState === "expired" ? "已逾時" : "失敗"}。`);
+    if (["failed", "cancelled", "expired"].includes(taskState)) {
+      const error = Error(task.error?.message || task.message || `影片生成${taskState === "cancelled" ? "已取消" : taskState === "expired" ? "已逾時" : "失敗"}。`);
+      error.terminal = true;
+      throw error;
+    }
     const elapsed = Math.floor((Date.now() - startedAt) / 1000);
     $("video-generation-lock-title").textContent = taskState === "running" ? "影片生成中" : "影片任務排隊中";
     $("video-generation-lock-detail").textContent = `任務 ${taskId} · 已等待 ${elapsed} 秒`;
@@ -2561,6 +2659,178 @@ async function pollVideoTask(taskId, apiKey, model, signal) {
     await wait(POLL_INTERVAL, signal);
   }
   throw Error(`影片生成等待超過 30 分鐘，請稍後至 ${model.apiKey} 查詢任務狀態。`);
+}
+
+function generationRecordMetadata(modelId, prompt) {
+  const model = VIDEO_MODELS[modelId];
+  return {
+    modelId,
+    modelLabel: model.label,
+    provider: model.provider,
+    resolution: $("video-resolution").value,
+    duration: Number($("video-duration").value),
+    ratio: $("video-ratio").value,
+    prompt,
+  };
+}
+
+async function loadGenerationHistory() {
+  const saved = await loadStoredValue("video-generation-history").catch(() => null);
+  generationHistory = Array.isArray(saved?.items) ? saved.items.filter(item => item?.blob?.size).slice(0, VIDEO_HISTORY_LIMIT) : [];
+  syncHistoryButton();
+  return generationHistory;
+}
+
+function syncHistoryButton() {
+  $("open-video-history").textContent = generationHistory.length ? `生成歷史（${generationHistory.length}）` : "生成歷史";
+  $("open-video-history").disabled = busy || !generationHistory.length;
+}
+
+async function saveGenerationHistory(blob, metadata) {
+  await loadGenerationHistory();
+  const record = {
+    id: globalThis.crypto?.randomUUID?.() || `video-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    blob,
+    name: videoFilename(),
+    createdAt: Date.now(),
+    ...metadata,
+  };
+  generationHistory.unshift(record);
+  generationHistory = generationHistory.slice(0, VIDEO_HISTORY_LIMIT);
+  let lastError;
+  while (generationHistory.length) {
+    try {
+      await saveStoredValue("video-generation-history", { items: generationHistory, updatedAt: Date.now() });
+      syncHistoryButton();
+      return record;
+    } catch (error) {
+      lastError = error;
+      if (generationHistory.length === 1) break;
+      generationHistory.pop();
+    }
+  }
+  throw lastError || Error("無法保存生成歷史。");
+}
+
+function releaseUrlSet(urls) {
+  urls.forEach(url => URL.revokeObjectURL(url));
+  urls.clear();
+}
+
+function historyTime(value) {
+  return new Intl.DateTimeFormat("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(value));
+}
+
+function loadHistoryVersion(id) {
+  const record = generationHistory.find(item => item.id === id);
+  if (!record) return;
+  releaseVideo();
+  generatedVideoBlob = record.blob;
+  generatedVideoUrl = URL.createObjectURL(record.blob);
+  generatedVideoMetadata = record;
+  $("result-video-resolution").textContent = record.resolution || "影片";
+  $("result-video-ratio").textContent = `${record.ratio || "原始比例"} · MP4`;
+  presentVideo();
+  $("video-history-dialog").close();
+  $("video-result-panel").open = true;
+  setStatus(`已載入 ${historyTime(record.createdAt)} 的生成版本`, "success");
+}
+
+async function deleteHistoryVersion(id) {
+  const record = generationHistory.find(item => item.id === id);
+  if (!record || !window.confirm(`確定刪除 ${historyTime(record.createdAt)} 的生成版本？`)) return;
+  generationHistory = generationHistory.filter(item => item.id !== id);
+  videoHistorySelection.delete(id);
+  if (generationHistory.length) await saveStoredValue("video-generation-history", { items: generationHistory, updatedAt: Date.now() });
+  else await deleteStoredValue("video-generation-history");
+  syncHistoryButton();
+  renderVideoHistory();
+}
+
+function renderVideoHistory() {
+  releaseUrlSet(historyPreviewUrls);
+  videoHistorySelection = new Set([...videoHistorySelection].filter(id => generationHistory.some(item => item.id === id)));
+  const list = $("video-history-list");
+  list.replaceChildren();
+  if (!generationHistory.length) {
+    const empty = document.createElement("p");
+    empty.className = "video-history-empty";
+    empty.textContent = "尚無生成歷史。";
+    list.append(empty);
+  }
+  for (const record of generationHistory) {
+    const card = document.createElement("article");
+    card.className = "video-history-card";
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(record.blob);
+    historyPreviewUrls.add(url);
+    video.src = url;
+    video.controls = true;
+    video.preload = "metadata";
+    const info = document.createElement("div");
+    info.className = "video-history-card-info";
+    const title = document.createElement("strong");
+    title.textContent = record.modelLabel || VIDEO_MODELS[record.modelId]?.label || "影片版本";
+    const meta = document.createElement("small");
+    meta.textContent = `${historyTime(record.createdAt)} · ${record.resolution || ""} · ${record.ratio || ""} · ${record.duration || "?"} 秒`;
+    const actions = document.createElement("div");
+    actions.className = "video-history-card-actions";
+    const choose = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = videoHistorySelection.has(record.id);
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked && videoHistorySelection.size >= 2) {
+        checkbox.checked = false;
+        return;
+      }
+      if (checkbox.checked) videoHistorySelection.add(record.id);
+      else videoHistorySelection.delete(record.id);
+      $("compare-video-history").disabled = videoHistorySelection.size !== 2;
+    });
+    choose.append(checkbox, document.createTextNode("比較"));
+    const load = document.createElement("button");
+    load.type = "button";
+    load.textContent = "載入";
+    load.addEventListener("click", () => loadHistoryVersion(record.id));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "刪除";
+    remove.addEventListener("click", () => void deleteHistoryVersion(record.id));
+    actions.append(choose, load, remove);
+    info.append(title, meta, actions);
+    card.append(video, info);
+    list.append(card);
+  }
+  $("compare-video-history").disabled = videoHistorySelection.size !== 2;
+}
+
+function openVideoHistory() {
+  renderVideoHistory();
+  $("video-history-dialog").showModal();
+}
+
+function compareSelectedVideos() {
+  const records = [...videoHistorySelection].map(id => generationHistory.find(item => item.id === id)).filter(Boolean);
+  if (records.length !== 2) return;
+  $("video-history-dialog").close();
+  releaseUrlSet(comparisonPreviewUrls);
+  const grid = $("video-compare-grid");
+  grid.replaceChildren(...records.map(record => {
+    const item = document.createElement("section");
+    item.className = "video-compare-item";
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(record.blob);
+    comparisonPreviewUrls.add(url);
+    video.src = url;
+    video.controls = true;
+    video.preload = "metadata";
+    const meta = document.createElement("p");
+    meta.textContent = `${record.modelLabel || "影片版本"} · ${historyTime(record.createdAt)} · ${record.resolution || ""} · ${record.ratio || ""}`;
+    item.append(video, meta);
+    return item;
+  }));
+  $("video-compare-dialog").showModal();
 }
 
 function releaseVideo() {
@@ -2573,6 +2843,8 @@ function releaseVideo() {
   generatedVideoUrl = "";
   generatedVideoRemoteUrl = "";
   generatedVideoApiKey = "";
+  generatedVideoMetadata = null;
+  $("send-video-editor").disabled = true;
   $("retry-save-video").hidden = true;
 }
 
@@ -2584,12 +2856,26 @@ function presentVideo() {
   video.load();
   $("download-video").disabled = false;
   $("apply-video-background").disabled = !generatedVideoBlob;
+  $("send-video-editor").disabled = !generatedVideoBlob;
 }
 
 async function restoreLastGeneratedVideo() {
   if (lastGeneratedVideoRestored) return;
   lastGeneratedVideoRestored = true;
   try {
+    await loadGenerationHistory();
+    const latest = generationHistory[0];
+    if (latest?.blob?.size && !busy) {
+      releaseVideo();
+      generatedVideoBlob = latest.blob;
+      generatedVideoUrl = URL.createObjectURL(generatedVideoBlob);
+      generatedVideoMetadata = latest;
+      $("result-video-resolution").textContent = latest.resolution || "影片";
+      $("result-video-ratio").textContent = `${latest.ratio || "原始比例"} · MP4`;
+      presentVideo();
+      setStatus("已載入上次生成結果", "success");
+      return;
+    }
     const record = await loadStoredMedia("generated-video");
     if (!record?.blob?.size || !record.blob.type?.startsWith("video/") || busy) return;
     releaseVideo();
@@ -2600,11 +2886,14 @@ async function restoreLastGeneratedVideo() {
   } catch {}
 }
 
-async function showVideoResult(remoteUrl, provider = generatedVideoProvider, expandResult = false, apiKey = "") {
+async function showVideoResult(remoteUrl, provider = generatedVideoProvider, expandResult = false, apiKey = "", metadata = generatedVideoMetadata) {
+  const resultMetadata = metadata || {};
+  let persisted = false;
   releaseVideo();
   generatedVideoRemoteUrl = remoteUrl;
   generatedVideoProvider = provider;
   generatedVideoApiKey = apiKey;
+  generatedVideoMetadata = resultMetadata;
   try {
     const response = await fetch(providerEndpoints(provider).download, {
       method: "POST",
@@ -2617,10 +2906,12 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider, exp
     if (!blob.size) throw Error("影片檔案內容為空。");
     generatedVideoBlob = new Blob([blob], { type: blob.type || "video/mp4" });
     generatedVideoUrl = URL.createObjectURL(generatedVideoBlob);
-    const cachedFile = new File([generatedVideoBlob], videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
-    await saveStoredMedia("generated-video", cachedFile).catch(() => {
-      showError("影片已生成，但瀏覽器無法保存最後一次生成結果。");
-    });
+    const historyRecord = await saveGenerationHistory(generatedVideoBlob, resultMetadata).catch(() => null);
+    if (historyRecord) {
+      generatedVideoMetadata = historyRecord;
+      persisted = true;
+    }
+    else showError("影片已生成，但瀏覽器無法保存生成歷史。");
     $("retry-save-video").hidden = true;
   } catch {
     showError("影片已生成，但下載代理無法讀取影片檔案；仍可播放或開啟下載網址。保存與套用背景功能暫時無法使用。");
@@ -2628,6 +2919,48 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider, exp
   }
   presentVideo();
   if (expandResult) $("video-result-panel").open = true;
+  return persisted;
+}
+
+async function savePendingGeneration(taskId, metadata) {
+  await saveStoredValue("video-generation-task", { taskId, metadata, createdAt: Date.now(), updatedAt: Date.now() });
+}
+
+async function clearPendingGeneration() {
+  await deleteStoredValue("video-generation-task").catch(() => {});
+}
+
+async function restorePendingGeneration() {
+  if (busy) return;
+  const pending = await loadStoredValue("video-generation-task").catch(() => null);
+  const metadata = pending?.metadata;
+  const model = VIDEO_MODELS[metadata?.modelId];
+  if (!pending?.taskId || !model) return;
+  const apiKey = getApiKey(metadata.modelId)?.value || "";
+  if (!apiKey) {
+    setStatus(`有一個未完成的 ${metadata.modelLabel || model.label} 任務；設定 API KEY 後重新開啟頁面即可繼續查詢`, "error");
+    return;
+  }
+  setBusy(true);
+  generationAbort = new AbortController();
+  $("video-generation-lock-title").textContent = "正在恢復影片生成任務";
+  $("video-generation-lock-detail").textContent = `任務 ${pending.taskId}`;
+  setStatus(`正在恢復 ${metadata.modelLabel || model.label} 生成任務…`);
+  try {
+    const task = await pollVideoTask(pending.taskId, apiKey, model, generationAbort.signal);
+    const saved = await showVideoResult(task.videoUrl, model.provider, true, apiKey, metadata);
+    if (saved) await clearPendingGeneration();
+    setStatus(saved ? "已取回先前的影片生成結果" : "影片已生成，將於下次開啟時再次嘗試保存", saved ? "success" : "error");
+  } catch (error) {
+    if (error?.terminal) await clearPendingGeneration();
+    if (error?.name !== "AbortError") {
+      showError(error.message || "暫時無法恢復影片生成任務，下次開啟頁面會再次查詢。");
+      setStatus(error?.terminal ? "先前的影片任務失敗" : "影片任務將於下次開啟時繼續查詢", "error");
+    }
+  } finally {
+    generationAbort = null;
+    setBusy(false);
+  }
 }
 
 function videoFilename(date = new Date()) {
@@ -2647,12 +2980,14 @@ async function generateVideo() {
   setBusy(true);
   generationAbort = new AbortController();
   let inputs = [];
+  let pendingTaskSaved = false;
   $("video-generation-lock-title").textContent = "正在建立影片生成任務";
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
     const generation = generationInputs(videoDetails);
     inputs = generation.resources;
     const prompt = completeVideoPrompt(videoDetails);
+    generatedVideoMetadata = generationRecordMetadata(modelId, prompt);
     setStatus(`正在建立 ${model.apiKey} 影片任務…`);
     const payload = await generationPayload(modelId, model, prompt, inputs, generationAbort.signal);
     if (model.provider === "byteplus") {
@@ -2671,12 +3006,21 @@ async function generateVideo() {
     }, model.provider);
     const taskId = model.provider === "byteplus" ? created?.id : model.provider === "google" ? created?.name : created?.task_id;
     if (!taskId) throw Error(`${model.apiKey} 沒有回傳影片任務 ID。`);
+    pendingTaskSaved = await savePendingGeneration(taskId, generatedVideoMetadata).then(() => true).catch(() => false);
     const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal);
     $("video-generation-lock-title").textContent = "影片已完成，正在載入結果";
     $("video-generation-lock-detail").textContent = "正在準備預覽與下載檔案…";
-    await showVideoResult(task.videoUrl, model.provider, true, apiKey);
-    setStatus(`生成完成 · ${task.resolution || $("video-resolution").value} · ${task.duration || $("video-duration").value} 秒`, "success");
+    const saved = await showVideoResult(task.videoUrl, model.provider, true, apiKey, generatedVideoMetadata);
+    if (pendingTaskSaved && saved) {
+      await clearPendingGeneration();
+      pendingTaskSaved = false;
+    }
+    setStatus(saved
+      ? `生成完成 · ${task.resolution || $("video-resolution").value} · ${task.duration || $("video-duration").value} 秒`
+      : "影片已生成，但尚未保存到瀏覽器；下次開啟時會再次嘗試",
+    saved ? "success" : "error");
   } catch (error) {
+    if (pendingTaskSaved && error?.terminal) await clearPendingGeneration();
     if (error?.name !== "AbortError") {
       const message = error instanceof TypeError
         ? "瀏覽器無法連線至影片生成服務，請稍後再試。"
@@ -2698,6 +3042,28 @@ function openGenerateConfirmation() {
     setStatus(`請先修正 ${report.errors} 個分鏡錯誤`, "error");
     return;
   }
+  const model = VIDEO_MODELS[$("video-model").value];
+  const details = promptVideoDetails();
+  const resources = referencedResources();
+  const characters = referencedCharacters(details);
+  const values = [
+    ["生成模型", model.label],
+    ["輸出規格", `${$("video-resolution").value} · ${$("video-ratio").value}`],
+    ["影片長度", `${$("video-duration").value} 秒`],
+    ["生成任務", "1 個"],
+    ["分鏡", `${report.entries.length} 個`],
+    ["人物／資源", `${characters.length} 位／${resources.length} 個`],
+    ["影片音訊", model.provider === "byteplus" ? "啟用" : "依模型輸出"],
+    ["額度／費用", `依 ${model.apiKey} 帳戶方案計算`],
+    ["題詞長度", `${report.promptLength} 字元`],
+  ];
+  $("video-generation-summary").replaceChildren(...values.map(([label, value]) => {
+    const item = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = value;
+    item.append(document.createTextNode(label), strong);
+    return item;
+  }));
   $("confirm-video-generation-dialog").showModal();
 }
 
@@ -2723,6 +3089,7 @@ $("delete-character").addEventListener("click", deleteEditingCharacter);
 $("preview-video-prompt").addEventListener("click", openVideoPromptPreview);
 $("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-preview-dialog").close());
 $("inspect-storyboards").addEventListener("click", () => openStoryboardInspection());
+$("reflow-storyboard-times").addEventListener("click", reflowStoryboardTimes);
 $("close-storyboard-inspection").addEventListener("click", () => $("storyboard-inspection-dialog").close());
 $("export-video-project").addEventListener("click", openVideoProjectExport);
 $("export-video-project-form").addEventListener("submit", event => void exportVideoProject(event));
@@ -2839,7 +3206,7 @@ $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;
   const link = document.createElement("a");
   link.href = generatedVideoUrl || generatedVideoRemoteUrl;
-  link.download = generatedVideoBlob ? videoFilename() : "";
+  link.download = generatedVideoBlob ? generatedVideoMetadata?.name || videoFilename() : "";
   if (!generatedVideoBlob) link.target = "_blank";
   link.rel = "noopener";
   link.click();
@@ -2856,6 +3223,29 @@ $("retry-save-video").addEventListener("click", async () => {
   await showVideoResult(retryUrl, retryProvider, false, retryApiKey);
   setStatus(generatedVideoBlob ? "影片已保存到瀏覽器" : "影片保存失敗", generatedVideoBlob ? "success" : "error");
   setBusy(false);
+});
+
+$("open-video-history").addEventListener("click", openVideoHistory);
+$("close-video-history").addEventListener("click", () => $("video-history-dialog").close());
+$("video-history-dialog").addEventListener("close", () => releaseUrlSet(historyPreviewUrls));
+$("compare-video-history").addEventListener("click", compareSelectedVideos);
+$("close-video-compare").addEventListener("click", () => $("video-compare-dialog").close());
+$("video-compare-dialog").addEventListener("close", () => releaseUrlSet(comparisonPreviewUrls));
+
+$("send-video-editor").addEventListener("click", async () => {
+  if (!generatedVideoBlob || busy) return;
+  setBusy(true);
+  setStatus("正在將影片送到影片編輯器…");
+  try {
+    const file = new File([generatedVideoBlob], generatedVideoMetadata?.name || videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
+    await saveStoredMedia("image", file);
+    await deleteStoredValue("image-video-project").catch(() => {});
+    window.location.href = "./video-editor.html";
+  } catch (error) {
+    showError(error.message || "無法將影片送到影片編輯器。");
+    setStatus("影片交接失敗", "error");
+    setBusy(false);
+  }
 });
 
 $("apply-video-background").addEventListener("click", async () => {
@@ -2878,6 +3268,8 @@ window.addEventListener("pagehide", () => {
   if (autoDraftReady) void saveAutoDraftNow({ resources: autoDraftResourcesDirty }).catch(() => {});
   generationAbort?.abort();
   releaseVideo();
+  releaseUrlSet(historyPreviewUrls);
+  releaseUrlSet(comparisonPreviewUrls);
   characterPreviewUrls.forEach(url => URL.revokeObjectURL(url));
   characterPreviewUrls.clear();
   releaseResourceUrls();
@@ -2891,4 +3283,7 @@ function restoreWhenIdle(task) {
   if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
   else setTimeout(run, 0);
 }
-restoreWhenIdle(() => Promise.all([restoreCharacterTemplates(), restoreAutoDraft()]));
+restoreWhenIdle(async () => {
+  await Promise.all([restoreCharacterTemplates(), restoreAutoDraft()]);
+});
+void loadGenerationHistory().then(() => restorePendingGeneration());

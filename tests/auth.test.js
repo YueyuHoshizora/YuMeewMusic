@@ -35,12 +35,14 @@ test("member center reads the balance, top-up history and consumption history", 
   const html = readFileSync("account.html", "utf8");
   const script = readFileSync("js/account.js", "utf8");
   for (const label of ["剩餘額度", "儲值紀錄", "消費紀錄", "使用 Google 登入", "臺灣銀行美元即期匯率"]) assert.match(html, new RegExp(label));
-  assert.match(html, /id="topup-usd"[^>]*type="number"[^>]*value="10"/);
+  assert.match(html, /id="topup-twd"[^>]*type="number"[^>]*value="100"[^>]*inputmode="numeric"/);
+  assert.match(html, /id="topup-usd">可取得 \$—/);
   assert.match(html, /id="account-topup"[^>]*disabled>儲值<\/button>/);
   assert.match(script, /fetchMemberAccount/);
   assert.match(script, /fetchUsdTwdExchangeRate/);
   assert.match(script, /TOPUP_PAYOUT_RATE = 0\.85/);
-  assert.match(script, /amount \* usdTwdRate \* TOPUP_PAYOUT_RATE/);
+  assert.match(script, /amount \/ usdTwdRate \* TOPUP_PAYOUT_RATE/);
+  assert.match(script, /`可取得 \$\{usdFormatter\.format\(total\)\}`/);
   assert.match(script, /中間匯率[\s\S]*85% 計價（平台保留 15%）/);
   assert.match(script, /style: "currency", currency: "USD"/);
   assert.doesNotMatch(script, /\.from\(/);

@@ -16,8 +16,8 @@ const avatar = document.getElementById("account-avatar");
 const name = document.getElementById("account-name");
 const email = document.getElementById("account-email");
 const balance = document.getElementById("account-balance");
-const topupUsd = document.getElementById("topup-usd");
 const topupTwd = document.getElementById("topup-twd");
+const topupUsd = document.getElementById("topup-usd");
 const topupExchangeNote = document.getElementById("topup-exchange-note");
 const topupRows = document.getElementById("topup-rows");
 const consumptionRows = document.getElementById("consumption-rows");
@@ -83,9 +83,9 @@ function renderLedger(container, entries, emptyMessage) {
 }
 
 function updateTopupEstimate() {
-  const amount = Number(topupUsd.value);
-  const total = amount > 0 && usdTwdRate > 0 ? amount * usdTwdRate * TOPUP_PAYOUT_RATE : 0;
-  topupTwd.textContent = total ? `約 NT$${Math.round(total).toLocaleString("zh-TW")}` : "約 NT$—";
+  const amount = Number(topupTwd.value);
+  const total = amount > 0 && usdTwdRate > 0 ? amount / usdTwdRate * TOPUP_PAYOUT_RATE : 0;
+  topupUsd.textContent = total ? `可取得 ${usdFormatter.format(total)}` : "可取得 $—";
 }
 
 async function loadExchangeRate() {
@@ -177,7 +177,7 @@ logoutButton.addEventListener("click", async () => {
   }
 });
 
-topupUsd.addEventListener("input", updateTopupEstimate);
+topupTwd.addEventListener("input", updateTopupEstimate);
 
 async function initialize() {
   if (!isSupabaseConfigured()) {

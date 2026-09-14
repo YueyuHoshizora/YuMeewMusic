@@ -34,6 +34,7 @@
           <div class="video-prompt-field">
             <div class="video-prompt-heading">
               <button id="open-film-style" class="video-prompt-add video-film-style-button" type="button">全片風格</button>
+              <button id="open-final-storyboard" class="video-prompt-add video-final-storyboard-button" type="button">最終分鏡</button>
               <button id="preview-video-prompt" class="video-prompt-add video-prompt-preview-button" type="button">預覽題詞</button>
               <button id="inspect-storyboards" class="video-prompt-add video-storyboard-inspect-button" type="button">檢查分鏡</button>
               <button id="reflow-storyboard-times" class="video-prompt-add video-storyboard-time-button" type="button">重新接續時間</button>
@@ -242,6 +243,27 @@
         <div class="dialog-actions">
           <button id="cancel-film-style" class="text-button" type="button">取消</button>
           <button id="apply-film-style" class="dialog-confirm" type="button">套用風格</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="final-storyboard-dialog" class="reset-dialog final-storyboard-dialog" aria-labelledby="final-storyboard-title">
+      <form id="final-storyboard-form" method="dialog">
+        <h2 id="final-storyboard-title">最終分鏡</h2>
+        <p>時間會自動接續最後一張分鏡，並延長 1 秒。</p>
+        <div class="final-storyboard-fields">
+          <label><span>場景</span><div id="final-storyboard-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡場景" data-placeholder="輸入最後畫面的場景"></div></label>
+          <label><span>鏡頭</span><div id="final-storyboard-camera" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡鏡頭" data-placeholder="例如：鏡頭緩慢拉遠"></div></label>
+          <label><span>視角</span><div id="final-storyboard-view" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡視角" data-placeholder="例如：正面遠景"></div></label>
+          <label><span>音效</span><div id="final-storyboard-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡音效" data-placeholder="例如：環境聲逐漸淡出"></div></label>
+          <div class="final-storyboard-action-field">
+            <div class="final-storyboard-action-heading"><span>動作</span><button id="add-final-storyboard-action" class="video-dialogue-add" type="button">＋ 新增動作</button></div>
+            <div id="final-storyboard-actions" class="final-storyboard-actions"></div>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button id="cancel-final-storyboard" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">加入最終分鏡</button>
         </div>
       </form>
     </dialog>

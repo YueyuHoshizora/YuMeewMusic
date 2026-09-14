@@ -23,7 +23,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
-  assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="inspect-storyboards"[^>]*>檢查分鏡<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
+  assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="open-final-storyboard"[^>]*>最終分鏡<\/button>\s*<button id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="inspect-storyboards"[^>]*>檢查分鏡<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
   assert.doesNotMatch(html, /video-prompt-footer/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
@@ -44,6 +44,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
+  assert.match(html, /id="final-storyboard-dialog"[^>]*aria-labelledby="final-storyboard-title"[\s\S]*時間會自動接續最後一張分鏡，並延長 1 秒。[\s\S]*id="final-storyboard-scene"[\s\S]*id="final-storyboard-camera"[\s\S]*id="final-storyboard-view"[\s\S]*id="final-storyboard-sound"[\s\S]*id="final-storyboard-actions"/);
+  assert.match(css, /\.final-storyboard-fields \{[^}]*grid-template-columns: repeat\(2/);
+  assert.match(css, /\.final-storyboard-actions \{[^}]*grid-template-columns: repeat\(2/);
   assert.match(html, /id="apply-film-style"[^>]*type="button"[^>]*>套用風格<\/button>/);
   for (const id of ["film-style-primary", "film-style-primary-custom", "film-style-era", "film-style-color", "film-style-texture", "film-style-framing", "film-style-narrator-voice", "film-style-narrator-custom", "film-style-notes"]) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /id="film-style-primary"[\s\S]*value="電影寫實"[\s\S]*value="音樂錄影帶"[\s\S]*value="custom">自訂風格/);
@@ -289,7 +292,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /editButton\.addEventListener\("click", \(\) => openCharacterEditor\(index\)\)/);
   assert.match(script, /function setCharacterVoice\(value = ""\)[\s\S]*presetExists[\s\S]*"custom"[\s\S]*character-voice-custom/);
   assert.match(script, /function showCharacterEditorReference\(file\)[\s\S]*character-reference-placeholder[\s\S]*classList\.add\("has-image"\)/);
-  assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
+  assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*finalStoryboard:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
+  assert.match(script, /function submitFinalStoryboard\(event\)[\s\S]*const start = Number\(nextStoryboardStart\(\)\)[\s\S]*end: roundedStoryboardTime\(start \+ 1\)[\s\S]*actions:[\s\S]*renderFinalStoryboardCard\(\)/);
+  assert.match(script, /function finalStoryboardPromptText\(\)[\s\S]*"最終分鏡："[\s\S]*finalStoryboardFields\(finalStoryboard\)/);
+  assert.match(script, /function videoPromptSections\(\)[\s\S]*node\.matches\("\.final-storyboard-block"\)[\s\S]*storyboardText\.push\(text\)/);
   assert.match(html, /id="video-auto-draft-status"[^>]*>正在檢查自動儲存草稿…<\/span>/);
   assert.match(script, /saveStoredValue\("video-generator-draft"/);
   assert.match(script, /saveStoredValue\("video-generator-draft-resources"/);

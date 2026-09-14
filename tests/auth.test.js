@@ -15,6 +15,7 @@ test("every page exposes the shared member avatar and balance entry", () => {
   }
   const script = readFileSync("js/member-status.js", "utf8");
   assert.match(script, /className = "member-widget"/);
+  assert.match(script, /header\.querySelector\("\.header-actions"\) \|\| header/);
   assert.match(script, /fetchMemberAccount/);
   assert.match(script, /avatar_url/);
 });

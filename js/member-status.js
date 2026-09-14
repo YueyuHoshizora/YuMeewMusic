@@ -6,7 +6,8 @@ if (header) {
   widget.href = "./account.html";
   widget.setAttribute("aria-label", "前往會員中心");
   widget.innerHTML = `<span class="member-widget-balance"><small>剩餘額度</small><strong>—</strong></span><span class="member-widget-avatar" aria-hidden="true">會</span>`;
-  header.append(widget);
+  const widgetTarget = header.querySelector(".header-actions") || header;
+  widgetTarget.append(widget);
 
   const balance = widget.querySelector("strong");
   const avatar = widget.querySelector(".member-widget-avatar");

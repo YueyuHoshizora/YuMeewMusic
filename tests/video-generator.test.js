@@ -302,7 +302,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function submitFinalStoryboard\(event\)[\s\S]*const start = Number\(nextStoryboardStart\(\)\)[\s\S]*end: roundedStoryboardTime\(start \+ 1\)[\s\S]*actions:[\s\S]*renderFinalStoryboardCard\(\)/);
   assert.match(script, /function createFinalStoryboardAction\(action = \{\}\)[\s\S]*final-storyboard-action-character[\s\S]*final-storyboard-action-category[\s\S]*final-storyboard-action-type[\s\S]*final-storyboard-action-style[\s\S]*final-storyboard-action-custom[\s\S]*final-storyboard-action-target[\s\S]*final-storyboard-action-detail/);
   assert.match(script, /cloneSelectOptions\("video-prompt-camera", "final-storyboard-camera"\)[\s\S]*cloneSelectOptions\("video-prompt-shot-size", "final-storyboard-shot-size"\)[\s\S]*cloneSelectOptions\("video-prompt-view-angle", "final-storyboard-view-angle"\)/);
-  assert.match(script, /function finalStoryboardPromptText\(\)[\s\S]*"最終分鏡："[\s\S]*finalStoryboardFields\(finalStoryboard\)/);
+  assert.match(script, /function finalStoryboardPromptText\(\)[\s\S]*return finalStoryboardFields\(finalStoryboard\)\.map/);
+  assert.doesNotMatch(script, /\["最終分鏡：", \.\.\.finalStoryboardFields/);
   assert.match(script, /function removeFinalStoryboard\(\)[\s\S]*window\.confirm\("確定移除最終分鏡？"\)[\s\S]*finalStoryboard = null[\s\S]*renderFinalStoryboardCard\(\)[\s\S]*syncDraftStatus\(\)/);
   assert.match(script, /storyboardAction\("delete", "移除最終分鏡", removeFinalStoryboard\)/);
   assert.match(script, /function videoPromptSections\(\)[\s\S]*node\.matches\("\.final-storyboard-block"\)[\s\S]*storyboardText\.push\(text\)/);

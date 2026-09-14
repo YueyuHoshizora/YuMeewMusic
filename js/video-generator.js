@@ -1934,7 +1934,7 @@ function storyboardPromptText(draft) {
 
 function finalStoryboardPromptText() {
   if (!finalStoryboard) return "";
-  return ["最終分鏡：", ...finalStoryboardFields(finalStoryboard).map(([label, value]) => `${label}：${value}`)].join("\n");
+  return finalStoryboardFields(finalStoryboard).map(([label, value]) => `${label}：${value}`).join("\n");
 }
 
 function videoPromptSections() {

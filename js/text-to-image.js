@@ -242,6 +242,14 @@ function completedPrompt(value) {
   return "";
 }
 
+function rateLimitMessage(body) {
+  if (!body || typeof body !== "object" || body.code !== "rate_limit_exceeded") return "";
+  const retryAfter = Math.max(1, Math.ceil(Number(body.retryAfter) || 60));
+  return typeof body.error === "string" && body.error.trim()
+    ? body.error.trim()
+    : `操作過於頻繁，請在 ${retryAfter} 秒後再試。`;
+}
+
 async function composePrompt() {
   const prompt = $("prompt-keywords").value.trim();
   if (!prompt || busy || composing) return;
@@ -259,6 +267,8 @@ async function composePrompt() {
     const body = contentType.includes("application/json") ? await response.json() : await response.text();
     if (!response.ok) {
       const detail = body?.message || body?.error || completedPrompt(body) || "";
+      const limitedMessage = rateLimitMessage(body);
+      if (limitedMessage) throw Error(limitedMessage);
       if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `文字補全服務回傳 ${response.status}`);
     }
@@ -329,11 +339,14 @@ async function generateImage() {
     const response = await model.call({ prompt, enhance, apiKey });
     if (!response.ok) {
       let detail = "";
+      let errorBody = null;
       try {
-        const errorBody = await response.json();
+        errorBody = await response.json();
         detail = errorBody?.error?.message || (typeof errorBody?.error === "string" ? errorBody.error : "") || errorBody?.message || "";
       } catch {}
-      if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
+      const limitedMessage = rateLimitMessage(errorBody);
+      if (limitedMessage) throw Error(limitedMessage);
+      if (model.publicResource && isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `圖片服務回傳 ${response.status}`);
     }
     const blob = await response.blob();

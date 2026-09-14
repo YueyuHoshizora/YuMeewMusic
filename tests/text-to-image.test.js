@@ -101,6 +101,10 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.doesNotMatch(script, /\$\("prompt-keywords"\)\.addEventListener\("keydown"/);
   assert.doesNotMatch(script, /searchParams\.set\("p"/);
   assert.match(script, /statusCode === 429/);
+  assert.match(script, /body\.code !== "rate_limit_exceeded"/);
+  assert.match(script, /操作過於頻繁，請在 \$\{retryAfter\} 秒後再試/);
+  assert.match(script, /const limitedMessage = rateLimitMessage\(body\);[\s\S]*if \(limitedMessage\) throw Error\(limitedMessage\);/);
+  assert.match(script, /const limitedMessage = rateLimitMessage\(errorBody\);[\s\S]*if \(model\.publicResource && isQuotaError/);
   assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredMedia\("generated-image", cachedFile\)/);

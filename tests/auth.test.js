@@ -39,8 +39,9 @@ test("member center reads the balance, top-up history and consumption history", 
   assert.match(html, /id="account-topup"[^>]*disabled>儲值<\/button>/);
   assert.match(script, /fetchMemberAccount/);
   assert.match(script, /fetchUsdTwdExchangeRate/);
-  assert.match(script, /amount \* usdTwdRate/);
-  assert.match(script, /臺灣銀行即期買入/);
+  assert.match(script, /TOPUP_PAYOUT_RATE = 0\.85/);
+  assert.match(script, /amount \* usdTwdRate \* TOPUP_PAYOUT_RATE/);
+  assert.match(script, /中間匯率[\s\S]*85% 計價（平台保留 15%）/);
   assert.match(script, /style: "currency", currency: "USD"/);
   assert.doesNotMatch(script, /\.from\(/);
   const api = readFileSync("js/member-api.js", "utf8");

@@ -22,6 +22,7 @@ const topupExchangeNote = document.getElementById("topup-exchange-note");
 const topupRows = document.getElementById("topup-rows");
 const consumptionRows = document.getElementById("consumption-rows");
 let usdTwdRate = 0;
+const TOPUP_PAYOUT_RATE = 0.85;
 const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 const setStatus = (message, error = false) => {
@@ -83,7 +84,7 @@ function renderLedger(container, entries, emptyMessage) {
 
 function updateTopupEstimate() {
   const amount = Number(topupUsd.value);
-  const total = amount > 0 && usdTwdRate > 0 ? amount * usdTwdRate : 0;
+  const total = amount > 0 && usdTwdRate > 0 ? amount * usdTwdRate * TOPUP_PAYOUT_RATE : 0;
   topupTwd.textContent = total ? `約 NT$${Math.round(total).toLocaleString("zh-TW")}` : "約 NT$—";
 }
 
@@ -100,7 +101,7 @@ async function loadExchangeRate() {
     if (!(buy > 0 && sell > 0 && average > 0)) throw new Error("匯率資料無效");
     usdTwdRate = average;
     updateTopupEstimate();
-    topupExchangeNote.textContent = `臺灣銀行即期買入 ${buy.toFixed(3)}、賣出 ${sell.toFixed(3)}，平均 ${average.toFixed(3)}`;
+    topupExchangeNote.textContent = `中間匯率 ${average.toFixed(3)} × 85% 計價（平台保留 15%）`;
   } catch (error) {
     topupExchangeNote.classList.add("error");
     topupExchangeNote.textContent = error.message || "目前無法取得臺灣銀行匯率。";

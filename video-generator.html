@@ -332,6 +332,10 @@
           <button id="minimize-video-prompt-builder" class="dialog-confirm video-prompt-builder-minimize" type="button" aria-label="縮小分鏡內容視窗">縮小</button>
         </div>
         <div class="video-prompt-builder-fields">
+          <label class="video-storyboard-summary-field" for="video-prompt-summary">
+            <span>分鏡簡述（選填）</span>
+            <textarea id="video-prompt-summary" class="text-input" rows="3" placeholder="僅顯示在分鏡卡片中，不會送入生成題詞"></textarea>
+          </label>
           <div class="video-prompt-time-fields">
             <label for="video-prompt-start"><span>開始時間（秒）</span><input id="video-prompt-start" class="text-input" type="number" min="0" step="0.1" inputmode="decimal" required /></label>
             <label for="video-prompt-end"><span>結束時間（秒）</span><input id="video-prompt-end" class="text-input" type="number" min="0" step="0.1" inputmode="decimal" required /></label>

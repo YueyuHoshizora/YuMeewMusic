@@ -67,6 +67,7 @@ test("video generator page provides a model-ready generation workspace", () => {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
   assert.match(html, /<span>人物與對話<\/span>[\s\S]*id="add-video-dialogue"[^>]*>＋ 新增對話<\/button>[\s\S]*id="video-dialogue-list"/);
+  assert.match(html, /class="video-storyboard-summary-field"[^>]*for="video-prompt-summary"[\s\S]*分鏡簡述（選填）[\s\S]*id="video-prompt-summary"[^>]*><\/textarea>/);
   assert.doesNotMatch(html, /id="video-prompt-dialogue"|<span>對白<\/span>/);
   assert.match(html, /<span>鏡頭<\/span>[\s\S]*id="video-prompt-camera"[\s\S]*<optgroup label="基本運鏡">[\s\S]*<optgroup label="跟拍與環繞">[\s\S]*<optgroup label="電影感運鏡">/);
   assert.match(html, /id="video-prompt-camera"[\s\S]*<option value="custom">自訂運鏡（開放輸入）<\/option>[\s\S]*id="video-prompt-camera-speed"/);
@@ -136,12 +137,13 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-action-selects\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.video-dialogue-row\s*\{[^}]*grid-template-columns:\s*170px 180px minmax\(0, 1fr\) auto/);
   assert.match(css, /\.video-dialogue-field\s*\{[^}]*grid-column:\s*1 \/ -1/);
+  assert.match(css, /\.video-storyboard-summary-field\s*\{[^}]*grid-column:\s*1 \/ -1/);
   assert.match(css, /\.video-view-subjects\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.doesNotMatch(script, /confirmPageExit|beforeunload|allowPageExit/);
   assert.match(script, /window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
-  assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*shotSize:[\s\S]*viewSubjects: selectedStoryboardSubjects\(\)[\s\S]*viewpointCharacter:[\s\S]*actionCharacter:[\s\S]*actionDetail:[\s\S]*lightingIntensity:/);
+  assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*summary: \$\("video-prompt-summary"\)\.value\.trim\(\),[\s\S]*shotSize:[\s\S]*viewSubjects: selectedStoryboardSubjects\(\)[\s\S]*viewpointCharacter:[\s\S]*actionCharacter:[\s\S]*actionDetail:[\s\S]*lightingIntensity:/);
   assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*dialogues: collectDialogueRows\(\)/);
   assert.match(script, /function dialogueSpeakerSelect\(selected = ""\)[\s\S]*__narrator__[\s\S]*character\.enabled !== false/);
   assert.match(script, /function dialogueSpeakerSelect\(selected = ""\)[\s\S]*video-dialogue-speaker/);
@@ -150,6 +152,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function renderDialogueRows\(dialogues = \[\]\)/);
   assert.match(script, /function escapedTextHtml\(text\)[\s\S]*holder\.textContent = text \|\| ""/);
   assert.match(script, /function arrangeVideoPromptBuilderFields\(\)[\s\S]*left\.append\([\s\S]*video-prompt-time-fields[\s\S]*video-prompt-camera-field[\s\S]*video-prompt-view-field[\s\S]*video-prompt-lighting-field[\s\S]*right\.append\([\s\S]*video-prompt-scene[\s\S]*video-prompt-action-field[\s\S]*video-prompt-sound/);
+  assert.match(script, /fields\.prepend\(fields\.querySelector\("\.video-storyboard-summary-field"\), left, right\)/);
   assert.match(script, /draft\.dialogues\?\.length \? draft\.dialogues : draft\.dialogue \? \[\{ speaker: "", emotion: "", text: draft\.dialogue \}\] : \[\]/);
   assert.match(script, /function dialoguePromptField\(dialogues = \[\]\)[\s\S]*__narrator__[\s\S]*旁白[\s\S]*dialogues/);
   assert.match(script, /function validateDialogueRows\(form\)[\s\S]*請選擇說話者或旁白/);
@@ -163,7 +166,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function nextStoryboardStart\(\)[\s\S]*storyboards\.get\(last\.dataset\.storyboardId\)\?\.end \|\| "0"/);
   assert.match(script, /function formatStoryboardTime\(start, end\)[\s\S]*`\$\{Number\(start\)\}-\$\{Number\(end\)\}s`/);
   assert.match(script, /function createStoryboardBlock\(draft\)[\s\S]*storyboard-card-action[\s\S]*editStoryboard\(draft\.id\)/);
-  assert.match(script, /function editStoryboard\(id\)[\s\S]*restoreEditorHtml[\s\S]*"儲存分鏡"/);
+  assert.match(script, /function storyboardDisplayFields\(draft\)[\s\S]*分鏡簡述[\s\S]*draft\.summary/);
+  assert.match(script, /function editStoryboard\(id\)[\s\S]*video-prompt-summary[\s\S]*restoreEditorHtml[\s\S]*"儲存分鏡"/);
   assert.match(script, /function duplicateStoryboard\(id\)[\s\S]*structuredClone\(source\)[\s\S]*duration = Number\(source\.end\) - Number\(source\.start\)[\s\S]*copy\.start = roundedStoryboardTime\(source\.end\)[\s\S]*copy\.end = roundedStoryboardTime\(Number\(copy\.start\) \+ duration\)/);
   assert.match(script, /function deleteStoryboard\(id\)[\s\S]*確定刪除這個分鏡/);
   assert.match(script, /existing\.replaceWith\(block\)[\s\S]*refreshStoryboardLabels\(\)/);
@@ -199,9 +203,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function referencedCharacters\(videoDetails\)[\s\S]*videoDetails\.includes\(character\.name\)/);
   assert.match(script, /function filmStyleText\(\)[\s\S]*主要風格[\s\S]*畫面比例感[\s\S]*旁白聲線[\s\S]*全片風格：/);
   assert.match(script, /function characterTemplateText\(characters\)[\s\S]*人物設定：/);
-  assert.match(script, /function videoPromptSections\(\)[\s\S]*\.storyboard-block[\s\S]*storyboards:/);
+  assert.match(script, /function videoPromptSections\(\)[\s\S]*\.storyboard-block[\s\S]*\[data-field="summary"\][\s\S]*\.remove\(\)[\s\S]*storyboards:/);
+  assert.match(script, /async function generateVideo\(\)[\s\S]*const videoDetails = promptVideoDetails\(\)/);
   assert.match(script, /function resourceReferenceText\(\)[\s\S]*引用資源：/);
-  assert.match(script, /function completeVideoPrompt\(videoDetails = editorText\(\$\("video-prompt"\)\)\)[\s\S]*filmStyleText\(\),[\s\S]*characterTemplateText\(referencedCharacters\(videoDetails\)\),[\s\S]*影片細節：[\s\S]*分鏡內容：[\s\S]*resourceReferenceText\(\)/);
+  assert.match(script, /function completeVideoPrompt\(videoDetails = promptVideoDetails\(\)\)[\s\S]*filmStyleText\(\),[\s\S]*characterTemplateText\(referencedCharacters\(videoDetails\)\),[\s\S]*影片細節：[\s\S]*分鏡內容：[\s\S]*resourceReferenceText\(\)/);
   assert.match(script, /function openVideoPromptPreview\(\)[\s\S]*video-prompt-preview-text"\)\.textContent = completeVideoPrompt\(\)[\s\S]*showModal\(\)/);
   assert.match(script, /function inspectStoryboardProject\(\)[\s\S]*與上一張分鏡重疊[\s\S]*全部分鏡的時間範圍[\s\S]*短於 \$\{model\.label\} 最低[\s\S]*超過目前輸出片長/);
   assert.doesNotMatch(script, /\$\{label\} 長度[^\n]*(?:最低|最高|可直接生成的片長)/);

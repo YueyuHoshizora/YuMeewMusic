@@ -179,7 +179,7 @@ function arrangeVideoPromptBuilderFields() {
     fields.querySelector(".video-prompt-action-field"),
     $("video-prompt-sound").closest("label"),
   );
-  fields.prepend(left, right);
+  fields.prepend(fields.querySelector(".video-storyboard-summary-field"), left, right);
 }
 
 function openVideoPromptBuilder() {
@@ -1025,6 +1025,7 @@ function collectStoryboardDraft() {
     id: editingStoryboardId || globalThis.crypto?.randomUUID?.() || `storyboard-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     start: $("video-prompt-start").value,
     end: $("video-prompt-end").value,
+    summary: $("video-prompt-summary").value.trim(),
     scene: editorSnapshot("video-prompt-scene"),
     shotSize: $("video-prompt-shot-size").value,
     viewAngle: $("video-prompt-view-angle").value,
@@ -1164,6 +1165,13 @@ function storyboardFields(draft) {
   ].filter(([, value]) => value);
 }
 
+function storyboardDisplayFields(draft) {
+  return [
+    ...storyboardFields(draft),
+    ["分鏡簡述", String(draft.summary || "").trim()],
+  ].filter(([, value]) => value);
+}
+
 function storyboardAction(kind, label, handler) {
   const button = document.createElement("button");
   button.type = "button";
@@ -1198,10 +1206,10 @@ function createStoryboardBlock(draft) {
     storyboardAction("copy", "複製分鏡", () => duplicateStoryboard(draft.id)),
     storyboardAction("delete", "刪除分鏡", () => deleteStoryboard(draft.id)),
   );
-  for (const [label, value, nodes] of storyboardFields(draft)) {
+  for (const [label, value, nodes] of storyboardDisplayFields(draft)) {
     const row = document.createElement("div");
     row.className = "storyboard-field";
-    row.dataset.field = ({ 時間: "time", 場景: "scene", 鏡頭: "camera", 視角: "view", 燈光: "lighting", 音效: "sound", 動作: "action", 人物與對話: "dialogue" })[label];
+    row.dataset.field = ({ 時間: "time", 場景: "scene", 鏡頭: "camera", 視角: "view", 燈光: "lighting", 音效: "sound", 動作: "action", 人物與對話: "dialogue", 分鏡簡述: "summary" })[label];
     const fieldLabel = document.createElement("span");
     fieldLabel.className = "storyboard-field-label";
     fieldLabel.textContent = `${label}：`;
@@ -1240,6 +1248,7 @@ function editStoryboard(id) {
   editingStoryboardId = id;
   $("video-prompt-start").value = draft.start;
   $("video-prompt-end").value = draft.end;
+  $("video-prompt-summary").value = draft.summary || "";
   for (const [field, html] of [["scene", draft.scene], ["sound", draft.sound]]) restoreEditorHtml(`video-prompt-${field}`, html);
   $("video-prompt-camera").value = draft.camera;
   $("video-prompt-camera-speed").value = draft.cameraSpeed;
@@ -1564,10 +1573,19 @@ function videoPromptSections() {
   const details = document.createElement("div");
   const storyboardText = [];
   for (const node of $("video-prompt").childNodes) {
-    if (node.nodeType === Node.ELEMENT_NODE && node.matches(".storyboard-block")) storyboardText.push(editorText(node));
+    if (node.nodeType === Node.ELEMENT_NODE && node.matches(".storyboard-block")) {
+      const promptBlock = node.cloneNode(true);
+      promptBlock.querySelector('[data-field="summary"]')?.remove();
+      storyboardText.push(editorText(promptBlock));
+    }
     else details.append(node.cloneNode(true));
   }
   return { details: editorText(details), storyboards: storyboardText.join("\n") };
+}
+
+function promptVideoDetails() {
+  const sections = videoPromptSections();
+  return [sections.details, sections.storyboards].filter(Boolean).join("\n");
 }
 
 function resourceReferenceText() {
@@ -1578,7 +1596,7 @@ function resourceReferenceText() {
   return lines.length ? `引用資源：\n${lines.join("\n")}` : "";
 }
 
-function completeVideoPrompt(videoDetails = editorText($("video-prompt"))) {
+function completeVideoPrompt(videoDetails = promptVideoDetails()) {
   const sections = videoPromptSections();
   return [
     filmStyleText(),
@@ -2056,6 +2074,7 @@ function normalizedStoryboard(raw) {
     id: globalThis.crypto?.randomUUID?.() || `storyboard-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     start: roundedStoryboardTime(start),
     end: roundedStoryboardTime(end),
+    summary: String(raw?.summary || ""),
     scene: html("scene"),
     shotSize: String(raw?.shotSize || ""),
     viewAngle: String(raw?.viewAngle || ""),
@@ -2619,7 +2638,7 @@ function videoFilename(date = new Date()) {
 }
 
 async function generateVideo() {
-  const videoDetails = editorText($("video-prompt"));
+  const videoDetails = promptVideoDetails();
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const apiKey = getApiKey(modelId)?.value || "";

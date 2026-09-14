@@ -37,6 +37,7 @@ next-env.d.ts
 /outputs/
 /work/
 /model-proxy/
+/flux-klein/
 
 # TypeScript build cache
 *.tsbuildinfo

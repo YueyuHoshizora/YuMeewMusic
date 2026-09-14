@@ -17,7 +17,7 @@ if (header) {
     avatar.removeAttribute("style");
   };
 
-  const showSession = async (session, authClient) => {
+  const showSession = async (session, fetchAccount) => {
     if (!session?.user) {
       showSignedOut(true);
       return;
@@ -35,26 +35,39 @@ if (header) {
       image.addEventListener("error", () => avatar.replaceChildren(fallback), { once: true });
       avatar.append(image);
     } else avatar.textContent = fallback;
+    if (!fetchAccount) {
+      balance.textContent = "—";
+      return;
+    }
     balance.textContent = "讀取中";
-    const { data, error } = await authClient
-      .from("credit_accounts")
-      .select("balance")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-    balance.textContent = error ? "—" : Number(data?.balance || 0).toLocaleString("zh-TW");
+    try {
+      const data = await fetchAccount(session, { ledger: false });
+      balance.textContent = Number(data.balance || 0).toLocaleString("zh-TW");
+    } catch {
+      balance.textContent = "—";
+    }
   };
 
   const loadMember = async () => {
     try {
-      const { getAuthClient, getCurrentSession, isSupabaseConfigured, onAuthStateChange } = await import("./auth.js");
+      const [{ getCurrentSession, isSupabaseConfigured, onAuthStateChange }, { fetchMemberAccount, isMemberApiConfigured }] = await Promise.all([
+        import("./auth.js"),
+        import("./member-api.js"),
+      ]);
       if (!isSupabaseConfigured()) {
         showSignedOut(false);
         return;
       }
-      const authClient = getAuthClient();
       const { session } = await getCurrentSession();
-      await showSession(session, authClient);
-      onAuthStateChange(nextSession => void showSession(nextSession, authClient));
+      const loadSession = async nextSession => {
+        if (!nextSession?.user) {
+          showSignedOut(true);
+          return;
+        }
+        await showSession(nextSession, isMemberApiConfigured() ? fetchMemberAccount : null);
+      };
+      await loadSession(session);
+      onAuthStateChange(nextSession => void loadSession(nextSession));
     } catch {
       balance.textContent = "—";
     }

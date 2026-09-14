@@ -15,7 +15,7 @@ test("every page exposes the shared member avatar and balance entry", () => {
   }
   const script = readFileSync("js/member-status.js", "utf8");
   assert.match(script, /className = "member-widget"/);
-  assert.match(script, /credit_accounts/);
+  assert.match(script, /fetchMemberAccount/);
   assert.match(script, /avatar_url/);
 });
 
@@ -34,20 +34,20 @@ test("member center reads the balance, top-up history and consumption history", 
   const html = readFileSync("account.html", "utf8");
   const script = readFileSync("js/account.js", "utf8");
   for (const label of ["剩餘額度", "儲值紀錄", "消費紀錄", "使用 Google 登入"]) assert.match(html, new RegExp(label));
-  assert.match(script, /from\("credit_accounts"\)/);
-  assert.match(script, /from\("credit_ledger"\)/);
-  assert.match(script, /kind === "topup"/);
-  assert.match(script, /kind === "consumption"/);
+  assert.match(script, /fetchMemberAccount/);
+  assert.doesNotMatch(script, /\.from\(/);
+  const api = readFileSync("js/member-api.js", "utf8");
+  assert.match(api, /\/v1\/account/);
+  assert.match(api, /session\.access_token/);
+  assert.match(api, /Authorization/);
   assert.equal(existsSync("vendor/supabase-LICENSE"), true);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"account\.html"/);
 });
 
-test("credit schema protects writes and limits members to their own records", () => {
-  const sql = readFileSync("supabase/migrations/20260915000000_member_credits.sql", "utf8");
-  assert.match(sql, /enable row level security/g);
-  assert.match(sql, /auth\.uid\(\)\) = user_id/);
-  assert.match(sql, /record_credit_transaction/);
-  assert.match(sql, /revoke all[\s\S]*authenticated/);
-  assert.match(sql, /grant execute[\s\S]*service_role/);
-  assert.match(sql, /after insert on auth\.users/);
+test("the browser reaches credit data only through the member Worker", () => {
+  const config = readFileSync("js/member-api-config.js", "utf8");
+  assert.match(config, /MEMBER_API_URL = ""/);
+  assert.doesNotMatch(config, /database_id|MEMBER_ADMIN_SECRET|service_role/i);
+  for (const file of ["js/account.js", "js/member-status.js", "js/member-api.js"])
+    assert.doesNotMatch(readFileSync(file, "utf8"), /D1Database|MEMBERS_DB|MEMBER_ADMIN_SECRET/, file);
 });

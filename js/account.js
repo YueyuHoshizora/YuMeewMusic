@@ -1,4 +1,5 @@
-import { getAuthClient, getCurrentSession, isSupabaseConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth.js";
+import { getCurrentSession, isSupabaseConfigured, onAuthStateChange, signInWithGoogle, signOut } from "./auth.js";
+import { fetchMemberAccount, isMemberApiConfigured } from "./member-api.js";
 import { loadSettings } from "./settings.js";
 import { applyTheme } from "./themes.js";
 
@@ -91,23 +92,25 @@ async function loadAccountData(session) {
   } else avatar.textContent = name.textContent.charAt(0);
 
   setStatus("正在讀取會員資料…");
-  const client = getAuthClient();
-  const [accountResult, ledgerResult] = await Promise.all([
-    client.from("credit_accounts").select("balance, updated_at").eq("user_id", user.id).maybeSingle(),
-    client.from("credit_ledger").select("id, kind, amount, balance_after, description, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(100),
-  ]);
-  if (accountResult.error || ledgerResult.error) {
+  if (!isMemberApiConfigured()) {
     balance.textContent = "—";
     renderLedger(topupRows, [], "尚無法讀取儲值紀錄");
     renderLedger(consumptionRows, [], "尚無法讀取消費紀錄");
-    setStatus("額度資料表尚未建立或目前無法讀取，登入功能仍可使用。", true);
+    setStatus("D1 會員資料服務尚未設定，登入功能仍可使用。", true);
     return;
   }
-  balance.textContent = Number(accountResult.data?.balance || 0).toLocaleString("zh-TW");
-  const entries = ledgerResult.data || [];
-  renderLedger(topupRows, entries.filter(item => item.kind === "topup" || item.kind === "refund" || (item.kind === "adjustment" && item.amount > 0)), "目前沒有儲值紀錄");
-  renderLedger(consumptionRows, entries.filter(item => item.kind === "consumption" || (item.kind === "adjustment" && item.amount < 0)), "目前沒有消費紀錄");
-  setStatus("會員資料已更新。");
+  try {
+    const account = await fetchMemberAccount(session);
+    balance.textContent = Number(account.balance || 0).toLocaleString("zh-TW");
+    renderLedger(topupRows, account.topups || [], "目前沒有儲值紀錄");
+    renderLedger(consumptionRows, account.consumption || [], "目前沒有消費紀錄");
+    setStatus("會員資料已更新。");
+  } catch (error) {
+    balance.textContent = "—";
+    renderLedger(topupRows, [], "尚無法讀取儲值紀錄");
+    renderLedger(consumptionRows, [], "尚無法讀取消費紀錄");
+    setStatus(error.message || "目前無法讀取會員資料。", true);
+  }
 }
 
 loginButton.addEventListener("click", async () => {

@@ -19,7 +19,7 @@ YuMeew 是以純 HTML、CSS 與原生 JavaScript 製作的瀏覽器音樂視覺�
 
 所有頁面右上角會顯示會員頭像與剩餘額度，點擊即可進入會員中心。未登入時可使用 Google OAuth 登入；會員中心會分別列出儲值及消費紀錄。
 
-會員身分由 Supabase Auth 管理。額度資料表已啟用 Row Level Security，會員只能讀取自己的資料；儲值與扣款必須由可信任的後端使用 `service_role` 呼叫交易函式，前端無法直接改寫餘額。啟用步驟與資料庫 migration 位於 [`supabase`](./supabase) 目錄。
+會員身分由 Supabase Auth 管理；會員資料、額度與交易紀錄保存在 Cloudflare D1。瀏覽器只能將 Supabase 登入 JWT 送至會員 Worker，無法直接存取 D1。儲值與扣款另由具備 Worker 管理密鑰的可信任服務執行。Supabase 設定方式位於 [`supabase`](./supabase) 目錄，會員 Worker 位於獨立的 `member-api` Git 專案。
 
 ## 音樂視覺工作室
 

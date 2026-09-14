@@ -45,6 +45,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
   assert.match(html, /id="final-storyboard-dialog"[^>]*aria-labelledby="final-storyboard-title"[\s\S]*時間會自動接續最後一張分鏡，並延長 1 秒。[\s\S]*id="final-storyboard-scene"[\s\S]*id="final-storyboard-sound"[\s\S]*id="final-storyboard-shot-size"[\s\S]*id="final-storyboard-view-angle"[\s\S]*id="final-storyboard-view-custom"[\s\S]*id="final-storyboard-view-subjects"[\s\S]*id="final-storyboard-viewpoint-character"[\s\S]*id="final-storyboard-camera"[\s\S]*id="final-storyboard-camera-speed"[\s\S]*id="final-storyboard-camera-custom"[\s\S]*id="final-storyboard-actions"/);
+  assert.match(html, /id="final-storyboard-form"[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>儲存最終分鏡<\/button>/);
   assert.match(css, /\.final-storyboard-fields \{[^}]*grid-template-columns: repeat\(2/);
   assert.match(css, /\.final-storyboard-action-field \{[^}]*grid-column: 1 \/ -1/);
   assert.match(css, /\.final-storyboard-actions \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);

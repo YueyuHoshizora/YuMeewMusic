@@ -46,7 +46,7 @@ test("large saved media restores outside the initial render path", () => {
     assert.match(readFileSync(file, "utf8"), /requestIdleCallback/, file);
   }
   const generator = readFileSync("js/video-generator.js", "utf8");
-  assert.match(generator, /video-result-panel"\)\.addEventListener\("toggle"[\s\S]*void restoreLastGeneratedVideo\(\)/);
+  assert.match(generator, /loadGenerationHistory\(\)\.then\(async \(\) => \{[\s\S]*restorePendingGeneration\(\)[\s\S]*restoreWhenIdle\(\(\) => restoreLastGeneratedVideo\(\)\)/);
   assert.doesNotMatch(generator, /syncDraftStatus\(\);\s*void restoreCharacterTemplates\(\);\s*void restoreLastGeneratedVideo\(\)/);
 });
 

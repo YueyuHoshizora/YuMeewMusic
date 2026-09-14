@@ -35,15 +35,15 @@
         <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">等待輸入影片細節</span>
       </section>
 
-      <details id="video-description-panel" class="panel prompt-panel video-description-panel" open>
-        <summary class="video-collapsible-summary">
+      <section id="video-description-panel" class="panel prompt-panel video-description-panel">
+        <div class="video-section-heading">
           <span>影片細節</span>
           <span class="video-prompt-mode" role="group" aria-label="影片細節輸入模式">
             <button id="storyboard-prompt-mode" type="button" aria-pressed="true">分鏡模式</button>
             <button id="plain-prompt-mode" type="button" aria-pressed="false">題詞模式</button>
           </span>
-        </summary>
-        <div class="video-collapsible-content">
+        </div>
+        <div class="video-section-content">
           <div class="video-prompt-field">
             <div class="video-prompt-heading">
               <button id="open-film-style" class="video-prompt-add video-film-style-button" type="button">全片風格</button>
@@ -73,11 +73,11 @@
             <p id="video-resource-empty" class="video-resource-empty">尚未加入資源。</p>
           </section>
         </div>
-      </details>
+      </section>
 
-      <details id="video-settings-panel" class="panel prompt-panel video-settings-panel">
-        <summary class="video-collapsible-summary">生成設定</summary>
-        <div class="video-collapsible-content">
+      <section id="video-settings-panel" class="panel prompt-panel video-settings-panel">
+        <div class="video-section-heading">生成設定</div>
+        <div class="video-section-content">
           <div class="video-output-options">
             <label for="video-resolution"><span>解析度</span><select id="video-resolution" class="setting-select"><option value="768P" selected>768P</option><option value="2K">2K</option></select></label>
             <label for="video-duration"><span>影片長度</span><select id="video-duration" class="setting-select"></select></label>
@@ -107,11 +107,11 @@
           <p id="video-generation-error" class="generation-error" role="alert" hidden></p>
           <p id="google-quota-help" class="google-quota-help" hidden><a href="https://aistudio.google.com/rate-limit?timeRange=last-28-days" target="_blank" rel="noopener">查看目前用量與速率限制</a><a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener">設定帳單資訊</a></p>
         </div>
-      </details>
+      </section>
 
-      <details id="video-result-panel" class="panel result-panel video-result-panel">
-        <summary class="video-collapsible-summary video-result-summary"><span class="video-result-title"><span id="result-video-resolution">768P</span><strong>生成結果</strong></span><small id="result-video-ratio">16:9 · MP4</small></summary>
-        <div class="video-collapsible-content">
+      <section id="video-result-panel" class="panel result-panel video-result-panel">
+        <div class="video-section-heading video-result-summary"><span class="video-result-title"><span id="result-video-resolution">768P</span><strong>生成結果</strong></span><small id="result-video-ratio">16:9 · MP4</small></div>
+        <div class="video-section-content">
           <div id="generated-video-frame" class="generated-image-frame generated-video-frame" aria-label="生成影片預覽區">
             <div id="empty-video-result" class="empty-result"><span aria-hidden="true">▶</span><strong>生成的影片會出現在這裡</strong><small>輸入影片細節並設定 API KEY 後即可開始生成</small></div>
             <video id="generated-video" controls playsinline hidden></video>
@@ -123,7 +123,7 @@
           </div>
           <p class="result-storage-note">最後一次生成結果與最近 10 個版本會保存在目前瀏覽器，並可下載為 MP4。</p>
         </div>
-      </details>
+      </section>
 
       <section class="video-credits" aria-labelledby="video-credits-title">
         <div class="eyebrow">CREDITS</div>

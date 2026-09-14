@@ -3681,7 +3681,6 @@ function loadHistoryVersion(id) {
   $("result-video-ratio").textContent = `${record.ratio || "原始比例"} · MP4`;
   presentVideo();
   $("video-history-dialog").close();
-  $("video-result-panel").open = true;
   setStatus(`已載入 ${historyTime(record.createdAt)} 的生成版本`, "success");
 }
 
@@ -3832,7 +3831,7 @@ async function restoreLastGeneratedVideo() {
   } catch {}
 }
 
-async function showVideoResult(remoteUrl, provider = generatedVideoProvider, expandResult = false, apiKey = "", metadata = generatedVideoMetadata) {
+async function showVideoResult(remoteUrl, provider = generatedVideoProvider, apiKey = "", metadata = generatedVideoMetadata) {
   const resultMetadata = metadata || {};
   let persisted = false;
   releaseVideo();
@@ -3864,7 +3863,6 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider, exp
     $("retry-save-video").hidden = false;
   }
   presentVideo();
-  if (expandResult) $("video-result-panel").open = true;
   return persisted;
 }
 
@@ -3894,7 +3892,7 @@ async function restorePendingGeneration() {
   setStatus(`正在恢復 ${metadata.modelLabel || model.label} 生成任務…`);
   try {
     const task = await pollVideoTask(pending.taskId, apiKey, model, generationAbort.signal);
-    const saved = await showVideoResult(task.videoUrl, model.provider, true, apiKey, metadata);
+    const saved = await showVideoResult(task.videoUrl, model.provider, apiKey, metadata);
     if (saved) await clearPendingGeneration();
     setStatus(saved ? "已取回先前的影片生成結果" : "影片已生成，將於下次開啟時再次嘗試保存", saved ? "success" : "error");
   } catch (error) {
@@ -3956,7 +3954,7 @@ async function generateVideo() {
     const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal);
     $("video-generation-lock-title").textContent = "影片已完成，正在載入結果";
     $("video-generation-lock-detail").textContent = "正在準備預覽與下載檔案…";
-    const saved = await showVideoResult(task.videoUrl, model.provider, true, apiKey, generatedVideoMetadata);
+    const saved = await showVideoResult(task.videoUrl, model.provider, apiKey, generatedVideoMetadata);
     if (pendingTaskSaved && saved) {
       await clearPendingGeneration();
       pendingTaskSaved = false;
@@ -4166,21 +4164,6 @@ $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialo
 $("generate-video").addEventListener("click", openGenerateConfirmation);
 $("confirm-video-generation-form").addEventListener("submit", confirmVideoGeneration);
 $("cancel-video-generation").addEventListener("click", () => $("confirm-video-generation-dialog").close());
-$("video-settings-panel").addEventListener("toggle", () => {
-  if ($("video-settings-panel").open) $("video-description-panel").open = false;
-});
-$("video-description-panel").addEventListener("toggle", () => {
-  if (!$("video-description-panel").open) return;
-  $("video-settings-panel").open = false;
-  $("video-result-panel").open = false;
-});
-$("video-result-panel").addEventListener("toggle", () => {
-  if (!$("video-result-panel").open) return;
-  $("video-description-panel").open = false;
-  $("video-settings-panel").open = false;
-  void restoreLastGeneratedVideo();
-});
-
 $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;
   const link = document.createElement("a");
@@ -4199,7 +4182,7 @@ $("retry-save-video").addEventListener("click", async () => {
   setBusy(true, false);
   showError();
   setStatus("正在重新下載並保存影片…");
-  await showVideoResult(retryUrl, retryProvider, false, retryApiKey);
+  await showVideoResult(retryUrl, retryProvider, retryApiKey);
   setStatus(generatedVideoBlob ? "影片已保存到瀏覽器" : "影片保存失敗", generatedVideoBlob ? "success" : "error");
   setBusy(false);
 });
@@ -4234,4 +4217,7 @@ function restoreWhenIdle(task) {
 restoreWhenIdle(async () => {
   await Promise.all([restoreCharacterTemplates(), restoreAutoDraft()]);
 });
-void loadGenerationHistory().then(() => restorePendingGeneration());
+void loadGenerationHistory().then(async () => {
+  await restorePendingGeneration();
+  restoreWhenIdle(() => restoreLastGeneratedVideo());
+});

@@ -1240,7 +1240,7 @@ function createStoryboardBlock(draft) {
   title.className = "storyboard-card-title";
   const summary = document.createElement("span");
   summary.className = "storyboard-card-summary";
-  summary.textContent = String(draft.summary || "").trim() ? `分鏡描述：${String(draft.summary).trim()}` : "";
+  summary.textContent = String(draft.summary || "").trim();
   heading.append(title, summary);
   block.append(heading);
   const actions = document.createElement("div");

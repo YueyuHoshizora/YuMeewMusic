@@ -1,0 +1,33 @@
+{
+  "id": "./video-generator.html",
+  "name": "YuMeew 影片生成器",
+  "short_name": "影片生成器",
+  "description": "建立分鏡、管理人物與參考資源，並透過 AI 生成影片。",
+  "lang": "zh-Hant",
+  "start_url": "./video-generator.html",
+  "scope": "./video-generator.html",
+  "display": "standalone",
+  "background_color": "#181a20",
+  "theme_color": "#bda2ff",
+  "categories": ["photo", "video", "productivity"],
+  "icons": [
+    {
+      "src": "./icons/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

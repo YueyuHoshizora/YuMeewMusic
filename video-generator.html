@@ -5,18 +5,23 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=1280" />
     <meta name="description" content="輸入文字描述，透過 AI 生成影片並套用為 YuMeew 背景素材。" />
+    <meta name="theme-color" content="#bda2ff" />
     <title>影片生成器 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="manifest" href="./video-generator.webmanifest" />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/text-to-image.css" />
     <link rel="stylesheet" href="./css/video-generator.css" />
     <script type="module" src="./js/video-generator.js"></script>
+    <script type="module" src="./js/video-generator-pwa.js"></script>
     <script type="module" src="./js/loading-screen.js"></script>
   </head>
   <body class="text-to-image-body video-generator-body" aria-busy="true">
     <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
     <header class="text-to-image-header">
       <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">▶</span>影片生成器<span class="brand-sub">VIDEO GENERATOR</span></a>
+      <button id="install-video-generator" class="video-pwa-install" type="button" hidden>安裝桌面應用程式</button>
     </header>
 
     <main class="text-to-image-main">

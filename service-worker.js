@@ -1,5 +1,5 @@
 const CACHE_NAME = "yumeew-static-__BUILD_VERSION__";
-const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image", "worker"]);
+const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image", "worker", "manifest"]);
 
 self.addEventListener("install", event => {
   event.waitUntil(self.skipWaiting());

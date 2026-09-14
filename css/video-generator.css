@@ -1,4 +1,10 @@
 body.video-generator-body { min-width: 1280px; overflow-x: auto; }
+.video-pwa-install { min-height: 38px; border: 1px solid var(--primary); border-radius: 9px; padding: 0 16px; background: var(--tint); color: var(--primary-text); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.video-pwa-install:hover { background: var(--hover); }
+.video-pwa-install:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.video-pwa-install[hidden],
+.video-pwa-standalone .video-pwa-install { display: none; }
+.video-pwa-standalone .text-to-image-header .brand { cursor: default; }
 #video-model { display: block; width: 100%; }
 .video-description-panel { margin-bottom: 22px; }
 .video-collapsible-summary { display: flex; align-items: center; gap: 12px; list-style: none; color: var(--foreground); font-size: 17px; font-weight: 800; cursor: pointer; user-select: none; }

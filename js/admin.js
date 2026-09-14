@@ -12,6 +12,7 @@ const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD",
 const PROVIDER_BILLING_URLS = Object.freeze({
   openai: "https://platform.openai.com/settings/organization/billing/overview",
   minimax: "https://platform.minimax.io/console/recharge-records",
+  byteplus: "https://console.byteplus.com/finance/overview",
 });
 const state = { session: null, members: [], selectedUserId: "", apiKeys: [], pendingTopup: null, pendingDeleteProvider: "" };
 

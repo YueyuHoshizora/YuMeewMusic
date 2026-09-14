@@ -32,6 +32,7 @@ test("administrator page manages margin, member top-ups and provider API keys th
   assert.match(script, /PROVIDER_BILLING_URLS/);
   assert.match(script, /https:\/\/platform\.openai\.com\/settings\/organization\/billing\/overview/);
   assert.match(script, /https:\/\/platform\.minimax\.io\/console\/recharge-records/);
+  assert.match(script, /https:\/\/console\.byteplus\.com\/finance\/overview/);
   for (const route of ["settings/topup", "admin/members", "credits/topup", "admin/api-keys"]) assert.match(api, new RegExp(route));
   assert.doesNotMatch(script, /MEMBER_ADMIN_SECRET|PLATFORM_API_KEYS/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"admin\.html"/);

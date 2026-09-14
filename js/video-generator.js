@@ -1,6 +1,6 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
+import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredValue } from "./media-store.js";
 import { getApiKey, listApiKeys, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLabel } from "./video-resources.js";
 import { createVideoProjectFile, readVideoProjectFile } from "./video-project-file.js";
@@ -3500,7 +3500,6 @@ function setBusy(value, showLock = value) {
   $("storyboard-prompt-mode").disabled = value;
   $("plain-prompt-mode").disabled = value;
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
-  $("apply-video-background").disabled = value || !generatedVideoBlob;
   $("open-video-history").disabled = value || !generationHistory.length;
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
@@ -3810,7 +3809,6 @@ function presentVideo() {
   $("empty-video-result").hidden = true;
   video.load();
   $("download-video").disabled = false;
-  $("apply-video-background").disabled = !generatedVideoBlob;
 }
 
 async function restoreLastGeneratedVideo() {
@@ -4227,22 +4225,6 @@ $("video-history-dialog").addEventListener("close", () => releaseUrlSet(historyP
 $("compare-video-history").addEventListener("click", compareSelectedVideos);
 $("close-video-compare").addEventListener("click", () => $("video-compare-dialog").close());
 $("video-compare-dialog").addEventListener("close", () => releaseUrlSet(comparisonPreviewUrls));
-
-$("apply-video-background").addEventListener("click", async () => {
-  if (!generatedVideoBlob || busy) return;
-  setBusy(true);
-  setStatus("正在保存為主畫面背景…");
-  try {
-    const file = new File([generatedVideoBlob], videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
-    await saveStoredMedia("image", file);
-    await deleteStoredValue("image-video-project").catch(() => {});
-    window.location.href = "./";
-  } catch (error) {
-    showError(error.message || "無法保存影片到瀏覽器。");
-    setStatus("背景套用失敗", "error");
-    setBusy(false);
-  }
-});
 
 window.addEventListener("pagehide", () => {
   if (autoDraftReady) void saveAutoDraftNow({ resources: autoDraftResourcesDirty }).catch(() => {});

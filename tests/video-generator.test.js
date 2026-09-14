@@ -151,7 +151,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="generated-video"[^>]*controls[^>]*playsinline[^>]*hidden/);
   assert.match(html, /id="download-video"[^>]*disabled/);
   assert.match(html, /id="retry-save-video"[^>]*hidden>重新保存影片<\/button>/);
-  assert.match(html, /id="apply-video-background"[^>]*disabled/);
+  assert.doesNotMatch(html, /id="apply-video-background"|套用主畫面背景/);
   assert.match(html, /id="open-video-history"[^>]*disabled>生成歷史<\/button>/);
   assert.doesNotMatch(html, /send-video-editor|送到影片編輯器/);
   assert.match(html, /最多保留最近 10 個版本/);
@@ -193,7 +193,6 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-view-subjects\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.doesNotMatch(script, /confirmPageExit|beforeunload|allowPageExit/);
-  assert.match(script, /window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*summary: \$\("video-prompt-summary"\)\.value\.trim\(\),[\s\S]*shotSize:[\s\S]*viewSubjects: selectedStoryboardSubjects\(\)[\s\S]*viewpointCharacter:[\s\S]*actionCharacter:[\s\S]*actionDetail:[\s\S]*lightingIntensity:/);
   assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*dialogues: collectDialogueRows\(\)/);
@@ -320,7 +319,6 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /generate-video"\)\.addEventListener\("click", openGenerateConfirmation\)/);
   assert.match(script, /confirm-video-generation-form"\)\.addEventListener\("submit", confirmVideoGeneration\)/);
   assert.match(script, /taskState === "succeeded"/);
-  assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredValue\("video-generation-history", \{ items: generationHistory/);
   assert.match(script, /VIDEO_HISTORY_LIMIT = 10/);
   assert.match(script, /function compareSelectedVideos\(\)[\s\S]*video-compare-grid/);
@@ -403,7 +401,6 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /if \(removeResourceMentionAtCaret\(event, editor\)\) return/);
   assert.match(script, /video-settings-panel"\)\.addEventListener\("toggle",[\s\S]*video-description-panel"\)\.open = false/);
   assert.match(script, /video-description-panel"\)\.addEventListener\("toggle",[\s\S]*video-settings-panel"\)\.open = false;[\s\S]*video-result-panel"\)\.open = false/);
-  assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影片生成器<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"video-generator\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-generator\.html"/);

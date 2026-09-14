@@ -1813,10 +1813,20 @@ function characterVoiceValue() {
     : $("character-voice").value;
 }
 
+function normalizedCharacterName(name = "") {
+  return String(name).normalize("NFKC").trim().toLocaleLowerCase("zh-TW");
+}
+
+function characterNameExists(name, ignoredIndex = -1) {
+  const normalized = normalizedCharacterName(name);
+  return Boolean(normalized) && characterTemplates.some((character, index) => index !== ignoredIndex && normalizedCharacterName(character.name) === normalized);
+}
+
 function openCharacterEditor(index = -1) {
   editingCharacterIndex = index;
   const character = index >= 0 ? characterTemplates[index] : null;
   $("character-editor-title").textContent = character ? "編輯人物" : "新增人物";
+  $("character-name").setCustomValidity("");
   $("character-name").value = character?.name || "";
   $("character-reference").value = "";
   $("character-style").value = character?.style || "";
@@ -1837,8 +1847,9 @@ function openCharacterTemplate() {
 
 async function submitCharacterEditor(event) {
   event.preventDefault();
+  const nameInput = $("character-name");
   const character = {
-    name: $("character-name").value.trim(),
+    name: nameInput.value.trim(),
     referenceImage: editingCharacterReference,
     style: $("character-style").value.trim(),
     tone: $("character-tone").value.trim(),
@@ -1846,7 +1857,9 @@ async function submitCharacterEditor(event) {
     clothing: $("character-clothing").value.trim(),
     enabled: editingCharacterIndex >= 0 ? characterTemplates[editingCharacterIndex]?.enabled !== false : false,
   };
-  if (!character.name || !character.referenceImage) {
+  const duplicateName = characterNameExists(character.name, editingCharacterIndex);
+  nameInput.setCustomValidity(duplicateName ? "人物名稱不可重複。" : "");
+  if (!character.name || !character.referenceImage || duplicateName) {
     $("character-reference").setCustomValidity(character.referenceImage ? "" : "請選擇人物參考圖。");
     $("character-editor-form").reportValidity();
     return;
@@ -2505,6 +2518,10 @@ function validateProjectMetadata(metadata, binaries) {
   }
   if (Array.isArray(metadata.characters) && metadata.characters.some(record => record?.binaryIndex !== null && (!Number.isInteger(record?.binaryIndex) || !binaries[record.binaryIndex]))) {
     throw new Error("影片設定檔的人物參考圖索引無效。");
+  }
+  if (Array.isArray(metadata.characters)) {
+    const names = metadata.characters.map(record => normalizedCharacterName(record?.name)).filter(Boolean);
+    if (new Set(names).size !== names.length) throw new Error("影片設定檔包含重複的人物名稱。");
   }
 }
 
@@ -3546,6 +3563,7 @@ $("cancel-film-style").addEventListener("click", () => $("film-style-dialog").cl
 $("add-character").addEventListener("click", () => openCharacterEditor());
 $("close-character-template").addEventListener("click", () => $("character-template-dialog").close());
 $("character-reference").addEventListener("change", event => showCharacterEditorReference(event.currentTarget.files?.[0] || null));
+$("character-name").addEventListener("input", event => event.currentTarget.setCustomValidity(""));
 $("character-voice").addEventListener("change", () => syncCharacterVoiceCustom(true));
 $("character-editor-form").addEventListener("submit", submitCharacterEditor);
 $("cancel-character-editor").addEventListener("click", () => $("character-editor-dialog").close());

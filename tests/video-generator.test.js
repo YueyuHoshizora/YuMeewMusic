@@ -298,6 +298,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /editButton\.addEventListener\("click", \(\) => openCharacterEditor\(index\)\)/);
   assert.match(script, /function setCharacterVoice\(value = ""\)[\s\S]*presetExists[\s\S]*"custom"[\s\S]*character-voice-custom/);
   assert.match(script, /function showCharacterEditorReference\(file\)[\s\S]*character-reference-placeholder[\s\S]*classList\.add\("has-image"\)/);
+  assert.match(script, /function normalizedCharacterName\(name = ""\)[\s\S]*normalize\("NFKC"\)[\s\S]*toLocaleLowerCase\("zh-TW"\)/);
+  assert.match(script, /function characterNameExists\(name, ignoredIndex = -1\)[\s\S]*index !== ignoredIndex[\s\S]*normalizedCharacterName\(character\.name\) === normalized/);
+  assert.match(script, /async function submitCharacterEditor\(event\)[\s\S]*const duplicateName = characterNameExists\(character\.name, editingCharacterIndex\)[\s\S]*"人物名稱不可重複。"[\s\S]*\|\| duplicateName/);
+  assert.match(script, /影片設定檔包含重複的人物名稱。/);
   assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*finalStoryboard:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
   assert.match(script, /function submitFinalStoryboard\(event\)[\s\S]*const start = Number\(nextStoryboardStart\(\)\)[\s\S]*end: roundedStoryboardTime\(start \+ 1\)[\s\S]*actions:[\s\S]*renderFinalStoryboardCard\(\)/);
   assert.match(script, /function createFinalStoryboardAction\(action = \{\}\)[\s\S]*final-storyboard-action-character[\s\S]*final-storyboard-action-category[\s\S]*final-storyboard-action-type[\s\S]*final-storyboard-action-style[\s\S]*final-storyboard-action-custom[\s\S]*final-storyboard-action-target[\s\S]*final-storyboard-action-detail/);
@@ -331,7 +335,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(script, /if \(target\.closest\("#video-prompt-builder-dialog"\)\) showCharacterMentionMenu/);
   assert.match(script, /const menuHost = target\.closest\("dialog"\) \|\| document\.body;[\s\S]*menuHost\.append\(menu\)/);
   assert.match(script, /event\.key === "ArrowDown" \|\| event\.key === "ArrowUp"/);
-  assert.match(script, /if \(!character\.name \|\| !character\.referenceImage\)/);
+  assert.match(script, /if \(!character\.name \|\| !character\.referenceImage \|\| duplicateName\)/);
   assert.match(script, /\["聲線", character\.voice\],[\s\S]*\["口氣", character\.tone\],[\s\S]*\["風格", character\.style\]/);
   assert.match(script, /const generation = generationInputs\(videoDetails\);\s*inputs = generation\.resources;\s*const prompt = completeVideoPrompt\(videoDetails\)/);
   assert.doesNotMatch(script, /saveStoredValue\("video-generation-resources"|loadStoredValue\("video-generation-resources"/);

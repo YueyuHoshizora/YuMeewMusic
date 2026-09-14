@@ -8,6 +8,8 @@ test("text-to-image page exposes generation, download and background actions", (
   const css = readFileSync("css/text-to-image.css", "utf8");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
   assert.equal(new Set(ids).size, ids.length);
+  assert.match(html, /<title>圖片生成器 · YuMeew<\/title>/);
+  assert.match(html, />圖片生成器<span class="brand-sub">TEXT TO IMAGE<\/span>/);
   assert.match(html, /name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
@@ -114,7 +116,7 @@ test("text-to-image page exposes generation, download and background actions", (
   assert.match(script, /void restoreLastGeneratedImage\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);
   const mainHtml = readFileSync("index.html", "utf8");
-  assert.match(mainHtml, /href="\.\/text-to-image\.html"[^>]*>文生圖<\/a>/);
+  assert.match(mainHtml, /href="\.\/text-to-image\.html"[^>]*>圖片生成器<\/a>/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"text-to-image\.html"/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"text-to-image\.html"/);
 });

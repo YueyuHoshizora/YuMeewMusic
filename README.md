@@ -63,7 +63,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 
 ## 獨立工具
 
-### 文生圖
+### 圖片生成器
 
 輸入文字後可使用 Flux.2 Klein 4B、GPT-Image-2.5 Flare 或 GPT-Image-2.5 Sunburst 生成 1280 × 720 圖片。
 
@@ -157,7 +157,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 | 任意轉、圖轉影片、影片編輯 | 瀏覽器 | 無 |
 | 人聲分離、歌曲評分 | 瀏覽器 | 只下載模型；不送出音樂 |
 | AI 字幕辨識 | 瀏覽器 + 辨識服務 | 分離後的人聲 WAV、語言、選填歌詞與時長 |
-| 文生圖、影片生成器 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
+| 圖片生成器、影片生成器 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
 | Suno 工具 | Suno CDN + 解析 Worker | 公開分享連結；Worker 不保存音樂 |
 
 一般素材限制：
@@ -198,7 +198,7 @@ npm run preview  # 預覽 dist/
 ```text
 ├── index.html                 # 音樂視覺工作室
 ├── subtitle-editor.html       # 字幕編輯器
-├── text-to-image.html         # 文生圖
+├── text-to-image.html         # 圖片生成器
 ├── video-generator.html       # 影片生成器
 ├── vocal-separator.html       # 人聲分離
 ├── image-video.html           # 圖轉影片

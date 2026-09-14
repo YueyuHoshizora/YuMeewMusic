@@ -52,8 +52,10 @@ test("production build minifies JavaScript and CSS without rewriting source file
   const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
   assert.match(build, /minifyJavaScript/);
   assert.match(build, /minifyCss/);
-  assert.equal(packageJson.devDependencies.esbuild, "^0.27.3");
-  assert.equal(packageJson.devDependencies.lightningcss, "^1.31.1");
+  assert.match(build, /from "esbuild"/);
+  assert.match(build, /from "lightningcss"/);
+  assert.ok(packageJson.devDependencies.esbuild);
+  assert.ok(packageJson.devDependencies.lightningcss);
 });
 
 test("GitHub Pages installs and runs the minifying production build", () => {

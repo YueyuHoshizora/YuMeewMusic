@@ -71,7 +71,9 @@ test("member center reads the balance, top-up history and consumption history", 
   assert.match(script, /Math\.floor\(calculated \* 100\) \/ 100/);
   assert.match(script, /`可取得 \$\{usdFormatter\.format\(total\)\}`/);
   assert.match(script, /platformMarginPercent/);
-  for (const page of allPages.filter(page => page !== "admin.html")) assert.doesNotMatch(readFileSync(page, "utf8"), /href="\.\/admin\.html"/, page);
+  assert.match(html, /id="account-admin"[^>]*href="\.\/admin\.html"[^>]*hidden>管理員<\/a>/);
+  assert.match(script, /adminLink\.hidden = !account\.isAdmin/);
+  for (const page of allPages.filter(page => !["account.html", "admin.html"].includes(page))) assert.doesNotMatch(readFileSync(page, "utf8"), /href="\.\/admin\.html"/, page);
   assert.match(script, /style: "currency", currency: "USD"/);
   assert.doesNotMatch(script, /\.from\(/);
   const api = readFileSync("js/member-api.js", "utf8");

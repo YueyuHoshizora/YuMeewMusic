@@ -22,7 +22,9 @@
 .account-identity span { margin-bottom: 5px; color: var(--muted); font-size: 11px; letter-spacing: 1px; }
 .account-identity strong { font-size: 16px; }
 .account-identity small { margin-top: 3px; color: var(--muted); font-size: 11px; }
-.account-logout { margin-left: auto; padding: 7px 11px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--foreground); }
+.account-admin { margin-left: auto; padding: 7px 11px; border: 1px solid var(--primary); border-radius: 8px; color: var(--primary-text); font-size: 12px; font-weight: 750; text-decoration: none; }
+.account-admin:hover { background: var(--hover); }
+.account-logout { padding: 7px 11px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--foreground); }
 .account-logout:hover { border-color: var(--primary); color: var(--primary-text); }
 .balance-card { display: grid; align-content: center; gap: 5px; }
 .balance-card span { color: var(--muted); font-size: 12px; letter-spacing: 1px; }

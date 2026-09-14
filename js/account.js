@@ -12,6 +12,7 @@ const signedInPanel = document.getElementById("account-signed-in");
 const status = document.getElementById("account-status");
 const loginButton = document.getElementById("google-login");
 const logoutButton = document.getElementById("account-logout");
+const adminLink = document.getElementById("account-admin");
 const avatar = document.getElementById("account-avatar");
 const name = document.getElementById("account-name");
 const email = document.getElementById("account-email");
@@ -172,6 +173,7 @@ async function loadExchangeRate() {
 
 async function loadAccountData(session) {
   if (!session?.user) {
+    adminLink.hidden = true;
     setVisible(signedOutPanel);
     setStatus("登入後即可查看額度與交易紀錄。");
     return;
@@ -204,10 +206,12 @@ async function loadAccountData(session) {
   try {
     const account = await fetchMemberAccount(session);
     balance.textContent = formatUsd(account.balance);
+    adminLink.hidden = !account.isAdmin;
     setLedgerEntries("topup", account.topups || [], "目前沒有儲值紀錄");
     setLedgerEntries("consumption", account.consumption || [], "目前沒有消費紀錄");
     setStatus("會員資料已更新。");
   } catch (error) {
+    adminLink.hidden = true;
     balance.textContent = "—";
     setLedgerEntries("topup", [], "尚無法讀取儲值紀錄");
     setLedgerEntries("consumption", [], "尚無法讀取消費紀錄");
@@ -230,6 +234,7 @@ logoutButton.addEventListener("click", async () => {
   logoutButton.disabled = true;
   try {
     await signOut();
+    adminLink.hidden = true;
     setVisible(signedOutPanel);
     setStatus("已登出會員帳號。");
   } catch (error) {

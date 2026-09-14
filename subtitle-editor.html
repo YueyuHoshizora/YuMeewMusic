@@ -9,8 +9,10 @@
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/subtitle-editor.css" />
     <script type="module" src="./js/subtitle-editor.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
   </head>
-  <body class="subtitle-editor-body">
+  <body class="subtitle-editor-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
     <header class="editor-header">
       <a id="return-to-main" class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SUBTITLE EDITOR</span></a>
       <span class="local"><i></i>原始音樂與字幕保存在瀏覽器</span>

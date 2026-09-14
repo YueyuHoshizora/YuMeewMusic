@@ -13,5 +13,9 @@
   "engines": {
     "node": ">=22"
   },
-  "license": "GPL-3.0-only"
+  "license": "GPL-3.0-only",
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "lightningcss": "^1.31.1"
+  }
 }

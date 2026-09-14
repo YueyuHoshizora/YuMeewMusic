@@ -418,4 +418,9 @@ window.addEventListener("pagehide", () => {
   releaseImage();
 });
 
-void restoreLastGeneratedImage();
+function restoreWhenIdle(task) {
+  const run = () => void task();
+  if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
+  else setTimeout(run, 0);
+}
+restoreWhenIdle(() => void restoreLastGeneratedImage());

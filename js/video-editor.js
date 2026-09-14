@@ -830,5 +830,10 @@ window.addEventListener("beforeunload", () => {
 });
 
 setCanvasSize();
-void restoreFixedLayers();
+function restoreWhenIdle(task) {
+  const run = () => void task();
+  if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
+  else setTimeout(run, 0);
+}
+restoreWhenIdle(restoreFixedLayers);
 requestAnimationFrame(animationFrame);

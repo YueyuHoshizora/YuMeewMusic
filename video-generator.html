@@ -8,10 +8,12 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/text-to-image.css" />
-    <link rel="stylesheet" href="./css/video-generator.css?v=20260914-sound-layout" />
-    <script type="module" src="./js/video-generator.js?v=20260914-sound-layout"></script>
+    <link rel="stylesheet" href="./css/video-generator.css" />
+    <script type="module" src="./js/video-generator.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
   </head>
-  <body class="text-to-image-body video-generator-body">
+  <body class="text-to-image-body video-generator-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
     <header class="text-to-image-header">
       <a class="brand" href="./" data-confirm-return aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">▶</span>影片生成器<span class="brand-sub">VIDEO GENERATOR</span></a>
     </header>

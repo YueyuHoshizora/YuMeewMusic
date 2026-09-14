@@ -1135,4 +1135,9 @@ async function restoreBrowserState() {
   await restoreIdentityImage();
   await restoreSavedMedia();
 }
-void restoreBrowserState();
+function restoreWhenIdle(task) {
+  const run = () => void task();
+  if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
+  else setTimeout(run, 0);
+}
+restoreWhenIdle(restoreBrowserState);

@@ -50,6 +50,7 @@ let editingStoryboardId = "";
 let filmStyle = { ...EMPTY_FILM_STYLE };
 const storyboards = new Map();
 let generatedVideoBlob = null;
+let lastGeneratedVideoRestored = false;
 let generatedVideoUrl = "";
 let generatedVideoRemoteUrl = "";
 let generatedVideoProvider = "minimax";
@@ -2299,6 +2300,8 @@ function presentVideo() {
 }
 
 async function restoreLastGeneratedVideo() {
+  if (lastGeneratedVideoRestored) return;
+  lastGeneratedVideoRestored = true;
   try {
     const record = await loadStoredMedia("generated-video");
     if (!record?.blob?.size || !record.blob.type?.startsWith("video/") || busy) return;
@@ -2529,6 +2532,12 @@ $("video-description-panel").addEventListener("toggle", () => {
   $("video-settings-panel").open = false;
   $("video-result-panel").open = false;
 });
+$("video-result-panel").addEventListener("toggle", () => {
+  if (!$("video-result-panel").open) return;
+  $("video-description-panel").open = false;
+  $("video-settings-panel").open = false;
+  void restoreLastGeneratedVideo();
+});
 
 $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;
@@ -2587,5 +2596,9 @@ window.addEventListener("pagehide", () => {
 
 syncModelDetails();
 syncDraftStatus();
-void restoreCharacterTemplates();
-void restoreLastGeneratedVideo();
+function restoreWhenIdle(task) {
+  const run = () => void task();
+  if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
+  else setTimeout(run, 0);
+}
+restoreWhenIdle(restoreCharacterTemplates);

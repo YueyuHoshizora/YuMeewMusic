@@ -9,8 +9,10 @@
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/music-rating.css" />
     <script type="module" src="./js/music-rating.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
   </head>
-  <body class="rating-body">
+  <body class="rating-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
     <header class="rating-header">
       <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♫</span>YuMeew<span class="brand-sub">SONG RATING</span></a>
       <span class="local"><i></i>音樂只在瀏覽器內分析</span>

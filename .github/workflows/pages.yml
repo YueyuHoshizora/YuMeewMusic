@@ -22,9 +22,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+      - name: Install build tools
+        run: npm ci
       - name: Test
         run: npm test
-      - name: Build static website
+      - name: Build and minify static website
         run: npm run build
       - name: Configure Pages
         uses: actions/configure-pages@v5

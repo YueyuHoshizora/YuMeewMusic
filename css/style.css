@@ -55,6 +55,59 @@ body {
   font-family: Arial, "Noto Sans TC", sans-serif;
   font-size: 16px;
 }
+.feature-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  backdrop-filter: blur(12px);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+}
+.feature-loading.is-complete {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.feature-loading-card {
+  min-width: 250px;
+  padding: 30px 36px;
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--tint-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 28%);
+}
+.feature-loading-card strong {
+  font-size: 17px;
+  letter-spacing: 0.08em;
+}
+.feature-loading-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.feature-loading-spinner {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 5px;
+  border: 3px solid color-mix(in srgb, var(--primary) 20%, var(--border));
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: feature-loading-spin 0.75s linear infinite;
+}
+@keyframes feature-loading-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feature-loading-spinner { animation-duration: 1.5s; }
+  .feature-loading { transition: none; }
+}
 button {
   cursor: pointer;
   transition:

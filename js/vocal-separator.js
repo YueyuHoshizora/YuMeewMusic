@@ -703,4 +703,9 @@ window.addEventListener("unload", () => {
   for (const url of Object.values(resultUrls)) if (url) URL.revokeObjectURL(url);
 });
 applyAutotuneSettings();
-void restoreMainAudio();
+function restoreWhenIdle(task) {
+  const run = () => void task();
+  if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
+  else setTimeout(run, 0);
+}
+restoreWhenIdle(() => void restoreMainAudio());

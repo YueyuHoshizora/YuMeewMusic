@@ -85,6 +85,36 @@ let autoDraftTimer = 0;
 let autoDraftResourcesDirty = false;
 let autoDraftSavePromise = Promise.resolve();
 
+const MINIMIZABLE_DIALOGS = Object.freeze({
+  filmStyle: Object.freeze({ dialog: "film-style-dialog", restore: "restore-film-style", focus: "film-style-primary" }),
+  promptPreview: Object.freeze({ dialog: "video-prompt-preview-dialog", restore: "restore-video-prompt-preview", focus: "video-prompt-preview-text" }),
+  finalStoryboard: Object.freeze({ dialog: "final-storyboard-dialog", restore: "restore-final-storyboard", focus: "final-storyboard-scene" }),
+  storyboardInspection: Object.freeze({ dialog: "storyboard-inspection-dialog", restore: "restore-storyboard-inspection", focus: "close-storyboard-inspection" }),
+});
+
+function minimizeDialog(name) {
+  const config = MINIMIZABLE_DIALOGS[name];
+  if (!config) return;
+  hideCharacterMentionMenu();
+  hideResourceMentionMenu();
+  $(config.dialog).close("minimized");
+}
+
+function restoreMinimizedDialog(name) {
+  const config = MINIMIZABLE_DIALOGS[name];
+  if (!config || busy || $(config.restore).hidden) return false;
+  $(config.restore).hidden = true;
+  $(config.dialog).returnValue = "";
+  $(config.dialog).showModal();
+  $(config.focus)?.focus();
+  return true;
+}
+
+function syncMinimizedDialog(name) {
+  const config = MINIMIZABLE_DIALOGS[name];
+  $(config.restore).hidden = $(config.dialog).returnValue !== "minimized";
+}
+
 function editorText(editor) {
   if (editor?.matches?.("input, textarea")) return String(editor.value || "").replace(/\u00a0/g, " ").trim();
   return String(editor?.innerText || editor?.textContent || "").replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").trim();
@@ -219,6 +249,7 @@ function syncNarratorVoiceCustom(focus = false) {
 
 function openFilmStyle() {
   if (busy) return;
+  if (restoreMinimizedDialog("filmStyle")) return;
   $("film-style-primary").value = filmStyle.primary;
   $("film-style-primary-custom").value = filmStyle.primaryCustom;
   $("film-style-era").value = filmStyle.era;
@@ -230,6 +261,7 @@ function openFilmStyle() {
   $("film-style-notes").value = filmStyle.notes;
   syncFilmStyleCustom();
   syncNarratorVoiceCustom();
+  $("film-style-dialog").returnValue = "";
   $("film-style-dialog").showModal();
   $("film-style-primary").focus();
 }
@@ -414,6 +446,7 @@ function syncFinalStoryboardView(focusCustom = false) {
 
 function openFinalStoryboard() {
   if (busy) return;
+  if (restoreMinimizedDialog("finalStoryboard")) return;
   restoreEditorHtml("final-storyboard-scene", finalStoryboard?.scene || "");
   restoreEditorHtml("final-storyboard-sound", finalStoryboard?.sound || "");
   $("final-storyboard-camera").value = finalStoryboard?.camera || "";
@@ -426,6 +459,7 @@ function openFinalStoryboard() {
   renderFinalStoryboardActions(finalStoryboard?.actions || []);
   syncFinalStoryboardCamera();
   syncFinalStoryboardView();
+  $("final-storyboard-dialog").returnValue = "";
   $("final-storyboard-dialog").showModal();
   $("final-storyboard-scene").focus();
 }
@@ -1994,7 +2028,9 @@ function completeVideoPrompt(videoDetails = promptVideoDetails()) {
 }
 
 function openVideoPromptPreview() {
+  if (restoreMinimizedDialog("promptPreview")) return;
   $("video-prompt-preview-text").textContent = completeVideoPrompt() || "目前尚未輸入題詞。";
+  $("video-prompt-preview-dialog").returnValue = "";
   $("video-prompt-preview-dialog").showModal();
   $("video-prompt-preview-text").focus();
 }
@@ -2214,7 +2250,9 @@ function renderStoryboardInspection(report) {
 }
 
 function openStoryboardInspection(report = inspectStoryboardProject()) {
+  if (restoreMinimizedDialog("storyboardInspection")) return report;
   renderStoryboardInspection(report);
+  $("storyboard-inspection-dialog").returnValue = "";
   $("storyboard-inspection-dialog").showModal();
   $("close-storyboard-inspection").focus();
   return report;
@@ -3546,7 +3584,12 @@ function confirmVideoGeneration(event) {
 
 $("open-character-template").addEventListener("click", openCharacterTemplate);
 $("open-film-style").addEventListener("click", openFilmStyle);
+$("minimize-film-style").addEventListener("click", () => minimizeDialog("filmStyle"));
+$("restore-film-style").addEventListener("click", () => restoreMinimizedDialog("filmStyle"));
+$("film-style-dialog").addEventListener("close", () => syncMinimizedDialog("filmStyle"));
 $("open-final-storyboard").addEventListener("click", openFinalStoryboard);
+$("minimize-final-storyboard").addEventListener("click", () => minimizeDialog("finalStoryboard"));
+$("restore-final-storyboard").addEventListener("click", () => restoreMinimizedDialog("finalStoryboard"));
 $("add-final-storyboard-action").addEventListener("click", () => $("final-storyboard-actions").append(createFinalStoryboardAction()));
 $("final-storyboard-camera").addEventListener("change", () => syncFinalStoryboardCamera(true));
 $("final-storyboard-view-angle").addEventListener("change", () => syncFinalStoryboardView(true));
@@ -3555,6 +3598,7 @@ $("cancel-final-storyboard").addEventListener("click", () => $("final-storyboard
 $("final-storyboard-dialog").addEventListener("close", () => {
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
+  syncMinimizedDialog("finalStoryboard");
 });
 $("film-style-primary").addEventListener("change", () => syncFilmStyleCustom(true));
 $("film-style-narrator-voice").addEventListener("change", () => syncNarratorVoiceCustom(true));
@@ -3569,10 +3613,16 @@ $("character-editor-form").addEventListener("submit", submitCharacterEditor);
 $("cancel-character-editor").addEventListener("click", () => $("character-editor-dialog").close());
 $("delete-character").addEventListener("click", deleteEditingCharacter);
 $("preview-video-prompt").addEventListener("click", openVideoPromptPreview);
+$("minimize-video-prompt-preview").addEventListener("click", () => minimizeDialog("promptPreview"));
+$("restore-video-prompt-preview").addEventListener("click", () => restoreMinimizedDialog("promptPreview"));
 $("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-preview-dialog").close());
+$("video-prompt-preview-dialog").addEventListener("close", () => syncMinimizedDialog("promptPreview"));
 $("inspect-storyboards").addEventListener("click", () => openStoryboardInspection());
+$("minimize-storyboard-inspection").addEventListener("click", () => minimizeDialog("storyboardInspection"));
+$("restore-storyboard-inspection").addEventListener("click", () => restoreMinimizedDialog("storyboardInspection"));
 $("reflow-storyboard-times").addEventListener("click", reflowStoryboardTimes);
 $("close-storyboard-inspection").addEventListener("click", () => $("storyboard-inspection-dialog").close());
+$("storyboard-inspection-dialog").addEventListener("close", () => syncMinimizedDialog("storyboardInspection"));
 $("export-video-project").addEventListener("click", openVideoProjectExport);
 $("export-video-project-form").addEventListener("submit", event => void exportVideoProject(event));
 $("cancel-export-video-project").addEventListener("click", () => $("export-video-project-dialog").close());

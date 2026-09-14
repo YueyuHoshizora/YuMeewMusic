@@ -123,7 +123,10 @@
 
     <dialog id="video-prompt-preview-dialog" class="reset-dialog video-prompt-preview-dialog" aria-labelledby="video-prompt-preview-title">
       <div>
-        <h2 id="video-prompt-preview-title">目前題詞</h2>
+        <div class="minimizable-dialog-heading">
+          <h2 id="video-prompt-preview-title">目前題詞</h2>
+          <button id="minimize-video-prompt-preview" class="dialog-confirm video-prompt-builder-minimize" type="button">縮小</button>
+        </div>
         <pre id="video-prompt-preview-text" class="video-prompt-preview-text" tabindex="0" aria-label="目前完整題詞"></pre>
         <div class="dialog-actions">
           <button id="close-video-prompt-preview" class="dialog-confirm" type="button">關閉</button>
@@ -133,7 +136,10 @@
 
     <dialog id="storyboard-inspection-dialog" class="reset-dialog storyboard-inspection-dialog" aria-labelledby="storyboard-inspection-title">
       <div>
-        <h2 id="storyboard-inspection-title">分鏡檢查</h2>
+        <div class="minimizable-dialog-heading">
+          <h2 id="storyboard-inspection-title">分鏡檢查</h2>
+          <button id="minimize-storyboard-inspection" class="dialog-confirm video-prompt-builder-minimize" type="button">縮小</button>
+        </div>
         <div id="storyboard-inspection-summary" class="storyboard-inspection-summary" aria-label="分鏡檢查摘要"></div>
         <p id="storyboard-time-room" class="storyboard-time-room" role="status"></p>
         <div id="storyboard-inspection-timeline" class="storyboard-inspection-timeline" aria-label="分鏡時間軸"></div>
@@ -179,7 +185,10 @@
 
     <dialog id="film-style-dialog" class="reset-dialog film-style-dialog" aria-labelledby="film-style-title">
       <form id="film-style-form" method="dialog">
-        <h2 id="film-style-title">全片風格</h2>
+        <div class="minimizable-dialog-heading">
+          <h2 id="film-style-title">全片風格</h2>
+          <button id="minimize-film-style" class="dialog-confirm video-prompt-builder-minimize" type="button">縮小</button>
+        </div>
         <p>設定整部影片共用的視覺方向，所有分鏡會沿用這些設定。</p>
         <div class="film-style-fields">
           <label for="film-style-primary"><span>主要風格</span>
@@ -249,7 +258,10 @@
 
     <dialog id="final-storyboard-dialog" class="reset-dialog final-storyboard-dialog" aria-labelledby="final-storyboard-title">
       <form id="final-storyboard-form" method="dialog">
-        <h2 id="final-storyboard-title">最終分鏡</h2>
+        <div class="minimizable-dialog-heading">
+          <h2 id="final-storyboard-title">最終分鏡</h2>
+          <button id="minimize-final-storyboard" class="dialog-confirm video-prompt-builder-minimize" type="button">縮小</button>
+        </div>
         <p>時間會自動接續最後一張分鏡，並延長 1 秒。</p>
         <div class="final-storyboard-fields">
           <label><span>場景</span><div id="final-storyboard-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡場景" data-placeholder="輸入最後畫面的場景"></div></label>
@@ -597,9 +609,15 @@
       </form>
     </dialog>
 
-    <button id="restore-video-prompt-builder" class="video-prompt-builder-minimized" type="button" aria-label="重新開啟分鏡內容視窗" hidden>
-      <span>分鏡內容</span><small>繼續編輯</small>
-    </button>
+    <div class="video-minimized-dialogs" aria-label="已縮小視窗">
+      <button id="restore-film-style" class="video-prompt-builder-minimized" type="button" hidden><span>全片風格</span><small>繼續編輯</small></button>
+      <button id="restore-video-prompt-preview" class="video-prompt-builder-minimized" type="button" hidden><span>預覽題詞</span><small>重新展開</small></button>
+      <button id="restore-final-storyboard" class="video-prompt-builder-minimized" type="button" hidden><span>最終分鏡</span><small>繼續編輯</small></button>
+      <button id="restore-storyboard-inspection" class="video-prompt-builder-minimized" type="button" hidden><span>檢查分鏡</span><small>重新展開</small></button>
+      <button id="restore-video-prompt-builder" class="video-prompt-builder-minimized" type="button" aria-label="重新開啟分鏡內容視窗" hidden>
+        <span>分鏡內容</span><small>繼續編輯</small>
+      </button>
+    </div>
 
     <div id="character-mention-menu" class="character-mention-menu" role="listbox" aria-label="選擇已啟用人物" hidden></div>
     <div id="resource-mention-menu" class="resource-mention-menu" role="listbox" aria-label="選擇資源" hidden></div>

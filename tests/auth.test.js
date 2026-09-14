@@ -24,7 +24,10 @@ test("administrator page manages margin, member top-ups and provider API keys th
   const html = readFileSync("admin.html", "utf8");
   const script = readFileSync("js/admin.js", "utf8");
   const api = readFileSync("js/member-api.js", "utf8");
-  for (const label of ["儲值換算設定", "會員人工加值", "平台 API KEY"]) assert.match(html, new RegExp(label));
+  for (const label of ["儲值換算設定", "會員人工加值", "計費設定", "平台 API KEY"]) assert.match(html, new RegExp(label));
+  for (const panel of ["margin-settings", "member-topup", "billing-settings", "platform-api-keys"]) assert.match(html, new RegExp(`data-admin-panel="${panel}"`));
+  assert.match(html, /class="panel admin-sidebar"[\s\S]*role="tablist"/);
+  assert.match(script, /function selectAdminPanel\(panelId\)[\s\S]*button\.dataset\.adminPanel[\s\S]*panel\.hidden = panel\.id !== panelId/);
   assert.match(html, /id="margin-percent"[^>]*min="0"[^>]*max="99"[^>]*step="0\.01"/);
   assert.match(html, /id="admin-topup-amount"[^>]*step="0\.01"/);
   assert.match(script, /crypto\.randomUUID\(\)/);

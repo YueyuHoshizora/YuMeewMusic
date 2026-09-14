@@ -9,9 +9,26 @@
 .admin-access { display: grid; min-height: 350px; place-items: center; align-content: center; gap: 8px; text-align: center; }
 .admin-access h2, .admin-access p { margin: 0; }
 .admin-access p { color: var(--muted); }
-.admin-dashboard { display: grid; gap: 18px; }
+.admin-dashboard { display: block; }
 .admin-dashboard[hidden] { display: none; }
-.admin-panel { padding: 26px; }
+.admin-workspace { display: grid; grid-template-columns: 238px minmax(0, 1fr); align-items: start; gap: 22px; }
+.admin-sidebar { position: sticky; top: 22px; padding: 18px 12px; }
+.admin-sidebar-label { display: block; padding: 0 10px 12px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; }
+.admin-nav { display: grid; gap: 6px; }
+.admin-nav-link { display: grid; width: 100%; grid-template-columns: 28px minmax(0, 1fr); align-items: center; gap: 9px; padding: 12px 10px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--foreground); text-align: left; }
+.admin-nav-link:hover { border-color: var(--border); background: var(--hover); }
+.admin-nav-link.active { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
+.admin-nav-icon { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 8px; background: var(--surface); color: var(--primary-text); font-size: 17px; font-weight: 800; }
+.admin-nav-link strong, .admin-nav-link small { display: block; }
+.admin-nav-link strong { margin-bottom: 4px; font-size: 14px; }
+.admin-nav-link small { overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.admin-content { min-width: 0; }
+.admin-panel { min-height: 430px; padding: 26px; }
+.admin-panel[hidden] { display: none; }
+.admin-empty-state { display: grid; min-height: 260px; place-items: center; align-content: center; gap: 8px; color: var(--muted); text-align: center; }
+.admin-empty-state > span { color: var(--primary); font-size: 38px; }
+.admin-empty-state strong { color: var(--foreground); font-size: 16px; }
+.admin-empty-state p { margin: 0; font-size: 13px; }
 .admin-intro { margin: 8px 0 20px; }
 .admin-inline-form { display: flex; align-items: end; gap: 12px; }
 .admin-inline-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }

@@ -38,6 +38,15 @@ function showAccess(title, message) {
   $("admin-dashboard").hidden = true;
 }
 
+function selectAdminPanel(panelId) {
+  for (const button of document.querySelectorAll("[data-admin-panel]")) {
+    const selected = button.dataset.adminPanel === panelId;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-selected", String(selected));
+  }
+  for (const panel of document.querySelectorAll(".admin-panel")) panel.hidden = panel.id !== panelId;
+}
+
 function renderMargin(setting) {
   $("margin-percent").value = String(setting.marginPercent);
   $("margin-preview").textContent = `會員可取得換算金額的 ${Number(setting.payoutPercent).toFixed(2).replace(/\.00$/, "")}%`;
@@ -214,6 +223,10 @@ $("api-key-delete-dialog").addEventListener("close", async () => {
   }
   catch (error) { setStatus(error.message || "API KEY 刪除失敗。", true); }
 });
+
+for (const button of document.querySelectorAll("[data-admin-panel]")) {
+  button.addEventListener("click", () => selectAdminPanel(button.dataset.adminPanel));
+}
 
 async function initialize() {
   const { session, error } = await getCurrentSession();

@@ -27,36 +27,56 @@
       <section id="admin-access" class="panel admin-access"><h2>正在確認權限</h2><p>請稍候，系統正在驗證目前登入的會員身分。</p></section>
 
       <div id="admin-dashboard" class="admin-dashboard" hidden>
-        <section class="panel admin-panel">
-          <div class="section-title"><span>01</span><h2>儲值換算設定</h2></div>
-          <p class="admin-intro">設定以臺灣銀行美元即期中間匯率換算時，平台保留的百分比。</p>
-          <form id="margin-form" class="admin-inline-form">
-            <label for="margin-percent"><span>平台保留</span><span class="admin-number"><input id="margin-percent" type="number" min="0" max="99" step="0.01" required /><b>%</b></span></label>
-            <button type="submit">儲存比例</button>
-          </form>
-          <p id="margin-preview" class="admin-note"></p>
-        </section>
+        <div class="admin-workspace">
+          <aside class="panel admin-sidebar" aria-label="管理項目">
+            <span class="admin-sidebar-label">管理項目</span>
+            <nav class="admin-nav" role="tablist" aria-label="管理員頁籤">
+              <button class="admin-nav-link active" type="button" role="tab" data-admin-panel="margin-settings" aria-controls="margin-settings" aria-selected="true"><span class="admin-nav-icon" aria-hidden="true">%</span><span><strong>儲值設定</strong><small>匯率與平台保留比例</small></span></button>
+              <button class="admin-nav-link" type="button" role="tab" data-admin-panel="member-topup" aria-controls="member-topup" aria-selected="false"><span class="admin-nav-icon" aria-hidden="true">＋</span><span><strong>會員加值</strong><small>搜尋帳號與人工加值</small></span></button>
+              <button class="admin-nav-link" type="button" role="tab" data-admin-panel="billing-settings" aria-controls="billing-settings" aria-selected="false"><span class="admin-nav-icon" aria-hidden="true">$</span><span><strong>計費設定</strong><small>模型帳戶扣點費率</small></span></button>
+              <button class="admin-nav-link" type="button" role="tab" data-admin-panel="platform-api-keys" aria-controls="platform-api-keys" aria-selected="false"><span class="admin-nav-icon" aria-hidden="true">⌁</span><span><strong>平台金鑰</strong><small>服務商 API KEY</small></span></button>
+            </nav>
+          </aside>
 
-        <section class="panel admin-panel member-admin-panel">
-          <div class="section-title"><span>02</span><h2>會員人工加值</h2></div>
-          <form id="member-search-form" class="member-search-form">
-            <label for="member-query">會員信箱、名稱或 UUID</label>
-            <div><input id="member-query" type="search" autocomplete="off" placeholder="輸入關鍵字；留空可列出最近會員" /><button type="submit">搜尋會員</button></div>
-          </form>
-          <div id="member-results" class="member-results" aria-live="polite"></div>
-          <form id="topup-form" class="admin-topup-form">
-            <div id="selected-member" class="selected-member">尚未選擇會員</div>
-            <label for="admin-topup-amount">加值金額（USD）<input id="admin-topup-amount" type="number" min="0.01" max="1000000" step="0.01" required disabled /></label>
-            <label for="admin-topup-description">紀錄說明<input id="admin-topup-description" type="text" maxlength="500" value="管理員人工加值" required disabled /></label>
-            <button id="admin-topup-submit" type="submit" disabled>確認加值</button>
-          </form>
-        </section>
+          <div class="admin-content">
+            <section id="margin-settings" class="panel admin-panel" role="tabpanel">
+              <div class="section-title"><span>01</span><h2>儲值換算設定</h2></div>
+              <p class="admin-intro">設定以臺灣銀行美元即期中間匯率換算時，平台保留的百分比。</p>
+              <form id="margin-form" class="admin-inline-form">
+                <label for="margin-percent"><span>平台保留</span><span class="admin-number"><input id="margin-percent" type="number" min="0" max="99" step="0.01" required /><b>%</b></span></label>
+                <button type="submit">儲存比例</button>
+              </form>
+              <p id="margin-preview" class="admin-note"></p>
+            </section>
 
-        <section class="panel admin-panel api-key-admin-panel">
-          <div class="section-title"><span>03</span><h2>平台 API KEY</h2></div>
-          <p class="admin-intro">金鑰依服務商保存在 Cloudflare KV。完整內容不會從後端讀回；輸入新金鑰可直接覆寫。</p>
-          <div id="admin-api-keys" class="admin-api-keys" aria-live="polite"></div>
-        </section>
+            <section id="member-topup" class="panel admin-panel member-admin-panel" role="tabpanel" hidden>
+              <div class="section-title"><span>02</span><h2>會員人工加值</h2></div>
+              <form id="member-search-form" class="member-search-form">
+                <label for="member-query">會員信箱、名稱或 UUID</label>
+                <div><input id="member-query" type="search" autocomplete="off" placeholder="輸入關鍵字；留空可列出最近會員" /><button type="submit">搜尋會員</button></div>
+              </form>
+              <div id="member-results" class="member-results" aria-live="polite"></div>
+              <form id="topup-form" class="admin-topup-form">
+                <div id="selected-member" class="selected-member">尚未選擇會員</div>
+                <label for="admin-topup-amount">加值金額（USD）<input id="admin-topup-amount" type="number" min="0.01" max="1000000" step="0.01" required disabled /></label>
+                <label for="admin-topup-description">紀錄說明<input id="admin-topup-description" type="text" maxlength="500" value="管理員人工加值" required disabled /></label>
+                <button id="admin-topup-submit" type="submit" disabled>確認加值</button>
+              </form>
+            </section>
+
+            <section id="billing-settings" class="panel admin-panel billing-settings-panel" role="tabpanel" hidden>
+              <div class="section-title"><span>03</span><h2>計費設定</h2></div>
+              <p class="admin-intro">管理各模型使用帳戶扣點時的計費方式。</p>
+              <div class="admin-empty-state"><span aria-hidden="true">$</span><strong>尚未設定計費項目</strong><p>後續新增模型費率時會集中顯示在此頁籤。</p></div>
+            </section>
+
+            <section id="platform-api-keys" class="panel admin-panel api-key-admin-panel" role="tabpanel" hidden>
+              <div class="section-title"><span>04</span><h2>平台 API KEY</h2></div>
+              <p class="admin-intro">金鑰依服務商保存在 Cloudflare KV。完整內容不會從後端讀回；輸入新金鑰可直接覆寫。</p>
+              <div id="admin-api-keys" class="admin-api-keys" aria-live="polite"></div>
+            </section>
+          </div>
+        </div>
       </div>
     </main>
 

@@ -2149,6 +2149,7 @@ function renderStoryboardInspection(report) {
     segment.style.left = `${Math.max(0, Number(entry.draft.start)) / scale * 100}%`;
     segment.style.width = `${Math.max(0.04, (Number(entry.draft.end) - Number(entry.draft.start)) / scale) * 100}%`;
     segment.textContent = `${entry.final ? "最終" : entry.index + 1} · ${formatStoryboardTime(entry.draft.start, entry.draft.end)}`;
+    segment.title = entry.final ? "最終分鏡" : String(entry.draft.summary || "").trim() || "未填寫分鏡描述";
     segment.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); entry.final ? openFinalStoryboard() : editStoryboard(entry.draft.id); });
     return segment;
   }));

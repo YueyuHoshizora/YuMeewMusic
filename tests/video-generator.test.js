@@ -235,6 +235,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function renderStoryboardInspection\(report\)[\s\S]*storyboard-timeline-segment[\s\S]*storyboard-inspection-item/);
   assert.match(script, /function inspectStoryboardProject\(\)[\s\S]*const finalEntry = finalStoryboard[\s\S]*timelineEntries[\s\S]*finalStoryboard: Boolean\(entry\?\.final\)[\s\S]*最終分鏡尚未設定場景[\s\S]*最終分鏡尚未設定鏡頭運動[\s\S]*totalEntries: timelineEntries\.length/);
   assert.match(script, /function renderStoryboardInspection\(report\)[\s\S]*report\.totalEntries[\s\S]*report\.timelineEntries\.map[\s\S]*entry\.final \? "最終"[\s\S]*entry\.final \? openFinalStoryboard\(\) : editStoryboard/);
+  assert.match(script, /segment\.title = entry\.final \? "最終分鏡" : String\(entry\.draft\.summary \|\| ""\)\.trim\(\) \|\| "未填寫分鏡描述"/);
   assert.match(css, /\.storyboard-timeline-segment\.final \{[^}]*border-width: 2px/);
   assert.match(script, /remainingDuration:\s*outputDuration - maxEnd/);
   assert.match(script, /storyboard-time-room[\s\S]*尚有 \$\{report\.remainingDuration\.toFixed\(1\)\} 秒餘裕[\s\S]*請點選下方警告自動調整/);

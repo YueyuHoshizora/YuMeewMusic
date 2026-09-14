@@ -36,7 +36,13 @@
       </section>
 
       <details id="video-description-panel" class="panel prompt-panel video-description-panel" open>
-        <summary class="video-collapsible-summary">影片細節</summary>
+        <summary class="video-collapsible-summary">
+          <span>影片細節</span>
+          <span class="video-prompt-mode" role="group" aria-label="影片細節輸入模式">
+            <button id="storyboard-prompt-mode" type="button" aria-pressed="true">分鏡模式</button>
+            <button id="plain-prompt-mode" type="button" aria-pressed="false">題詞模式</button>
+          </span>
+        </summary>
         <div class="video-collapsible-content">
           <div class="video-prompt-field">
             <div class="video-prompt-heading">
@@ -47,6 +53,7 @@
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
             <div id="video-prompt" class="storyboard-list" role="region" aria-label="分鏡列表" data-placeholder="尚未加入分鏡，請點選上方「新增分鏡」"></div>
+            <div id="video-prompt-text" class="storyboard-list resource-editor video-prompt-text" contenteditable="true" role="textbox" aria-label="影片題詞" aria-multiline="true" data-placeholder="輸入完整影片題詞；輸入 @ 引用資源，輸入 # 選擇啟用人物" hidden></div>
             <div class="video-project-actions">
               <button id="export-storyboard-pdf" class="video-prompt-add video-project-button" type="button" disabled>匯出 PDF</button>
               <button id="export-video-project" class="video-prompt-add video-project-button" type="button" disabled>匯出設定</button>

@@ -19,7 +19,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<div id="video-prompt"[^>]*class="storyboard-list"[^>]*role="region"[^>]*aria-label="分鏡列表"/);
   assert.doesNotMatch(html, /id="video-prompt"[^>]*contenteditable/);
   assert.doesNotMatch(html, />影片描述<\/label>|加入影片描述|等待輸入影片描述/);
-  assert.match(html, /<details id="video-description-panel" class="panel prompt-panel video-description-panel" open>[\s\S]*<summary[^>]*>影片細節<\/summary>[\s\S]*id="video-prompt"[\s\S]*<\/details>\s*<details id="video-settings-panel" class="panel prompt-panel video-settings-panel">/);
+  assert.match(html, /<details id="video-description-panel" class="panel prompt-panel video-description-panel" open>[\s\S]*<summary[^>]*>[\s\S]*影片細節[\s\S]*<\/summary>[\s\S]*id="video-prompt"[\s\S]*<\/details>\s*<details id="video-settings-panel" class="panel prompt-panel video-settings-panel">/);
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.match(html, /class="video-credits"[^>]*aria-labelledby="video-credits-title"[\s\S]*企劃[\s\S]*href="https:\/\/www\.youtube\.com\/@YuStellar"[^>]*>星語<\/a>[\s\S]*技術指導[\s\S]*href="https:\/\/www\.youtube\.com\/@oktrf2000"[^>]*>修卡迪特<\/a>[\s\S]*程式開發[\s\S]*Yueyu Hoshizora[\s\S]*開源專案[\s\S]*Mediabunny[\s\S]*ONNX Runtime Web[\s\S]*專案網站[\s\S]*ezmusic\.yustellar\.idv\.tw[\s\S]*GitHub[\s\S]*YueyuHoshizora\/YuMeewMusic/);

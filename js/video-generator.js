@@ -7,6 +7,7 @@ import { createVideoProjectFile, readVideoProjectFile } from "./video-project-fi
 import { createStoryboardReportPdf } from "./pdf-export.js";
 import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
 import { clientIdentityHeaders } from "./client-identity.js";
+import { parseStoryboardPrompt, referencedResourceNames } from "./video-prompt-mode.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -93,6 +94,11 @@ let autoDraftResourcesDirty = false;
 let autoDraftSavePromise = Promise.resolve();
 let lastStoryboardAiReport = null;
 let storyboardAiPdfWindow = null;
+let promptEditorMode = "storyboard";
+let promptModeSource = "";
+
+function isPromptMode() { return promptEditorMode === "prompt"; }
+function activePromptEditor() { return $(isPromptMode() ? "video-prompt-text" : "video-prompt"); }
 
 const MINIMIZABLE_DIALOGS = Object.freeze({
   filmStyle: Object.freeze({ dialog: "film-style-dialog", restore: "restore-film-style", focus: "film-style-primary" }),
@@ -173,13 +179,13 @@ function showError(text = "") {
 }
 
 function syncGenerateAvailability() {
-  const prompt = editorText($("video-prompt"));
+  const prompt = editorText(activePromptEditor());
   const hasKey = Boolean(getApiKey($("video-model").value));
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
 function hasClearableWorkspace() {
-  return Boolean(storyboards.size || finalStoryboard || videoResources.length || filmStyleText());
+  return Boolean(editorText($("video-prompt-text")) || storyboards.size || finalStoryboard || videoResources.length || filmStyleText());
 }
 
 function syncClearWorkspaceAvailability() {
@@ -187,11 +193,63 @@ function syncClearWorkspaceAvailability() {
 }
 
 function syncStoryboardPdfAvailability() {
-  $("export-storyboard-pdf").disabled = busy || (!storyboards.size && !finalStoryboard);
+  $("export-storyboard-pdf").disabled = busy || (!isPromptMode() && !storyboards.size && !finalStoryboard) || (isPromptMode() && !editorText($("video-prompt-text")));
+}
+
+function fillPromptEditor(text) {
+  const editor = $("video-prompt-text");
+  editor.replaceChildren();
+  const resources = [...videoResources].sort((a, b) => b.referenceName.length - a.referenceName.length);
+  const names = resources.map(resource => resource.referenceName.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"));
+  if (!names.length) { editor.textContent = text; return; }
+  const matcher = new RegExp(`@(${names.join("|")})(?![\\p{L}\\p{N}_-])`, "gu");
+  let offset = 0;
+  for (const match of text.matchAll(matcher)) {
+    editor.append(document.createTextNode(text.slice(offset, match.index)));
+    const resource = resources.find(item => item.referenceName === match[1]);
+    editor.append(resource ? createResourceMention(resource) : document.createTextNode(match[0]));
+    offset = match.index + match[0].length;
+  }
+  editor.append(document.createTextNode(text.slice(offset)));
+}
+
+function syncPromptModeUi() {
+  const promptMode = isPromptMode();
+  $("video-prompt").hidden = promptMode;
+  $("video-prompt-text").hidden = !promptMode;
+  $("storyboard-prompt-mode").setAttribute("aria-pressed", String(!promptMode));
+  $("plain-prompt-mode").setAttribute("aria-pressed", String(promptMode));
+  for (const id of ["open-film-style", "open-final-storyboard", "inspect-storyboards", "open-video-prompt-builder"])
+    $(id).disabled = busy || promptMode || (id === "open-video-prompt-builder" && promptBuilderMinimized);
+  syncStoryboardPdfAvailability();
+  syncGenerateAvailability();
+}
+
+function selectPromptMode(mode) {
+  if (busy || mode === promptEditorMode) return;
+  if (mode === "prompt") {
+    promptModeSource = completeVideoPrompt();
+    fillPromptEditor(promptModeSource);
+    promptEditorMode = "prompt";
+  } else {
+    const current = editorText($("video-prompt-text"));
+    if (current !== promptModeSource && !parseStoryboardPrompt(current)
+      && !window.confirm("此操作會清除所有輸入內容，是否繼續？")) return;
+    if (current !== promptModeSource) {
+      storyboards.clear();
+      $("video-prompt").replaceChildren();
+      finalStoryboard = null;
+      filmStyle = { ...EMPTY_FILM_STYLE };
+      renderFinalStoryboardCard();
+    }
+    promptEditorMode = "storyboard";
+  }
+  syncPromptModeUi();
+  syncDraftStatus();
 }
 
 function syncDraftStatus(saveDraft = true) {
-  if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
+  if (!busy) setStatus(editorText(activePromptEditor()) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
   syncStoryboardPdfAvailability();
@@ -1081,7 +1139,7 @@ function handleResourceEditorInput(event) {
   if (!editorText(target) && target.childNodes.length) target.replaceChildren();
   if (showResourceMentionMenu(target)) return;
   showCharacterMentionMenu(target);
-  if (target.id === "video-prompt") syncDraftStatus();
+  if (["video-prompt", "video-prompt-text"].includes(target.id)) syncDraftStatus();
 }
 
 function handlePlainTextPaste(event) {
@@ -2030,6 +2088,7 @@ function videoPromptSections() {
 }
 
 function promptVideoDetails() {
+  if (isPromptMode()) return editorText($("video-prompt-text"));
   const sections = videoPromptSections();
   return [sections.details, sections.storyboards].filter(Boolean).join("\n");
 }
@@ -2043,6 +2102,7 @@ function resourceReferenceText() {
 }
 
 function completeVideoPrompt(videoDetails = promptVideoDetails()) {
+  if (isPromptMode()) return videoDetails;
   const sections = videoPromptSections();
   return [
     filmStyleText(),
@@ -2591,6 +2651,8 @@ function videoProjectMetadata(includeCharacters, binaries) {
   const enabledCharacters = characterTemplates.filter(character => character.enabled !== false);
   return {
     createdAt: new Date().toISOString(),
+    editorMode: promptEditorMode,
+    promptTextHtml: $("video-prompt-text").innerHTML,
     videoDetailsHtml: videoDetailsHtml(),
     filmStyle: { ...filmStyle },
     storyboards: storyboardOrder,
@@ -2770,6 +2832,11 @@ function downloadBlob(blob, filename) {
 }
 
 function storyboardPdfProject() {
+  if (isPromptMode()) return {
+    scenes: [{ title: "影片題詞", summary: "", fields: [["內容", editorText($("video-prompt-text"))]] }],
+    characters: referencedCharacters(promptVideoDetails()).map(character => ({ kind: "image", file: character.referenceImage, referenceName: character.name, voice: character.voice, tone: character.tone, style: character.style, clothing: character.clothing })),
+    resources: referencedResources().map(resource => ({ kind: resource.kind, file: resource.file, referenceName: `@${resource.referenceName}`, originalName: resource.file?.name || "未命名檔案", meta: resourceTypeLabel(resource.kind) })),
+  };
   const entries = orderedStoryboardEntries();
   const allScenes = finalStoryboard
     ? [...entries, { draft: finalStoryboard, final: true }]
@@ -2806,7 +2873,7 @@ function storyboardPdfFilename(date = new Date()) {
 }
 
 async function exportStoryboardPdf() {
-  if (busy || (!storyboards.size && !finalStoryboard)) return;
+  if (busy || (!isPromptMode() && !storyboards.size && !finalStoryboard) || (isPromptMode() && !editorText($("video-prompt-text")))) return;
   setBusy(true);
   $("video-generation-lock-title").textContent = "正在建立分鏡 PDF";
   $("video-generation-lock-detail").textContent = "正在整理分鏡卡與引用資源，所有處理都在瀏覽器內完成。";
@@ -3100,6 +3167,7 @@ function restoreImportedFilmStyle(saved = {}) {
 async function importVideoProject(event) {
   event.preventDefault();
   if (!pendingVideoProject) return;
+  if (!window.confirm("匯入設定將會複寫目前的所有資料，是否確認？")) return;
   const { metadata, binaries } = pendingVideoProject;
   const overwriteCharacters = $("import-project-characters").checked && Array.isArray(metadata.characters);
   $("confirm-import-video-project").disabled = true;
@@ -3145,6 +3213,10 @@ async function importVideoProject(event) {
 }
 
 function referencedResources() {
+  if (isPromptMode()) {
+    const names = referencedResourceNames(editorText($("video-prompt-text")), videoResources.map(resource => resource.referenceName));
+    return names.map(name => videoResources.find(resource => resource.referenceName === name));
+  }
   const tokens = [...$("video-prompt").querySelectorAll(".resource-token")];
   const ids = [...new Set(tokens.map(token => token.dataset.resourceId).filter(Boolean))];
   const missing = ids.filter(id => !videoResources.some(resource => resource.id === id));
@@ -3398,12 +3470,15 @@ function setBusy(value, showLock = value) {
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
+  $("storyboard-prompt-mode").disabled = value;
+  $("plain-prompt-mode").disabled = value;
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("apply-video-background").disabled = value || !generatedVideoBlob;
   $("open-video-history").disabled = value || !generationHistory.length;
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
   syncStoryboardPdfAvailability();
+  syncPromptModeUi();
 }
 
 function apiError(body, fallback = "", provider = "minimax") {
@@ -3888,7 +3963,9 @@ async function generateVideo() {
 
 function openGenerateConfirmation() {
   if ($("generate-video").disabled || busy) return;
-  const report = inspectStoryboardProject();
+  const report = isPromptMode()
+    ? { errors: 0, totalEntries: 0, promptLength: completeVideoPrompt().length }
+    : inspectStoryboardProject();
   if (report.errors) {
     openStoryboardInspection(report);
     setStatus(`請先修正 ${report.errors} 個分鏡錯誤`, "error");
@@ -3903,7 +3980,7 @@ function openGenerateConfirmation() {
     ["輸出規格", `${$("video-resolution").value} · ${$("video-ratio").value}`],
     ["影片長度", `${$("video-duration").value} 秒`],
     ["生成任務", "1 個"],
-    ["分鏡", `${report.totalEntries} 個`],
+    ["內容模式", isPromptMode() ? "題詞模式" : `${report.totalEntries} 個分鏡`],
     ["人物／資源", `${characters.length} 位／${resources.length} 個`],
     ["影片音訊", model.provider === "byteplus" ? "啟用" : "依模型輸出"],
     ["額度／費用", `依 ${model.apiKey} 帳戶方案計算`],
@@ -3926,6 +4003,13 @@ function confirmVideoGeneration(event) {
 }
 
 $("open-character-template").addEventListener("click", openCharacterTemplate);
+for (const [id, mode] of [["storyboard-prompt-mode", "storyboard"], ["plain-prompt-mode", "prompt"]]) {
+  $(id).addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectPromptMode(mode);
+  });
+}
 $("open-film-style").addEventListener("click", openFilmStyle);
 $("minimize-film-style").addEventListener("click", () => minimizeDialog("filmStyle"));
 $("restore-film-style").addEventListener("click", () => restoreMinimizedDialog("filmStyle"));
@@ -4145,6 +4229,7 @@ window.addEventListener("pagehide", () => {
 });
 
 syncModelDetails();
+syncPromptModeUi();
 syncDraftStatus(false);
 function restoreWhenIdle(task) {
   const run = () => void task();

@@ -205,6 +205,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function openVideoPromptPreview\(\)[\s\S]*video-prompt-preview-text"\)\.textContent = completeVideoPrompt\(\)[\s\S]*showModal\(\)/);
   assert.match(script, /function inspectStoryboardProject\(\)[\s\S]*與上一張分鏡重疊[\s\S]*全部分鏡的時間範圍[\s\S]*短於 \$\{model\.label\} 最低[\s\S]*超過目前輸出片長/);
   assert.doesNotMatch(script, /\$\{label\} 長度[^\n]*(?:最低|最高|可直接生成的片長)/);
+  assert.doesNotMatch(script, /尚未設定動作/);
   assert.match(script, /function renderStoryboardInspection\(report\)[\s\S]*storyboard-timeline-segment[\s\S]*storyboard-inspection-item/);
   assert.match(script, /function openGenerateConfirmation\(\)[\s\S]*inspectStoryboardProject\(\)[\s\S]*if \(report\.errors\)[\s\S]*openStoryboardInspection\(report\)/);
   assert.match(script, /const prompt = completeVideoPrompt\(videoDetails\)/);

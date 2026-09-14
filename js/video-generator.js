@@ -1622,7 +1622,6 @@ function inspectStoryboardProject() {
     previousEnd = Number.isFinite(end) ? end : previousEnd;
     if (!htmlText(draft.scene)) add("warning", `${label} 尚未設定場景。`, entry);
     if (!draft.camera && !htmlText(draft.cameraCustom)) add("warning", `${label} 尚未設定鏡頭運動。`, entry);
-    if (!draft.actionType && !htmlText(draft.actionCustom) && !htmlText(draft.actionDetail)) add("warning", `${label} 尚未設定動作。`, entry);
     for (const token of block.querySelectorAll(".resource-token")) {
       if (!videoResources.some(resource => resource.id === token.dataset.resourceId)) add("error", `${label} 引用了已刪除的資源「${token.textContent.trim()}」。`, entry);
     }

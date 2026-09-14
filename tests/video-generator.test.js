@@ -15,7 +15,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.match(html, /<a class="brand" href="\.\/" data-confirm-return/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
-  assert.match(html, /<div id="video-prompt"[^>]*class="resource-editor"[^>]*contenteditable="true"[^>]*aria-label="影片細節"/);
+  assert.match(html, /<div id="video-prompt"[^>]*class="storyboard-list"[^>]*role="region"[^>]*aria-label="分鏡列表"/);
+  assert.doesNotMatch(html, /id="video-prompt"[^>]*contenteditable/);
   assert.doesNotMatch(html, />影片描述<\/label>|加入影片描述|等待輸入影片描述/);
   assert.match(html, /<details id="video-description-panel" class="panel prompt-panel video-description-panel" open>[\s\S]*<summary[^>]*>影片細節<\/summary>[\s\S]*id="video-prompt"[\s\S]*<\/details>\s*<details id="video-settings-panel" class="panel prompt-panel video-settings-panel">/);
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);

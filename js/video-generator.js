@@ -1343,7 +1343,7 @@ function submitVideoPromptBuilder(event) {
   resetVideoPromptBuilder();
   $("video-prompt-builder-dialog").close();
   syncDraftStatus();
-  prompt.focus();
+  block.focus();
 }
 
 async function persistCharacterTemplates() {

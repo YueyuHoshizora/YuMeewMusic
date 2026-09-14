@@ -224,7 +224,6 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-action-caption { margin-top: 2px; color: var(--muted); font-size: 11px; }
 .video-dialogue-field { display: grid; grid-column: 1 / -1; gap: 9px; color: var(--foreground); font-size: 13px; font-weight: 700; }
 .video-storyboard-summary-field { grid-column: 1 / -1; }
-.video-storyboard-summary-field textarea { min-height: 72px; }
 .video-dialogue-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .video-dialogue-add { border: 1px solid var(--primary); border-radius: 7px; padding: 6px 10px; background: transparent; color: var(--primary); font: inherit; font-size: 11px; cursor: pointer; }
 .video-dialogue-add:hover { background: var(--tint); }

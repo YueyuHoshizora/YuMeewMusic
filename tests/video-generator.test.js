@@ -68,7 +68,8 @@ test("video generator page provides a model-ready generation workspace", () => {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
   assert.match(html, /<span>人物與對話<\/span>[\s\S]*id="add-video-dialogue"[^>]*>＋ 新增對話<\/button>[\s\S]*id="video-dialogue-list"/);
-  assert.match(html, /class="video-storyboard-summary-field"[^>]*for="video-prompt-summary"[\s\S]*分鏡簡述（選填）[\s\S]*id="video-prompt-summary"[^>]*><\/textarea>/);
+  assert.match(html, /class="video-storyboard-summary-field"[^>]*for="video-prompt-summary"[\s\S]*分鏡簡述（選填）[\s\S]*id="video-prompt-summary"[^>]*type="text"/);
+  assert.doesNotMatch(html, /<textarea id="video-prompt-summary"/);
   assert.doesNotMatch(html, /id="video-prompt-dialogue"|<span>對白<\/span>/);
   assert.match(html, /<span>鏡頭<\/span>[\s\S]*id="video-prompt-camera"[\s\S]*<optgroup label="基本運鏡">[\s\S]*<optgroup label="跟拍與環繞">[\s\S]*<optgroup label="電影感運鏡">/);
   assert.match(html, /id="video-prompt-camera"[\s\S]*<option value="custom">自訂運鏡（開放輸入）<\/option>[\s\S]*id="video-prompt-camera-speed"/);

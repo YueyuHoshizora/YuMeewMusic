@@ -16,6 +16,14 @@ const pages = [
   "video-generator.html",
 ];
 
+test("every page declares the AdSense publisher account", () => {
+  for (const page of pages) {
+    const html = readFileSync(page, "utf8");
+    const matches = html.match(/<meta name="google-adsense-account" content="ca-pub-7132586781018963" \/>/g) || [];
+    assert.equal(matches.length, 1, page);
+  }
+});
+
 test("every page presents and dismisses the shared feature loading screen", () => {
   for (const page of pages) {
     const html = readFileSync(page, "utf8");

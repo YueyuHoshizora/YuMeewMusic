@@ -49,6 +49,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function storyboardAiRequest\(\)[\s\S]*orderedStoryboardEntries\(\)[\s\S]*storyboardAiScene\(finalStoryboard, scenes\.length \+ 1, true\)[\s\S]*scenes/);
   assert.match(script, /const STORYBOARD_CHECKER_STATUS_URL = `\$\{STORYBOARD_CHECKER_URL\}\/status`/);
   assert.match(script, /async function waitForStoryboardAiReport\(input\)[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_URL, input\)[\s\S]*created\.requestId[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_STATUS_URL, \{ requestId \}\)[\s\S]*status\.status === "complete"[\s\S]*10 分鐘/);
+  assert.match(script, /function parseStoryboardAiResult\(payload\)[\s\S]*result\.choices\[0\]\?\.message\?\.content[\s\S]*Number\.isFinite\(Number\(result\.overall_score\)\)[\s\S]*AI 分析結果缺少必要的報告欄位/);
   assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*setBusy\(true\)[\s\S]*AI 正在分析分鏡[\s\S]*renderStoryboardAiReport\(await waitForStoryboardAiReport\(input\)\)[\s\S]*setBusy\(false\)/);
   assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*const reopenInspection = inspectionDialog\.open[\s\S]*inspectionDialog\.close\(\)[\s\S]*setBusy\(true\)[\s\S]*setBusy\(false\)[\s\S]*inspectionDialog\.showModal\(\)/);
   assert.match(script, /function renderStoryboardAiReport\(report\)[\s\S]*做得好的地方[\s\S]*需要處理的問題[\s\S]*逐鏡分析[\s\S]*修正版分鏡[\s\S]*生成建議/);

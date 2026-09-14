@@ -2227,12 +2227,23 @@ function storyboardAiRequest() {
 function parseStoryboardAiResult(payload) {
   if (!payload?.success) throw new Error(payload?.error || "AI 分析服務未回傳結果。");
   let result = payload.result?.response ?? payload.result;
+  if (Array.isArray(result?.choices)) result = result.choices[0]?.message?.content;
   if (typeof result === "string") {
     const source = result.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
     try { result = JSON.parse(source); }
-    catch { throw new Error("AI 分析結果不是有效的報告格式。"); }
+    catch { throw new Error("AI 分析報告未完整產生，請重新分析。"); }
   }
-  if (!result || typeof result !== "object") throw new Error("AI 分析結果內容不完整。");
+  const hasReportFields = result
+    && typeof result === "object"
+    && Number.isFinite(Number(result.overall_score))
+    && ["pass", "needs_revision", "fail"].includes(result.status)
+    && typeof result.summary === "string"
+    && Array.isArray(result.strengths)
+    && Array.isArray(result.problems)
+    && Array.isArray(result.scene_reviews)
+    && Array.isArray(result.corrected_scenes)
+    && Array.isArray(result.generation_advice);
+  if (!hasReportFields) throw new Error("AI 分析結果缺少必要的報告欄位，請重新分析。");
   return result;
 }
 

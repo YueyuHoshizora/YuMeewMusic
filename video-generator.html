@@ -253,8 +253,25 @@
         <p>時間會自動接續最後一張分鏡，並延長 1 秒。</p>
         <div class="final-storyboard-fields">
           <label><span>場景</span><div id="final-storyboard-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡場景" data-placeholder="輸入最後畫面的場景"></div></label>
-          <label><span>鏡頭</span><div id="final-storyboard-camera" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡鏡頭" data-placeholder="例如：鏡頭緩慢拉遠"></div></label>
-          <label><span>視角</span><div id="final-storyboard-view" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡視角" data-placeholder="例如：正面遠景"></div></label>
+          <div class="video-prompt-camera-field final-storyboard-camera-field">
+            <span>鏡頭</span>
+            <div class="video-camera-selects">
+              <select id="final-storyboard-camera" class="setting-select" aria-label="最終分鏡運鏡方式"></select>
+              <select id="final-storyboard-camera-speed" class="setting-select" aria-label="最終分鏡運鏡速度" disabled><option value="緩慢">緩慢</option><option value="" selected>正常速度</option><option value="快速">快速</option></select>
+            </div>
+            <div id="final-storyboard-camera-custom" class="text-input resource-editor resource-editor-single video-camera-custom" contenteditable="true" role="textbox" aria-label="最終分鏡自訂運鏡" data-placeholder="輸入自訂運鏡，也可使用 @ 資源或 # 人物" hidden></div>
+          </div>
+          <div class="video-prompt-view-field final-storyboard-view-field">
+            <span>視角</span>
+            <div class="video-view-selects">
+              <select id="final-storyboard-shot-size" class="setting-select" aria-label="最終分鏡景別"></select>
+              <select id="final-storyboard-view-angle" class="setting-select" aria-label="最終分鏡觀看角度"></select>
+            </div>
+            <div id="final-storyboard-view-custom" class="text-input resource-editor resource-editor-single video-view-custom" contenteditable="true" role="textbox" aria-label="最終分鏡自訂視角" data-placeholder="輸入自訂視角，也可使用 @ 資源或 # 人物" hidden></div>
+            <span class="video-view-caption">畫面主體（可複選）</span>
+            <div id="final-storyboard-view-subjects" class="video-view-subjects" aria-label="選擇最終分鏡畫面主體"></div>
+            <label id="final-storyboard-viewpoint-wrap" class="video-viewpoint-character" for="final-storyboard-viewpoint-character" hidden><span>視點角色</span><select id="final-storyboard-viewpoint-character" class="setting-select" aria-label="最終分鏡視點角色"></select></label>
+          </div>
           <label><span>音效</span><div id="final-storyboard-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡音效" data-placeholder="例如：環境聲逐漸淡出"></div></label>
           <div class="final-storyboard-action-field">
             <div class="final-storyboard-action-heading"><span>動作</span><button id="add-final-storyboard-action" class="video-dialogue-add" type="button">＋ 新增動作</button></div>

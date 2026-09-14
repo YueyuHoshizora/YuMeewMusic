@@ -44,9 +44,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
-  assert.match(html, /id="final-storyboard-dialog"[^>]*aria-labelledby="final-storyboard-title"[\s\S]*時間會自動接續最後一張分鏡，並延長 1 秒。[\s\S]*id="final-storyboard-scene"[\s\S]*id="final-storyboard-camera"[\s\S]*id="final-storyboard-view"[\s\S]*id="final-storyboard-sound"[\s\S]*id="final-storyboard-actions"/);
+  assert.match(html, /id="final-storyboard-dialog"[^>]*aria-labelledby="final-storyboard-title"[\s\S]*時間會自動接續最後一張分鏡，並延長 1 秒。[\s\S]*id="final-storyboard-scene"[\s\S]*id="final-storyboard-camera"[\s\S]*id="final-storyboard-camera-speed"[\s\S]*id="final-storyboard-camera-custom"[\s\S]*id="final-storyboard-shot-size"[\s\S]*id="final-storyboard-view-angle"[\s\S]*id="final-storyboard-view-custom"[\s\S]*id="final-storyboard-view-subjects"[\s\S]*id="final-storyboard-viewpoint-character"[\s\S]*id="final-storyboard-sound"[\s\S]*id="final-storyboard-actions"/);
   assert.match(css, /\.final-storyboard-fields \{[^}]*grid-template-columns: repeat\(2/);
-  assert.match(css, /\.final-storyboard-actions \{[^}]*grid-template-columns: repeat\(2/);
+  assert.match(css, /\.final-storyboard-action-field \{[^}]*grid-column: 1 \/ -1/);
+  assert.match(css, /\.final-storyboard-actions \{[^}]*grid-template-columns: minmax\(0, 1fr\)/);
   assert.match(html, /id="apply-film-style"[^>]*type="button"[^>]*>套用風格<\/button>/);
   for (const id of ["film-style-primary", "film-style-primary-custom", "film-style-era", "film-style-color", "film-style-texture", "film-style-framing", "film-style-narrator-voice", "film-style-narrator-custom", "film-style-notes"]) assert.match(html, new RegExp(`id="${id}"`));
   assert.match(html, /id="film-style-primary"[\s\S]*value="電影寫實"[\s\S]*value="音樂錄影帶"[\s\S]*value="custom">自訂風格/);
@@ -294,6 +295,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function showCharacterEditorReference\(file\)[\s\S]*character-reference-placeholder[\s\S]*classList\.add\("has-image"\)/);
   assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*finalStoryboard:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
   assert.match(script, /function submitFinalStoryboard\(event\)[\s\S]*const start = Number\(nextStoryboardStart\(\)\)[\s\S]*end: roundedStoryboardTime\(start \+ 1\)[\s\S]*actions:[\s\S]*renderFinalStoryboardCard\(\)/);
+  assert.match(script, /function createFinalStoryboardAction\(action = \{\}\)[\s\S]*final-storyboard-action-character[\s\S]*final-storyboard-action-category[\s\S]*final-storyboard-action-type[\s\S]*final-storyboard-action-style[\s\S]*final-storyboard-action-custom[\s\S]*final-storyboard-action-target[\s\S]*final-storyboard-action-detail/);
+  assert.match(script, /cloneSelectOptions\("video-prompt-camera", "final-storyboard-camera"\)[\s\S]*cloneSelectOptions\("video-prompt-shot-size", "final-storyboard-shot-size"\)[\s\S]*cloneSelectOptions\("video-prompt-view-angle", "final-storyboard-view-angle"\)/);
   assert.match(script, /function finalStoryboardPromptText\(\)[\s\S]*"最終分鏡："[\s\S]*finalStoryboardFields\(finalStoryboard\)/);
   assert.match(script, /function videoPromptSections\(\)[\s\S]*node\.matches\("\.final-storyboard-block"\)[\s\S]*storyboardText\.push\(text\)/);
   assert.match(html, /id="video-auto-draft-status"[^>]*>正在檢查自動儲存草稿…<\/span>/);

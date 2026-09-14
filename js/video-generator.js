@@ -254,24 +254,106 @@ function applyFilmStyle() {
   scheduleAutoDraft();
 }
 
-function createFinalStoryboardAction(value = "") {
+function cloneSelectOptions(sourceId, targetId) {
+  $(targetId).replaceChildren(...[...$(sourceId).children].map(option => option.cloneNode(true)));
+}
+
+function finalStoryboardCharacterSelect(selected = "") {
+  const select = document.createElement("select");
+  select.className = "setting-select final-storyboard-action-character";
+  select.setAttribute("aria-label", "最終分鏡執行角色");
+  const choices = [
+    ["", "未指定執行角色"],
+    ["__all__", "所有畫面人物"],
+    ...characterTemplates.filter(character => character.enabled !== false && character.name).map(character => [character.name, character.name]),
+  ];
+  if (selected && !choices.some(([value]) => value === selected)) choices.push([selected, `${selected}（目前未啟用）`]);
+  select.append(...choices.map(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    return option;
+  }));
+  select.value = selected;
+  return select;
+}
+
+function syncFinalStoryboardAction(row, selectedAction = "", focusCustom = false) {
+  const category = row.querySelector(".final-storyboard-action-category").value;
+  const actionSelect = row.querySelector(".final-storyboard-action-type");
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = category ? "選擇動作內容" : "請先選擇動作類別";
+  const options = (STORYBOARD_ACTIONS[category] || []).map(action => {
+    const option = document.createElement("option");
+    option.value = action;
+    option.textContent = action;
+    return option;
+  });
+  if (category) {
+    const custom = document.createElement("option");
+    custom.value = "custom";
+    custom.textContent = "自訂動作（開放輸入）";
+    options.push(custom);
+  }
+  actionSelect.replaceChildren(placeholder, ...options);
+  actionSelect.disabled = !category;
+  actionSelect.value = options.some(option => option.value === selectedAction) ? selectedAction : "";
+  const customEditor = row.querySelector(".final-storyboard-action-custom");
+  customEditor.hidden = actionSelect.value !== "custom";
+  if (!customEditor.hidden && focusCustom) customEditor.focus();
+}
+
+function createFinalStoryboardAction(action = {}) {
   const row = document.createElement("div");
   row.className = "final-storyboard-action-row";
-  const editor = document.createElement("div");
-  editor.className = "text-input resource-editor resource-editor-single final-storyboard-action";
-  editor.contentEditable = "true";
-  editor.setAttribute("role", "textbox");
-  editor.setAttribute("aria-label", "最終分鏡動作");
-  editor.dataset.placeholder = "輸入動作，也可使用 @ 資源或 # 人物";
-  editor.innerHTML = value;
-  setupResourceEditor(editor);
+  const selects = document.createElement("div");
+  selects.className = "video-action-selects final-storyboard-action-selects";
+  const character = finalStoryboardCharacterSelect(action.actionCharacter || "");
+  const category = document.createElement("select");
+  category.className = "setting-select final-storyboard-action-category";
+  category.setAttribute("aria-label", "最終分鏡動作類別");
+  category.append(...[...$("video-prompt-action-category").children].map(option => option.cloneNode(true)));
+  category.value = action.actionCategory || "";
+  const type = document.createElement("select");
+  type.className = "setting-select final-storyboard-action-type";
+  type.setAttribute("aria-label", "最終分鏡動作內容");
+  const style = document.createElement("select");
+  style.className = "setting-select final-storyboard-action-style";
+  style.setAttribute("aria-label", "最終分鏡動作速度或力度");
+  style.append(...[...$("video-prompt-action-style").children].map(option => option.cloneNode(true)));
+  style.value = action.actionStyle || "";
+  selects.append(character, category, type, style);
+  const createEditor = (kind, label, placeholder, value = "") => {
+    const editor = document.createElement("div");
+    editor.className = `text-input resource-editor resource-editor-single final-storyboard-action-${kind}`;
+    editor.contentEditable = "true";
+    editor.setAttribute("role", "textbox");
+    editor.setAttribute("aria-label", label);
+    editor.dataset.placeholder = placeholder;
+    editor.innerHTML = value;
+    setupResourceEditor(editor);
+    return editor;
+  };
+  const custom = createEditor("custom", "最終分鏡自訂動作", "輸入自訂動作，也可使用 @ 資源或 # 人物", action.actionCustom);
+  const target = createEditor("target", "最終分鏡動作目標或物件", "目標／物件，可使用 @ 資源或 # 人物", action.actionTarget);
+  const detail = createEditor("detail", "最終分鏡動作補充", "補充連續動作或細節", action.actionDetail);
+  const targetCaption = document.createElement("span");
+  targetCaption.className = "video-action-caption";
+  targetCaption.textContent = "目標／物件";
+  const detailCaption = document.createElement("span");
+  detailCaption.className = "video-action-caption";
+  detailCaption.textContent = "動作補充";
   const remove = document.createElement("button");
   remove.type = "button";
   remove.className = "final-storyboard-action-remove";
   remove.setAttribute("aria-label", "刪除動作");
   remove.textContent = "−";
   remove.addEventListener("click", () => row.remove());
-  row.append(editor, remove);
+  row.append(selects, remove, custom, targetCaption, target, detailCaption, detail);
+  category.addEventListener("change", () => syncFinalStoryboardAction(row));
+  type.addEventListener("change", () => syncFinalStoryboardAction(row, type.value, true));
+  syncFinalStoryboardAction(row, action.actionType || "");
   return row;
 }
 
@@ -281,14 +363,69 @@ function renderFinalStoryboardActions(actions = []) {
 }
 
 function resetFinalStoryboardEditor() {
-  for (const field of ["scene", "camera", "view", "sound"]) clearEditor($(`final-storyboard-${field}`));
+  for (const field of ["scene", "camera-custom", "view-custom", "sound"]) clearEditor($(`final-storyboard-${field}`));
   $("final-storyboard-actions").replaceChildren();
+}
+
+function selectedFinalStoryboardSubjects() {
+  return [...$("final-storyboard-view-subjects").querySelectorAll("input:checked")].map(input => input.value);
+}
+
+function renderFinalStoryboardCharacterControls(selectedSubjects = [], viewpoint = "") {
+  const enabled = characterTemplates.filter(character => character.enabled !== false && character.name);
+  const subjects = $("final-storyboard-view-subjects");
+  subjects.replaceChildren(...(enabled.length ? enabled.map(character => {
+    const label = document.createElement("label");
+    label.className = "video-view-subject";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.value = character.name;
+    input.checked = selectedSubjects.includes(character.name);
+    const text = document.createElement("span");
+    text.textContent = character.name;
+    label.append(input, text);
+    return label;
+  }) : [Object.assign(document.createElement("span"), { className: "video-view-subjects-empty", textContent: "尚無已啟用人物" })]));
+  const select = $("final-storyboard-viewpoint-character");
+  select.replaceChildren(...[["", "選擇視點角色（選填）"], ...enabled.map(character => [character.name, character.name])].map(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    return option;
+  }));
+  select.value = enabled.some(character => character.name === viewpoint) ? viewpoint : "";
+}
+
+function syncFinalStoryboardCamera(focusCustom = false) {
+  const camera = $("final-storyboard-camera").value;
+  $("final-storyboard-camera-speed").disabled = !camera;
+  $("final-storyboard-camera-custom").hidden = camera !== "custom";
+  if (camera === "custom" && focusCustom) $("final-storyboard-camera-custom").focus();
+}
+
+function syncFinalStoryboardView(focusCustom = false) {
+  const angle = $("final-storyboard-view-angle").value;
+  $("final-storyboard-view-custom").hidden = angle !== "custom";
+  const needsViewpoint = ["第一人稱視角", "越肩視角"].includes(angle);
+  $("final-storyboard-viewpoint-wrap").hidden = !needsViewpoint;
+  if (!needsViewpoint) $("final-storyboard-viewpoint-character").value = "";
+  if (angle === "custom" && focusCustom) $("final-storyboard-view-custom").focus();
 }
 
 function openFinalStoryboard() {
   if (busy) return;
-  for (const field of ["scene", "camera", "view", "sound"]) restoreEditorHtml(`final-storyboard-${field}`, finalStoryboard?.[field] || "");
+  restoreEditorHtml("final-storyboard-scene", finalStoryboard?.scene || "");
+  restoreEditorHtml("final-storyboard-sound", finalStoryboard?.sound || "");
+  $("final-storyboard-camera").value = finalStoryboard?.camera || "";
+  $("final-storyboard-camera-speed").value = finalStoryboard?.cameraSpeed || "";
+  restoreEditorHtml("final-storyboard-camera-custom", finalStoryboard?.cameraCustom || "");
+  $("final-storyboard-shot-size").value = finalStoryboard?.shotSize || "";
+  $("final-storyboard-view-angle").value = finalStoryboard?.viewAngle || "";
+  restoreEditorHtml("final-storyboard-view-custom", finalStoryboard?.viewCustom || "");
+  renderFinalStoryboardCharacterControls(finalStoryboard?.viewSubjects || [], finalStoryboard?.viewpointCharacter || "");
   renderFinalStoryboardActions(finalStoryboard?.actions || []);
+  syncFinalStoryboardCamera();
+  syncFinalStoryboardView();
   $("final-storyboard-dialog").showModal();
   $("final-storyboard-scene").focus();
 }
@@ -302,12 +439,24 @@ function submitFinalStoryboard(event) {
     start: roundedStoryboardTime(start),
     end: roundedStoryboardTime(start + 1),
     scene: editorSnapshot("final-storyboard-scene"),
-    camera: editorSnapshot("final-storyboard-camera"),
-    view: editorSnapshot("final-storyboard-view"),
+    camera: $("final-storyboard-camera").value,
+    cameraSpeed: $("final-storyboard-camera-speed").value,
+    cameraCustom: editorSnapshot("final-storyboard-camera-custom"),
+    shotSize: $("final-storyboard-shot-size").value,
+    viewAngle: $("final-storyboard-view-angle").value,
+    viewCustom: editorSnapshot("final-storyboard-view-custom"),
+    viewSubjects: selectedFinalStoryboardSubjects(),
+    viewpointCharacter: $("final-storyboard-viewpoint-character").value,
     sound: editorSnapshot("final-storyboard-sound"),
-    actions: [...$("final-storyboard-actions").querySelectorAll(".final-storyboard-action")]
-      .map(editor => editor.innerHTML)
-      .filter(value => htmlText(value)),
+    actions: [...$("final-storyboard-actions").querySelectorAll(".final-storyboard-action-row")].map(row => ({
+      actionCharacter: row.querySelector(".final-storyboard-action-character").value,
+      actionCategory: row.querySelector(".final-storyboard-action-category").value,
+      actionType: row.querySelector(".final-storyboard-action-type").value,
+      actionStyle: row.querySelector(".final-storyboard-action-style").value,
+      actionCustom: row.querySelector(".final-storyboard-action-custom").innerHTML,
+      actionTarget: row.querySelector(".final-storyboard-action-target").innerHTML,
+      actionDetail: row.querySelector(".final-storyboard-action-detail").innerHTML,
+    })).filter(action => actionPromptField(action)[0]),
   };
   if (!finalStoryboardFields(draft).some(([label]) => label !== "時間")) return;
   finalStoryboard = draft;
@@ -1249,20 +1398,24 @@ function storyboardFields(draft) {
 
 function finalStoryboardFields(draft) {
   if (!draft) return [];
-  const actionValues = (draft.actions || []).map(htmlText).filter(Boolean);
+  const cameraPrefix = draft.cameraSpeed || "";
+  const cameraCustomText = htmlText(draft.cameraCustom);
+  const cameraText = draft.camera === "custom" ? `${cameraPrefix}${cameraPrefix ? " " : ""}${cameraCustomText}` : draft.camera ? `${cameraPrefix}${draft.camera}` : "";
+  const cameraNodes = draft.camera === "custom" && cameraCustomText ? prefixedNodes(cameraPrefix, draft.cameraCustom) : null;
+  const [viewText, viewNodes] = viewPromptField(draft);
+  const actionRows = (draft.actions || []).map(actionPromptField).filter(([value]) => value);
   const actionNodes = [];
-  (draft.actions || []).forEach(action => {
-    if (!htmlText(action)) return;
+  actionRows.forEach(([value, nodes]) => {
     if (actionNodes.length) actionNodes.push(document.createElement("br"));
-    actionNodes.push(...htmlNodes(action));
+    actionNodes.push(...(nodes || [document.createTextNode(value)]));
   });
   return [
     ["時間", formatStoryboardTime(draft.start, draft.end)],
     ["場景", htmlText(draft.scene), htmlNodes(draft.scene)],
-    ["鏡頭", htmlText(draft.camera), htmlNodes(draft.camera)],
-    ["視角", htmlText(draft.view), htmlNodes(draft.view)],
+    ["鏡頭", cameraText, cameraNodes],
+    ["視角", viewText, viewNodes],
     ["音效", htmlText(draft.sound), htmlNodes(draft.sound)],
-    ["動作", actionValues.join("\n"), actionNodes],
+    ["動作", actionRows.map(([value]) => value).join("\n"), actionNodes],
   ].filter(([, value]) => value);
 }
 
@@ -2402,14 +2555,34 @@ function normalizedStoryboard(raw) {
 function normalizedFinalStoryboard(raw) {
   if (!raw || typeof raw !== "object") return null;
   const html = key => sanitizedImportedHtml(raw[key]);
+  const structuredCamera = Object.hasOwn(raw, "cameraCustom");
+  const structuredView = Object.hasOwn(raw, "viewAngle");
+  const actions = Array.isArray(raw.actions) ? raw.actions.map(action => {
+    if (typeof action === "string") return { actionCharacter: "", actionCategory: "movement", actionType: "custom", actionStyle: "", actionCustom: sanitizedImportedHtml(action), actionTarget: "", actionDetail: "" };
+    return {
+      actionCharacter: String(action?.actionCharacter || ""),
+      actionCategory: String(action?.actionCategory || ""),
+      actionType: String(action?.actionType || ""),
+      actionStyle: String(action?.actionStyle || ""),
+      actionCustom: sanitizedImportedHtml(action?.actionCustom),
+      actionTarget: sanitizedImportedHtml(action?.actionTarget),
+      actionDetail: sanitizedImportedHtml(action?.actionDetail),
+    };
+  }).filter(action => actionPromptField(action)[0]) : [];
   return {
     start: roundedStoryboardTime(Number(raw.start) || 0),
     end: roundedStoryboardTime((Number(raw.start) || 0) + 1),
     scene: html("scene"),
-    camera: html("camera"),
-    view: html("view"),
+    camera: structuredCamera ? String(raw.camera || "") : raw.camera ? "custom" : "",
+    cameraSpeed: String(raw.cameraSpeed || ""),
+    cameraCustom: structuredCamera ? html("cameraCustom") : html("camera"),
+    shotSize: String(raw.shotSize || ""),
+    viewAngle: structuredView ? String(raw.viewAngle || "") : raw.view ? "custom" : "",
+    viewCustom: structuredView ? html("viewCustom") : html("view"),
+    viewSubjects: Array.isArray(raw.viewSubjects) ? raw.viewSubjects.map(String) : [],
+    viewpointCharacter: String(raw.viewpointCharacter || ""),
     sound: html("sound"),
-    actions: Array.isArray(raw.actions) ? raw.actions.map(sanitizedImportedHtml).filter(htmlText) : [],
+    actions,
   };
 }
 
@@ -3304,6 +3477,8 @@ $("open-character-template").addEventListener("click", openCharacterTemplate);
 $("open-film-style").addEventListener("click", openFilmStyle);
 $("open-final-storyboard").addEventListener("click", openFinalStoryboard);
 $("add-final-storyboard-action").addEventListener("click", () => $("final-storyboard-actions").append(createFinalStoryboardAction()));
+$("final-storyboard-camera").addEventListener("change", () => syncFinalStoryboardCamera(true));
+$("final-storyboard-view-angle").addEventListener("change", () => syncFinalStoryboardView(true));
 $("final-storyboard-form").addEventListener("submit", submitFinalStoryboard);
 $("cancel-final-storyboard").addEventListener("click", () => $("final-storyboard-dialog").close());
 $("final-storyboard-dialog").addEventListener("close", () => {
@@ -3383,6 +3558,9 @@ $("video-prompt-builder-dialog").addEventListener("scroll", () => {
   if (resourceMentionTarget) positionResourceMentionMenu(resourceMentionTarget, $("resource-mention-menu").childElementCount);
 });
 arrangeVideoPromptBuilderFields();
+cloneSelectOptions("video-prompt-camera", "final-storyboard-camera");
+cloneSelectOptions("video-prompt-shot-size", "final-storyboard-shot-size");
+cloneSelectOptions("video-prompt-view-angle", "final-storyboard-view-angle");
 syncCameraControls();
 renderStoryboardCharacterControls();
 renderDialogueRows();

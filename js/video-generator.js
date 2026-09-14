@@ -2309,6 +2309,12 @@ function renderStoryboardAiReport(report) {
 async function analyzeStoryboardsWithAi() {
   const input = storyboardAiRequest();
   if (!input.scenes.length || busy) return;
+  const inspectionDialog = $("storyboard-inspection-dialog");
+  const reopenInspection = inspectionDialog.open;
+  if (reopenInspection) {
+    inspectionDialog.returnValue = "";
+    inspectionDialog.close();
+  }
   setBusy(true);
   $("video-generation-lock-title").textContent = "AI 正在分析分鏡";
   $("video-generation-lock-detail").textContent = `正在檢查 ${input.scenes.length} 個 Scene 的故事、運鏡與連續性…`;
@@ -2330,7 +2336,14 @@ async function analyzeStoryboardsWithAi() {
     setStatus("AI 分鏡分析失敗", "error");
   } finally {
     setBusy(false);
-    requestAnimationFrame(() => $("storyboard-ai-report").scrollIntoView({ block: "nearest", behavior: "smooth" }));
+    if (reopenInspection && !inspectionDialog.open) {
+      inspectionDialog.returnValue = "";
+      inspectionDialog.showModal();
+    }
+    requestAnimationFrame(() => {
+      $("storyboard-ai-report").scrollIntoView({ block: "nearest", behavior: "smooth" });
+      $("close-storyboard-inspection").focus();
+    });
   }
 }
 

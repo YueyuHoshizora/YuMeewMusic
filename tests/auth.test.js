@@ -51,6 +51,8 @@ test("member center reads the balance, top-up history and consumption history", 
   for (const id of ["topup-prev", "topup-page", "topup-next", "consumption-prev", "consumption-page", "consumption-next"]) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
+  assert.match(html, /Copyright © 2026 YuMeewMusic/);
+  assert.match(html, /href="https:\/\/github\.com\/YueyuHoshizora\/YuMeewMusic\/blob\/main\/PRIVACY-POLICY\.md"[^>]*>隱私權政策<\/a>/);
   assert.match(script, /amount \/ usdTwdRate \* TOPUP_PAYOUT_RATE/);
   assert.match(script, /Math\.floor\(calculated \* 100\) \/ 100/);
   assert.match(script, /`可取得 \$\{usdFormatter\.format\(total\)\}`/);

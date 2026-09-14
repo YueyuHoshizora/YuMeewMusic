@@ -53,3 +53,6 @@
 .ledger-pagination button { padding: 7px 13px; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary-text); font: inherit; font-size: 12px; font-weight: 750; }
 .ledger-pagination button:hover:not(:disabled) { background: var(--hover); }
 .ledger-pagination button:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; opacity: .55; }
+.account-footer { max-width: 1180px; align-items: center; justify-content: center; gap: 18px; margin: 24px auto 0; padding: 0 3.2% 30px; }
+.account-footer a { color: var(--primary-text); text-decoration: none; }
+.account-footer a:hover { text-decoration: underline; text-underline-offset: 3px; }

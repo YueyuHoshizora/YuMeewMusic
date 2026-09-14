@@ -1419,6 +1419,15 @@ function finalStoryboardFields(draft) {
   ].filter(([, value]) => value);
 }
 
+function removeFinalStoryboard() {
+  if (busy || !finalStoryboard || !window.confirm("確定移除最終分鏡？")) return;
+  finalStoryboard = null;
+  resetFinalStoryboardEditor();
+  renderFinalStoryboardCard();
+  syncDraftStatus();
+  setStatus("已移除最終分鏡", "success");
+}
+
 function renderFinalStoryboardCard() {
   document.getElementById("final-storyboard-card")?.remove();
   const configured = Boolean(finalStoryboard);
@@ -1443,7 +1452,10 @@ function renderFinalStoryboardCard() {
   heading.append(title);
   const actions = document.createElement("div");
   actions.className = "storyboard-card-actions";
-  actions.append(storyboardAction("edit", "編輯最終分鏡", openFinalStoryboard));
+  actions.append(
+    storyboardAction("edit", "編輯最終分鏡", openFinalStoryboard),
+    storyboardAction("delete", "移除最終分鏡", removeFinalStoryboard),
+  );
   block.append(heading);
   for (const [label, value, nodes] of finalStoryboardFields(finalStoryboard)) {
     const row = document.createElement("div");

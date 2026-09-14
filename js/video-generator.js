@@ -2024,10 +2024,24 @@ function modelDurationOptions(model) {
 
 function inspectStoryboardProject() {
   const entries = orderedStoryboardEntries();
+  const finalEntry = finalStoryboard ? {
+    block: document.getElementById("final-storyboard-card"),
+    draft: finalStoryboard,
+    index: entries.length,
+    final: true,
+  } : null;
+  const timelineEntries = finalEntry ? [...entries, finalEntry] : entries;
   const model = VIDEO_MODELS[$("video-model").value];
   const outputDuration = Number($("video-duration").value) || 0;
   const issues = [];
-  const add = (severity, message, entry = null, action = null) => issues.push({ severity, message, storyboardId: entry?.draft.id || "", index: entry ? entry.index : -1, action });
+  const add = (severity, message, entry = null, action = null) => issues.push({
+    severity,
+    message,
+    storyboardId: entry?.final ? "" : entry?.draft.id || "",
+    finalStoryboard: Boolean(entry?.final),
+    index: entry ? entry.index : -1,
+    action,
+  });
   if (!entries.length) add("error", "尚未加入任何分鏡，請先建立至少一張分鏡卡片。");
   let previousEnd = null;
   for (const entry of entries) {
@@ -2048,6 +2062,26 @@ function inspectStoryboardProject() {
     const characterNames = [...(draft.viewSubjects || []), draft.viewpointCharacter, draft.actionCharacter, ...(draft.dialogues || []).map(dialogue => dialogue.speaker)]
       .filter(name => name && name !== "__all__" && name !== "__narrator__");
     for (const name of new Set(characterNames)) if (!enabledNames.has(name)) add("warning", `${label} 使用的人物「${name}」目前不存在或已禁用。`, entry);
+  }
+  if (finalEntry) {
+    const { draft, block } = finalEntry;
+    const start = Number(draft.start);
+    const end = Number(draft.end);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) add("error", "最終分鏡的開始或結束時間無效。", finalEntry);
+    if (previousEnd !== null && start < previousEnd) add("error", `最終分鏡與上一張分鏡重疊 ${(previousEnd - start).toFixed(1)} 秒。`, finalEntry);
+    else if (previousEnd !== null && start > previousEnd) add("warning", `最終分鏡與上一張分鏡之間有 ${(start - previousEnd).toFixed(1)} 秒空檔。`, finalEntry);
+    if (!htmlText(draft.scene)) add("warning", "最終分鏡尚未設定場景。", finalEntry);
+    if (!draft.camera && !htmlText(draft.cameraCustom)) add("warning", "最終分鏡尚未設定鏡頭運動。", finalEntry);
+    for (const token of block?.querySelectorAll(".resource-token") || []) {
+      if (!videoResources.some(resource => resource.id === token.dataset.resourceId)) add("error", `最終分鏡引用了已刪除的資源「${token.textContent.trim()}」。`, finalEntry);
+    }
+    const enabledNames = new Set(characterTemplates.filter(character => character.enabled !== false).map(character => character.name));
+    const characterNames = [
+      ...(draft.viewSubjects || []),
+      draft.viewpointCharacter,
+      ...(draft.actions || []).map(action => action.actionCharacter),
+    ].filter(name => name && name !== "__all__");
+    for (const name of new Set(characterNames)) if (!enabledNames.has(name)) add("warning", `最終分鏡使用的人物「${name}」目前不存在或已禁用。`, finalEntry);
   }
   addContinuityWarnings(entries, add);
   const referencedIds = new Set([...$("video-prompt").querySelectorAll(".resource-token")].map(token => token.dataset.resourceId).filter(Boolean));
@@ -2071,6 +2105,9 @@ function inspectStoryboardProject() {
   if (entries.length && Number(entries[0].draft.start) > 0) add("warning", `第一張分鏡從 ${Number(entries[0].draft.start).toFixed(1)} 秒開始，片頭會有空檔。`, entries[0]);
   return {
     entries,
+    finalEntry,
+    timelineEntries,
+    totalEntries: timelineEntries.length,
     issues,
     errors: issues.filter(issue => issue.severity === "error").length,
     warnings: issues.filter(issue => issue.severity === "warning").length,
@@ -2091,7 +2128,7 @@ function inspectionSummaryItem(label, value) {
 
 function renderStoryboardInspection(report) {
   $("storyboard-inspection-summary").replaceChildren(
-    inspectionSummaryItem("分鏡", report.entries.length),
+    inspectionSummaryItem("分鏡", report.totalEntries),
     inspectionSummaryItem("時間範圍", `${report.maxEnd.toFixed(1)} / ${report.outputDuration} 秒`),
     inspectionSummaryItem("最終題詞", `${report.promptLength.toLocaleString()} 字`),
     inspectionSummaryItem("錯誤／提醒", `${report.errors}／${report.warnings}`),
@@ -2103,15 +2140,16 @@ function renderStoryboardInspection(report) {
     : `目前分鏡已超出輸出片長 ${Math.abs(report.remainingDuration).toFixed(1)} 秒；請點選下方警告自動調整。若超過模型最長時間，仍會保留警告。`;
   const timeline = $("storyboard-inspection-timeline");
   const scale = Math.max(report.maxEnd, report.outputDuration, 1);
-  const errorIds = new Set(report.issues.filter(issue => issue.severity === "error").map(issue => issue.storyboardId));
-  timeline.replaceChildren(...report.entries.map(entry => {
+  const errorIds = new Set(report.issues.filter(issue => issue.severity === "error").map(issue => issue.finalStoryboard ? "__final__" : issue.storyboardId));
+  timeline.replaceChildren(...report.timelineEntries.map(entry => {
     const segment = document.createElement("button");
     segment.type = "button";
-    segment.className = `storyboard-timeline-segment${errorIds.has(entry.draft.id) ? " has-error" : ""}`;
+    const entryId = entry.final ? "__final__" : entry.draft.id;
+    segment.className = `storyboard-timeline-segment${entry.final ? " final" : ""}${errorIds.has(entryId) ? " has-error" : ""}`;
     segment.style.left = `${Math.max(0, Number(entry.draft.start)) / scale * 100}%`;
     segment.style.width = `${Math.max(0.04, (Number(entry.draft.end) - Number(entry.draft.start)) / scale) * 100}%`;
-    segment.textContent = `${entry.index + 1} · ${formatStoryboardTime(entry.draft.start, entry.draft.end)}`;
-    segment.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); editStoryboard(entry.draft.id); });
+    segment.textContent = `${entry.final ? "最終" : entry.index + 1} · ${formatStoryboardTime(entry.draft.start, entry.draft.end)}`;
+    segment.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); entry.final ? openFinalStoryboard() : editStoryboard(entry.draft.id); });
     return segment;
   }));
   const result = $("storyboard-inspection-result");
@@ -2124,7 +2162,7 @@ function renderStoryboardInspection(report) {
   }
   const list = document.createElement("ul");
   list.replaceChildren(...report.issues.map(issue => {
-    const item = document.createElement(issue.storyboardId || issue.action ? "button" : "div");
+    const item = document.createElement(issue.storyboardId || issue.finalStoryboard || issue.action ? "button" : "div");
     if (item instanceof HTMLButtonElement) item.type = "button";
     item.className = "storyboard-inspection-item";
     item.dataset.severity = issue.severity;
@@ -2133,7 +2171,8 @@ function renderStoryboardInspection(report) {
     const message = document.createElement("span");
     message.textContent = issue.message;
     item.append(marker, message);
-    if (issue.storyboardId) item.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); editStoryboard(issue.storyboardId); });
+    if (issue.finalStoryboard) item.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); openFinalStoryboard(); });
+    else if (issue.storyboardId) item.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); editStoryboard(issue.storyboardId); });
     else if (issue.action?.type === "fit-duration") item.addEventListener("click", () => {
       $("video-duration").value = String(issue.action.duration);
       syncResultHeading();
@@ -3451,7 +3490,7 @@ function openGenerateConfirmation() {
     ["輸出規格", `${$("video-resolution").value} · ${$("video-ratio").value}`],
     ["影片長度", `${$("video-duration").value} 秒`],
     ["生成任務", "1 個"],
-    ["分鏡", `${report.entries.length} 個`],
+    ["分鏡", `${report.totalEntries} 個`],
     ["人物／資源", `${characters.length} 位／${resources.length} 個`],
     ["影片音訊", model.provider === "byteplus" ? "啟用" : "依模型輸出"],
     ["額度／費用", `依 ${model.apiKey} 帳戶方案計算`],

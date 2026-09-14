@@ -57,6 +57,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .storyboard-time-room.warning { border-color: color-mix(in srgb, #f3b64b 70%, var(--border)); background: color-mix(in srgb, #f3b64b 12%, var(--surface)); color: var(--foreground); }
 .storyboard-inspection-timeline { position: relative; height: 76px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); overflow: hidden; }
 .storyboard-timeline-segment { position: absolute; top: 15px; height: 46px; min-width: 34px; padding: 0 7px; overflow: hidden; border: 1px solid var(--primary); border-radius: 7px; background: var(--tint); color: var(--foreground); font-size: 11px; white-space: nowrap; text-overflow: ellipsis; }
+.storyboard-timeline-segment.final { border-width: 2px; color: var(--primary-text); font-weight: 800; }
 .storyboard-timeline-segment.has-error { border-color: var(--error); background: var(--error-surface); }
 .storyboard-inspection-result { max-height: 340px; overflow-y: auto; }
 .storyboard-inspection-result ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }

@@ -42,6 +42,7 @@ test("member center reads the balance, top-up history and consumption history", 
   assert.match(script, /fetchUsdTwdExchangeRate/);
   assert.match(script, /TOPUP_PAYOUT_RATE = 0\.85/);
   assert.match(script, /amount \/ usdTwdRate \* TOPUP_PAYOUT_RATE/);
+  assert.match(script, /Math\.floor\(calculated \* 100\) \/ 100/);
   assert.match(script, /`可取得 \$\{usdFormatter\.format\(total\)\}`/);
   assert.match(script, /中間匯率[\s\S]*85% 計價（平台保留 15%）/);
   assert.match(script, /style: "currency", currency: "USD"/);

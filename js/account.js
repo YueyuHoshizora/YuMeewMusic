@@ -84,7 +84,8 @@ function renderLedger(container, entries, emptyMessage) {
 
 function updateTopupEstimate() {
   const amount = Number(topupTwd.value);
-  const total = amount > 0 && usdTwdRate > 0 ? amount / usdTwdRate * TOPUP_PAYOUT_RATE : 0;
+  const calculated = amount > 0 && usdTwdRate > 0 ? amount / usdTwdRate * TOPUP_PAYOUT_RATE : 0;
+  const total = Math.floor(calculated * 100) / 100;
   topupUsd.textContent = total ? `可取得 ${usdFormatter.format(total)}` : "可取得 $—";
 }
 

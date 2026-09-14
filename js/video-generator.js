@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
-import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
+import { getApiKey, listApiKeys, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLabel } from "./video-resources.js";
 import { createVideoProjectFile, readVideoProjectFile } from "./video-project-file.js";
 import { createStoryboardReportPdf } from "./pdf-export.js";
@@ -180,7 +180,7 @@ function showError(text = "") {
 
 function syncGenerateAvailability() {
   const prompt = editorText(activePromptEditor());
-  const hasKey = Boolean(getApiKey($("video-model").value));
+  const hasKey = usesAccountCredits($("video-model").value) || Boolean(getApiKey($("video-model").value));
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
@@ -3407,7 +3407,7 @@ function syncModelDetails() {
   const ratios = model.ratios || VIDEO_RATIOS;
   const previousRatio = $("video-ratio").value;
   replaceOptions($("video-ratio"), ratios, ratios.includes(previousRatio) ? previousRatio : ratios[0]);
-  $("video-api-key").textContent = getApiKey(modelId) ? "已設定" : "未設定";
+  $("video-api-key").textContent = usesAccountCredits(modelId) ? "帳戶扣點" : getApiKey(modelId) ? "已設定" : "未設定";
   $("confirm-video-generation-message").textContent = `影片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
   syncResultHeading();
   syncGenerateAvailability();
@@ -3444,11 +3444,19 @@ function openApiKeyDialog() {
       ? "請使用 Google AI Studio Gemini API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 Google。"
       : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
   $("video-api-key-input").value = "";
+  $("video-api-key-account-credits").checked = usesAccountCredits(modelId);
   $("video-api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("video-api-key-error").hidden = true;
   syncApiKeySources(modelId);
+  syncVideoApiKeyCreditControls();
   $("video-api-key-dialog").showModal();
-  $("video-api-key-input").focus();
+  ($("video-api-key-input").disabled ? $("video-api-key-account-credits") : $("video-api-key-input")).focus();
+}
+
+function syncVideoApiKeyCreditControls() {
+  const disabled = $("video-api-key-account-credits").checked;
+  $("video-api-key-source").disabled = disabled || !listApiKeys().some(key => key.id !== $("video-model").value);
+  $("video-api-key-input").disabled = disabled;
 }
 
 function copyApiKeyFromSource() {
@@ -3463,13 +3471,14 @@ function submitApiKey(event) {
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const value = $("video-api-key-input").value.trim();
+  const accountCredits = $("video-api-key-account-credits").checked;
   if (!model) return;
-  if (!value) {
+  if (!accountCredits && !value) {
     $("video-api-key-error").textContent = "請輸入 API KEY。";
     $("video-api-key-error").hidden = false;
     return;
   }
-  if (!saveApiKey(modelId, model.label, value)) {
+  if (!saveAccountCredits(modelId, accountCredits) || (!accountCredits && !saveApiKey(modelId, model.label, value))) {
     $("video-api-key-error").textContent = "瀏覽器無法保存 API KEY。";
     $("video-api-key-error").hidden = false;
     return;
@@ -4168,6 +4177,7 @@ $("video-duration").addEventListener("change", () => scheduleAutoDraft());
 $("video-ratio").addEventListener("change", () => { syncResultHeading(); scheduleAutoDraft(); });
 $("video-api-key").addEventListener("click", openApiKeyDialog);
 $("video-api-key-source").addEventListener("change", copyApiKeyFromSource);
+$("video-api-key-account-credits").addEventListener("change", syncVideoApiKeyCreditControls);
 $("video-api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialog").close());
 $("generate-video").addEventListener("click", openGenerateConfirmation);

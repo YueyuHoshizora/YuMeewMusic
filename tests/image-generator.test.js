@@ -86,6 +86,9 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /function confirmFluxGeneration\(event\)[\s\S]*flux-generation-confirm-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*flux-generation-confirm-form"\)\.addEventListener\("submit", confirmFluxGeneration\)/);
   assert.match(html, /id="api-key-input"[^>]*type="password"/);
+  assert.match(html, /id="api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
+  assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);
+  assert.match(script, /function syncApiKeyCreditControls\(\)[\s\S]*api-key-input"\)\.disabled = disabled/);
   assert.match(html, /id="api-key-source"[^>]*class="setting-select"/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
   assert.match(script, /\$\("api-key-source"\)\.addEventListener\("change", copyApiKeyFromSource\)/);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { API_KEY_STORAGE_KEY, deleteApiKey, getApiKey, listApiKeys, maskApiKey, saveApiKey } from "../js/api-keys.js";
+import { API_BILLING_STORAGE_KEY, API_KEY_STORAGE_KEY, deleteApiKey, getApiKey, listApiKeys, maskApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "../js/api-keys.js";
 
 function createStorage() {
   const values = new Map();
@@ -26,4 +26,13 @@ test("API keys save to localStorage, list safely and delete individually", () =>
   assert.match(localStorage.getItem(API_KEY_STORAGE_KEY), /abc123456xyz/);
   assert.equal(deleteApiKey("paid-model"), true);
   assert.equal(getApiKey("paid-model"), null);
+});
+
+test("account credit billing preference persists per model", () => {
+  localStorage.removeItem(API_BILLING_STORAGE_KEY);
+  assert.equal(usesAccountCredits("paid-model"), false);
+  assert.equal(saveAccountCredits("paid-model", true), true);
+  assert.equal(usesAccountCredits("paid-model"), true);
+  assert.equal(saveAccountCredits("paid-model", false), true);
+  assert.equal(usesAccountCredits("paid-model"), false);
 });

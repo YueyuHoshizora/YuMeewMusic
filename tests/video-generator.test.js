@@ -240,6 +240,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
   assert.match(html, /id="video-api-key-dialog"/);
+  assert.match(html, /id="video-api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
+  assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);
+  assert.match(script, /function syncVideoApiKeyCreditControls\(\)[\s\S]*video-api-key-input"\)\.disabled = disabled/);
   assert.match(html, /id="google-quota-help"[^>]*hidden>[\s\S]*aistudio\.google\.com\/rate-limit[\s\S]*ai\.google\.dev\/gemini-api\/docs\/billing/);
   assert.match(script, /https:\/\/model-proxy\.yustellar\.idv\.tw\/minimax\/video/);
   assert.match(script, /CREATE_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/generate`/);

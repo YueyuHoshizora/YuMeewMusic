@@ -1,4 +1,24 @@
 export const API_KEY_STORAGE_KEY = "yumeew-api-keys-v1";
+export const API_BILLING_STORAGE_KEY = "yumeew-api-billing-v1";
+
+function readBillingModes() {
+  try {
+    const value = JSON.parse(localStorage.getItem(API_BILLING_STORAGE_KEY) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+
+export function usesAccountCredits(id) { return readBillingModes()[id] === true; }
+
+export function saveAccountCredits(id, enabled) {
+  try {
+    const modes = readBillingModes();
+    if (enabled) modes[id] = true;
+    else delete modes[id];
+    localStorage.setItem(API_BILLING_STORAGE_KEY, JSON.stringify(modes));
+    return true;
+  } catch { return false; }
+}
 
 function readRecords() {
   try {

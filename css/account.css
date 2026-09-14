@@ -13,21 +13,33 @@
 .google-login { display: flex; min-height: 46px; align-items: center; gap: 12px; margin-top: 12px; padding: 0 20px; border: 1px solid var(--primary); border-radius: 9px; background: transparent; color: var(--primary-text); font-weight: 750; }
 .google-login span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 50%; background: var(--surface); color: var(--foreground); font-weight: 900; }
 .google-login:hover { background: var(--hover); }
-.account-dashboard { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, .7fr); gap: 18px; }
-.member-profile { display: flex; min-width: 0; align-items: center; gap: 16px; }
-.account-avatar { display: grid; width: 64px; height: 64px; flex: 0 0 64px; place-items: center; overflow: hidden; border: 2px solid var(--primary); border-radius: 50%; background: var(--tint); color: var(--primary-text); font-size: 22px; font-weight: 800; }
+.account-dashboard { display: grid; grid-template-columns: minmax(310px, 1.15fr) minmax(230px, .75fr) minmax(280px, .9fr); gap: 18px; }
+.member-profile { display: flex; min-width: 0; align-items: center; gap: 12px; padding: 14px 16px; }
+.account-avatar { display: grid; width: 48px; height: 48px; flex: 0 0 48px; place-items: center; overflow: hidden; border: 2px solid var(--primary); border-radius: 50%; background: var(--tint); color: var(--primary-text); font-size: 18px; font-weight: 800; }
 .account-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .account-identity { min-width: 0; }
 .account-identity span, .account-identity strong, .account-identity small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-identity span { margin-bottom: 5px; color: var(--muted); font-size: 11px; letter-spacing: 1px; }
-.account-identity strong { font-size: 19px; }
-.account-identity small { margin-top: 5px; color: var(--muted); font-size: 12px; }
-.account-logout { margin-left: auto; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--foreground); }
+.account-identity strong { font-size: 16px; }
+.account-identity small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.account-logout { margin-left: auto; padding: 7px 11px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--foreground); }
 .account-logout:hover { border-color: var(--primary); color: var(--primary-text); }
 .balance-card { display: grid; align-content: center; gap: 5px; }
 .balance-card span { color: var(--muted); font-size: 12px; letter-spacing: 1px; }
 .balance-card strong { color: var(--primary-text); font-size: 36px; font-variant-numeric: tabular-nums; }
 .balance-card small { color: var(--muted); font-size: 11px; }
+.topup-card { display: grid; align-content: center; gap: 7px; }
+.topup-card > span { color: var(--muted); font-size: 12px; letter-spacing: 1px; }
+.topup-controls { display: flex; align-items: stretch; gap: 8px; }
+.topup-amount { display: flex; min-width: 0; flex: 1; align-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+.topup-amount:focus-within { border-color: var(--primary); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 18%, transparent); }
+.topup-amount input { width: 100%; min-width: 0; border: 0; padding: 8px 9px; outline: 0; background: transparent; color: var(--foreground); font: inherit; font-variant-numeric: tabular-nums; }
+.topup-amount b { padding-right: 9px; color: var(--muted); font-size: 11px; }
+.topup-controls button { min-width: 58px; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary-text); font: inherit; font-size: 12px; font-weight: 800; }
+.topup-controls button:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; opacity: .65; }
+.topup-card > strong { color: var(--primary-text); font-size: 19px; font-variant-numeric: tabular-nums; }
+.topup-card > small { min-height: 2.8em; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.topup-card > small.error { color: var(--error-text); }
 .ledger-panel { grid-column: 1 / -1; }
 .ledger-scroll { overflow-x: auto; }
 .ledger-panel table { width: 100%; border-collapse: collapse; font-size: 13px; }

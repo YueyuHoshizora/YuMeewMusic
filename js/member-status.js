@@ -1,4 +1,5 @@
 const header = document.querySelector("header");
+const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 if (header) {
   const widget = document.createElement("a");
@@ -43,7 +44,7 @@ if (header) {
     balance.textContent = "讀取中";
     try {
       const data = await fetchAccount(session, { ledger: false });
-      balance.textContent = Number(data.balance || 0).toLocaleString("zh-TW");
+      balance.textContent = usdFormatter.format(Number(data.balance || 0));
     } catch {
       balance.textContent = "—";
     }

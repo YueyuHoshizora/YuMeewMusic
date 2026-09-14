@@ -19,3 +19,17 @@ export async function fetchMemberAccount(session, { ledger = true } = {}) {
   if (!response.ok) throw new Error(result.message || result.error || `會員資料服務回傳 ${response.status}`);
   return result;
 }
+
+export async function fetchUsdTwdExchangeRate() {
+  if (!isMemberApiConfigured()) throw new Error("會員資料服務尚未設定。");
+  const url = new URL("./v1/exchange-rates/usd-twd", `${MEMBER_API_URL.replace(/\/+$/, "")}/`);
+  const response = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    result = {};
+  }
+  if (!response.ok) throw new Error(result.message || result.error || `匯率服務回傳 ${response.status}`);
+  return result;
+}

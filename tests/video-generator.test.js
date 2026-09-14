@@ -89,17 +89,13 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<h2 id="video-prompt-builder-title">分鏡內容<\/h2>/);
   assert.match(html, /id="minimize-video-prompt-builder"[^>]*>縮小<\/button>/);
   assert.match(html, /id="restore-video-prompt-builder"[^>]*hidden>[\s\S]*分鏡內容[\s\S]*繼續編輯/);
-  for (const [name, minimizeId, restoreId] of [
-    ["全片風格", "minimize-film-style", "restore-film-style"],
-    ["預覽題詞", "minimize-video-prompt-preview", "restore-video-prompt-preview"],
-    ["最終分鏡", "minimize-final-storyboard", "restore-final-storyboard"],
-    ["檢查分鏡", "minimize-storyboard-inspection", "restore-storyboard-inspection"],
-  ]) {
+  for (const [name, minimizeId, restoreId] of [["預覽題詞", "minimize-video-prompt-preview", "restore-video-prompt-preview"]]) {
     assert.match(html, new RegExp(`id="${minimizeId}"[^>]*>縮小<\\/button>`));
     assert.match(html, new RegExp(`id="${restoreId}"[^>]*hidden>[\\s\\S]*${name}`));
   }
   assert.match(css, /\.video-minimized-dialogs \{[^}]*position: fixed[^}]*display: grid/);
-  assert.match(script, /const MINIMIZABLE_DIALOGS = Object\.freeze\([\s\S]*filmStyle:[\s\S]*promptPreview:[\s\S]*finalStoryboard:[\s\S]*storyboardInspection:/);
+  assert.match(script, /const MINIMIZABLE_DIALOGS = Object\.freeze\([\s\S]*promptPreview:/);
+  assert.doesNotMatch(html, /minimize-(?:film-style|final-storyboard|storyboard-inspection)|restore-(?:film-style|final-storyboard|storyboard-inspection)/);
   assert.match(script, /function minimizeDialog\(name\)[\s\S]*close\("minimized"\)/);
   assert.match(script, /function restoreMinimizedDialog\(name\)[\s\S]*returnValue = ""[\s\S]*showModal\(\)/);
   assert.match(html, /id="video-prompt-builder-form"[\s\S]*id="submit-video-prompt-builder"[^>]*>加入分鏡<\/button>/);

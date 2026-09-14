@@ -101,10 +101,7 @@ function isPromptMode() { return promptEditorMode === "prompt"; }
 function activePromptEditor() { return $(isPromptMode() ? "video-prompt-text" : "video-prompt"); }
 
 const MINIMIZABLE_DIALOGS = Object.freeze({
-  filmStyle: Object.freeze({ dialog: "film-style-dialog", restore: "restore-film-style", focus: "film-style-primary" }),
   promptPreview: Object.freeze({ dialog: "video-prompt-preview-dialog", restore: "restore-video-prompt-preview", focus: "video-prompt-preview-text" }),
-  finalStoryboard: Object.freeze({ dialog: "final-storyboard-dialog", restore: "restore-final-storyboard", focus: "final-storyboard-scene" }),
-  storyboardInspection: Object.freeze({ dialog: "storyboard-inspection-dialog", restore: "restore-storyboard-inspection", focus: "close-storyboard-inspection" }),
 });
 
 function minimizeDialog(name) {
@@ -321,7 +318,6 @@ function syncNarratorVoiceCustom(focus = false) {
 
 function openFilmStyle() {
   if (busy) return;
-  if (restoreMinimizedDialog("filmStyle")) return;
   $("film-style-primary").value = filmStyle.primary;
   $("film-style-primary-custom").value = filmStyle.primaryCustom;
   $("film-style-era").value = filmStyle.era;
@@ -524,7 +520,6 @@ function syncFinalStoryboardView(focusCustom = false) {
 
 function openFinalStoryboard() {
   if (busy) return;
-  if (restoreMinimizedDialog("finalStoryboard")) return;
   restoreEditorHtml("final-storyboard-scene", finalStoryboard?.scene || "");
   restoreEditorHtml("final-storyboard-sound", finalStoryboard?.sound || "");
   $("final-storyboard-duration").value = String(finalStoryboardDuration());
@@ -2594,7 +2589,6 @@ function renderStoryboardInspection(report) {
 }
 
 function openStoryboardInspection(report = inspectStoryboardProject()) {
-  if (restoreMinimizedDialog("storyboardInspection")) return report;
   renderStoryboardInspection(report);
   $("storyboard-inspection-dialog").returnValue = "";
   $("storyboard-inspection-dialog").showModal();
@@ -4036,12 +4030,7 @@ for (const [id, mode] of [["storyboard-prompt-mode", "storyboard"], ["plain-prom
   });
 }
 $("open-film-style").addEventListener("click", openFilmStyle);
-$("minimize-film-style").addEventListener("click", () => minimizeDialog("filmStyle"));
-$("restore-film-style").addEventListener("click", () => restoreMinimizedDialog("filmStyle"));
-$("film-style-dialog").addEventListener("close", () => syncMinimizedDialog("filmStyle"));
 $("open-final-storyboard").addEventListener("click", openFinalStoryboard);
-$("minimize-final-storyboard").addEventListener("click", () => minimizeDialog("finalStoryboard"));
-$("restore-final-storyboard").addEventListener("click", () => restoreMinimizedDialog("finalStoryboard"));
 $("add-final-storyboard-action").addEventListener("click", () => $("final-storyboard-actions").append(createFinalStoryboardAction()));
 $("final-storyboard-camera").addEventListener("change", () => syncFinalStoryboardCamera(true));
 $("final-storyboard-view-angle").addEventListener("change", () => syncFinalStoryboardView(true));
@@ -4050,7 +4039,6 @@ $("cancel-final-storyboard").addEventListener("click", () => $("final-storyboard
 $("final-storyboard-dialog").addEventListener("close", () => {
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
-  syncMinimizedDialog("finalStoryboard");
 });
 $("film-style-primary").addEventListener("change", () => syncFilmStyleCustom(true));
 $("film-style-narrator-voice").addEventListener("change", () => syncNarratorVoiceCustom(true));
@@ -4074,11 +4062,8 @@ $("analyze-storyboards-ai").addEventListener("click", openStoryboardAiConfirmati
 $("open-storyboard-ai-pdf").addEventListener("click", () => void openStoryboardAiPdf());
 $("storyboard-ai-confirm-form").addEventListener("submit", confirmStoryboardAiAnalysis);
 $("cancel-storyboard-ai").addEventListener("click", () => $("storyboard-ai-confirm-dialog").close());
-$("minimize-storyboard-inspection").addEventListener("click", () => minimizeDialog("storyboardInspection"));
-$("restore-storyboard-inspection").addEventListener("click", () => restoreMinimizedDialog("storyboardInspection"));
 $("reflow-storyboard-times").addEventListener("click", reflowStoryboardTimes);
 $("close-storyboard-inspection").addEventListener("click", () => $("storyboard-inspection-dialog").close());
-$("storyboard-inspection-dialog").addEventListener("close", () => syncMinimizedDialog("storyboardInspection"));
 $("export-storyboard-pdf").addEventListener("click", () => void exportStoryboardPdf());
 $("export-video-project").addEventListener("click", openVideoProjectExport);
 $("export-video-project-form").addEventListener("submit", event => void exportVideoProject(event));

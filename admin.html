@@ -66,8 +66,31 @@
 
             <section id="billing-settings" class="panel admin-panel billing-settings-panel" role="tabpanel" hidden>
               <div class="section-title"><span>03</span><h2>計費設定</h2></div>
-              <p class="admin-intro">管理各模型使用帳戶扣點時的計費方式。</p>
-              <div class="admin-empty-state"><span aria-hidden="true">$</span><strong>尚未設定計費項目</strong><p>後續新增模型費率時會集中顯示在此頁籤。</p></div>
+              <p class="admin-intro">管理各模型使用帳戶扣點時的美元費率與免費輸入額度，設定會保存到 Cloudflare KV。</p>
+              <form id="billing-form" class="billing-form">
+                <label class="billing-model" for="billing-model"><span>模型</span><select id="billing-model"><option value="minimax-h3">MiniMax H3</option></select></label>
+                <div class="billing-group">
+                  <h3>影片生成</h3>
+                  <div class="billing-grid">
+                    <label for="billing-output-768"><span>768P 每秒</span><span class="billing-number"><b>$</b><input id="billing-output-768" name="output768PerSecond" type="number" min="0" step="0.01" value="0.08" required /></span></label>
+                    <label for="billing-output-2k"><span>2K 每秒</span><span class="billing-number"><b>$</b><input id="billing-output-2k" name="output2kPerSecond" type="number" min="0" step="0.01" value="0.13" required /></span></label>
+                  </div>
+                </div>
+                <div class="billing-group">
+                  <h3>參考素材輸入</h3>
+                  <div class="billing-grid billing-input-grid">
+                    <label for="billing-audio-free"><span>音效免費張數</span><input id="billing-audio-free" name="audioFreeCount" type="number" min="0" step="1" value="999" required /></label>
+                    <label for="billing-audio-price"><span>音效超過後每張</span><span class="billing-number"><b>$</b><input id="billing-audio-price" name="audioOveragePerItem" type="number" min="0" step="0.01" value="0.00" required /></span></label>
+                    <label for="billing-image-free"><span>圖片免費張數</span><input id="billing-image-free" name="imageFreeCount" type="number" min="0" step="1" value="5" required /></label>
+                    <label for="billing-image-price"><span>圖片超過後每張</span><span class="billing-number"><b>$</b><input id="billing-image-price" name="imageOveragePerItem" type="number" min="0" step="0.01" value="0.04" required /></span></label>
+                    <label for="billing-video-768-free"><span>影像輸入 768P 免費部數</span><input id="billing-video-768-free" name="video768FreeCount" type="number" min="0" step="1" value="0" required /></label>
+                    <label for="billing-video-768-price"><span>影像輸入 768P 每部</span><span class="billing-number"><b>$</b><input id="billing-video-768-price" name="video768OveragePerItem" type="number" min="0" step="0.01" value="0.08" required /></span></label>
+                    <label for="billing-video-2k-free"><span>影像輸入 2K 免費部數</span><input id="billing-video-2k-free" name="video2kFreeCount" type="number" min="0" step="1" value="0" required /></label>
+                    <label for="billing-video-2k-price"><span>影像輸入 2K 每部</span><span class="billing-number"><b>$</b><input id="billing-video-2k-price" name="video2kOveragePerItem" type="number" min="0" step="0.01" value="0.13" required /></span></label>
+                  </div>
+                </div>
+                <button class="billing-save" type="submit">儲存計費設定</button>
+              </form>
             </section>
 
             <section id="platform-api-keys" class="panel admin-panel api-key-admin-panel" role="tabpanel" hidden>

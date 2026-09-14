@@ -1,7 +1,7 @@
 import { getCurrentSession } from "./auth.js";
 import {
-  createAdminTopup, deleteAdminApiKey, fetchAdminTopupSettings, listAdminApiKeys,
-  saveAdminApiKey, searchAdminMembers, updateAdminTopupSettings, verifyAdminAccess,
+  createAdminTopup, deleteAdminApiKey, fetchAdminBillingSettings, fetchAdminTopupSettings, listAdminApiKeys,
+  saveAdminApiKey, searchAdminMembers, updateAdminBillingSettings, updateAdminTopupSettings, verifyAdminAccess,
 } from "./member-api.js";
 import { loadSettings } from "./settings.js";
 import { applyTheme } from "./themes.js";
@@ -50,6 +50,17 @@ function selectAdminPanel(panelId) {
 function renderMargin(setting) {
   $("margin-percent").value = String(setting.marginPercent);
   $("margin-preview").textContent = `會員可取得換算金額的 ${Number(setting.payoutPercent).toFixed(2).replace(/\.00$/, "")}%`;
+}
+
+function renderBilling(settings) {
+  for (const [name, value] of Object.entries(settings)) {
+    const input = $("billing-form").elements.namedItem(name);
+    if (input instanceof HTMLInputElement) input.value = String(value);
+  }
+}
+
+function readBillingForm() {
+  return Object.fromEntries([...$("billing-form").querySelectorAll("input[name]")].map(input => [input.name, Number(input.value)]));
 }
 
 function renderMembers() {
@@ -171,6 +182,28 @@ $("margin-form").addEventListener("submit", async event => {
   finally { button.disabled = false; }
 });
 
+$("billing-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const button = event.submitter;
+  if (!event.currentTarget.reportValidity()) return;
+  button.disabled = true;
+  try {
+    const session = await revalidateAdminPermission();
+    const result = await updateAdminBillingSettings(session, $("billing-model").value, readBillingForm());
+    renderBilling(result.settings);
+    setStatus(`${result.label} 計費設定已保存到 KV。`);
+  } catch (error) { setStatus(error.message || "無法更新計費設定。", true); }
+  finally { button.disabled = false; }
+});
+
+$("billing-model").addEventListener("change", async event => {
+  try {
+    const result = await fetchAdminBillingSettings(state.session, event.currentTarget.value);
+    renderBilling(result.settings);
+    setStatus(`${result.label} 計費設定已載入。`);
+  } catch (error) { setStatus(error.message || "無法載入計費設定。", true); }
+});
+
 $("member-search-form").addEventListener("submit", async event => {
   event.preventDefault();
   setStatus("正在搜尋會員…");
@@ -237,12 +270,14 @@ async function initialize() {
   }
   state.session = session;
   try {
-    const [setting, members, keys] = await Promise.all([
+    const [setting, members, keys, billing] = await Promise.all([
       fetchAdminTopupSettings(session), searchAdminMembers(session), listAdminApiKeys(session),
+      fetchAdminBillingSettings(session, $("billing-model").value),
     ]);
     renderMargin(setting);
     state.members = members.members || [];
     state.apiKeys = keys.keys || [];
+    renderBilling(billing.settings);
     renderMembers();
     renderApiKeys();
     $("admin-access").hidden = true;

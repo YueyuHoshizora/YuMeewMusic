@@ -65,6 +65,14 @@ export function updateAdminTopupSettings(session, marginPercent) {
   return fetchAdminJson(session, "/v1/admin/settings/topup", { method: "PUT", body: { marginPercent } });
 }
 
+export function fetchAdminBillingSettings(session, model) {
+  return fetchAdminJson(session, `/v1/admin/billing/${encodeURIComponent(model)}`);
+}
+
+export function updateAdminBillingSettings(session, model, settings) {
+  return fetchAdminJson(session, `/v1/admin/billing/${encodeURIComponent(model)}`, { method: "PUT", body: settings });
+}
+
 export function searchAdminMembers(session, query = "") {
   return fetchAdminJson(session, `/v1/admin/members?query=${encodeURIComponent(query)}`);
 }

@@ -16,6 +16,14 @@ const pages = [
   "video-generator.html",
 ];
 
+test("every page loads the AdSense publisher script once", () => {
+  for (const page of pages) {
+    const html = readFileSync(page, "utf8");
+    const matches = html.match(/<script async src="https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=ca-pub-7132586781018963" crossorigin="anonymous"><\/script>/g) || [];
+    assert.equal(matches.length, 1, page);
+  }
+});
+
 test("every page presents and dismisses the shared feature loading screen", () => {
   for (const page of pages) {
     const html = readFileSync(page, "utf8");

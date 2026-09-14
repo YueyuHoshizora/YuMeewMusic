@@ -25,7 +25,7 @@ test("administrator page manages margin, member top-ups and provider API keys th
   const script = readFileSync("js/admin.js", "utf8");
   const api = readFileSync("js/member-api.js", "utf8");
   for (const label of ["儲值換算設定", "會員人工加值", "平台 API KEY"]) assert.match(html, new RegExp(label));
-  assert.match(html, /id="margin-percent"[^>]*min="0"[^>]*max="100"[^>]*step="0\.01"/);
+  assert.match(html, /id="margin-percent"[^>]*min="0"[^>]*max="99"[^>]*step="0\.01"/);
   assert.match(html, /id="admin-topup-amount"[^>]*step="0\.01"/);
   assert.match(script, /crypto\.randomUUID\(\)/);
   assert.match(script, /getCurrentSession/);

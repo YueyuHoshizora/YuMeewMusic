@@ -162,7 +162,7 @@ async function loadExchangeRate() {
     if (!(buy > 0 && sell > 0 && average > 0)) throw new Error("匯率資料無效");
     usdTwdRate = average;
     if (Number.isFinite(payoutRate) && payoutRate >= 0 && payoutRate <= 1) topupPayoutRate = payoutRate;
-    if (Number.isFinite(marginPercent) && marginPercent >= 0 && marginPercent <= 100) topupMarginPercent = marginPercent;
+    if (Number.isFinite(marginPercent) && marginPercent >= 0 && marginPercent <= 99) topupMarginPercent = marginPercent;
     updateTopupEstimate();
     topupExchangeNote.textContent = `中間匯率 ${average.toFixed(3)} × ${(topupPayoutRate * 100).toFixed(2).replace(/\.00$/, "")}% 計價（平台保留 ${topupMarginPercent.toFixed(2).replace(/\.00$/, "")}%）`;
   } catch (error) {

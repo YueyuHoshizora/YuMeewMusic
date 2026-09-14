@@ -1171,13 +1171,6 @@ function storyboardFields(draft) {
   ].filter(([, value]) => value);
 }
 
-function storyboardDisplayFields(draft) {
-  return [
-    ...storyboardFields(draft),
-    ["分鏡簡述", String(draft.summary || "").trim()],
-  ].filter(([, value]) => value);
-}
-
 function storyboardAction(kind, label, handler) {
   const button = document.createElement("button");
   button.type = "button";
@@ -1194,7 +1187,7 @@ function storyboardAction(kind, label, handler) {
 function refreshStoryboardLabels() {
   const blocks = [...document.querySelectorAll("#video-prompt .storyboard-block")];
   blocks.forEach((block, index) => {
-    block.dataset.title = `分鏡 ${index + 1}`;
+    block.querySelector(".storyboard-card-title").textContent = `分鏡 ${index + 1}`;
     block.setAttribute("aria-label", `編輯分鏡 ${index + 1}`);
     block.querySelector(".storyboard-card-action.up").disabled = index === 0;
     block.querySelector(".storyboard-card-action.down").disabled = index === blocks.length - 1;
@@ -1241,6 +1234,15 @@ function createStoryboardBlock(draft) {
   block.setAttribute("contenteditable", "false");
   block.setAttribute("role", "group");
   block.tabIndex = 0;
+  const heading = document.createElement("div");
+  heading.className = "storyboard-card-heading";
+  const title = document.createElement("strong");
+  title.className = "storyboard-card-title";
+  const summary = document.createElement("span");
+  summary.className = "storyboard-card-summary";
+  summary.textContent = String(draft.summary || "").trim() ? `分鏡描述：${String(draft.summary).trim()}` : "";
+  heading.append(title, summary);
+  block.append(heading);
   const actions = document.createElement("div");
   actions.className = "storyboard-card-actions";
   actions.append(
@@ -1250,10 +1252,10 @@ function createStoryboardBlock(draft) {
     storyboardAction("copy", "複製分鏡", () => duplicateStoryboard(draft.id)),
     storyboardAction("delete", "刪除分鏡", () => deleteStoryboard(draft.id)),
   );
-  for (const [label, value, nodes] of storyboardDisplayFields(draft)) {
+  for (const [label, value, nodes] of storyboardFields(draft)) {
     const row = document.createElement("div");
     row.className = "storyboard-field";
-    row.dataset.field = ({ 時間: "time", 場景: "scene", 鏡頭: "camera", 視角: "view", 燈光: "lighting", 音效: "sound", 動作: "action", 人物與對話: "dialogue", 分鏡簡述: "summary" })[label];
+    row.dataset.field = ({ 時間: "time", 場景: "scene", 鏡頭: "camera", 視角: "view", 燈光: "lighting", 音效: "sound", 動作: "action", 人物與對話: "dialogue" })[label];
     const fieldLabel = document.createElement("span");
     fieldLabel.className = "storyboard-field-label";
     fieldLabel.textContent = `${label}：`;

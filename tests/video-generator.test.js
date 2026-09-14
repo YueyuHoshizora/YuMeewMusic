@@ -68,7 +68,7 @@ test("video generator page provides a model-ready generation workspace", () => {
     assert.match(html, new RegExp(`<span>${label}<\\/span><div id="${id}"[^>]*resource-editor`));
   }
   assert.match(html, /<span>人物與對話<\/span>[\s\S]*id="add-video-dialogue"[^>]*>＋ 新增對話<\/button>[\s\S]*id="video-dialogue-list"/);
-  assert.match(html, /class="video-storyboard-summary-field"[^>]*for="video-prompt-summary"[\s\S]*分鏡簡述（選填）[\s\S]*id="video-prompt-summary"[^>]*type="text"/);
+  assert.match(html, /class="video-storyboard-summary-field"[^>]*for="video-prompt-summary"[\s\S]*分鏡描述（選填）[\s\S]*id="video-prompt-summary"[^>]*type="text"/);
   assert.doesNotMatch(html, /<textarea id="video-prompt-summary"/);
   assert.doesNotMatch(html, /id="video-prompt-dialogue"|<span>對白<\/span>/);
   assert.match(html, /<span>鏡頭<\/span>[\s\S]*id="video-prompt-camera"[\s\S]*<optgroup label="基本運鏡">[\s\S]*<optgroup label="跟拍與環繞">[\s\S]*<optgroup label="電影感運鏡">/);
@@ -177,7 +177,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /storyboardAction\("down", "向下移動", \(\) => moveStoryboard\(draft\.id, 1\)\)/);
   assert.doesNotMatch(script, /draggable|dragstart|dragover|drag-target/);
   assert.match(script, /function reflowStoryboardTimes\(\)[\s\S]*重新接續所有分鏡時間[\s\S]*draft\.start = roundedStoryboardTime\(cursor\)[\s\S]*draft\.end = roundedStoryboardTime\(cursor\)/);
-  assert.match(script, /function storyboardDisplayFields\(draft\)[\s\S]*分鏡簡述[\s\S]*draft\.summary/);
+  assert.match(script, /summary\.textContent = String\(draft\.summary \|\| ""\)\.trim\(\) \? `分鏡描述：\$\{String\(draft\.summary\)\.trim\(\)\}` : ""/);
+  assert.doesNotMatch(script, /function storyboardDisplayFields/);
   assert.match(script, /function editStoryboard\(id\)[\s\S]*video-prompt-summary[\s\S]*restoreEditorHtml[\s\S]*"儲存分鏡"/);
   assert.match(script, /function duplicateStoryboard\(id\)[\s\S]*structuredClone\(source\)[\s\S]*duration = Number\(source\.end\) - Number\(source\.start\)[\s\S]*copy\.start = roundedStoryboardTime\(source\.end\)[\s\S]*copy\.end = roundedStoryboardTime\(Number\(copy\.start\) \+ duration\)/);
   assert.match(script, /function deleteStoryboard\(id\)[\s\S]*確定刪除這個分鏡/);

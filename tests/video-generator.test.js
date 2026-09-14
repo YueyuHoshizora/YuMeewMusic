@@ -122,7 +122,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-collapsible-summary\s*\{[^}]*cursor:\s*pointer/);
   assert.match(css, /\.video-prompt-builder-dialog\s*\{[^}]*width:\s*1080px;[^}]*max-width:\s*none/);
   assert.match(css, /\.video-prompt-add\s*\{[^}]*border:\s*1px solid var\(--primary\)[^}]*color:\s*var\(--primary\)/);
-  assert.match(css, /\.video-storyboard-inspect-button\s*\{[^}]*margin-right:\s*auto/);
+  assert.match(css, /\.video-storyboard-time-button\s*\{[^}]*margin-right:\s*auto/);
   assert.match(css, /\.film-style-fields\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
   assert.match(css, /\.video-prompt-preview-text\s*\{[^}]*user-select:\s*text/);
   assert.match(css, /\.storyboard-inspection-dialog\s*\{[^}]*width:\s*920px/);

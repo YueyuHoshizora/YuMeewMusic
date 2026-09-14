@@ -19,7 +19,7 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-prompt-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .video-prompt-add:disabled { opacity: .5; cursor: default; }
 .video-film-style-button.configured { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
-.video-storyboard-inspect-button { margin-right: auto; }
+.video-storyboard-time-button { margin-right: auto; }
 .video-character-template-button { border-color: var(--border); background: var(--surface); color: var(--foreground); }
 .video-project-actions { display: flex; justify-content: flex-start; align-items: center; gap: 10px; margin-top: 12px; }
 .video-auto-draft-status { margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }

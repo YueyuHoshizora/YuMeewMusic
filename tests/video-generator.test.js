@@ -23,7 +23,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /<summary class="video-collapsible-summary">生成設定<\/summary>/);
   assert.match(html, /<details id="video-result-panel" class="panel result-panel video-result-panel">[\s\S]*生成結果[\s\S]*<\/details>/);
   assert.doesNotMatch(html, /<details id="(?:video-settings-panel|video-result-panel)"[^>]*\sopen(?:\s|>)/);
-  assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="open-final-storyboard"[^>]*>最終分鏡<\/button>\s*<button id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="inspect-storyboards"[^>]*>檢查分鏡<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
+  assert.match(html, /id="open-film-style"[^>]*>全片風格<\/button>\s*<button id="open-final-storyboard"[^>]*>最終分鏡<\/button>\s*<button id="inspect-storyboards"[^>]*>檢查分鏡<\/button>[\s\S]*id="open-character-template"[\s\S]*id="open-video-prompt-builder"[\s\S]*id="video-prompt"/);
   assert.doesNotMatch(html, /video-prompt-footer/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
@@ -42,7 +42,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="inspect-storyboards"[^>]*>檢查分鏡<\/button>/);
   assert.match(html, /id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>/);
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
-  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
+  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
   assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
   assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
   assert.match(script, /const STORYBOARD_CHECKER_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);

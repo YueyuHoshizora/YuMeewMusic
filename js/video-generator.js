@@ -1605,6 +1605,123 @@ function openVideoPromptPreview() {
   $("video-prompt-preview-text").focus();
 }
 
+function orderedStoryboardEntries() {
+  return [...$("video-prompt").querySelectorAll(".storyboard-block")].map((block, index) => ({
+    block,
+    draft: storyboards.get(block.dataset.storyboardId),
+    index,
+  })).filter(entry => entry.draft);
+}
+
+function inspectStoryboardProject() {
+  const entries = orderedStoryboardEntries();
+  const model = VIDEO_MODELS[$("video-model").value];
+  const outputDuration = Number($("video-duration").value) || 0;
+  const issues = [];
+  const add = (severity, message, entry = null) => issues.push({ severity, message, storyboardId: entry?.draft.id || "", index: entry ? entry.index : -1 });
+  if (!entries.length) add("error", "尚未加入任何分鏡，請先建立至少一張分鏡卡片。");
+  let previousEnd = null;
+  for (const entry of entries) {
+    const { draft, index, block } = entry;
+    const start = Number(draft.start);
+    const end = Number(draft.end);
+    const duration = end - start;
+    const label = `分鏡 ${index + 1}`;
+    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start) add("error", `${label} 的開始或結束時間無效。`, entry);
+    if (previousEnd !== null && start < previousEnd) add("error", `${label} 與上一張分鏡重疊 ${(previousEnd - start).toFixed(1)} 秒。`, entry);
+    else if (previousEnd !== null && start > previousEnd) add("warning", `${label} 與上一張分鏡之間有 ${(start - previousEnd).toFixed(1)} 秒空檔。`, entry);
+    previousEnd = Number.isFinite(end) ? end : previousEnd;
+    if (model?.durations && !model.durations.includes(duration)) add("warning", `${label} 長度 ${duration.toFixed(1)} 秒，不是 ${model.label} 可直接生成的片長。`, entry);
+    else if (model?.minimumDuration && duration < model.minimumDuration) add("warning", `${label} 長度 ${duration.toFixed(1)} 秒，短於 ${model.label} 單次最低 ${model.minimumDuration} 秒。`, entry);
+    else if (model?.maximumDuration && duration > model.maximumDuration) add("warning", `${label} 長度 ${duration.toFixed(1)} 秒，超過 ${model.label} 單次最高 ${model.maximumDuration} 秒。`, entry);
+    if (!htmlText(draft.scene)) add("warning", `${label} 尚未設定場景。`, entry);
+    if (!draft.camera && !htmlText(draft.cameraCustom)) add("warning", `${label} 尚未設定鏡頭運動。`, entry);
+    if (!draft.actionType && !htmlText(draft.actionCustom) && !htmlText(draft.actionDetail)) add("warning", `${label} 尚未設定動作。`, entry);
+    for (const token of block.querySelectorAll(".resource-token")) {
+      if (!videoResources.some(resource => resource.id === token.dataset.resourceId)) add("error", `${label} 引用了已刪除的資源「${token.textContent.trim()}」。`, entry);
+    }
+    const enabledNames = new Set(characterTemplates.filter(character => character.enabled !== false).map(character => character.name));
+    const characterNames = [...(draft.viewSubjects || []), draft.viewpointCharacter, draft.actionCharacter, ...(draft.dialogues || []).map(dialogue => dialogue.speaker)]
+      .filter(name => name && name !== "__all__" && name !== "__narrator__");
+    for (const name of new Set(characterNames)) if (!enabledNames.has(name)) add("warning", `${label} 使用的人物「${name}」目前不存在或已禁用。`, entry);
+  }
+  const referencedIds = new Set([...$("video-prompt").querySelectorAll(".resource-token")].map(token => token.dataset.resourceId).filter(Boolean));
+  const unusedResources = videoResources.filter(resource => !referencedIds.has(resource.id));
+  if (unusedResources.length) add("warning", `有 ${unusedResources.length} 個上傳資源尚未被任何分鏡引用。`);
+  const maxEnd = entries.reduce((value, entry) => Math.max(value, Number(entry.draft.end) || 0), 0);
+  if (maxEnd > outputDuration) add("error", `分鏡時間延伸至 ${maxEnd.toFixed(1)} 秒，超過目前輸出片長 ${outputDuration} 秒。`);
+  if (entries.length && Number(entries[0].draft.start) > 0) add("warning", `第一張分鏡從 ${Number(entries[0].draft.start).toFixed(1)} 秒開始，片頭會有空檔。`, entries[0]);
+  return {
+    entries,
+    issues,
+    errors: issues.filter(issue => issue.severity === "error").length,
+    warnings: issues.filter(issue => issue.severity === "warning").length,
+    maxEnd,
+    outputDuration,
+    promptLength: completeVideoPrompt().length,
+  };
+}
+
+function inspectionSummaryItem(label, value) {
+  const item = document.createElement("span");
+  const strong = document.createElement("strong");
+  strong.textContent = String(value);
+  item.append(document.createTextNode(label), strong);
+  return item;
+}
+
+function renderStoryboardInspection(report) {
+  $("storyboard-inspection-summary").replaceChildren(
+    inspectionSummaryItem("分鏡", report.entries.length),
+    inspectionSummaryItem("時間範圍", `${report.maxEnd.toFixed(1)} / ${report.outputDuration} 秒`),
+    inspectionSummaryItem("最終題詞", `${report.promptLength.toLocaleString()} 字`),
+    inspectionSummaryItem("錯誤／提醒", `${report.errors}／${report.warnings}`),
+  );
+  const timeline = $("storyboard-inspection-timeline");
+  const scale = Math.max(report.maxEnd, report.outputDuration, 1);
+  const errorIds = new Set(report.issues.filter(issue => issue.severity === "error").map(issue => issue.storyboardId));
+  timeline.replaceChildren(...report.entries.map(entry => {
+    const segment = document.createElement("button");
+    segment.type = "button";
+    segment.className = `storyboard-timeline-segment${errorIds.has(entry.draft.id) ? " has-error" : ""}`;
+    segment.style.left = `${Math.max(0, Number(entry.draft.start)) / scale * 100}%`;
+    segment.style.width = `${Math.max(0.04, (Number(entry.draft.end) - Number(entry.draft.start)) / scale) * 100}%`;
+    segment.textContent = `${entry.index + 1} · ${formatStoryboardTime(entry.draft.start, entry.draft.end)}`;
+    segment.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); editStoryboard(entry.draft.id); });
+    return segment;
+  }));
+  const result = $("storyboard-inspection-result");
+  if (!report.issues.length) {
+    const empty = document.createElement("p");
+    empty.className = "storyboard-inspection-empty";
+    empty.textContent = "分鏡時間、模型片長與引用資源皆通過檢查。";
+    result.replaceChildren(empty);
+    return;
+  }
+  const list = document.createElement("ul");
+  list.replaceChildren(...report.issues.map(issue => {
+    const item = document.createElement(issue.storyboardId ? "button" : "div");
+    if (item instanceof HTMLButtonElement) item.type = "button";
+    item.className = "storyboard-inspection-item";
+    item.dataset.severity = issue.severity;
+    const marker = document.createElement("strong");
+    marker.textContent = issue.severity === "error" ? "錯誤" : "提醒";
+    const message = document.createElement("span");
+    message.textContent = issue.message;
+    item.append(marker, message);
+    if (issue.storyboardId) item.addEventListener("click", () => { $("storyboard-inspection-dialog").close(); editStoryboard(issue.storyboardId); });
+    return item;
+  }));
+  result.replaceChildren(list);
+}
+
+function openStoryboardInspection(report = inspectStoryboardProject()) {
+  renderStoryboardInspection(report);
+  $("storyboard-inspection-dialog").showModal();
+  $("close-storyboard-inspection").focus();
+  return report;
+}
+
 function videoDetailsHtml() {
   const holder = document.createElement("div");
   for (const node of $("video-prompt").childNodes) {
@@ -2325,7 +2442,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["open-film-style", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
+  for (const id of ["open-film-style", "preview-video-prompt", "inspect-storyboards", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input"]) $(id).disabled = value;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
@@ -2565,6 +2682,12 @@ async function generateVideo() {
 
 function openGenerateConfirmation() {
   if ($("generate-video").disabled || busy) return;
+  const report = inspectStoryboardProject();
+  if (report.errors) {
+    openStoryboardInspection(report);
+    setStatus(`請先修正 ${report.errors} 個分鏡錯誤`, "error");
+    return;
+  }
   $("confirm-video-generation-dialog").showModal();
 }
 
@@ -2589,6 +2712,8 @@ $("cancel-character-editor").addEventListener("click", () => $("character-editor
 $("delete-character").addEventListener("click", deleteEditingCharacter);
 $("preview-video-prompt").addEventListener("click", openVideoPromptPreview);
 $("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-preview-dialog").close());
+$("inspect-storyboards").addEventListener("click", () => openStoryboardInspection());
+$("close-storyboard-inspection").addEventListener("click", () => $("storyboard-inspection-dialog").close());
 $("export-video-project").addEventListener("click", openVideoProjectExport);
 $("export-video-project-form").addEventListener("submit", event => void exportVideoProject(event));
 $("cancel-export-video-project").addEventListener("click", () => $("export-video-project-dialog").close());

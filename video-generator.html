@@ -35,6 +35,7 @@
             <div class="video-prompt-heading">
               <button id="open-film-style" class="video-prompt-add video-film-style-button" type="button">全片風格</button>
               <button id="preview-video-prompt" class="video-prompt-add video-prompt-preview-button" type="button">預覽題詞</button>
+              <button id="inspect-storyboards" class="video-prompt-add video-storyboard-inspect-button" type="button">檢查分鏡</button>
               <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
               <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
             </div>
@@ -121,6 +122,18 @@
         <pre id="video-prompt-preview-text" class="video-prompt-preview-text" tabindex="0" aria-label="目前完整題詞"></pre>
         <div class="dialog-actions">
           <button id="close-video-prompt-preview" class="dialog-confirm" type="button">關閉</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="storyboard-inspection-dialog" class="reset-dialog storyboard-inspection-dialog" aria-labelledby="storyboard-inspection-title">
+      <div>
+        <h2 id="storyboard-inspection-title">分鏡檢查</h2>
+        <div id="storyboard-inspection-summary" class="storyboard-inspection-summary" aria-label="分鏡檢查摘要"></div>
+        <div id="storyboard-inspection-timeline" class="storyboard-inspection-timeline" aria-label="分鏡時間軸"></div>
+        <div id="storyboard-inspection-result" class="storyboard-inspection-result"></div>
+        <div class="dialog-actions">
+          <button id="close-storyboard-inspection" class="dialog-confirm" type="button">關閉</button>
         </div>
       </div>
     </dialog>

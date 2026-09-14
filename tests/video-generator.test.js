@@ -41,7 +41,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-prompt-preview-dialog"[^>]*aria-labelledby="video-prompt-preview-title"[\s\S]*<pre id="video-prompt-preview-text"[^>]*aria-label="目前完整題詞"[\s\S]*id="close-video-prompt-preview"/);
   assert.match(html, /id="inspect-storyboards"[^>]*>檢查分鏡<\/button>/);
   assert.match(html, /id="storyboard-inspection-dialog"[^>]*aria-labelledby="storyboard-inspection-title"[\s\S]*id="storyboard-inspection-summary"[\s\S]*id="storyboard-time-room"[\s\S]*id="storyboard-inspection-timeline"[\s\S]*id="storyboard-inspection-result"/);
-  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>\s*<button id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>/);
+  assert.match(html, /id="storyboard-ai-report"[^>]*aria-live="polite"[^>]*hidden[\s\S]*id="preview-video-prompt"[^>]*>預覽題詞<\/button>\s*<button id="reflow-storyboard-times"[^>]*>重新接續時間<\/button>\s*<button id="analyze-storyboards-ai"[^>]*>AI 分析<\/button>\s*<button id="open-storyboard-ai-pdf"[^>]*disabled>開啟 PDF<\/button>/);
   assert.match(html, /id="storyboard-ai-confirm-dialog"[^>]*aria-labelledby="storyboard-ai-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-storyboard-ai"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
   assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
   assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
@@ -55,6 +55,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /analyze-storyboards-ai"\)\.addEventListener\("click", openStoryboardAiConfirmation\)[\s\S]*storyboard-ai-confirm-form"\)\.addEventListener\("submit", confirmStoryboardAiAnalysis\)/);
   assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*const reopenInspection = inspectionDialog\.open[\s\S]*inspectionDialog\.close\(\)[\s\S]*setBusy\(true\)[\s\S]*setBusy\(false\)[\s\S]*inspectionDialog\.showModal\(\)/);
   assert.match(script, /function renderStoryboardAiReport\(report\)[\s\S]*做得好的地方[\s\S]*需要處理的問題[\s\S]*逐鏡分析[\s\S]*修正版分鏡[\s\S]*生成建議/);
+  assert.match(script, /import \{ createStoryboardReportPdf \} from "\.\/pdf-export\.js"/);
+  assert.match(script, /async function openStoryboardAiPdf\(\)[\s\S]*window\.open\("about:blank", "_blank"\)[\s\S]*createStoryboardReportPdf\(lastStoryboardAiReport\)[\s\S]*target\.location\.replace\(url\)/);
   assert.match(html, /id="character-template-dialog"[^>]*aria-labelledby="character-template-title"/);
   assert.match(html, /id="film-style-dialog"[^>]*aria-labelledby="film-style-title"[\s\S]*id="film-style-form"/);
   assert.match(html, /id="final-storyboard-dialog"[^>]*aria-labelledby="final-storyboard-title"[\s\S]*時間會自動接續最後一張分鏡，並延長 1 秒。[\s\S]*id="final-storyboard-scene"[\s\S]*id="final-storyboard-sound"[\s\S]*id="final-storyboard-shot-size"[\s\S]*id="final-storyboard-view-angle"[\s\S]*id="final-storyboard-view-custom"[\s\S]*id="final-storyboard-view-subjects"[\s\S]*id="final-storyboard-viewpoint-character"[\s\S]*id="final-storyboard-camera"[\s\S]*id="final-storyboard-camera-speed"[\s\S]*id="final-storyboard-camera-custom"[\s\S]*id="final-storyboard-actions"/);

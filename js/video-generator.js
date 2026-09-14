@@ -4,6 +4,7 @@ import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, s
 import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLabel } from "./video-resources.js";
 import { createVideoProjectFile, readVideoProjectFile } from "./video-project-file.js";
+import { createStoryboardReportPdf } from "./pdf-export.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -88,6 +89,7 @@ let autoDraftTouched = false;
 let autoDraftTimer = 0;
 let autoDraftResourcesDirty = false;
 let autoDraftSavePromise = Promise.resolve();
+let lastStoryboardAiReport = null;
 
 const MINIMIZABLE_DIALOGS = Object.freeze({
   filmStyle: Object.freeze({ dialog: "film-style-dialog", restore: "restore-film-style", focus: "film-style-primary" }),
@@ -2318,6 +2320,32 @@ function renderStoryboardAiReport(report) {
   if (advice) nodes.push(advice);
   container.replaceChildren(...nodes);
   container.hidden = false;
+  lastStoryboardAiReport = report;
+  $("open-storyboard-ai-pdf").disabled = busy;
+}
+
+async function openStoryboardAiPdf() {
+  if (!lastStoryboardAiReport || busy) return;
+  const target = window.open("about:blank", "_blank");
+  if (!target) {
+    setStatus("瀏覽器已封鎖 PDF 視窗", "error");
+    return;
+  }
+  target.document.title = "正在建立 AI 分鏡分析報告…";
+  target.document.body.textContent = "正在建立 AI 分鏡分析報告…";
+  $("open-storyboard-ai-pdf").disabled = true;
+  try {
+    const pdf = await createStoryboardReportPdf(lastStoryboardAiReport);
+    const url = URL.createObjectURL(pdf);
+    target.location.replace(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setStatus("已在新視窗開啟 AI 分析 PDF", "success");
+  } catch (error) {
+    target.close();
+    setStatus(error?.message || "無法建立 AI 分析 PDF", "error");
+  } finally {
+    $("open-storyboard-ai-pdf").disabled = busy || !lastStoryboardAiReport;
+  }
 }
 
 async function storyboardCheckerRequest(url, body) {
@@ -2367,6 +2395,8 @@ async function analyzeStoryboardsWithAi() {
     setStatus("AI 分鏡分析完成", "success");
   } catch (error) {
     const container = $("storyboard-ai-report");
+    lastStoryboardAiReport = null;
+    $("open-storyboard-ai-pdf").disabled = true;
     container.replaceChildren(reportText("p", "storyboard-ai-error", error?.message || "AI 分析失敗，請稍後再試。"));
     container.hidden = false;
     setStatus("AI 分鏡分析失敗", "error");
@@ -3264,6 +3294,7 @@ function setBusy(value, showLock = value) {
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
   for (const id of ["open-film-style", "open-final-storyboard", "preview-video-prompt", "inspect-storyboards", "analyze-storyboards-ai", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "clear-video-resources", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
+  $("open-storyboard-ai-pdf").disabled = value || !lastStoryboardAiReport;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
@@ -3833,6 +3864,7 @@ $("close-video-prompt-preview").addEventListener("click", () => $("video-prompt-
 $("video-prompt-preview-dialog").addEventListener("close", () => syncMinimizedDialog("promptPreview"));
 $("inspect-storyboards").addEventListener("click", () => openStoryboardInspection());
 $("analyze-storyboards-ai").addEventListener("click", openStoryboardAiConfirmation);
+$("open-storyboard-ai-pdf").addEventListener("click", () => void openStoryboardAiPdf());
 $("storyboard-ai-confirm-form").addEventListener("submit", confirmStoryboardAiAnalysis);
 $("cancel-storyboard-ai").addEventListener("click", () => $("storyboard-ai-confirm-dialog").close());
 $("minimize-storyboard-inspection").addEventListener("click", () => minimizeDialog("storyboardInspection"));

@@ -5,6 +5,7 @@ import { getApiKey, listApiKeys, saveApiKey } from "./api-keys.js";
 import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLabel } from "./video-resources.js";
 import { createVideoProjectFile, readVideoProjectFile } from "./video-project-file.js";
 import { createStoryboardReportPdf } from "./pdf-export.js";
+import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -184,10 +185,15 @@ function syncClearWorkspaceAvailability() {
   $("clear-video-resources").disabled = busy || !autoDraftReady || !hasClearableWorkspace();
 }
 
+function syncStoryboardPdfAvailability() {
+  $("export-storyboard-pdf").disabled = busy || (!storyboards.size && !finalStoryboard);
+}
+
 function syncDraftStatus(saveDraft = true) {
   if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
+  syncStoryboardPdfAvailability();
   if (saveDraft) scheduleAutoDraft();
 }
 
@@ -2615,6 +2621,7 @@ function finishAutoDraftRestore() {
   $("export-video-project").disabled = false;
   $("select-video-project").disabled = false;
   syncClearWorkspaceAvailability();
+  syncStoryboardPdfAvailability();
 }
 
 function autoDraftMetadata() {
@@ -2759,6 +2766,59 @@ function downloadBlob(blob, filename) {
   link.download = filename;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function storyboardPdfProject() {
+  const entries = orderedStoryboardEntries();
+  const allScenes = finalStoryboard
+    ? [...entries, { draft: finalStoryboard, final: true }]
+    : entries;
+  const scenes = allScenes.map((entry, index) => ({
+    title: `Scene ${index + 1}${entry.final ? " · 最終分鏡" : ""}`,
+    summary: entry.final ? "" : String(entry.draft.summary || "").trim(),
+    fields: (entry.final ? finalStoryboardFields(entry.draft) : storyboardFields(entry.draft)).map(([label, value]) => [label, value]),
+  }));
+  const characters = referencedCharacters(promptVideoDetails()).map(character => ({
+    kind: "image",
+    file: character.referenceImage,
+    referenceName: character.name,
+    voice: character.voice,
+    tone: character.tone,
+    style: character.style,
+    clothing: character.clothing,
+  }));
+  const resources = referencedResources().map(resource => ({
+    kind: resource.kind,
+    file: resource.file,
+    referenceName: `@${resource.referenceName}`,
+    originalName: resource.file?.name || "未命名檔案",
+    meta: [resourceTypeLabel(resource.kind), formatResourceSize(resource.file?.size), formatDuration(resource.duration)].filter(Boolean).join(" · "),
+  }));
+  return { scenes, characters, resources };
+}
+
+function storyboardPdfFilename(date = new Date()) {
+  const pad = value => String(value).padStart(2, "0");
+  const day = `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}`;
+  const time = `${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  return `video_storyboard_${day}_${time}.pdf`;
+}
+
+async function exportStoryboardPdf() {
+  if (busy || (!storyboards.size && !finalStoryboard)) return;
+  setBusy(true);
+  $("video-generation-lock-title").textContent = "正在建立分鏡 PDF";
+  $("video-generation-lock-detail").textContent = "正在整理分鏡卡與引用資源，所有處理都在瀏覽器內完成。";
+  setStatus("正在建立分鏡 PDF…");
+  try {
+    const pdf = await createStoryboardCardsPdf(storyboardPdfProject());
+    downloadBlob(pdf, storyboardPdfFilename());
+    setStatus("分鏡 PDF 已匯出", "success");
+  } catch (error) {
+    setStatus(error?.message || "分鏡 PDF 匯出失敗", "error");
+  } finally {
+    setBusy(false);
+  }
 }
 
 function openVideoProjectExport() {
@@ -3332,7 +3392,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["open-film-style", "open-final-storyboard", "preview-video-prompt", "inspect-storyboards", "analyze-storyboards-ai", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "clear-video-resources", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
+  for (const id of ["open-film-style", "open-final-storyboard", "preview-video-prompt", "inspect-storyboards", "analyze-storyboards-ai", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-storyboard-pdf", "export-video-project", "select-video-project", "clear-video-resources", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
   $("open-storyboard-ai-pdf").disabled = value || !lastStoryboardAiReport;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
@@ -3343,6 +3403,7 @@ function setBusy(value, showLock = value) {
   $("open-video-history").disabled = value || !generationHistory.length;
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
+  syncStoryboardPdfAvailability();
 }
 
 function apiError(body, fallback = "", provider = "minimax") {
@@ -3911,6 +3972,7 @@ $("restore-storyboard-inspection").addEventListener("click", () => restoreMinimi
 $("reflow-storyboard-times").addEventListener("click", reflowStoryboardTimes);
 $("close-storyboard-inspection").addEventListener("click", () => $("storyboard-inspection-dialog").close());
 $("storyboard-inspection-dialog").addEventListener("close", () => syncMinimizedDialog("storyboardInspection"));
+$("export-storyboard-pdf").addEventListener("click", () => void exportStoryboardPdf());
 $("export-video-project").addEventListener("click", openVideoProjectExport);
 $("export-video-project-form").addEventListener("submit", event => void exportVideoProject(event));
 $("cancel-export-video-project").addEventListener("click", () => $("export-video-project-dialog").close());

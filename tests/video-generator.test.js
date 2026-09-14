@@ -27,7 +27,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(html, /video-prompt-footer/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
-  assert.match(html, /id="video-prompt"[\s\S]*class="video-project-actions"[\s\S]*id="export-video-project"[^>]*>匯出設定<\/button>[\s\S]*id="select-video-project"[^>]*>匯入設定<\/button>[\s\S]*id="clear-video-resources"[^>]*>清除所有資源<\/button>/);
+  assert.match(html, /id="video-prompt"[\s\S]*class="video-project-actions"[\s\S]*id="export-storyboard-pdf"[^>]*>匯出 PDF<\/button>[\s\S]*id="export-video-project"[^>]*>匯出設定<\/button>[\s\S]*id="select-video-project"[^>]*>匯入設定<\/button>[\s\S]*id="clear-video-resources"[^>]*>清除所有資源<\/button>/);
   assert.match(css, /\.video-project-clear \{[^}]*border-color: var\(--error\)[^}]*background: transparent[^}]*color: var\(--error-text\)/);
   assert.match(html, /id="video-project-input"[^>]*accept="\.zip,application\/octet-stream"[^>]*hidden/);
   assert.match(html, /id="export-video-project-dialog"[\s\S]*id="export-active-characters"[^>]*checked[\s\S]*包含啟用的人物/);
@@ -335,6 +335,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /async function submitCharacterEditor\(event\)[\s\S]*const duplicateName = characterNameExists\(character\.name, editingCharacterIndex\)[\s\S]*"人物名稱不可重複。"[\s\S]*\|\| duplicateName/);
   assert.match(script, /影片設定檔包含重複的人物名稱。/);
   assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*finalStoryboard:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
+  assert.match(script, /import \{ createStoryboardCardsPdf \} from "\.\/storyboard-pdf\.js"/);
+  assert.match(script, /function storyboardPdfProject\(\)[\s\S]*orderedStoryboardEntries\(\)[\s\S]*finalStoryboardFields[\s\S]*storyboardFields[\s\S]*const characters = referencedCharacters\(promptVideoDetails\(\)\)[\s\S]*referenceImage[\s\S]*voice:[\s\S]*tone:[\s\S]*style:[\s\S]*clothing:[\s\S]*const resources = referencedResources\(\)/);
+  assert.match(script, /async function exportStoryboardPdf\(\)[\s\S]*createStoryboardCardsPdf\(storyboardPdfProject\(\)\)[\s\S]*downloadBlob\(pdf, storyboardPdfFilename\(\)\)/);
+  assert.match(script, /export-storyboard-pdf"\)\.addEventListener\("click", \(\) => void exportStoryboardPdf\(\)\)/);
   assert.match(script, /function submitFinalStoryboard\(event\)[\s\S]*const start = Number\(nextStoryboardStart\(\)\)[\s\S]*const duration = finalStoryboardDuration\(null\)[\s\S]*end: roundedStoryboardTime\(start \+ duration\)[\s\S]*actions:[\s\S]*renderFinalStoryboardCard\(\)/);
   assert.match(script, /function createFinalStoryboardAction\(action = \{\}\)[\s\S]*final-storyboard-action-character[\s\S]*final-storyboard-action-category[\s\S]*final-storyboard-action-type[\s\S]*final-storyboard-action-style[\s\S]*final-storyboard-action-custom[\s\S]*final-storyboard-action-target[\s\S]*final-storyboard-action-detail/);
   assert.match(script, /cloneSelectOptions\("video-prompt-camera", "final-storyboard-camera"\)[\s\S]*cloneSelectOptions\("video-prompt-shot-size", "final-storyboard-shot-size"\)[\s\S]*cloneSelectOptions\("video-prompt-view-angle", "final-storyboard-view-angle"\)/);

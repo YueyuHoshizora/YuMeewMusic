@@ -30,10 +30,11 @@ export async function decryptSunoAudio(blob, result) {
   return new Blob([bytes], { type: "audio/mp4" });
 }
 
-export async function readSunoAudioResponse(response, { maxBytes = SUNO_MAX_AUDIO_BYTES, onProgress = () => {} } = {}) {
+export async function readSunoAudioResponse(response, { maxBytes = SUNO_MAX_AUDIO_BYTES, onProgress = () => {}, allowEncryptedBinary = false } = {}) {
   if (!response.ok) throw Error(`音樂下載失敗（${response.status}）`);
   const contentType = response.headers.get("Content-Type") || "";
-  if (!/^audio\//i.test(contentType)) throw Error("取得的內容不是可播放的音樂檔案。");
+  const encryptedBinary = allowEncryptedBinary && /^application\/octet-stream(?:;|$)/i.test(contentType);
+  if (!/^audio\//i.test(contentType) && !encryptedBinary) throw Error("取得的內容不是可播放的音樂檔案。");
   const contentLength = Number(response.headers.get("Content-Length")) || 0;
   if (contentLength > maxBytes) throw Error(`音樂檔案超過 ${Math.round(maxBytes / 1024 ** 2)} MB，已停止下載。`);
   if (!response.body) return response.blob();
@@ -62,7 +63,10 @@ export async function resolveSunoAudio(url, { onProgress } = {}) {
   });
   const metadata = await response.json().catch(() => ({}));
   if (!response.ok) throw Error(metadata.error || metadata.message || `分享連結解析失敗（${response.status}）`);
-  const encrypted = await readSunoAudioResponse(await fetch(metadata.audioUrl, { cache: "no-store" }), { onProgress });
+  const encrypted = await readSunoAudioResponse(await fetch(metadata.audioUrl, { cache: "no-store" }), {
+    onProgress,
+    allowEncryptedBinary: Boolean(metadata.encrypted),
+  });
   const blob = metadata.encrypted ? await decryptSunoAudio(encrypted, metadata) : encrypted;
   return { blob, metadata };
 }

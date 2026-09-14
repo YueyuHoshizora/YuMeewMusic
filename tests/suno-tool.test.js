@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { readSunoAudioResponse } from "../js/suno-source.js";
 
 test("Suno tool page resolves, converts, previews and applies public audio", () => {
   const html = readFileSync("suno-tool.html", "utf8");
@@ -30,4 +31,13 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/suno-tool\.html"[\s\S]*<strong>Suno 工具<\/strong>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"suno-tool\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"suno-tool\.html"/);
+});
+
+test("encrypted Suno v5 audio accepts its binary CDN response", async () => {
+  const bytes = new Uint8Array([1, 2, 3, 4]);
+  const binaryResponse = () => new Response(bytes, { headers: { "Content-Type": "application/octet-stream" } });
+  await assert.rejects(readSunoAudioResponse(binaryResponse()), /不是可播放的音樂檔案/);
+  const blob = await readSunoAudioResponse(binaryResponse(), { allowEncryptedBinary: true });
+  assert.equal(blob.size, bytes.length);
+  assert.equal(blob.type, "application/octet-stream");
 });

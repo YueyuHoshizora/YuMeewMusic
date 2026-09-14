@@ -44,7 +44,6 @@ const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 
 let busy = false;
-let allowPageExit = false;
 let promptBuilderMinimized = false;
 let editingStoryboardId = "";
 let filmStyle = { ...EMPTY_FILM_STYLE };
@@ -137,15 +136,6 @@ function syncDraftStatus(saveDraft = true) {
   if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
   if (saveDraft) scheduleAutoDraft();
-}
-
-async function confirmPageExit(event) {
-  if (allowPageExit) return;
-  event.preventDefault();
-  if (!window.confirm("草稿會自動保存；尚未加入分鏡的視窗內容不會保留，是否離開影片生成器？")) return;
-  await saveAutoDraftNow({ resources: autoDraftResourcesDirty }).catch(() => {});
-  allowPageExit = true;
-  window.location.href = event.currentTarget.href;
 }
 
 function showVideoPromptBuilder() {
@@ -2858,7 +2848,6 @@ $("apply-video-background").addEventListener("click", async () => {
     const file = new File([generatedVideoBlob], videoFilename(), { type: generatedVideoBlob.type || "video/mp4", lastModified: Date.now() });
     await saveStoredMedia("image", file);
     await deleteStoredValue("image-video-project").catch(() => {});
-    allowPageExit = true;
     window.location.href = "./";
   } catch (error) {
     showError(error.message || "無法保存影片到瀏覽器。");
@@ -2867,12 +2856,6 @@ $("apply-video-background").addEventListener("click", async () => {
   }
 });
 
-document.querySelector("[data-confirm-return]").addEventListener("click", confirmPageExit);
-window.addEventListener("beforeunload", event => {
-  if (allowPageExit) return;
-  event.preventDefault();
-  event.returnValue = "";
-});
 window.addEventListener("pagehide", () => {
   if (autoDraftReady) void saveAutoDraftNow({ resources: autoDraftResourcesDirty }).catch(() => {});
   generationAbort?.abort();

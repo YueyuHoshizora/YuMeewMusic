@@ -13,7 +13,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
   assert.match(html, /<title>影片生成器 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
-  assert.match(html, /<a class="brand" href="\.\/" data-confirm-return/);
+  assert.match(html, /<a class="brand" href="\.\/" aria-label="返回 YuMeew 主畫面"/);
+  assert.doesNotMatch(html, /data-confirm-return/);
   assert.doesNotMatch(html, /video-keywords|compose-video-prompt|題詞詞語|enhance-video-prompt|文字轉譯成 Prompt/);
   assert.match(html, /<div id="video-prompt"[^>]*class="storyboard-list"[^>]*role="region"[^>]*aria-label="分鏡列表"/);
   assert.doesNotMatch(html, /id="video-prompt"[^>]*contenteditable/);
@@ -137,9 +138,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-dialogue-field\s*\{[^}]*grid-column:\s*1 \/ -1/);
   assert.match(css, /\.video-view-subjects\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
-  assert.match(script, /window\.confirm\("草稿會自動保存；尚未加入分鏡的視窗內容不會保留，是否離開影片生成器？"\)/);
-  assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
-  assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
+  assert.doesNotMatch(script, /confirmPageExit|beforeunload|allowPageExit/);
+  assert.match(script, /window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
   assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*start: \$\("video-prompt-start"\)\.value,[\s\S]*end: \$\("video-prompt-end"\)\.value,[\s\S]*shotSize:[\s\S]*viewSubjects: selectedStoryboardSubjects\(\)[\s\S]*viewpointCharacter:[\s\S]*actionCharacter:[\s\S]*actionDetail:[\s\S]*lightingIntensity:/);
   assert.match(script, /function collectStoryboardDraft\(\)[\s\S]*dialogues: collectDialogueRows\(\)/);

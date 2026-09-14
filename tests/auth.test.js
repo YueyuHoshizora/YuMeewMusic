@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
 const allPages = [
-  "index.html", "account.html", "settings.html", "subtitle-editor.html", "converter.html",
+  "index.html", "account.html", "admin.html", "settings.html", "subtitle-editor.html", "converter.html",
   "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html",
   "suno-tool.html", "image-generator.html", "video-generator.html",
 ];
@@ -18,6 +18,20 @@ test("every page exposes the shared member avatar and balance entry", () => {
   assert.match(script, /header\.querySelector\("\.header-actions"\) \|\| header/);
   assert.match(script, /fetchMemberAccount/);
   assert.match(script, /avatar_url/);
+});
+
+test("administrator page manages margin, member top-ups and provider API keys through the Worker", () => {
+  const html = readFileSync("admin.html", "utf8");
+  const script = readFileSync("js/admin.js", "utf8");
+  const api = readFileSync("js/member-api.js", "utf8");
+  for (const label of ["儲值換算設定", "會員人工加值", "平台 API KEY"]) assert.match(html, new RegExp(label));
+  assert.match(html, /id="margin-percent"[^>]*min="0"[^>]*max="100"[^>]*step="0\.01"/);
+  assert.match(html, /id="admin-topup-amount"[^>]*step="0\.01"/);
+  assert.match(script, /crypto\.randomUUID\(\)/);
+  assert.match(script, /getCurrentSession/);
+  for (const route of ["settings/topup", "admin/members", "credits/topup", "admin/api-keys"]) assert.match(api, new RegExp(route));
+  assert.doesNotMatch(script, /MEMBER_ADMIN_SECRET|PLATFORM_API_KEYS/);
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"admin\.html"/);
 });
 
 test("Google OAuth uses a persistent PKCE Supabase session", () => {
@@ -40,7 +54,7 @@ test("member center reads the balance, top-up history and consumption history", 
   assert.match(html, /id="account-topup"[^>]*disabled>儲值<\/button>/);
   assert.match(script, /fetchMemberAccount/);
   assert.match(script, /fetchUsdTwdExchangeRate/);
-  assert.match(script, /TOPUP_PAYOUT_RATE = 0\.85/);
+  assert.match(script, /topupPayoutRate = 0\.85/);
   assert.match(script, /MIN_TOPUP_TWD = 300/);
   assert.match(script, /MAX_TOPUP_TWD = 3_000/);
   assert.match(script, /amount >= MIN_TOPUP_TWD && amount <= MAX_TOPUP_TWD/);
@@ -53,10 +67,11 @@ test("member center reads the balance, top-up history and consumption history", 
   }
   assert.match(html, /Copyright © 2026 YuMeewMusic/);
   assert.match(html, /href="https:\/\/github\.com\/YueyuHoshizora\/YuMeewMusic\/blob\/main\/PRIVACY-POLICY\.md"[^>]*>隱私權政策<\/a>/);
-  assert.match(script, /amount \/ usdTwdRate \* TOPUP_PAYOUT_RATE/);
+  assert.match(script, /amount \/ usdTwdRate \* topupPayoutRate/);
   assert.match(script, /Math\.floor\(calculated \* 100\) \/ 100/);
   assert.match(script, /`可取得 \$\{usdFormatter\.format\(total\)\}`/);
-  assert.match(script, /中間匯率[\s\S]*85% 計價（平台保留 15%）/);
+  assert.match(script, /platformMarginPercent/);
+  for (const page of allPages.filter(page => page !== "admin.html")) assert.doesNotMatch(readFileSync(page, "utf8"), /href="\.\/admin\.html"/, page);
   assert.match(script, /style: "currency", currency: "USD"/);
   assert.doesNotMatch(script, /\.from\(/);
   const api = readFileSync("js/member-api.js", "utf8");

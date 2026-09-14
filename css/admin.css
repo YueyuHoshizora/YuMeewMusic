@@ -1,0 +1,44 @@
+.admin-body { min-width: 980px; }
+.admin-header { justify-content: space-between; }
+.admin-main { max-width: 1180px; padding-top: 34px; }
+.admin-heading { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 25px; }
+.admin-heading p, .admin-intro, .admin-note { color: var(--muted); font-size: 13px; line-height: 1.7; }
+.admin-heading p { margin: 0; }
+.admin-status { max-width: 380px; color: var(--primary-text); font-size: 13px; text-align: right; }
+.admin-status.error { color: var(--error-text); }
+.admin-access { display: grid; min-height: 350px; place-items: center; align-content: center; gap: 8px; text-align: center; }
+.admin-access h2, .admin-access p { margin: 0; }
+.admin-access p { color: var(--muted); }
+.admin-dashboard { display: grid; gap: 18px; }
+.admin-dashboard[hidden] { display: none; }
+.admin-panel { padding: 26px; }
+.admin-intro { margin: 8px 0 20px; }
+.admin-inline-form { display: flex; align-items: end; gap: 12px; }
+.admin-inline-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
+.admin-number { display: flex; width: 190px; align-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 9px; background: var(--card); }
+.admin-number input { width: 100%; min-width: 0; border: 0; padding: 11px; outline: 0; background: transparent; color: var(--foreground); font: inherit; }
+.admin-number b { padding-right: 12px; color: var(--muted); }
+.admin-inline-form button, .member-search-form button, .admin-topup-form button, .api-key-save { padding: 10px 15px; border: 1px solid var(--primary); border-radius: 9px; background: transparent; color: var(--primary-text); font: inherit; font-weight: 750; }
+.admin-inline-form button:hover, .member-search-form button:hover, .admin-topup-form button:hover:not(:disabled), .api-key-save:hover { background: var(--hover); }
+.admin-note { margin: 12px 0 0; }
+.member-search-form { display: grid; gap: 7px; margin: 10px 0 16px; }
+.member-search-form > label, .admin-topup-form label { color: var(--muted); font-size: 12px; }
+.member-search-form > div { display: flex; gap: 10px; }
+.member-search-form input, .admin-topup-form input, .api-key-row input { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; outline: 0; background: var(--card); color: var(--foreground); font: inherit; }
+.member-search-form input:focus, .admin-topup-form input:focus, .api-key-row input:focus { border-color: var(--primary); }
+.member-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; max-height: 280px; overflow-y: auto; }
+.member-result { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px 16px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--foreground); text-align: left; }
+.member-result:hover, .member-result.selected { border-color: var(--primary); background: var(--tint); }
+.member-result strong, .member-result small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.member-result small { color: var(--muted); }
+.member-result b { grid-row: 1 / 3; grid-column: 2; align-self: center; color: var(--primary-text); }
+.admin-topup-form { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(260px, 1fr) auto; align-items: end; gap: 12px; margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+.selected-member { grid-column: 1 / -1; color: var(--primary-text); font-size: 13px; }
+.admin-topup-form label { display: grid; gap: 7px; }
+.admin-topup-form button:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; opacity: .55; }
+.admin-api-keys { display: grid; gap: 10px; }
+.api-key-row { display: grid; grid-template-columns: 190px minmax(260px, 1fr) auto auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.api-key-provider strong, .api-key-provider small { display: block; }
+.api-key-provider small { margin-top: 4px; color: var(--muted); font: 12px monospace; }
+.api-key-delete { padding: 10px 13px; border: 1px solid var(--error); border-radius: 9px; background: transparent; color: var(--error-text); font: inherit; }
+.api-key-delete:disabled { border-color: var(--border); color: var(--muted); cursor: not-allowed; opacity: .55; }

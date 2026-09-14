@@ -48,7 +48,8 @@ const ledgerViews = {
 let usdTwdRate = 0;
 const MIN_TOPUP_TWD = 300;
 const MAX_TOPUP_TWD = 3_000;
-const TOPUP_PAYOUT_RATE = 0.85;
+let topupPayoutRate = 0.85;
+let topupMarginPercent = 15;
 const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 const setStatus = (message, error = false) => {
@@ -133,7 +134,7 @@ function changeLedgerPage(type, offset) {
 
 function updateTopupEstimate() {
   const amount = Number(topupTwd.value);
-  const calculated = amount >= MIN_TOPUP_TWD && amount <= MAX_TOPUP_TWD && usdTwdRate > 0 ? amount / usdTwdRate * TOPUP_PAYOUT_RATE : 0;
+  const calculated = amount >= MIN_TOPUP_TWD && amount <= MAX_TOPUP_TWD && usdTwdRate > 0 ? amount / usdTwdRate * topupPayoutRate : 0;
   const total = Math.floor(calculated * 100) / 100;
   topupUsd.textContent = total ? `可取得 ${usdFormatter.format(total)}` : "可取得 $—";
 }
@@ -155,10 +156,14 @@ async function loadExchangeRate() {
     const buy = Number(result.buy);
     const sell = Number(result.sell);
     const average = Number(result.average);
+    const payoutRate = Number(result.payoutRate);
+    const marginPercent = Number(result.platformMarginPercent);
     if (!(buy > 0 && sell > 0 && average > 0)) throw new Error("匯率資料無效");
     usdTwdRate = average;
+    if (Number.isFinite(payoutRate) && payoutRate >= 0 && payoutRate <= 1) topupPayoutRate = payoutRate;
+    if (Number.isFinite(marginPercent) && marginPercent >= 0 && marginPercent <= 100) topupMarginPercent = marginPercent;
     updateTopupEstimate();
-    topupExchangeNote.textContent = `中間匯率 ${average.toFixed(3)} × 85% 計價（平台保留 15%）`;
+    topupExchangeNote.textContent = `中間匯率 ${average.toFixed(3)} × ${(topupPayoutRate * 100).toFixed(2).replace(/\.00$/, "")}% 計價（平台保留 ${topupMarginPercent.toFixed(2).replace(/\.00$/, "")}%）`;
   } catch (error) {
     topupExchangeNote.classList.add("error");
     topupExchangeNote.textContent = error.message || "目前無法取得臺灣銀行匯率。";

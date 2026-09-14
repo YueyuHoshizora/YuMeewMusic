@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const pages = [
   "index.html",
   "account.html",
+  "admin.html",
   "settings.html",
   "subtitle-editor.html",
   "converter.html",

@@ -73,6 +73,11 @@ let resourceMentionMatch = null;
 let resourceMentionActiveIndex = 0;
 const uploadedResourceCache = new WeakMap();
 let pendingVideoProject = null;
+let autoDraftReady = false;
+let autoDraftTouched = false;
+let autoDraftTimer = 0;
+let autoDraftResourcesDirty = false;
+let autoDraftSavePromise = Promise.resolve();
 
 function editorText(editor) {
   if (editor?.matches?.("input, textarea")) return String(editor.value || "").replace(/\u00a0/g, " ").trim();
@@ -128,18 +133,19 @@ function syncGenerateAvailability() {
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
-function syncDraftStatus() {
+function syncDraftStatus(saveDraft = true) {
   if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
+  if (saveDraft) scheduleAutoDraft();
 }
 
-function confirmPageExit(event) {
+async function confirmPageExit(event) {
   if (allowPageExit) return;
-  if (!window.confirm("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？")) {
-    event.preventDefault();
-    return;
-  }
+  event.preventDefault();
+  if (!window.confirm("草稿會自動保存；尚未加入分鏡的視窗內容不會保留，是否離開影片生成器？")) return;
+  await saveAutoDraftNow({ resources: autoDraftResourcesDirty }).catch(() => {});
   allowPageExit = true;
+  window.location.href = event.currentTarget.href;
 }
 
 function showVideoPromptBuilder() {
@@ -238,6 +244,7 @@ function applyFilmStyle() {
   $("open-film-style").classList.toggle("configured", configured);
   $("open-film-style").textContent = configured ? "全片風格（已設定）" : "全片風格";
   $("film-style-dialog").close();
+  scheduleAutoDraft();
 }
 
 function minimizeVideoPromptBuilder() {
@@ -920,6 +927,7 @@ async function addVideoResources(files) {
   }
   $("video-resource-input").value = "";
   renderVideoResources();
+  scheduleAutoDraft({ resources: true });
   if (unsupported.length) setStatus(`${added ? `已加入 ${added} 個資源；` : ""}${unsupported.length} 個檔案格式不支援`, "error");
   else setStatus(`已加入 ${added} 個資源`, "success");
 }
@@ -943,6 +951,7 @@ async function deleteVideoResource(id) {
     token.title = "資源不存在";
   });
   renderVideoResources();
+  scheduleAutoDraft({ resources: true });
 }
 
 function stopResourcePreview() {
@@ -1660,6 +1669,156 @@ function videoProjectMetadata(includeCharacters, binaries) {
   };
 }
 
+function draftTimeLabel(timestamp = Date.now()) {
+  return new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(timestamp);
+}
+
+function setAutoDraftStatus(text, mode = "") {
+  const output = $("video-auto-draft-status");
+  output.textContent = text;
+  output.className = `video-auto-draft-status ${mode}`.trim();
+}
+
+function finishAutoDraftRestore() {
+  autoDraftReady = true;
+  $("export-video-project").disabled = false;
+  $("select-video-project").disabled = false;
+}
+
+function autoDraftMetadata() {
+  const binaries = [];
+  const metadata = videoProjectMetadata(false, binaries);
+  metadata.resources = metadata.resources.map(({ binaryIndex, ...resource }) => resource);
+  return metadata;
+}
+
+function autoDraftResourceRecords() {
+  return videoResources.filter(resource => resource.file instanceof Blob).map(resource => ({
+    id: resource.id,
+    kind: resource.kind,
+    referenceName: resource.referenceName,
+    originalName: resource.originalName,
+    mimeType: resource.mimeType,
+    duration: resource.duration,
+    createdAt: resource.createdAt,
+    file: resource.file,
+  }));
+}
+
+function scheduleAutoDraft({ resources = false } = {}) {
+  autoDraftResourcesDirty ||= resources;
+  if (!autoDraftReady) {
+    autoDraftTouched = true;
+    return;
+  }
+  clearTimeout(autoDraftTimer);
+  setAutoDraftStatus("等待自動儲存…", "saving");
+  autoDraftTimer = setTimeout(() => void saveAutoDraftNow().catch(() => {}), 900);
+}
+
+function saveAutoDraftNow({ resources = false } = {}) {
+  if (!autoDraftReady) return Promise.resolve(null);
+  clearTimeout(autoDraftTimer);
+  autoDraftTimer = 0;
+  const saveResources = resources || autoDraftResourcesDirty;
+  autoDraftResourcesDirty = false;
+  setAutoDraftStatus("正在自動儲存…", "saving");
+  const operation = async () => {
+    const savedAt = Date.now();
+    if (saveResources) {
+      await saveStoredValue("video-generator-draft-resources", {
+        resources: autoDraftResourceRecords(),
+        updatedAt: savedAt,
+      });
+    }
+    const draft = { metadata: autoDraftMetadata(), updatedAt: savedAt };
+    await saveStoredValue("video-generator-draft", draft);
+    setAutoDraftStatus(`草稿已自動儲存 · ${draftTimeLabel(savedAt)}`);
+    return draft;
+  };
+  autoDraftSavePromise = autoDraftSavePromise.then(operation, operation).catch(error => {
+    autoDraftResourcesDirty ||= saveResources;
+    setAutoDraftStatus("草稿自動儲存失敗", "error");
+    throw error;
+  });
+  return autoDraftSavePromise;
+}
+
+function storedDraftResource(record) {
+  const kind = resourceKind(record?.file);
+  if (!kind) return null;
+  return {
+    id: String(record.id || globalThis.crypto?.randomUUID?.() || `resource-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+    kind,
+    referenceName: String(record.referenceName || record.file.name),
+    originalName: String(record.originalName || record.file.name),
+    mimeType: record.file.type || String(record.mimeType || ""),
+    file: record.file,
+    duration: Number.isFinite(Number(record.duration)) ? Number(record.duration) : null,
+    createdAt: Number(record.createdAt) || Date.now(),
+  };
+}
+
+async function restoreAutoDraft() {
+  try {
+    const [draft, storedResources] = await Promise.all([
+      loadStoredValue("video-generator-draft"),
+      loadStoredValue("video-generator-draft-resources"),
+    ]);
+    if (autoDraftTouched) {
+      finishAutoDraftRestore();
+      scheduleAutoDraft({ resources: true });
+      return;
+    }
+    const metadata = draft?.metadata;
+    if (!metadata || !Array.isArray(metadata.storyboards) || !Array.isArray(metadata.resources)) {
+      finishAutoDraftRestore();
+      setAutoDraftStatus("自動儲存已啟用");
+      return;
+    }
+    const resourceIds = new Set(metadata.resources.map(resource => String(resource.id)));
+    videoResources = (storedResources?.resources || []).map(storedDraftResource).filter(resource => resource && resourceIds.has(resource.id));
+    restoreResourceCounters(metadata.resourceCounters);
+    renderVideoResources();
+    restoreImportedFilmStyle(metadata.filmStyle);
+    const prompt = $("video-prompt");
+    prompt.innerHTML = sanitizedImportedHtml(metadata.videoDetailsHtml);
+    storyboards.clear();
+    metadata.storyboards.map(normalizedStoryboard).forEach(draftItem => {
+      storyboards.set(draftItem.id, draftItem);
+      prompt.append(createStoryboardBlock(draftItem));
+    });
+    refreshStoryboardLabels();
+    renderStoryboardCharacterControls();
+    restoreGenerationSettings(metadata.generation);
+    finishAutoDraftRestore();
+    syncDraftStatus(false);
+    setAutoDraftStatus(`已還原自動儲存草稿 · ${draftTimeLabel(draft.updatedAt)}`);
+  } catch {
+    finishAutoDraftRestore();
+    setAutoDraftStatus("草稿無法從瀏覽器還原", "error");
+  }
+}
+
+async function projectFromStoredDraft(includeCharacters) {
+  const [draft, storedResources] = await Promise.all([
+    loadStoredValue("video-generator-draft"),
+    loadStoredValue("video-generator-draft-resources"),
+  ]);
+  if (!draft?.metadata || !Array.isArray(draft.metadata.resources)) throw Error("無法讀取剛儲存的影片草稿。");
+  const resources = new Map((storedResources?.resources || []).map(record => [String(record.id), storedDraftResource(record)]));
+  const binaries = [];
+  const metadata = structuredClone(draft.metadata);
+  metadata.resources = metadata.resources.map(record => {
+    const resource = resources.get(String(record.id));
+    if (!resource) throw Error(`草稿中的資源 ${record.referenceName || record.id} 無法讀取。`);
+    return projectResourceRecord(resource, binaries);
+  });
+  const enabledCharacters = characterTemplates.filter(character => character.enabled !== false);
+  metadata.characters = includeCharacters ? enabledCharacters.map(character => projectCharacterRecord(character, binaries)) : null;
+  return { metadata, binaries };
+}
+
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -1685,8 +1844,8 @@ async function exportVideoProject(event) {
   $("export-video-project").disabled = true;
   setStatus("正在整理影片設定與媒體資源…");
   try {
-    const binaries = [];
-    const metadata = videoProjectMetadata(includeCharacters, binaries);
+    await saveAutoDraftNow({ resources: true });
+    const { metadata, binaries } = await projectFromStoredDraft(includeCharacters);
     const file = await createVideoProjectFile(metadata, binaries);
     downloadBlob(file, file.name);
     setStatus(`已匯出設定 · ${metadata.storyboards.length} 個分鏡 · ${metadata.resources.length} 個資源`, "success");
@@ -1909,6 +2068,7 @@ async function importVideoProject(event) {
     pendingVideoProject = null;
     $("import-video-project-dialog").close();
     syncDraftStatus();
+    scheduleAutoDraft({ resources: true });
     setStatus(`已匯入設定 · ${metadata.storyboards.length} 個分鏡 · ${metadata.resources.length} 個資源`, "success");
   } catch (error) {
     $("import-video-project-error").textContent = error.message || "影片設定匯入失敗。";
@@ -2514,9 +2674,10 @@ document.addEventListener("pointerdown", event => {
   if (characterMentionTarget && !$("character-mention-menu").contains(event.target) && event.target !== characterMentionTarget) hideCharacterMentionMenu();
   if (resourceMentionTarget && !$("resource-mention-menu").contains(event.target) && !event.target.closest?.(".resource-editor")) hideResourceMentionMenu();
 });
-$("video-model").addEventListener("change", syncModelDetails);
-$("video-resolution").addEventListener("change", syncResultHeading);
-$("video-ratio").addEventListener("change", syncResultHeading);
+$("video-model").addEventListener("change", () => { syncModelDetails(); scheduleAutoDraft(); });
+$("video-resolution").addEventListener("change", () => { syncResultHeading(); scheduleAutoDraft(); });
+$("video-duration").addEventListener("change", () => scheduleAutoDraft());
+$("video-ratio").addEventListener("change", () => { syncResultHeading(); scheduleAutoDraft(); });
 $("video-api-key").addEventListener("click", openApiKeyDialog);
 $("video-api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("video-api-key-form").addEventListener("submit", submitApiKey);
@@ -2586,6 +2747,7 @@ window.addEventListener("beforeunload", event => {
   event.returnValue = "";
 });
 window.addEventListener("pagehide", () => {
+  if (autoDraftReady) void saveAutoDraftNow({ resources: autoDraftResourcesDirty }).catch(() => {});
   generationAbort?.abort();
   releaseVideo();
   characterPreviewUrls.forEach(url => URL.revokeObjectURL(url));
@@ -2595,10 +2757,10 @@ window.addEventListener("pagehide", () => {
 });
 
 syncModelDetails();
-syncDraftStatus();
+syncDraftStatus(false);
 function restoreWhenIdle(task) {
   const run = () => void task();
   if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
   else setTimeout(run, 0);
 }
-restoreWhenIdle(restoreCharacterTemplates);
+restoreWhenIdle(() => Promise.all([restoreCharacterTemplates(), restoreAutoDraft()]));

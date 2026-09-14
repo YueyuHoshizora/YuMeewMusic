@@ -132,7 +132,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(css, /\.video-dialogue-field\s*\{[^}]*grid-column:\s*1 \/ -1/);
   assert.match(css, /\.video-view-subjects\s*\{[^}]*flex-wrap:\s*wrap/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
-  assert.match(script, /window\.confirm\("離開影片生成器將不會保留影片細節與本次加入的資源，是否確定？"\)/);
+  assert.match(script, /window\.confirm\("草稿會自動保存；尚未加入分鏡的視窗內容不會保留，是否離開影片生成器？"\)/);
   assert.match(script, /window\.addEventListener\("beforeunload", event => \{\s*if \(allowPageExit\) return;\s*event\.preventDefault\(\);\s*event\.returnValue = ""/);
   assert.match(script, /allowPageExit = true;\s*window\.location\.href = "\.\/"/);
   assert.match(script, /"影片細節已輸入" : "等待輸入影片細節"/);
@@ -249,6 +249,11 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /function setCharacterVoice\(value = ""\)[\s\S]*presetExists[\s\S]*"custom"[\s\S]*character-voice-custom/);
   assert.match(script, /function showCharacterEditorReference\(file\)[\s\S]*character-reference-placeholder[\s\S]*classList\.add\("has-image"\)/);
   assert.match(script, /function videoProjectMetadata\(includeCharacters, binaries\)[\s\S]*videoDetailsHtml[\s\S]*storyboards:[\s\S]*resources:[\s\S]*characters:[\s\S]*generation:/);
+  assert.match(html, /id="video-auto-draft-status"[^>]*>正在檢查自動儲存草稿…<\/span>/);
+  assert.match(script, /saveStoredValue\("video-generator-draft"/);
+  assert.match(script, /saveStoredValue\("video-generator-draft-resources"/);
+  assert.match(script, /loadStoredValue\("video-generator-draft"\)/);
+  assert.match(script, /async function exportVideoProject\(event\)[\s\S]*await saveAutoDraftNow\(\{ resources: true \}\)[\s\S]*await projectFromStoredDraft\(includeCharacters\)[\s\S]*createVideoProjectFile/);
   assert.match(script, /function sanitizedImportedHtml\(html\)[\s\S]*resource-token[\s\S]*createResourceMention/);
   assert.match(script, /async function importVideoProject\(event\)[\s\S]*persistCharacterTemplates[\s\S]*renderVideoResources[\s\S]*createStoryboardBlock/);
   assert.match(script, /function characterVoiceValue\(\)[\s\S]*character-voice-custom/);

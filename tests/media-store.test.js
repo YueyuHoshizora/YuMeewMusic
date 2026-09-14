@@ -147,3 +147,13 @@ test("nested project media size counts each Blob once", () => {
   const blob = new Blob(["12345"]);
   assert.equal(storedValueSize({ slides: [{ blob }, { blob }] }), blob.size);
 });
+
+test("video generator draft and its media resources persist in IndexedDB", async () => {
+  const database = memoryIndexedDb();
+  const resource = new TestFile(["draft-image"], "Image1.png", { type: "image/png" });
+  await saveStoredValue("video-generator-draft", { metadata: { storyboards: [], resources: [{ id: "r1" }] }, updatedAt: 100 }, database);
+  await saveStoredValue("video-generator-draft-resources", { resources: [{ id: "r1", file: resource }], updatedAt: 100 }, database);
+  const entries = await listStoredEntries(database);
+  assert.equal(entries.find(entry => entry.key === "video-generator-draft").field, "自動儲存草稿");
+  assert.equal(entries.find(entry => entry.key === "video-generator-draft-resources").size, resource.size);
+});

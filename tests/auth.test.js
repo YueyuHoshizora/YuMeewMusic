@@ -26,7 +26,7 @@ test("Google OAuth uses a persistent PKCE Supabase session", () => {
   assert.match(auth, /provider: "google"/);
   assert.match(auth, /account\.html/);
   const config = readFileSync("js/supabase-config.js", "utf8");
-  assert.match(config, /SUPABASE_PUBLISHABLE_KEY = ""/);
+  assert.match(config, /SUPABASE_PUBLISHABLE_KEY = "sb_publishable_/);
   assert.doesNotMatch(config, /eyJ[A-Za-z0-9_-]+\./);
 });
 
@@ -46,7 +46,7 @@ test("member center reads the balance, top-up history and consumption history", 
 
 test("the browser reaches credit data only through the member Worker", () => {
   const config = readFileSync("js/member-api-config.js", "utf8");
-  assert.match(config, /MEMBER_API_URL = ""/);
+  assert.match(config, /MEMBER_API_URL = "https:\/\/member-api\.yustellar\.idv\.tw"/);
   assert.doesNotMatch(config, /database_id|MEMBER_ADMIN_SECRET|service_role/i);
   for (const file of ["js/account.js", "js/member-status.js", "js/member-api.js"])
     assert.doesNotMatch(readFileSync(file, "utf8"), /D1Database|MEMBERS_DB|MEMBER_ADMIN_SECRET/, file);

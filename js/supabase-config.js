@@ -1,7 +1,7 @@
 // Supabase Project Settings > Data API 裡的公開連線資訊。
 // Publishable Key 可放在前端；請勿在此放入 secret key 或 service_role key。
-export const SUPABASE_URL = "";
-export const SUPABASE_PUBLISHABLE_KEY = "";
+export const SUPABASE_URL = "https://odqbbkolywwumoduonpw.supabase.co";
+export const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DiLQv9MV96JYhOIAzalImg_GzehYmTq";
 
 export function isSupabaseConfigured() {
   try {

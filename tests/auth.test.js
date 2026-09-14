@@ -29,6 +29,9 @@ test("administrator page manages margin, member top-ups and provider API keys th
   assert.match(html, /id="admin-topup-amount"[^>]*step="0\.01"/);
   assert.match(script, /crypto\.randomUUID\(\)/);
   assert.match(script, /getCurrentSession/);
+  assert.match(script, /revalidateAdminPermission/);
+  assert.match(script, /verifyAdminAccess\(session\)/);
+  for (const operation of ["updateAdminTopupSettings(session", "createAdminTopup(session", "saveAdminApiKey(session", "deleteAdminApiKey(session"]) assert.match(script, new RegExp(operation.replace("(", "\\(")));
   assert.match(script, /PROVIDER_BILLING_URLS/);
   assert.match(script, /https:\/\/platform\.openai\.com\/settings\/organization\/billing\/overview/);
   assert.match(script, /https:\/\/platform\.minimax\.io\/console\/recharge-records/);

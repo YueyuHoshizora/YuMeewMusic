@@ -57,6 +57,10 @@ export function fetchAdminTopupSettings(session) {
   return fetchAdminJson(session, "/v1/admin/settings/topup");
 }
 
+export function verifyAdminAccess(session) {
+  return fetchAdminJson(session, "/v1/admin/verify");
+}
+
 export function updateAdminTopupSettings(session, marginPercent) {
   return fetchAdminJson(session, "/v1/admin/settings/topup", { method: "PUT", body: { marginPercent } });
 }

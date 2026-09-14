@@ -1,7 +1,7 @@
 import { getCurrentSession } from "./auth.js";
 import {
   createAdminTopup, deleteAdminApiKey, fetchAdminTopupSettings, listAdminApiKeys,
-  saveAdminApiKey, searchAdminMembers, updateAdminTopupSettings,
+  saveAdminApiKey, searchAdminMembers, updateAdminTopupSettings, verifyAdminAccess,
 } from "./member-api.js";
 import { loadSettings } from "./settings.js";
 import { applyTheme } from "./themes.js";
@@ -20,6 +20,15 @@ const state = { session: null, members: [], selectedUserId: "", apiKeys: [], pen
 function setStatus(message, error = false) {
   $("admin-status").textContent = message;
   $("admin-status").classList.toggle("error", error);
+}
+
+async function revalidateAdminPermission() {
+  setStatus("正在重新驗證管理員權限…");
+  const { session, error } = await getCurrentSession();
+  if (error || !session?.user) throw new Error(error?.message || "登入狀態已失效，請重新登入。");
+  await verifyAdminAccess(session);
+  state.session = session;
+  return session;
 }
 
 function showAccess(title, message) {
@@ -124,7 +133,8 @@ async function saveProviderKey(record, input, button) {
   if (!value) return setStatus(`請輸入 ${record.label} API KEY。`, true);
   button.disabled = true;
   try {
-    await saveAdminApiKey(state.session, record.provider, value);
+    const session = await revalidateAdminPermission();
+    await saveAdminApiKey(session, record.provider, value);
     input.value = "";
     await refreshApiKeys();
     setStatus(`${record.label} API KEY 已保存到 KV。`);
@@ -144,7 +154,8 @@ $("margin-form").addEventListener("submit", async event => {
   const button = event.submitter;
   button.disabled = true;
   try {
-    const setting = await updateAdminTopupSettings(state.session, Number($("margin-percent").value));
+    const session = await revalidateAdminPermission();
+    const setting = await updateAdminTopupSettings(session, Number($("margin-percent").value));
     renderMargin(setting);
     setStatus("儲值換算比例已更新。最多約五分鐘後套用到既有快取頁面。");
   } catch (error) { setStatus(error.message || "無法更新儲值比例。", true); }
@@ -176,7 +187,8 @@ $("topup-confirm-dialog").addEventListener("close", async () => {
   $("admin-topup-submit").disabled = true;
   setStatus("正在寫入會員加值紀錄…");
   try {
-    const result = await createAdminTopup(state.session, {
+    const session = await revalidateAdminPermission();
+    const result = await createAdminTopup(session, {
       userId: pending.member.user_id,
       amount: pending.amount,
       description: pending.description,
@@ -194,7 +206,12 @@ $("api-key-delete-dialog").addEventListener("close", async () => {
   const provider = state.pendingDeleteProvider;
   state.pendingDeleteProvider = "";
   if ($("api-key-delete-dialog").returnValue !== "confirm" || !provider) return;
-  try { await deleteAdminApiKey(state.session, provider); await refreshApiKeys(); setStatus("平台 API KEY 已刪除。"); }
+  try {
+    const session = await revalidateAdminPermission();
+    await deleteAdminApiKey(session, provider);
+    await refreshApiKeys();
+    setStatus("平台 API KEY 已刪除。");
+  }
   catch (error) { setStatus(error.message || "API KEY 刪除失敗。", true); }
 });
 

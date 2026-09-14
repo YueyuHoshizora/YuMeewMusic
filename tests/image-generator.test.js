@@ -34,7 +34,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(html, /id="apply-background"[^>]*disabled/);
   assert.match(html, /id="open-image-history"[^>]*disabled>生成歷史<\/button>/);
   assert.match(html, /id="image-history-dialog"[\s\S]*最多保留最近 10 張圖片/);
-  assert.match(html, /只有按下「套用主畫面背景」才會取代瀏覽器保存的背景素材/);
+  assert.match(html, /只有按下「套用主畫面背景」才會取代主畫面的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
   assert.match(html, /id="flux-generation-confirm-dialog"[^>]*aria-labelledby="flux-generation-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-flux-generation"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);

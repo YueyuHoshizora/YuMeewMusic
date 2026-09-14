@@ -138,9 +138,18 @@ function syncGenerateAvailability() {
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
+function hasClearableWorkspace() {
+  return Boolean(storyboards.size || videoResources.length || filmStyleText());
+}
+
+function syncClearWorkspaceAvailability() {
+  $("clear-video-resources").disabled = busy || !autoDraftReady || !hasClearableWorkspace();
+}
+
 function syncDraftStatus(saveDraft = true) {
   if (!busy) setStatus(editorText($("video-prompt")) ? "影片細節已輸入" : "等待輸入影片細節");
   syncGenerateAvailability();
+  syncClearWorkspaceAvailability();
   if (saveDraft) scheduleAutoDraft();
 }
 
@@ -240,6 +249,7 @@ function applyFilmStyle() {
   $("open-film-style").classList.toggle("configured", configured);
   $("open-film-style").textContent = configured ? "全片風格（已設定）" : "全片風格";
   $("film-style-dialog").close();
+  syncClearWorkspaceAvailability();
   scheduleAutoDraft();
 }
 
@@ -896,6 +906,7 @@ function renderVideoResources() {
   releaseResourceUrls();
   $("video-resource-list").replaceChildren(...videoResources.map(createResourceCard));
   $("video-resource-empty").hidden = Boolean(videoResources.length);
+  syncClearWorkspaceAvailability();
 }
 
 async function addVideoResources(files) {
@@ -1921,6 +1932,7 @@ function finishAutoDraftRestore() {
   autoDraftReady = true;
   $("export-video-project").disabled = false;
   $("select-video-project").disabled = false;
+  syncClearWorkspaceAvailability();
 }
 
 function autoDraftMetadata() {
@@ -2092,6 +2104,30 @@ async function exportVideoProject(event) {
   } finally {
     $("export-video-project").disabled = false;
   }
+}
+
+function clearVideoWorkspace() {
+  if (busy || !hasClearableWorkspace()) return;
+  if (!window.confirm("是否清除所有工作區？")) return;
+  if (window.confirm("是否先匯出檔案？")) {
+    openVideoProjectExport();
+    return;
+  }
+
+  storyboards.clear();
+  $("video-prompt").replaceChildren();
+  videoResources = [];
+  resourceCounters = { image: 0, audio: 0, video: 0 };
+  filmStyle = { ...EMPTY_FILM_STYLE };
+  resetVideoPromptBuilder();
+  promptBuilderMinimized = false;
+  $("restore-video-prompt-builder").hidden = true;
+  if ($("video-resource-preview-dialog").open) $("video-resource-preview-dialog").close();
+  renderVideoResources();
+  restoreImportedFilmStyle(filmStyle);
+  syncDraftStatus(false);
+  scheduleAutoDraft({ resources: true });
+  setStatus("已清除全部分鏡、上傳資源與全片風格", "success");
 }
 
 function projectCountSummary(label, count) {
@@ -2565,7 +2601,7 @@ function setBusy(value, showLock = value) {
   busy = value;
   document.body.setAttribute("aria-busy", String(value));
   $("video-generation-lock").hidden = !showLock;
-  for (const id of ["open-film-style", "preview-video-prompt", "inspect-storyboards", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
+  for (const id of ["open-film-style", "preview-video-prompt", "inspect-storyboards", "reflow-storyboard-times", "open-character-template", "open-video-prompt-builder", "export-video-project", "select-video-project", "clear-video-resources", "video-model", "video-resolution", "video-duration", "video-ratio", "video-api-key", "video-resource-input", "open-video-history"]) $(id).disabled = value;
   $("open-video-prompt-builder").disabled = value || promptBuilderMinimized || $("video-prompt-builder-dialog").open;
   $("restore-video-prompt-builder").disabled = value;
   document.querySelectorAll(".resource-editor").forEach(editor => editor.contentEditable = String(!value));
@@ -2574,6 +2610,7 @@ function setBusy(value, showLock = value) {
   $("send-video-editor").disabled = value || !generatedVideoBlob;
   $("open-video-history").disabled = value || !generationHistory.length;
   syncGenerateAvailability();
+  syncClearWorkspaceAvailability();
 }
 
 function apiError(body, fallback = "", provider = "minimax") {
@@ -3119,6 +3156,7 @@ $("export-video-project").addEventListener("click", openVideoProjectExport);
 $("export-video-project-form").addEventListener("submit", event => void exportVideoProject(event));
 $("cancel-export-video-project").addEventListener("click", () => $("export-video-project-dialog").close());
 $("select-video-project").addEventListener("click", () => $("video-project-input").click());
+$("clear-video-resources").addEventListener("click", clearVideoWorkspace);
 $("video-project-input").addEventListener("change", event => void selectVideoProject(event));
 $("import-video-project-form").addEventListener("submit", event => void importVideoProject(event));
 $("cancel-import-video-project").addEventListener("click", () => $("import-video-project-dialog").close());

@@ -26,6 +26,8 @@ details[open] > .video-collapsible-summary::after { transform: rotate(180deg); }
 .video-auto-draft-status.saving { color: var(--primary); }
 .video-auto-draft-status.error { color: var(--error-text); }
 .video-project-button { min-width: 84px; border-color: var(--border); background: var(--surface); color: var(--foreground); }
+.video-project-clear { border-color: var(--error); background: transparent; color: var(--error-text); }
+.video-project-clear:hover { background: color-mix(in srgb, var(--error) 12%, var(--surface)); }
 .video-prompt-preview-dialog { width: 860px; max-width: none; }
 .video-prompt-preview-dialog h2 { margin-bottom: 16px; }
 .storyboard-inspection-dialog { width: 920px; max-width: none; }

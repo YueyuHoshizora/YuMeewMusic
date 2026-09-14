@@ -27,7 +27,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(html, /video-prompt-footer/);
   assert.match(html, /id="open-video-prompt-builder"[^>]*>新增分鏡<\/button>/);
   assert.match(html, /id="open-character-template"[^>]*>人物模板<\/button>/);
-  assert.match(html, /id="video-prompt"[\s\S]*class="video-project-actions"[\s\S]*id="export-video-project"[^>]*>匯出設定<\/button>[\s\S]*id="select-video-project"[^>]*>匯入設定<\/button>/);
+  assert.match(html, /id="video-prompt"[\s\S]*class="video-project-actions"[\s\S]*id="export-video-project"[^>]*>匯出設定<\/button>[\s\S]*id="select-video-project"[^>]*>匯入設定<\/button>[\s\S]*id="clear-video-resources"[^>]*>清除所有資源<\/button>/);
+  assert.match(css, /\.video-project-clear \{[^}]*border-color: var\(--error\)[^}]*background: transparent[^}]*color: var\(--error-text\)/);
   assert.match(html, /id="video-project-input"[^>]*accept="\.zip,application\/octet-stream"[^>]*hidden/);
   assert.match(html, /id="export-video-project-dialog"[\s\S]*id="export-active-characters"[^>]*checked[\s\S]*包含啟用的人物/);
   assert.match(html, /id="import-video-project-dialog"[\s\S]*id="import-project-characters"[\s\S]*匯入人物並複寫/);
@@ -296,6 +297,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /async function exportVideoProject\(event\)[\s\S]*await saveAutoDraftNow\(\{ resources: true \}\)[\s\S]*await projectFromStoredDraft\(includeCharacters\)[\s\S]*createVideoProjectFile/);
   assert.match(script, /function sanitizedImportedHtml\(html\)[\s\S]*resource-token[\s\S]*createResourceMention/);
   assert.match(script, /async function importVideoProject\(event\)[\s\S]*persistCharacterTemplates[\s\S]*renderVideoResources[\s\S]*createStoryboardBlock/);
+  assert.match(script, /function clearVideoWorkspace\(\)[\s\S]*window\.confirm\("是否清除所有工作區？"\)[\s\S]*window\.confirm\("是否先匯出檔案？"\)[\s\S]*openVideoProjectExport\(\)[\s\S]*storyboards\.clear\(\)[\s\S]*videoResources = \[\][\s\S]*filmStyle = \{ \.\.\.EMPTY_FILM_STYLE \}[\s\S]*scheduleAutoDraft\(\{ resources: true \}\)/);
+  assert.match(script, /\$\("clear-video-resources"\)\.addEventListener\("click", clearVideoWorkspace\)/);
   assert.match(script, /function characterVoiceValue\(\)[\s\S]*character-voice-custom/);
   assert.match(script, /voice: characterVoiceValue\(\)/);
   assert.match(script, /toggle\.addEventListener\("click", \(\) => void toggleCharacterTemplate\(index\)\)/);

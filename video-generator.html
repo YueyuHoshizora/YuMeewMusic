@@ -276,8 +276,9 @@
           <h2 id="final-storyboard-title">最終分鏡</h2>
           <button id="minimize-final-storyboard" class="dialog-confirm video-prompt-builder-minimize" type="button">縮小</button>
         </div>
-        <p>時間會自動接續最後一張分鏡，並延長 1 秒。</p>
+        <p>開始時間會自動接續最後一張分鏡，持續時間可設定為 1～3 秒。</p>
         <div class="final-storyboard-fields">
+          <label><span>持續時間</span><select id="final-storyboard-duration" class="setting-select" aria-label="最終分鏡持續時間"><option value="1">1 秒</option><option value="2" selected>2 秒</option><option value="3">3 秒</option></select></label>
           <label><span>場景</span><div id="final-storyboard-scene" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡場景" data-placeholder="輸入最後畫面的場景"></div></label>
           <label><span>音效</span><div id="final-storyboard-sound" class="text-input resource-editor resource-editor-single" contenteditable="true" role="textbox" aria-label="最終分鏡音效" data-placeholder="例如：環境聲逐漸淡出"></div></label>
           <div class="video-prompt-view-field final-storyboard-view-field">

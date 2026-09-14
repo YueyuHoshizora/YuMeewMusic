@@ -403,7 +403,13 @@ function renderFinalStoryboardActions(actions = []) {
 
 function resetFinalStoryboardEditor() {
   for (const field of ["scene", "camera-custom", "view-custom", "sound"]) clearEditor($(`final-storyboard-${field}`));
+  $("final-storyboard-duration").value = "2";
   $("final-storyboard-actions").replaceChildren();
+}
+
+function finalStoryboardDuration(draft = finalStoryboard) {
+  const duration = Number(draft?.duration ?? $("final-storyboard-duration")?.value ?? 2);
+  return [1, 2, 3].includes(duration) ? duration : 2;
 }
 
 function selectedFinalStoryboardSubjects() {
@@ -456,6 +462,7 @@ function openFinalStoryboard() {
   if (restoreMinimizedDialog("finalStoryboard")) return;
   restoreEditorHtml("final-storyboard-scene", finalStoryboard?.scene || "");
   restoreEditorHtml("final-storyboard-sound", finalStoryboard?.sound || "");
+  $("final-storyboard-duration").value = String(finalStoryboardDuration());
   $("final-storyboard-camera").value = finalStoryboard?.camera || "";
   $("final-storyboard-camera-speed").value = finalStoryboard?.cameraSpeed || "";
   restoreEditorHtml("final-storyboard-camera-custom", finalStoryboard?.cameraCustom || "");
@@ -476,9 +483,11 @@ function submitFinalStoryboard(event) {
   hideCharacterMentionMenu();
   hideResourceMentionMenu();
   const start = Number(nextStoryboardStart());
+  const duration = finalStoryboardDuration(null);
   const draft = {
     start: roundedStoryboardTime(start),
-    end: roundedStoryboardTime(start + 1),
+    end: roundedStoryboardTime(start + duration),
+    duration,
     scene: editorSnapshot("final-storyboard-scene"),
     camera: $("final-storyboard-camera").value,
     cameraSpeed: $("final-storyboard-camera-speed").value,
@@ -1476,8 +1485,10 @@ function renderFinalStoryboardCard() {
   $("open-final-storyboard").textContent = configured ? "最終分鏡（已設定）" : "最終分鏡";
   if (!configured) return;
   const start = Number(nextStoryboardStart());
+  const duration = finalStoryboardDuration(finalStoryboard);
   finalStoryboard.start = roundedStoryboardTime(start);
-  finalStoryboard.end = roundedStoryboardTime(start + 1);
+  finalStoryboard.end = roundedStoryboardTime(start + duration);
+  finalStoryboard.duration = duration;
   const block = document.createElement("article");
   block.id = "final-storyboard-card";
   block.className = "storyboard-block final-storyboard-block";
@@ -2931,6 +2942,11 @@ function normalizedFinalStoryboard(raw) {
   const html = key => sanitizedImportedHtml(raw[key]);
   const structuredCamera = Object.hasOwn(raw, "cameraCustom");
   const structuredView = Object.hasOwn(raw, "viewAngle");
+  const storedDuration = Number(raw.duration);
+  const legacyDuration = roundedStoryboardTime(Number(raw.end) - Number(raw.start));
+  const duration = [1, 2, 3].includes(storedDuration)
+    ? storedDuration
+    : [1, 2, 3].includes(legacyDuration) ? legacyDuration : 2;
   const actions = Array.isArray(raw.actions) ? raw.actions.map(action => {
     if (typeof action === "string") return { actionCharacter: "", actionCategory: "movement", actionType: "custom", actionStyle: "", actionCustom: sanitizedImportedHtml(action), actionTarget: "", actionDetail: "" };
     return {
@@ -2945,7 +2961,8 @@ function normalizedFinalStoryboard(raw) {
   }).filter(action => actionPromptField(action)[0]) : [];
   return {
     start: roundedStoryboardTime(Number(raw.start) || 0),
-    end: roundedStoryboardTime((Number(raw.start) || 0) + 1),
+    end: roundedStoryboardTime((Number(raw.start) || 0) + duration),
+    duration,
     scene: html("scene"),
     camera: structuredCamera ? String(raw.camera || "") : raw.camera ? "custom" : "",
     cameraSpeed: String(raw.cameraSpeed || ""),

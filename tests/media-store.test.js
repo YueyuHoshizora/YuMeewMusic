@@ -167,3 +167,16 @@ test("video generation task and history persist in IndexedDB", async () => {
   assert.equal(entries.find(entry => entry.key === "video-generation-task").field, "進行中的生成任務");
   assert.equal(entries.find(entry => entry.key === "video-generation-history").size, video.size);
 });
+
+test("image generation history persists in IndexedDB and appears in cache management", async () => {
+  const database = memoryIndexedDb();
+  const image = new Blob(["image-history"], { type: "image/jpeg" });
+  const history = { items: [{ id: "i1", blob: image, prompt: "星空" }], updatedAt: 400 };
+  await saveStoredValue("image-generation-history", history, database);
+  assert.deepEqual(await loadStoredValue("image-generation-history", database), history);
+  const entries = await listStoredEntries(database);
+  const entry = entries.find(item => item.key === "image-generation-history");
+  assert.equal(entry.page, "圖片生成器");
+  assert.equal(entry.field, "生成歷史");
+  assert.equal(entry.size, image.size);
+});

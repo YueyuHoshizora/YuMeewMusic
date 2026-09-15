@@ -68,7 +68,8 @@
               <div class="section-title"><span>03</span><h2>計費設定</h2></div>
               <p class="admin-intro">管理各模型使用帳戶扣點時的美元費率與免費輸入額度，設定會保存到 Cloudflare KV。</p>
               <form id="billing-form" class="billing-form">
-                <label class="billing-model" for="billing-model"><span>模型</span><select id="billing-model"><option value="minimax-h3">MiniMax H3</option></select></label>
+                <label class="billing-model" for="billing-model"><span>模型</span><select id="billing-model"><option value="minimax-h3">MiniMax H3</option><option value="seedance-2-0">Seedance 2.0</option></select></label>
+                <div class="billing-model-fields" data-billing-fields="minimax-h3">
                 <div class="billing-group">
                   <h3>影片生成</h3>
                   <div class="billing-grid">
@@ -87,6 +88,26 @@
                     <label for="billing-video-768-price"><span>影像輸入 768P 每部</span><span class="billing-number"><b>$</b><input id="billing-video-768-price" name="video768OveragePerItem" type="number" min="0" step="0.01" value="0.08" required /></span></label>
                     <label for="billing-video-2k-free"><span>影像輸入 2K 免費部數</span><input id="billing-video-2k-free" name="video2kFreeCount" type="number" min="0" step="1" value="0" required /></label>
                     <label for="billing-video-2k-price"><span>影像輸入 2K 每部</span><span class="billing-number"><b>$</b><input id="billing-video-2k-price" name="video2kOveragePerItem" type="number" min="0" step="0.01" value="0.13" required /></span></label>
+                  </div>
+                </div>
+                </div>
+                <div class="billing-model-fields" data-billing-fields="seedance-2-0" hidden>
+                  <div class="billing-group">
+                    <h3>基本費率</h3>
+                    <div class="billing-grid">
+                      <label for="billing-seedance-base"><span>基本係數／秒</span><span class="billing-number"><b>$</b><input id="billing-seedance-base" name="basePerSecond" type="number" min="0" step="0.001" value="0.303" required /></span></label>
+                      <label for="billing-seedance-decimals"><span>無條件進位小數位數</span><input id="billing-seedance-decimals" name="roundUpDecimals" type="number" min="2" max="2" step="1" value="2" readonly required /></label>
+                    </div>
+                  </div>
+                  <div class="billing-group">
+                    <h3>解析度倍率</h3>
+                    <div class="billing-grid billing-input-grid">
+                      <label for="billing-seedance-480"><span>480P 倍率</span><input id="billing-seedance-480" name="multiplier480" type="number" min="0" step="0.0001" value="0.4651" required /></label>
+                      <label for="billing-seedance-720"><span>720P 倍率</span><input id="billing-seedance-720" name="multiplier720" type="number" min="0" step="0.0001" value="1" required /></label>
+                      <label for="billing-seedance-1080"><span>1080P 倍率</span><input id="billing-seedance-1080" name="multiplier1080" type="number" min="0" step="0.0001" value="2.5" required /></label>
+                      <label for="billing-seedance-4k"><span>4K 倍率</span><input id="billing-seedance-4k" name="multiplier4k" type="number" min="0" step="0.0001" value="5.0761" required /></label>
+                    </div>
+                    <p class="billing-note">最終金額依「基本係數 × 秒數 × 解析度倍率」計算，並無條件進位至小數第二位。</p>
                   </div>
                 </div>
                 <button class="billing-save" type="submit">儲存計費設定</button>

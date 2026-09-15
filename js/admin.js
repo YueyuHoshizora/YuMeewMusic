@@ -60,7 +60,16 @@ function renderBilling(settings) {
 }
 
 function readBillingForm() {
-  return Object.fromEntries([...$("billing-form").querySelectorAll("input[name]")].map(input => [input.name, Number(input.value)]));
+  const fields = document.querySelector(`[data-billing-fields="${$("billing-model").value}"]`);
+  return Object.fromEntries([...fields.querySelectorAll("input[name]")].map(input => [input.name, Number(input.value)]));
+}
+
+function showBillingModel(model) {
+  for (const fields of document.querySelectorAll("[data-billing-fields]")) {
+    const selected = fields.dataset.billingFields === model;
+    fields.hidden = !selected;
+    for (const input of fields.querySelectorAll("input")) input.disabled = !selected;
+  }
 }
 
 function renderMembers() {
@@ -197,6 +206,7 @@ $("billing-form").addEventListener("submit", async event => {
 });
 
 $("billing-model").addEventListener("change", async event => {
+  showBillingModel(event.currentTarget.value);
   try {
     const result = await fetchAdminBillingSettings(state.session, event.currentTarget.value);
     renderBilling(result.settings);
@@ -270,6 +280,7 @@ async function initialize() {
   }
   state.session = session;
   try {
+    showBillingModel($("billing-model").value);
     const [setting, members, keys, billing] = await Promise.all([
       fetchAdminTopupSettings(session), searchAdminMembers(session), listAdminApiKeys(session),
       fetchAdminBillingSettings(session, $("billing-model").value),

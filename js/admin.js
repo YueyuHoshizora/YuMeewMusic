@@ -83,20 +83,14 @@ function roundBillingUp(value, decimals = 2) {
 function renderBillingPreview(model) {
   if (!model.startsWith("seedance-")) return;
   const fields = document.querySelector(`[data-billing-fields="${model}"]`);
-  const preview = $(`billing-preview-${model}`);
-  if (!fields || !preview) return;
+  if (!fields) return;
   const base = Number(fields.querySelector('[name="basePerSecond"]')?.value);
   const decimals = Number(fields.querySelector('[name="roundUpDecimals"]')?.value) || 2;
-  const resolutions = model === "seedance-2-0"
-    ? [["480P", "multiplier480"], ["720P", "multiplier720"], ["1080P", "multiplier1080"], ["4K", "multiplier4k"]]
-    : [["480P", "multiplier480"], ["720P", "multiplier720"]];
-  preview.replaceChildren(...resolutions.map(([label, name]) => {
-    const result = document.createElement("span");
-    const multiplier = Number(fields.querySelector(`[name="${name}"]`)?.value);
+  for (const result of fields.querySelectorAll("[data-billing-preview]")) {
+    const multiplier = Number(fields.querySelector(`[name="${result.dataset.billingPreview}"]`)?.value);
     const total = Number.isFinite(base) && Number.isFinite(multiplier) ? roundBillingUp(base * multiplier, decimals) : 0;
-    result.textContent = `${label} · ${usd.format(total)}／秒`;
-    return result;
-  }));
+    result.textContent = `${usd.format(total)}／秒`;
+  }
 }
 
 function renderMembers() {

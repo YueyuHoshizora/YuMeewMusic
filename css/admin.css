@@ -63,8 +63,8 @@
 .billing-model-fields[hidden] { display: none; }
 .billing-form label { display: grid; gap: 7px; color: var(--muted); font-size: 12px; }
 .billing-model { max-width: 360px; }
-.billing-model select, .billing-grid > label > input { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; outline: 0; background: var(--card); color: var(--foreground); font: inherit; }
-.billing-model select:focus, .billing-grid > label > input:focus, .billing-number:focus-within { border-color: var(--primary); }
+.billing-model select, .billing-grid > label > input, .billing-rate-row input { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; outline: 0; background: var(--card); color: var(--foreground); font: inherit; }
+.billing-model select:focus, .billing-grid > label > input:focus, .billing-rate-row input:focus, .billing-number:focus-within { border-color: var(--primary); }
 .billing-group { padding: 17px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); }
 .billing-group h3 { margin: 0 0 14px; color: var(--foreground); font-size: 14px; }
 .billing-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px 16px; }
@@ -74,6 +74,5 @@
 .billing-save { justify-self: start; padding: 10px 15px; border: 1px solid var(--primary); border-radius: 9px; background: transparent; color: var(--primary-text); font: inherit; font-weight: 750; }
 .billing-save:hover { background: var(--hover); }
 .billing-note { margin: 13px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
-.billing-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
-.billing-preview::before { align-self: center; margin-right: 2px; color: var(--muted); content: "每秒試算"; font-size: 12px; font-weight: 750; }
-.billing-preview span { padding: 7px 10px; border: 1px solid var(--primary); border-radius: 8px; background: var(--tint); color: var(--primary-text); font-size: 12px; font-weight: 750; }
+.billing-rate-row { display: grid; grid-template-columns: minmax(90px, 145px) minmax(112px, 1fr); align-items: center; gap: 9px; }
+.billing-rate-row output { padding: 10px 8px; border: 1px solid var(--primary); border-radius: 9px; background: var(--tint); color: var(--primary-text); font-size: 12px; font-weight: 750; text-align: center; white-space: nowrap; }

@@ -5,6 +5,7 @@ import { resolveSunoAudio } from "./suno-source.js";
 
 const $ = id => document.getElementById(id);
 const TARGET_SAMPLE_RATE = 16000;
+const WASM_THREAD_FALLBACKS = [4, 1];
 applyTheme(loadSettings().mode, loadSettings().theme);
 
 let mode = "single";
@@ -330,10 +331,17 @@ function analyzeAudio(audio, index, total) {
     };
     worker.onerror = event => {
       pendingReject = null;
-      reject(Error(event.message || "歌曲評分工作程序發生錯誤。"));
+      reject(Object.assign(Error(event.message || "歌曲評分工作程序發生錯誤。"), { code: "WORKER_CRASH" }));
     };
-    worker.postMessage({ type: "analyze", audio }, [audio.buffer]);
+    const transferableAudio = audio.slice();
+    worker.postMessage({ type: "analyze", audio: transferableAudio }, [transferableAudio.buffer]);
   });
+}
+
+function createRatingWorker(threadLimit) {
+  const workerUrl = new URL("./music-rating-worker.js", import.meta.url);
+  workerUrl.searchParams.set("threads", String(threadLimit));
+  return new Worker(workerUrl, { type: "module" });
 }
 
 async function startRating() {
@@ -349,14 +357,30 @@ async function startRating() {
   $("rating-progress").value = 0;
   $("rating-engine").className = "rating-engine";
   $("rating-engine").textContent = "分析中";
-  worker = new Worker(new URL("./music-rating-worker.js", import.meta.url), { type: "module" });
+  const threadFallbacks = globalThis.crossOriginIsolated ? WASM_THREAD_FALLBACKS : [1];
+  let threadFallbackIndex = 0;
+  worker = createRatingWorker(threadFallbacks[threadFallbackIndex]);
   try {
     const rawResults = [];
     for (let index = 0; index < targets.length; index++) {
       $("rating-status").textContent = `${targets.length > 1 ? `正在準備歌曲 ${index === 0 ? "A" : "B"}` : "正在準備音樂"}的 16 kHz 單聲道音訊…`;
       const audio = await resampleMono(targets[index].buffer);
       if (cancelled) throw Object.assign(Error("歌曲評分已取消。"), { code: "CANCELLED" });
-      const response = await analyzeAudio(audio, index, targets.length);
+      let response;
+      while (!response) {
+        try {
+          response = await analyzeAudio(audio, index, targets.length);
+        } catch (error) {
+          if (error?.code !== "WORKER_CRASH" || threadFallbackIndex >= threadFallbacks.length - 1) throw error;
+          const failedThreads = threadFallbacks[threadFallbackIndex];
+          threadFallbackIndex += 1;
+          const nextThreads = threadFallbacks[threadFallbackIndex];
+          worker?.terminate();
+          worker = createRatingWorker(nextThreads);
+          $("rating-engine").textContent = "WASM CPU";
+          $("rating-status").textContent = `${failedThreads} 執行緒無法啟動，正在改用 ${nextThreads} 執行緒重試…`;
+        }
+      }
       rawResults.push(response.result);
       $("rating-engine").textContent = response.provider === "webgpu" ? "WebGPU" : "WASM CPU";
     }

@@ -39,3 +39,14 @@ test("comparison mode reserves more room for two audio players", () => {
   assert.match(css, /\.rating-compare-files > article\s*\{[^}]*min-width:\s*0/);
   assert.match(css, /\.rating-compare-files audio\s*\{[^}]*max-width:\s*100%/);
 });
+
+test("song rating retries unstable WASM thread counts without losing audio", () => {
+  const script = readFileSync("js/music-rating.js", "utf8");
+  const worker = readFileSync("js/music-rating-worker.js", "utf8");
+  assert.match(script, /const WASM_THREAD_FALLBACKS = \[4, 1\]/);
+  assert.match(script, /const transferableAudio = audio\.slice\(\)/);
+  assert.match(script, /code: "WORKER_CRASH"/);
+  assert.match(script, /workerUrl\.searchParams\.set\("threads", String\(threadLimit\)\)/);
+  assert.match(worker, /searchParams\.get\("threads"\)/);
+  assert.match(worker, /Math\.min\(4, requestedThreadLimit\)/);
+});

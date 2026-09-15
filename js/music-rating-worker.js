@@ -9,7 +9,10 @@ const SEGMENT_SAMPLES = SAMPLE_RATE * 30;
 const HIDDEN_SIZE = 768;
 
 ort.env.wasm.wasmPaths = new URL("../vendor/onnxruntime-web/", import.meta.url).href;
-const WASM_THREAD_LIMIT = 16;
+const requestedThreadLimit = Number(new URL(self.location.href).searchParams.get("threads"));
+const WASM_THREAD_LIMIT = Number.isInteger(requestedThreadLimit) && requestedThreadLimit > 0
+  ? Math.min(4, requestedThreadLimit)
+  : 4;
 ort.env.wasm.numThreads = globalThis.crossOriginIsolated
   ? Math.min(WASM_THREAD_LIMIT, navigator.hardwareConcurrency || WASM_THREAD_LIMIT)
   : 1;
@@ -34,7 +37,9 @@ async function createSessions() {
     let mert;
     let head;
     try {
-      status(provider === "webgpu" ? "正在啟用 WebGPU 評分引擎…" : "正在啟用 WASM 評分引擎…", provider);
+      status(provider === "webgpu"
+        ? "正在啟用 WebGPU 評分引擎…"
+        : `正在啟用 WASM 評分引擎（${ort.env.wasm.numThreads} 執行緒）…`, provider);
       if (provider === "webgpu") ort.env.webgpu.powerPreference = "high-performance";
       const options = { executionProviders: [provider], graphOptimizationLevel: "all" };
       mert = await ort.InferenceSession.create(mertBytes, options);

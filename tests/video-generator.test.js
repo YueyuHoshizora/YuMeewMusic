@@ -140,6 +140,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="veo-audio-option"[^>]*hidden[\s\S]*id="veo-include-audio"[^>]*type="checkbox"[^>]*checked/);
   assert.match(html, /id="video-api-key"[^>]*>未設定<\/button>/);
   assert.match(html, /id="video-provider-billing"[^>]*href="https:\/\/platform\.minimax\.io\/console\/recharge-records"[^>]*>儲值<\/a>/);
+  assert.match(html, /id="video-api-key"[^>]*>未設定<\/button>\s*<\/div>\s*<a id="video-provider-billing"/);
+  assert.match(css, /\.video-generator-body \.generation-options\s*\{[^}]*grid-template-columns:\s*minmax\(190px, 300px\) 260px auto/);
   assert.doesNotMatch(html, /影片模型與 API 尚未設定，後續加入模型後即可啟用生成/);
   assert.match(html, /id="generate-video"[^>]*disabled>▶ 生成影片<\/button>/);
   assert.match(html, /id="confirm-video-generation-dialog"[^>]*aria-labelledby="confirm-video-generation-title"/);

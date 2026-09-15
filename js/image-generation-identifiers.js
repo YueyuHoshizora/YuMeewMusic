@@ -23,9 +23,9 @@ export function extractImageGenerationIdentifiers(payload, headers) {
 
 export function responseGenerationIdentifiers(headers) {
   return {
-    taskId: headerValue(headers, "x-yumeew-task-id"),
-    generationId: headerValue(headers, "x-yumeew-generation-id"),
-    requestId: headerValue(headers, "x-yumeew-request-id"),
+    taskId: headerValue(headers, "x-yumeew-task-id") || headerValue(headers, "x-task-id"),
+    generationId: headerValue(headers, "x-yumeew-generation-id") || headerValue(headers, "x-generation-id"),
+    requestId: headerValue(headers, "x-yumeew-request-id") || headerValue(headers, "x-request-id"),
   };
 }
 

@@ -113,6 +113,7 @@ let busy = false;
 let composing = false;
 let memberSignedIn = false;
 let generationHistory = [];
+let generationProgress = null;
 const historyPreviewUrls = new Set();
 const resultFrame = $("generated-image-frame");
 
@@ -166,6 +167,48 @@ function status(text, mode = "") {
 function showError(text = "") {
   $("generation-error").textContent = text;
   $("generation-error").hidden = !text;
+}
+
+function localImageTaskId() {
+  const value = crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `IMG-${value}`;
+}
+
+function renderGenerationProgress() {
+  if (!generationProgress) return;
+  const elapsed = Math.floor((Date.now() - generationProgress.startedAt) / 1000);
+  $("image-generation-lock-title").textContent = "圖片生成中";
+  $("image-generation-lock-detail").textContent = `${generationProgress.label}：${generationProgress.identifier} · 已執行 ${elapsed} 秒`;
+  status(`圖片生成中 · 已執行 ${elapsed} 秒`);
+}
+
+function startGenerationProgress() {
+  stopGenerationProgress();
+  generationProgress = {
+    localTaskId: localImageTaskId(),
+    identifier: "",
+    label: "任務 ID",
+    startedAt: Date.now(),
+    timer: 0,
+  };
+  generationProgress.identifier = generationProgress.localTaskId;
+  renderGenerationProgress();
+  generationProgress.timer = window.setInterval(renderGenerationProgress, 1000);
+  return generationProgress;
+}
+
+function updateGenerationProgress(identifiers) {
+  if (!generationProgress) return;
+  if (identifiers.taskId) [generationProgress.label, generationProgress.identifier] = ["任務 ID", identifiers.taskId];
+  else if (identifiers.generationId) [generationProgress.label, generationProgress.identifier] = ["生成 ID", identifiers.generationId];
+  else if (identifiers.requestId) [generationProgress.label, generationProgress.identifier] = ["請求 ID", identifiers.requestId];
+  renderGenerationProgress();
+}
+
+function stopGenerationProgress() {
+  if (!generationProgress) return;
+  window.clearInterval(generationProgress.timer);
+  generationProgress = null;
 }
 
 function generationSize() {
@@ -416,6 +459,7 @@ async function saveGenerationHistory(blob, prompt, modelId, identifiers = {}) {
     taskId: identifiers.taskId || "",
     generationId: identifiers.generationId || "",
     requestId: identifiers.requestId || "",
+    localTaskId: identifiers.localTaskId || "",
     createdAt: Date.now(),
   });
   generationHistory = generationHistory.slice(0, IMAGE_HISTORY_LIMIT);
@@ -453,7 +497,9 @@ function renderImageHistory() {
         ? `生成 ID：${record.generationId}`
         : record.requestId
           ? `請求 ID：${record.requestId}`
-          : "";
+          : record.localTaskId
+            ? `任務 ID：${record.localTaskId}`
+            : "";
     identifierMeta.hidden = !identifierMeta.textContent;
     const prompt = document.createElement("p"); prompt.textContent = record.prompt || "";
     const actions = document.createElement("div"); actions.className = "image-history-card-actions";
@@ -475,8 +521,8 @@ async function generateImage() {
   const model = IMAGE_MODELS[modelId];
   if (!prompt || busy || composing) return;
   showError();
-  status("圖片生成中…");
   setBusy(true);
+  const progress = startGenerationProgress();
   try {
     if (!model) throw Error("找不到所選圖片模型的呼叫方式。");
     const accountCredits = usesAccountCredits(modelId);
@@ -498,9 +544,12 @@ async function generateImage() {
       throw Error(detail || `圖片服務回傳 ${response.status}`);
     }
     const identifiers = responseGenerationIdentifiers(response.headers);
+    identifiers.localTaskId = progress.localTaskId;
+    updateGenerationProgress(identifiers);
     const blob = await response.blob();
     if (!blob.type.startsWith("image/") || !blob.size) throw Error("圖片服務沒有回傳可用的圖片。");
     const result = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
+    stopGenerationProgress();
     await displayGeneratedImage(result);
     const cachedFile = new File([result], imageFilename(), { type: result.type || "image/jpeg", lastModified: Date.now() });
     await saveGenerationHistory(result, prompt, modelId, identifiers).catch(() => showError("圖片已生成，但無法保存生成歷史。"));
@@ -517,6 +566,7 @@ async function generateImage() {
     showError(message);
     status("圖片生成失敗", "error");
   } finally {
+    stopGenerationProgress();
     setBusy(false);
   }
 }

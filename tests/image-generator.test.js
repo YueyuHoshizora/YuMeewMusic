@@ -69,6 +69,8 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(html, /id="image-history-dialog"[\s\S]*最多保留最近 10 張圖片/);
   assert.match(html, /只有按下「套用主畫面背景」才會取代主畫面的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
+  assert.match(html, /id="image-generation-lock-title"[^>]*>圖片生成中<\/strong>/);
+  assert.match(html, /id="image-generation-lock-detail"[^>]*>正在建立圖片生成任務…<\/p>/);
   assert.match(html, /id="confirm-image-generation-dialog"[^>]*aria-labelledby="confirm-image-generation-title"[\s\S]*id="image-generation-summary"[^>]*aria-label="生成摘要"[\s\S]*id="cancel-image-generation"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確認生成<\/button>/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(css, /\.generated-image-frame:fullscreen/);
@@ -160,8 +162,11 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /const IMAGE_HISTORY_LIMIT = 10/);
   assert.match(script, /saveStoredValue\("image-generation-history"/);
   assert.match(script, /loadStoredValue\("image-generation-history"\)/);
-  assert.match(script, /async function saveGenerationHistory\(blob, prompt, modelId, identifiers = \{\}\)[\s\S]*taskId: identifiers\.taskId[\s\S]*requestId: identifiers\.requestId[\s\S]*slice\(0, IMAGE_HISTORY_LIMIT\)/);
+  assert.match(script, /async function saveGenerationHistory\(blob, prompt, modelId, identifiers = \{\}\)[\s\S]*taskId: identifiers\.taskId[\s\S]*requestId: identifiers\.requestId[\s\S]*localTaskId: identifiers\.localTaskId[\s\S]*slice\(0, IMAGE_HISTORY_LIMIT\)/);
   assert.match(script, /任務 ID：\$\{record\.taskId\}[\s\S]*生成 ID：\$\{record\.generationId\}[\s\S]*請求 ID：\$\{record\.requestId\}/);
+  assert.match(script, /function startGenerationProgress\(\)[\s\S]*window\.setInterval\(renderGenerationProgress, 1000\)/);
+  assert.match(script, /已執行 \$\{elapsed\} 秒/);
+  assert.match(script, /const progress = startGenerationProgress\(\)[\s\S]*identifiers\.localTaskId = progress\.localTaskId[\s\S]*updateGenerationProgress\(identifiers\)[\s\S]*stopGenerationProgress\(\)/);
   assert.match(script, /open-image-history"\)\.addEventListener/);
   assert.match(script, /void restoreLastGeneratedImage\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);

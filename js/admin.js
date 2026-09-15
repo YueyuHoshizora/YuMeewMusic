@@ -80,6 +80,11 @@ function roundBillingUp(value, decimals = 2) {
   return Math.ceil((value - Number.EPSILON) * factor) / factor;
 }
 
+function calculateSeedanceCharge(base, multiplier, seconds, decimals = 2) {
+  const unitRate = roundBillingUp(base * multiplier, decimals);
+  return unitRate * seconds;
+}
+
 function renderBillingPreview(model) {
   if (!model.startsWith("seedance-")) return;
   const fields = document.querySelector(`[data-billing-fields="${model}"]`);
@@ -88,7 +93,7 @@ function renderBillingPreview(model) {
   const decimals = Number(fields.querySelector('[name="roundUpDecimals"]')?.value) || 2;
   for (const result of fields.querySelectorAll("[data-billing-preview]")) {
     const multiplier = Number(fields.querySelector(`[name="${result.dataset.billingPreview}"]`)?.value);
-    const total = Number.isFinite(base) && Number.isFinite(multiplier) ? roundBillingUp(base * multiplier, decimals) : 0;
+    const total = Number.isFinite(base) && Number.isFinite(multiplier) ? calculateSeedanceCharge(base, multiplier, 1, decimals) : 0;
     result.textContent = `${usd.format(total)}／秒`;
   }
 }

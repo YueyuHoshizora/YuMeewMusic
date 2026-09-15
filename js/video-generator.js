@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredValue } from "./media-store.js";
-import { getApiKey, listApiKeys, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
+import { getApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { formatResourceSize, nextResourceReference, resourceKind, resourceTypeLabel } from "./video-resources.js";
 import { createVideoProjectFile, readVideoProjectFile } from "./video-project-file.js";
 import { createStoryboardReportPdf } from "./pdf-export.js";
@@ -182,7 +182,8 @@ function showError(text = "") {
 
 function syncGenerateAvailability() {
   const prompt = editorText(activePromptEditor());
-  const hasKey = usesAccountCredits($("video-model").value) || Boolean(getApiKey($("video-model").value));
+  const modelId = $("video-model").value;
+  const hasKey = usesAccountCredits(modelId) || Boolean(getApiKey(VIDEO_MODELS[modelId]?.provider));
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
@@ -3404,7 +3405,7 @@ function syncModelDetails() {
   const ratios = model.ratios || VIDEO_RATIOS;
   const previousRatio = $("video-ratio").value;
   replaceOptions($("video-ratio"), ratios, ratios.includes(previousRatio) ? previousRatio : ratios[0]);
-  $("video-api-key").textContent = usesAccountCredits(modelId) ? "帳戶扣點" : getApiKey(modelId) ? "已設定" : "未設定";
+  $("video-api-key").textContent = usesAccountCredits(modelId) ? "帳戶扣點" : getApiKey(model.provider) ? "已設定" : "未設定";
   const billingUrl = providerBillingUrl(model.provider);
   $("video-provider-billing").href = billingUrl;
   $("video-provider-billing").hidden = !billingUrl;
@@ -3423,26 +3424,11 @@ function syncResultHeading() {
   $("result-video-ratio").textContent = `${$("video-ratio").value} · MP4`;
 }
 
-function syncApiKeySources(modelId) {
-  const select = $("video-api-key-source");
-  const sources = listApiKeys().filter(key => key.id !== modelId);
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = sources.length ? "選擇已保存的金鑰…" : "目前沒有其他已保存的金鑰";
-  select.replaceChildren(placeholder, ...sources.map(source => {
-    const option = document.createElement("option");
-    option.value = source.id;
-    option.textContent = source.label;
-    return option;
-  }));
-  select.disabled = !sources.length;
-}
-
 function openApiKeyDialog() {
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   if (!model || busy) return;
-  $("video-api-key-dialog-title").textContent = `${model.label} API KEY`;
+  $("video-api-key-dialog-title").textContent = `${model.apiKey} API KEY`;
   $("video-api-key-help").textContent = model.provider === "minimax"
     ? "MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援。金鑰只會保存在目前瀏覽器。"
     : model.provider === "google"
@@ -3450,9 +3436,8 @@ function openApiKeyDialog() {
       : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
   $("video-api-key-input").value = "";
   $("video-api-key-account-credits").checked = usesAccountCredits(modelId);
-  $("video-api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
+  $("video-api-key-input").placeholder = getApiKey(model.provider) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("video-api-key-error").hidden = true;
-  syncApiKeySources(modelId);
   syncVideoApiKeyCreditControls();
   $("video-api-key-dialog").showModal();
   ($("video-api-key-input").disabled ? $("video-api-key-account-credits") : $("video-api-key-input")).focus();
@@ -3460,15 +3445,7 @@ function openApiKeyDialog() {
 
 function syncVideoApiKeyCreditControls() {
   const disabled = $("video-api-key-account-credits").checked;
-  $("video-api-key-source").disabled = disabled || !listApiKeys().some(key => key.id !== $("video-model").value);
   $("video-api-key-input").disabled = disabled;
-}
-
-function copyApiKeyFromSource() {
-  const source = getApiKey($("video-api-key-source").value);
-  if (!source) return;
-  $("video-api-key-input").value = source.value;
-  $("video-api-key-error").hidden = true;
 }
 
 function submitApiKey(event) {
@@ -3483,7 +3460,7 @@ function submitApiKey(event) {
     $("video-api-key-error").hidden = false;
     return;
   }
-  if (!saveAccountCredits(modelId, accountCredits) || (!accountCredits && !saveApiKey(modelId, model.label, value))) {
+  if (!saveAccountCredits(modelId, accountCredits) || (!accountCredits && !saveApiKey(model.provider, model.apiKey, value))) {
     $("video-api-key-error").textContent = "瀏覽器無法保存 API KEY。";
     $("video-api-key-error").hidden = false;
     return;
@@ -3915,7 +3892,7 @@ async function restorePendingGeneration() {
   const metadata = pending?.metadata;
   const model = VIDEO_MODELS[metadata?.modelId];
   if (!pending?.taskId || !model) return;
-  const apiKey = getApiKey(metadata.modelId)?.value || "";
+  const apiKey = getApiKey(model.provider)?.value || "";
   if (!metadata.accountCredits && !apiKey) {
     setStatus(`有一個未完成的 ${metadata.modelLabel || model.label} 任務；設定 API KEY 後重新開啟頁面即可繼續查詢`, "error");
     return;
@@ -3957,7 +3934,7 @@ async function generateVideo() {
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const accountCredits = usesAccountCredits(modelId);
-  const apiKey = getApiKey(modelId)?.value || "";
+  const apiKey = getApiKey(model.provider)?.value || "";
   if (!videoDetails || (!accountCredits && !apiKey) || busy) return;
   showError();
   setBusy(true);
@@ -4254,7 +4231,6 @@ $("video-duration").addEventListener("change", () => scheduleAutoDraft());
 $("video-ratio").addEventListener("change", () => { syncResultHeading(); scheduleAutoDraft(); });
 $("veo-include-audio").addEventListener("change", () => scheduleAutoDraft());
 $("video-api-key").addEventListener("click", openApiKeyDialog);
-$("video-api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("video-api-key-account-credits").addEventListener("change", syncVideoApiKeyCreditControls);
 $("video-api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialog").close());

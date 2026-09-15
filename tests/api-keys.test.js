@@ -18,14 +18,27 @@ test("API keys keep only the first and last three characters visible with at mos
   assert.equal(maskApiKey(""), "");
 });
 
-test("API keys save to localStorage, list safely and delete individually", () => {
+test("API keys save to localStorage by service provider, list safely and delete individually", () => {
   globalThis.localStorage = createStorage();
-  assert.equal(saveApiKey("paid-model", "付費模型", "  abc123456xyz  "), true);
-  assert.equal(getApiKey("paid-model").value, "abc123456xyz");
-  assert.deepEqual(listApiKeys().map(key => [key.id, key.label]), [["paid-model", "付費模型"]]);
+  assert.equal(saveApiKey("openai", "OpenAI", "  abc123456xyz  "), true);
+  assert.equal(getApiKey("openai").value, "abc123456xyz");
+  assert.deepEqual(listApiKeys().map(key => [key.id, key.label]), [["openai", "OpenAI"]]);
   assert.match(localStorage.getItem(API_KEY_STORAGE_KEY), /abc123456xyz/);
-  assert.equal(deleteApiKey("paid-model"), true);
-  assert.equal(getApiKey("paid-model"), null);
+  assert.equal(deleteApiKey("openai"), true);
+  assert.equal(getApiKey("openai"), null);
+});
+
+test("legacy per-model API keys migrate to the newest key for each provider", () => {
+  globalThis.localStorage = createStorage();
+  localStorage.setItem(API_KEY_STORAGE_KEY, JSON.stringify({
+    "gpt-image-2.5-flare": { label: "GPT-Image-2.5 Flare", value: "older", savedAt: 10 },
+    "gpt-image-2.5-sunburst": { label: "GPT-Image-2.5 Sunburst", value: "newer", savedAt: 20 },
+    "dreamina-seedance-2-0-260128": { label: "Seedance 2.0", value: "byteplus-key", savedAt: 15 },
+  }));
+  assert.equal(getApiKey("openai").value, "newer");
+  assert.equal(getApiKey("byteplus").value, "byteplus-key");
+  assert.deepEqual(listApiKeys().map(key => [key.id, key.label]), [["byteplus", "BytePlus"], ["openai", "OpenAI"]]);
+  assert.doesNotMatch(localStorage.getItem(API_KEY_STORAGE_KEY), /gpt-image|dreamina/);
 });
 
 test("account credit billing preference persists per model", () => {

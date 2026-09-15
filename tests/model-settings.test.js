@@ -53,6 +53,7 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(script, /deleteCachedModel\(target\.keys\)/);
   assert.match(script, /deleteAllCachedModels\(\)/);
   assert.match(script, /listApiKeys\(\)/);
+  assert.match(html, /依服務供應商列出[\s\S]*相同供應商的模型共用一把金鑰/);
   assert.match(script, /maskApiKey\(key\.value\)/);
   assert.match(script, /deleteApiKey\(key\.id\)/);
   assert.match(script, /listStoredEntries\(\)/);

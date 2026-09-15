@@ -36,7 +36,6 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
 @media (max-width: 800px) {
   .image-history-list { grid-template-columns: 1fr; }
 }
-.reset-dialog #api-key-source { width: 100%; box-sizing: border-box; }
 .reset-dialog #api-key-input { width: 100%; box-sizing: border-box; font-family: monospace; }
 #image-prompt { display: block; width: 100%; height: 112px; resize: vertical; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; line-height: 1.7; }
 #image-prompt::placeholder { color: var(--muted); }

@@ -1,6 +1,22 @@
 export const API_KEY_STORAGE_KEY = "yumeew-api-keys-v1";
 export const API_BILLING_STORAGE_KEY = "yumeew-api-billing-v1";
 
+const PROVIDER_LABELS = Object.freeze({
+  openai: "OpenAI",
+  minimax: "MiniMax",
+  byteplus: "BytePlus",
+  google: "Google AI Studio",
+});
+
+const LEGACY_MODEL_PROVIDERS = Object.freeze({
+  "gpt-image-2.5-flare": "openai",
+  "gpt-image-2.5-sunburst": "openai",
+  "MiniMax-H3": "minimax",
+  "dreamina-seedance-2-0-260128": "byteplus",
+  "dreamina-seedance-2-5-260628": "byteplus",
+  "veo-3.1-generate-preview": "google",
+});
+
 function readBillingModes() {
   try {
     const value = JSON.parse(localStorage.getItem(API_BILLING_STORAGE_KEY) || "{}");
@@ -24,9 +40,23 @@ function readRecords() {
   try {
     const parsed = JSON.parse(localStorage.getItem(API_KEY_STORAGE_KEY) || "{}");
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    return Object.fromEntries(Object.entries(parsed).filter(([, record]) => (
-      record && typeof record === "object" && typeof record.value === "string" && record.value
-    )));
+    const normalized = {};
+    let migrated = false;
+    for (const [id, record] of Object.entries(parsed)) {
+      if (!record || typeof record !== "object" || typeof record.value !== "string" || !record.value) continue;
+      const provider = LEGACY_MODEL_PROVIDERS[id] || id;
+      const savedAt = Number(record.savedAt) || 0;
+      if (!normalized[provider] || savedAt >= normalized[provider].savedAt) {
+        normalized[provider] = {
+          label: PROVIDER_LABELS[provider] || String(record.label || provider),
+          value: record.value,
+          savedAt,
+        };
+      }
+      migrated ||= provider !== id || normalized[provider].label !== record.label;
+    }
+    if (migrated) writeRecords(normalized);
+    return normalized;
   } catch {
     return {};
   }

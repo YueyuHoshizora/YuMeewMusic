@@ -82,7 +82,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.doesNotMatch(script, /maskApiKey/);
   assert.match(script, /\$\("image-model"\)\.addEventListener\("change", syncModelDetails\)/);
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
-  assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
+  assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey \}\)/);
   assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\?\.publicResource[\s\S]*flux-generation-confirm-dialog"\)\.showModal\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /function confirmFluxGeneration\(event\)[\s\S]*flux-generation-confirm-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
@@ -91,10 +91,9 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(html, /id="api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
   assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);
   assert.match(script, /function syncApiKeyCreditControls\(\)[\s\S]*api-key-input"\)\.disabled = disabled/);
-  assert.match(html, /id="api-key-source"[^>]*class="setting-select"/);
-  assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
-  assert.match(script, /\$\("api-key-source"\)\.addEventListener\("change", copyApiKeyFromSource\)/);
-  assert.match(script, /\$\("api-key-input"\)\.value = source\.value/);
+  assert.doesNotMatch(html, /api-key-source|從其他模型複製/);
+  assert.doesNotMatch(script, /copyApiKeyFromSource|syncApiKeySources|listApiKeys/);
+  assert.match(script, /getApiKey\(model\.provider\)/);
   assert.match(script, /\$\("image-model"\)\.disabled = value/);
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);

@@ -77,7 +77,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 - 支援題詞補全、生成進度、全螢幕預覽與圖片下載。
 - 最後一次生成結果保存在 IndexedDB。
 - 只有按下「套用主畫面背景」才會取代目前背景素材。
-- 需要金鑰的模型會把 API KEY 保存在目前瀏覽器的 `localStorage`。
+- 需要金鑰的模型會依服務供應商共用 API KEY，並保存在目前瀏覽器的 `localStorage`。
 
 ### 影片生成器
 
@@ -179,7 +179,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 
 ## 瀏覽器儲存
 
-- `localStorage`：介面佈景、畫面、字幕、輸出及其他輕量設定；API KEY 也保存在這裡。
+- `localStorage`：介面佈景、畫面、字幕、輸出及其他輕量設定；使用者 API KEY 依服務供應商保存在這裡。
 - IndexedDB 媒體快取：主畫面音樂、背景素材、字幕、人物模板及最近生成結果。
 - IndexedDB 模型快取：Spleeter、BS PolarFormer、APEX／MERT 等瀏覽器 AI 模型。
 

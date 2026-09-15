@@ -1,7 +1,7 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
-import { getApiKey, listApiKeys, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
+import { getApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
@@ -78,11 +78,13 @@ const IMAGE_MODELS = Object.freeze({
   }),
   "gpt-image-2.5-flare": Object.freeze({
     label: "GPT-Image-2.5 Flare",
+    provider: "openai",
     apiKey: "OpenAI",
     call: callGptImage25Flare,
   }),
   "gpt-image-2.5-sunburst": Object.freeze({
     label: "GPT-Image-2.5 Sunburst",
+    provider: "openai",
     apiKey: "OpenAI",
     call: callGptImage25Sunburst,
   }),
@@ -155,44 +157,21 @@ function syncModelDetails() {
   const modelId = $("image-model").value;
   const model = IMAGE_MODELS[modelId];
   const isFree = model?.apiKey === "Free";
-  const storedKey = isFree ? null : getApiKey(modelId);
+  const storedKey = isFree ? null : getApiKey(model?.provider);
   $("model-api-key").textContent = isFree ? "Free" : usesAccountCredits(modelId) ? "帳戶扣點" : storedKey ? "已設定" : "未設定";
   $("model-api-key").disabled = busy || isFree || !model;
-}
-
-function syncApiKeySources(modelId) {
-  const select = $("api-key-source");
-  const sources = listApiKeys().filter(key => key.id !== modelId);
-  const placeholder = document.createElement("option");
-  placeholder.value = "";
-  placeholder.textContent = sources.length ? "選擇已保存的金鑰…" : "目前沒有其他已保存的金鑰";
-  select.replaceChildren(placeholder, ...sources.map(source => {
-    const option = document.createElement("option");
-    option.value = source.id;
-    option.textContent = source.label;
-    return option;
-  }));
-  select.disabled = !sources.length;
-}
-
-function copyApiKeyFromSource() {
-  const source = getApiKey($("api-key-source").value);
-  if (!source) return;
-  $("api-key-input").value = source.value;
-  $("api-key-error").hidden = true;
 }
 
 function openApiKeyDialog() {
   const modelId = $("image-model").value;
   const model = IMAGE_MODELS[modelId];
   if (!model || model.apiKey === "Free" || busy) return;
-  $("api-key-dialog-title").textContent = `${model.label} API KEY`;
-  $("api-key-dialog-description").textContent = "可從其他模型複製金鑰，或直接輸入。金鑰只會保存在目前瀏覽器。";
-  syncApiKeySources(modelId);
+  $("api-key-dialog-title").textContent = `${model.apiKey} API KEY`;
+  $("api-key-dialog-description").textContent = `同一服務供應商的模型會共用這把金鑰。金鑰只會保存在目前瀏覽器。`;
   $("api-key-input").value = "";
   $("api-key-account-credits").checked = usesAccountCredits(modelId);
   syncApiKeyCreditControls();
-  $("api-key-input").placeholder = getApiKey(modelId) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
+  $("api-key-input").placeholder = getApiKey(model.provider) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("api-key-error").hidden = true;
   $("api-key-dialog").showModal();
   ($("api-key-input").disabled ? $("api-key-account-credits") : $("api-key-input")).focus();
@@ -200,7 +179,6 @@ function openApiKeyDialog() {
 
 function syncApiKeyCreditControls() {
   const disabled = $("api-key-account-credits").checked;
-  $("api-key-source").disabled = disabled || !listApiKeys().some(key => key.id !== $("image-model").value);
   $("api-key-input").disabled = disabled;
 }
 
@@ -216,7 +194,7 @@ function submitApiKey(event) {
     $("api-key-error").hidden = false;
     return;
   }
-  if (!saveAccountCredits(modelId, accountCredits) || (!accountCredits && !saveApiKey(modelId, model.label, value))) {
+  if (!saveAccountCredits(modelId, accountCredits) || (!accountCredits && !saveApiKey(model.provider, model.apiKey, value))) {
     $("api-key-error").textContent = "瀏覽器無法保存 API KEY。";
     $("api-key-error").hidden = false;
     return;
@@ -405,7 +383,7 @@ async function generateImage() {
   try {
     if (!model) throw Error("找不到所選圖片模型的呼叫方式。");
     const accountCredits = usesAccountCredits(modelId);
-    const apiKey = model.apiKey === "Free" || accountCredits ? "" : getApiKey(modelId)?.value || "";
+    const apiKey = model.apiKey === "Free" || accountCredits ? "" : getApiKey(model.provider)?.value || "";
     if (model.apiKey !== "Free" && !accountCredits && !apiKey) throw Error("請先點擊 API KEY 並輸入金鑰。");
     const response = await model.call({ prompt, enhance, apiKey });
     if (!response.ok) {
@@ -471,7 +449,6 @@ $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("image-model").addEventListener("change", syncModelDetails);
 $("model-api-key").addEventListener("click", openApiKeyDialog);
-$("api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("api-key-account-credits").addEventListener("change", syncApiKeyCreditControls);
 $("api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-api-key").addEventListener("click", () => $("api-key-dialog").close());

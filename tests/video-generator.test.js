@@ -238,8 +238,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /"dreamina-seedance-2-5-260628": Object\.freeze\(\{[^}]*label: "Seedance 2\.5"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 30/);
   assert.match(script, /"veo-3\.1-generate-preview": Object\.freeze\(\{[^}]*label: "Veo 3\.1"[^}]*provider: "google"[^}]*apiKey: "Google AI Studio"[^}]*resolutions: \["720p", "1080p"\][^}]*durations: \[4, 6, 8\][^}]*ratios: \["16:9", "9:16"\]/);
   assert.match(script, /model\.provider === "google"[\s\S]*"veo-audio-option"\)\.hidden = !veoAudio[\s\S]*"veo-include-audio"\)\.disabled = busy \|\| !veoAudio/);
-  assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
-  assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
+  assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
+  assert.match(script, /getApiKey\(model\.provider\)/);
+  assert.doesNotMatch(script, /copyApiKeyFromSource|syncApiKeySources|listApiKeys/);
+  assert.doesNotMatch(html, /video-api-key-source|從其他模型複製/);
   assert.match(html, /id="video-api-key-dialog"/);
   assert.match(html, /id="video-api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
   assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);

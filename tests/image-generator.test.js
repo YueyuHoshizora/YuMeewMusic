@@ -2,6 +2,24 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { calculateImageSize } from "../js/image-generation-settings.js";
+import { extractImageGenerationIdentifiers, generationIdentifierHeaders, responseGenerationIdentifiers } from "../js/image-generation-identifiers.js";
+
+test("image generation identifiers preserve task, generation and request IDs", () => {
+  const identifiers = extractImageGenerationIdentifiers(
+    { task_id: "task_123", id: "generation_456" },
+    new Headers({ "x-request-id": "req_789" }),
+  );
+  assert.deepEqual(identifiers, { taskId: "task_123", generationId: "generation_456", requestId: "req_789" });
+  const internalHeaders = new Headers(generationIdentifierHeaders(identifiers));
+  assert.deepEqual(responseGenerationIdentifiers(internalHeaders), identifiers);
+});
+
+test("image generation identifiers fall back to request ID when no task ID exists", () => {
+  assert.deepEqual(
+    extractImageGenerationIdentifiers({}, new Headers({ "x-request-id": "req_only" })),
+    { taskId: "", generationId: "", requestId: "req_only" },
+  );
+});
 
 test("image generation settings calculate height from horizontal pixels", () => {
   assert.deepEqual(calculateImageSize("16:9", 1280), { ratio: "16:9", width: 1280, height: 720 });
@@ -142,7 +160,8 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /const IMAGE_HISTORY_LIMIT = 10/);
   assert.match(script, /saveStoredValue\("image-generation-history"/);
   assert.match(script, /loadStoredValue\("image-generation-history"\)/);
-  assert.match(script, /async function saveGenerationHistory\(blob, prompt, modelId\)[\s\S]*slice\(0, IMAGE_HISTORY_LIMIT\)/);
+  assert.match(script, /async function saveGenerationHistory\(blob, prompt, modelId, identifiers = \{\}\)[\s\S]*taskId: identifiers\.taskId[\s\S]*requestId: identifiers\.requestId[\s\S]*slice\(0, IMAGE_HISTORY_LIMIT\)/);
+  assert.match(script, /任務 ID：\$\{record\.taskId\}[\s\S]*生成 ID：\$\{record\.generationId\}[\s\S]*請求 ID：\$\{record\.requestId\}/);
   assert.match(script, /open-image-history"\)\.addEventListener/);
   assert.match(script, /void restoreLastGeneratedImage\(\)/);
   assert.match(script, /deleteStoredValue\("image-video-project"\)/);

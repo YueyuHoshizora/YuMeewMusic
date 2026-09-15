@@ -5,6 +5,7 @@ import { getApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from ".
 import { clientIdentityHeaders } from "./client-identity.js";
 import { getCurrentSession, onAuthStateChange } from "./auth.js";
 import { calculateImageSize, IMAGE_RATIOS, IMAGE_WIDTHS } from "./image-generation-settings.js";
+import { extractImageGenerationIdentifiers, generationIdentifierHeaders, responseGenerationIdentifiers } from "./image-generation-identifiers.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
@@ -53,14 +54,24 @@ async function callOpenAiImage({ model, prompt, apiKey, width, height }) {
   });
   if (!response.ok) return response;
   const result = await response.json();
+  const identifiers = extractImageGenerationIdentifiers(result, response.headers);
+  const identifierHeaders = generationIdentifierHeaders(identifiers);
   const image = result?.data?.[0];
   if (image?.b64_json) {
     return new Response(base64ImageBlob(image.b64_json), {
       status: 200,
-      headers: { "Content-Type": "image/jpeg" },
+      headers: { "Content-Type": "image/jpeg", ...identifierHeaders },
     });
   }
-  if (image?.url) return fetch(image.url, { cache: "no-store" });
+  if (image?.url) {
+    const imageResponse = await fetch(image.url, { cache: "no-store" });
+    if (!imageResponse.ok) return imageResponse;
+    const imageBlob = await imageResponse.blob();
+    return new Response(imageBlob, {
+      status: 200,
+      headers: { "Content-Type": imageBlob.type || "image/jpeg", ...identifierHeaders },
+    });
+  }
   throw Error("OpenAI 沒有回傳可用的圖片資料。");
 }
 
@@ -394,9 +405,19 @@ async function loadGenerationHistory() {
   syncHistoryButton();
 }
 
-async function saveGenerationHistory(blob, prompt, modelId) {
+async function saveGenerationHistory(blob, prompt, modelId, identifiers = {}) {
   await loadGenerationHistory();
-  generationHistory.unshift({ id: crypto.randomUUID?.() || `image-${Date.now()}`, blob, prompt, modelId, modelLabel: IMAGE_MODELS[modelId]?.label || modelId, createdAt: Date.now() });
+  generationHistory.unshift({
+    id: crypto.randomUUID?.() || `image-${Date.now()}`,
+    blob,
+    prompt,
+    modelId,
+    modelLabel: IMAGE_MODELS[modelId]?.label || modelId,
+    taskId: identifiers.taskId || "",
+    generationId: identifiers.generationId || "",
+    requestId: identifiers.requestId || "",
+    createdAt: Date.now(),
+  });
   generationHistory = generationHistory.slice(0, IMAGE_HISTORY_LIMIT);
   await saveStoredValue("image-generation-history", { items: generationHistory, updatedAt: Date.now() });
   syncHistoryButton();
@@ -425,12 +446,21 @@ function renderImageHistory() {
     const info = document.createElement("div"); info.className = "image-history-card-info";
     const title = document.createElement("strong"); title.textContent = record.modelLabel || "生成圖片";
     const meta = document.createElement("small"); meta.textContent = historyTime(record.createdAt);
+    const identifierMeta = document.createElement("small");
+    identifierMeta.textContent = record.taskId
+      ? `任務 ID：${record.taskId}`
+      : record.generationId
+        ? `生成 ID：${record.generationId}`
+        : record.requestId
+          ? `請求 ID：${record.requestId}`
+          : "";
+    identifierMeta.hidden = !identifierMeta.textContent;
     const prompt = document.createElement("p"); prompt.textContent = record.prompt || "";
     const actions = document.createElement("div"); actions.className = "image-history-card-actions";
     const load = document.createElement("button"); load.type = "button"; load.textContent = "載入"; load.addEventListener("click", async () => { await displayGeneratedImage(record.blob, true); $("image-history-dialog").close(); });
     const download = document.createElement("button"); download.type = "button"; download.textContent = "下載"; download.addEventListener("click", () => { const link = document.createElement("a"); link.href = url; link.download = imageFilename(); link.click(); });
     const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "刪除"; remove.addEventListener("click", () => void deleteHistoryImage(record.id));
-    actions.append(load, download, remove); info.append(title, meta, prompt, actions); card.append(image, info); return card;
+    actions.append(load, download, remove); info.append(title, meta, identifierMeta, prompt, actions); card.append(image, info); return card;
   }));
 }
 
@@ -467,12 +497,13 @@ async function generateImage() {
       if (model.publicResource && isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
       throw Error(detail || `圖片服務回傳 ${response.status}`);
     }
+    const identifiers = responseGenerationIdentifiers(response.headers);
     const blob = await response.blob();
     if (!blob.type.startsWith("image/") || !blob.size) throw Error("圖片服務沒有回傳可用的圖片。");
     const result = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
     await displayGeneratedImage(result);
     const cachedFile = new File([result], imageFilename(), { type: result.type || "image/jpeg", lastModified: Date.now() });
-    await saveGenerationHistory(result, prompt, modelId).catch(() => showError("圖片已生成，但無法保存生成歷史。"));
+    await saveGenerationHistory(result, prompt, modelId, identifiers).catch(() => showError("圖片已生成，但無法保存生成歷史。"));
     await saveStoredMedia("generated-image", cachedFile).catch(() => {
       showError("圖片已生成，但瀏覽器無法保存最後一次生成結果。");
     });

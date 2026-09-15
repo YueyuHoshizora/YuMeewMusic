@@ -3,6 +3,15 @@ export function roundUpCurrency(value, decimals = 2) {
   return Math.ceil((Number(value) - Number.EPSILON) * factor) / factor;
 }
 
+export function hasSufficientVideoCredit(balance, requiredCost) {
+  const available = Number(balance);
+  const required = Number(requiredCost);
+  if (!Number.isFinite(available) || !Number.isFinite(required) || available < 0 || required < 0) return false;
+  const availableCents = Math.floor((available + Number.EPSILON) * 100);
+  const requiredCents = Math.ceil((required - Number.EPSILON) * 100);
+  return availableCents >= requiredCents;
+}
+
 function resourceCounts(resources = []) {
   return resources.reduce((counts, resource) => {
     if (Object.hasOwn(counts, resource?.kind)) counts[resource.kind] += 1;

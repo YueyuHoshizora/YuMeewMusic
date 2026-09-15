@@ -320,6 +320,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /provider === "google" && resultMetadata\.includeAudio === false[\s\S]*convertMediaFile\(\{[\s\S]*hasAudio: false/);
   assert.match(script, /resources\.push\(\.\.\.characters\.map\(character => \(\{[\s\S]*kind: "image"[\s\S]*referenceImage/);
   assert.match(script, /const inputs = generationInputs\(details\)\.resources[\s\S]*estimateVideoGenerationCost\([\s\S]*resources: inputs/);
+  assert.match(script, /const accountCredits = usesAccountCredits\(\$\("video-model"\)\.value\)[\s\S]*if \(accountCredits\)[\s\S]*getCurrentSession\(\)[\s\S]*fetchMemberAccount\(session, \{ ledger: false \}\)/);
+  assert.match(script, /!hasSufficientVideoCredit\(account\.balance, estimate\.total\)[\s\S]*生成額度不足，請先儲值再嘗試。/);
   assert.match(script, /payload\.watermark = false/);
   assert.match(script, /instances: \[\{ prompt: guidedPrompt,[\s\S]*sampleCount: 1[\s\S]*durationSeconds:[\s\S]*aspectRatio:/);
   assert.match(script, /provider === "google" \? \{ apiKey \} : \{\}/);

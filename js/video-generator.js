@@ -9,8 +9,9 @@ import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 import { parseStoryboardPrompt, referencedResourceNames } from "./video-prompt-mode.js";
 import { convertMediaFile } from "./converter-core.js";
-import { fetchVideoBillingSettings } from "./member-api.js";
-import { estimateVideoGenerationCost } from "./video-billing.js";
+import { getCurrentSession } from "./auth.js";
+import { fetchMemberAccount, fetchVideoBillingSettings } from "./member-api.js";
+import { estimateVideoGenerationCost, hasSufficientVideoCredit } from "./video-billing.js";
 import { providerBillingUrl } from "./provider-billing.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
@@ -4015,6 +4016,7 @@ async function openGenerateConfirmation() {
     return;
   }
   const model = VIDEO_MODELS[$("video-model").value];
+  const accountCredits = usesAccountCredits($("video-model").value);
   const details = promptVideoDetails();
   const resources = referencedResources();
   const characters = referencedCharacters(details);
@@ -4033,9 +4035,21 @@ async function openGenerateConfirmation() {
       includeAudio: $("veo-include-audio").checked,
       resources: inputs,
     }, billing.settings);
+    if (accountCredits) {
+      setStatus("正在確認會員剩餘額度…");
+      const { session, error } = await getCurrentSession();
+      if (error) throw error;
+      const account = await fetchMemberAccount(session, { ledger: false });
+      if (!hasSufficientVideoCredit(account.balance, estimate.total)) {
+        showError("生成額度不足，請先儲值再嘗試。");
+        setStatus("生成額度不足", "error");
+        syncGenerateAvailability();
+        return;
+      }
+    }
   } catch (error) {
     showError(error.message || "目前無法取得影片生成費率，請稍後再試。");
-    setStatus("影片費率試算失敗", "error");
+    setStatus(accountCredits ? "會員額度確認失敗" : "影片費率試算失敗", "error");
     syncGenerateAvailability();
     return;
   }

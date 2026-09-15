@@ -9,7 +9,7 @@ import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 import { parseStoryboardPrompt, referencedResourceNames } from "./video-prompt-mode.js";
 import { convertMediaFile } from "./converter-core.js";
-import { getCurrentSession } from "./auth.js";
+import { getCurrentSession, onAuthStateChange } from "./auth.js";
 import { fetchMemberAccount, fetchVideoBillingSettings } from "./member-api.js";
 import { estimateVideoGenerationCost, hasSufficientVideoCredit } from "./video-billing.js";
 import { providerBillingUrl } from "./provider-billing.js";
@@ -58,6 +58,7 @@ applyTheme(settings.mode, settings.theme);
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 let busy = false;
+let memberSignedIn = false;
 let promptBuilderMinimized = false;
 let editingStoryboardId = "";
 let filmStyle = { ...EMPTY_FILM_STYLE };
@@ -183,7 +184,8 @@ function showError(text = "") {
 function syncGenerateAvailability() {
   const prompt = editorText(activePromptEditor());
   const modelId = $("video-model").value;
-  const hasKey = usesAccountCredits(modelId) || Boolean(getApiKey(VIDEO_MODELS[modelId]?.provider));
+  const accountCredits = usesAccountCredits(modelId);
+  const hasKey = accountCredits ? memberSignedIn : Boolean(getApiKey(VIDEO_MODELS[modelId]?.provider));
   $("generate-video").disabled = busy || !prompt || !hasKey;
 }
 
@@ -3405,7 +3407,7 @@ function syncModelDetails() {
   const ratios = model.ratios || VIDEO_RATIOS;
   const previousRatio = $("video-ratio").value;
   replaceOptions($("video-ratio"), ratios, ratios.includes(previousRatio) ? previousRatio : ratios[0]);
-  $("video-api-key").textContent = usesAccountCredits(modelId) ? "帳戶扣點" : getApiKey(model.provider) ? "已設定" : "未設定";
+  $("video-api-key").textContent = usesAccountCredits(modelId) ? (memberSignedIn ? "帳戶扣點" : "需登入") : getApiKey(model.provider) ? "已設定" : "未設定";
   const billingUrl = providerBillingUrl(model.provider);
   $("video-provider-billing").href = billingUrl;
   $("video-provider-billing").hidden = !billingUrl;
@@ -3435,7 +3437,7 @@ function openApiKeyDialog() {
       ? "請使用 Google AI Studio Gemini API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 Google。"
       : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
   $("video-api-key-input").value = "";
-  $("video-api-key-account-credits").checked = usesAccountCredits(modelId);
+  $("video-api-key-account-credits").checked = memberSignedIn && usesAccountCredits(modelId);
   $("video-api-key-input").placeholder = getApiKey(model.provider) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
   $("video-api-key-error").hidden = true;
   syncVideoApiKeyCreditControls();
@@ -3444,8 +3446,10 @@ function openApiKeyDialog() {
 }
 
 function syncVideoApiKeyCreditControls() {
-  const disabled = $("video-api-key-account-credits").checked;
-  $("video-api-key-input").disabled = disabled;
+  const accountOption = $("video-api-key-account-credits");
+  accountOption.disabled = !memberSignedIn;
+  if (!memberSignedIn) accountOption.checked = false;
+  $("video-api-key-input").disabled = accountOption.checked;
 }
 
 function submitApiKey(event) {
@@ -3455,6 +3459,11 @@ function submitApiKey(event) {
   const value = $("video-api-key-input").value.trim();
   const accountCredits = $("video-api-key-account-credits").checked;
   if (!model) return;
+  if (accountCredits && !memberSignedIn) {
+    $("video-api-key-error").textContent = "請先登入會員帳號。";
+    $("video-api-key-error").hidden = false;
+    return;
+  }
   if (!accountCredits && !value) {
     $("video-api-key-error").textContent = "請輸入 API KEY。";
     $("video-api-key-error").hidden = false;
@@ -4024,6 +4033,12 @@ async function openGenerateConfirmation() {
   }
   const model = VIDEO_MODELS[$("video-model").value];
   const accountCredits = usesAccountCredits($("video-model").value);
+  if (accountCredits && !memberSignedIn) {
+    showError("請先登入會員帳號，再使用帳戶扣點。");
+    setStatus("需要會員登入", "error");
+    syncGenerateAvailability();
+    return;
+  }
   const details = promptVideoDetails();
   const resources = referencedResources();
   const characters = referencedCharacters(details);
@@ -4234,6 +4249,11 @@ $("video-api-key").addEventListener("click", openApiKeyDialog);
 $("video-api-key-account-credits").addEventListener("change", syncVideoApiKeyCreditControls);
 $("video-api-key-form").addEventListener("submit", submitApiKey);
 $("cancel-video-api-key").addEventListener("click", () => $("video-api-key-dialog").close());
+onAuthStateChange(session => {
+  memberSignedIn = Boolean(session?.user);
+  syncModelDetails();
+  syncVideoApiKeyCreditControls();
+});
 $("generate-video").addEventListener("click", openGenerateConfirmation);
 $("confirm-video-generation-form").addEventListener("submit", confirmVideoGeneration);
 $("cancel-video-generation").addEventListener("click", () => $("confirm-video-generation-dialog").close());
@@ -4282,6 +4302,11 @@ window.addEventListener("pagehide", () => {
 syncModelDetails();
 syncPromptModeUi();
 syncDraftStatus(false);
+void getCurrentSession().then(({ session }) => {
+  memberSignedIn = Boolean(session?.user);
+  syncModelDetails();
+  syncVideoApiKeyCreditControls();
+}).catch(() => {});
 function restoreWhenIdle(task) {
   const run = () => void task();
   if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });

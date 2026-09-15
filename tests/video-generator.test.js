@@ -244,9 +244,12 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(html, /video-api-key-source|從其他模型複製/);
   assert.match(html, /id="video-api-key-dialog"/);
   assert.match(html, /id="video-api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
-  assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);
+  assert.match(script, /usesAccountCredits\(modelId\) \? \(memberSignedIn \? "帳戶扣點" : "需登入"\)/);
   assert.match(script, /providerBillingUrl\(model\.provider\)[\s\S]*"video-provider-billing"\)\.href = billingUrl[\s\S]*前往 \$\{model\.apiKey\} 儲值/);
-  assert.match(script, /function syncVideoApiKeyCreditControls\(\)[\s\S]*video-api-key-input"\)\.disabled = disabled/);
+  assert.match(script, /function syncGenerateAvailability\(\)[\s\S]*accountCredits \? memberSignedIn[\s\S]*generate-video"\)\.disabled/);
+  assert.match(script, /function syncVideoApiKeyCreditControls\(\)[\s\S]*accountOption\.disabled = !memberSignedIn[\s\S]*video-api-key-input"\)\.disabled = accountOption\.checked/);
+  assert.match(script, /onAuthStateChange\(session =>[\s\S]*memberSignedIn = Boolean\(session\?\.user\)[\s\S]*syncModelDetails\(\)/);
+  assert.match(script, /accountCredits && !memberSignedIn[\s\S]*請先登入會員帳號，再使用帳戶扣點/);
   assert.match(html, /id="google-quota-help"[^>]*hidden>[\s\S]*aistudio\.google\.com\/rate-limit[\s\S]*ai\.google\.dev\/gemini-api\/docs\/billing/);
   assert.match(script, /https:\/\/model-proxy\.yustellar\.idv\.tw\/minimax\/video/);
   assert.match(script, /CREATE_VIDEO_URL = `\$\{VIDEO_PROXY_URL\}\/generate`/);

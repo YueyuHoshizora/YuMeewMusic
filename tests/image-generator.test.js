@@ -89,11 +89,14 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*flux-generation-confirm-form"\)\.addEventListener\("submit", confirmFluxGeneration\)/);
   assert.match(html, /id="api-key-input"[^>]*type="password"/);
   assert.match(html, /id="api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
-  assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);
-  assert.match(script, /function syncApiKeyCreditControls\(\)[\s\S]*api-key-input"\)\.disabled = disabled/);
+  assert.match(script, /usesAccountCredits\(modelId\) \? \(memberSignedIn \? "帳戶扣點" : "需登入"\)/);
+  assert.match(script, /function canUseSelectedImageModel\(\)[\s\S]*usesAccountCredits\(modelId\)[\s\S]*return memberSignedIn/);
+  assert.match(script, /function syncApiKeyCreditControls\(\)[\s\S]*accountOption\.disabled = !memberSignedIn[\s\S]*api-key-input"\)\.disabled = accountOption\.checked/);
+  assert.match(script, /onAuthStateChange\(session =>[\s\S]*memberSignedIn = Boolean\(session\?\.user\)[\s\S]*syncModelDetails\(\)/);
   assert.doesNotMatch(html, /api-key-source|從其他模型複製/);
   assert.doesNotMatch(script, /copyApiKeyFromSource|syncApiKeySources|listApiKeys/);
   assert.match(script, /getApiKey\(model\.provider\)/);
+  assert.match(script, /accountCredits && !memberSignedIn[\s\S]*請先登入會員帳號，再使用帳戶扣點/);
   assert.match(script, /\$\("image-model"\)\.disabled = value/);
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
   assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);

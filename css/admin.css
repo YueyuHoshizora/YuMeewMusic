@@ -74,3 +74,6 @@
 .billing-save { justify-self: start; padding: 10px 15px; border: 1px solid var(--primary); border-radius: 9px; background: transparent; color: var(--primary-text); font: inherit; font-weight: 750; }
 .billing-save:hover { background: var(--hover); }
 .billing-note { margin: 13px 0 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.billing-preview { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+.billing-preview::before { align-self: center; margin-right: 2px; color: var(--muted); content: "每秒試算"; font-size: 12px; font-weight: 750; }
+.billing-preview span { padding: 7px 10px; border: 1px solid var(--primary); border-radius: 8px; background: var(--tint); color: var(--primary-text); font-size: 12px; font-weight: 750; }

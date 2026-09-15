@@ -53,10 +53,12 @@ function renderMargin(setting) {
 }
 
 function renderBilling(settings) {
+  const fields = document.querySelector(`[data-billing-fields="${$("billing-model").value}"]`);
   for (const [name, value] of Object.entries(settings)) {
-    const input = $("billing-form").elements.namedItem(name);
+    const input = fields?.querySelector(`[name="${name}"]`);
     if (input instanceof HTMLInputElement) input.value = String(value);
   }
+  renderBillingPreview($("billing-model").value);
 }
 
 function readBillingForm() {
@@ -70,6 +72,31 @@ function showBillingModel(model) {
     fields.hidden = !selected;
     for (const input of fields.querySelectorAll("input")) input.disabled = !selected;
   }
+  renderBillingPreview(model);
+}
+
+function roundBillingUp(value, decimals = 2) {
+  const factor = 10 ** decimals;
+  return Math.ceil((value - Number.EPSILON) * factor) / factor;
+}
+
+function renderBillingPreview(model) {
+  if (!model.startsWith("seedance-")) return;
+  const fields = document.querySelector(`[data-billing-fields="${model}"]`);
+  const preview = $(`billing-preview-${model}`);
+  if (!fields || !preview) return;
+  const base = Number(fields.querySelector('[name="basePerSecond"]')?.value);
+  const decimals = Number(fields.querySelector('[name="roundUpDecimals"]')?.value) || 2;
+  const resolutions = model === "seedance-2-0"
+    ? [["480P", "multiplier480"], ["720P", "multiplier720"], ["1080P", "multiplier1080"], ["4K", "multiplier4k"]]
+    : [["480P", "multiplier480"], ["720P", "multiplier720"]];
+  preview.replaceChildren(...resolutions.map(([label, name]) => {
+    const result = document.createElement("span");
+    const multiplier = Number(fields.querySelector(`[name="${name}"]`)?.value);
+    const total = Number.isFinite(base) && Number.isFinite(multiplier) ? roundBillingUp(base * multiplier, decimals) : 0;
+    result.textContent = `${label} · ${usd.format(total)}／秒`;
+    return result;
+  }));
 }
 
 function renderMembers() {
@@ -212,6 +239,10 @@ $("billing-model").addEventListener("change", async event => {
     renderBilling(result.settings);
     setStatus(`${result.label} 計費設定已載入。`);
   } catch (error) { setStatus(error.message || "無法載入計費設定。", true); }
+});
+
+$("billing-form").addEventListener("input", event => {
+  if (event.target.matches("input[type=number]")) renderBillingPreview($("billing-model").value);
 });
 
 $("member-search-form").addEventListener("submit", async event => {

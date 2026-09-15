@@ -314,6 +314,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /payload\.generate_audio = true/);
   assert.match(script, /includeAudio: model\.provider === "google" \? \$\("veo-include-audio"\)\.checked : true/);
   assert.match(script, /provider === "google" && resultMetadata\.includeAudio === false[\s\S]*convertMediaFile\(\{[\s\S]*hasAudio: false/);
+  assert.match(script, /resources\.push\(\.\.\.characters\.map\(character => \(\{[\s\S]*kind: "image"[\s\S]*referenceImage/);
+  assert.match(script, /const inputs = generationInputs\(details\)\.resources[\s\S]*estimateVideoGenerationCost\([\s\S]*resources: inputs/);
   assert.match(script, /payload\.watermark = false/);
   assert.match(script, /instances: \[\{ prompt: guidedPrompt,[\s\S]*sampleCount: 1[\s\S]*durationSeconds:[\s\S]*aspectRatio:/);
   assert.match(script, /provider === "google" \? \{ apiKey \} : \{\}/);

@@ -9,6 +9,8 @@ import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 import { parseStoryboardPrompt, referencedResourceNames } from "./video-prompt-mode.js";
 import { convertMediaFile } from "./converter-core.js";
+import { fetchVideoBillingSettings } from "./member-api.js";
+import { estimateVideoGenerationCost } from "./video-billing.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -32,10 +34,10 @@ const POLL_TIMEOUT = 30 * 60 * 1000;
 const VIDEO_HISTORY_LIMIT = 10;
 const $ = id => document.getElementById(id);
 const VIDEO_MODELS = Object.freeze({
-  "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15 }),
-  "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 15 }),
-  "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 30 }),
-  "veo-3.1-generate-preview": Object.freeze({ label: "Veo 3.1", provider: "google", apiKey: "Google AI Studio", resolutions: ["720p", "1080p"], defaultResolution: "720p", durations: [4, 6, 8], ratios: ["16:9", "9:16"] }),
+  "MiniMax-H3": Object.freeze({ label: "MiniMax H3", provider: "minimax", apiKey: "MiniMax", resolutions: ["768P", "2K"], defaultResolution: "768P", minimumDuration: 4, maximumDuration: 15, billingId: "minimax-h3" }),
+  "dreamina-seedance-2-0-260128": Object.freeze({ label: "Seedance 2.0", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p", "1080p", "4k"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 15, billingId: "seedance-2-0" }),
+  "dreamina-seedance-2-5-260628": Object.freeze({ label: "Seedance 2.5", provider: "byteplus", apiKey: "BytePlus", resolutions: ["480p", "720p"], defaultResolution: "480p", minimumDuration: 4, maximumDuration: 30, billingId: "seedance-2-5" }),
+  "veo-3.1-generate-preview": Object.freeze({ label: "Veo 3.1", provider: "google", apiKey: "Google AI Studio", resolutions: ["720p", "1080p"], defaultResolution: "720p", durations: [4, 6, 8], ratios: ["16:9", "9:16"], billingId: "veo-3-1" }),
 });
 const VIDEO_RATIOS = Object.freeze(["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"]);
 const STORYBOARD_ACTIONS = Object.freeze({
@@ -51,6 +53,7 @@ const EMPTY_FILM_STYLE = Object.freeze({ primary: "", primaryCustom: "", era: ""
 
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 let busy = false;
 let promptBuilderMinimized = false;
@@ -3996,7 +3999,7 @@ async function generateVideo() {
   }
 }
 
-function openGenerateConfirmation() {
+async function openGenerateConfirmation() {
   if ($("generate-video").disabled || busy) return;
   const report = isPromptMode()
     ? { errors: 0, totalEntries: 0, promptLength: completeVideoPrompt().length }
@@ -4010,15 +4013,39 @@ function openGenerateConfirmation() {
   const details = promptVideoDetails();
   const resources = referencedResources();
   const characters = referencedCharacters(details);
+  const inputs = generationInputs(details).resources;
+  const duration = model.provider === "google" && inputs.length ? 8 : Number($("video-duration").value);
+  if (duration !== Number($("video-duration").value)) $("video-duration").value = String(duration);
+  setStatus("正在取得最新費率並試算…");
+  $("generate-video").disabled = true;
+  let estimate;
+  try {
+    const billing = await fetchVideoBillingSettings(model.billingId);
+    estimate = estimateVideoGenerationCost({
+      billingId: model.billingId,
+      resolution: $("video-resolution").value,
+      duration,
+      includeAudio: $("veo-include-audio").checked,
+      resources: inputs,
+    }, billing.settings);
+  } catch (error) {
+    showError(error.message || "目前無法取得影片生成費率，請稍後再試。");
+    setStatus("影片費率試算失敗", "error");
+    syncGenerateAvailability();
+    return;
+  }
+  const estimatedFee = estimate.resourceCost > 0
+    ? `${usd.format(estimate.total)}（影片 ${usd.format(estimate.outputCost)}＋資源 ${usd.format(estimate.resourceCost)}）`
+    : usd.format(estimate.total);
   const values = [
     ["生成模型", model.label],
     ["輸出規格", `${$("video-resolution").value} · ${$("video-ratio").value}`],
-    ["影片長度", `${$("video-duration").value} 秒`],
+    ["影片長度", `${duration} 秒`],
     ["生成任務", "1 個"],
     ["內容模式", isPromptMode() ? "題詞模式" : `${report.totalEntries} 個分鏡`],
     ["人物／資源", `${characters.length} 位／${resources.length} 個`],
     ["影片音訊", model.provider === "google" ? ($("veo-include-audio").checked ? "包含" : "不包含") : model.provider === "byteplus" ? "啟用" : "依模型輸出"],
-    ["額度／費用", `依 ${model.apiKey} 帳戶方案計算`],
+    ["額度／費用", `預估 ${estimatedFee}`],
     ["題詞長度", `${report.promptLength} 字元`],
   ];
   $("video-generation-summary").replaceChildren(...values.map(([label, value]) => {
@@ -4029,6 +4056,8 @@ function openGenerateConfirmation() {
     return item;
   }));
   $("confirm-video-generation-dialog").showModal();
+  setStatus("已完成生成費率試算");
+  syncGenerateAvailability();
 }
 
 function confirmVideoGeneration(event) {

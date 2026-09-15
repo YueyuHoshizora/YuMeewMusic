@@ -34,6 +34,16 @@ export async function fetchUsdTwdExchangeRate() {
   return result;
 }
 
+export async function fetchVideoBillingSettings(model) {
+  if (!isMemberApiConfigured()) throw new Error("會員資料服務尚未設定。");
+  const url = new URL(`./v1/billing/video/${encodeURIComponent(model)}`, `${MEMBER_API_URL.replace(/\/+$/, "")}/`);
+  const response = await fetch(url, { headers: { Accept: "application/json" }, cache: "no-store" });
+  let result;
+  try { result = await response.json(); } catch { result = {}; }
+  if (!response.ok) throw new Error(result.message || result.error || `費率服務回傳 ${response.status}`);
+  return result;
+}
+
 async function fetchAdminJson(session, path, { method = "GET", body } = {}) {
   if (!isMemberApiConfigured()) throw new Error("會員資料服務尚未設定。");
   if (!session?.access_token) throw new Error("請先登入會員帳號。");

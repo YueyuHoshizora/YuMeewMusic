@@ -297,9 +297,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /image: \{ inlineData: \{ mimeType: resourceMimeType\(input\), data: await fileBase64\(input\.file\) \} \}/);
   assert.match(script, /Veo 3\.1 最多可使用 3 張引用圖片（包含人物參考圖）/);
   assert.doesNotMatch(script, /AUTOCOMPLETE_URL|requestCompletedPrompt|enhance-video-prompt/);
-  assert.match(script, /JSON\.stringify\(\{ apiKey, taskId \}\)/);
+  assert.match(script, /JSON\.stringify\(\{ apiKey, taskId, \.\.\.billing \}\)/);
   assert.match(script, /body: JSON\.stringify\(\{\s*apiKey,\s*payload,/);
-  assert.match(script, /fetch\(providerEndpoints\(provider\)\.download, \{[\s\S]*body: JSON\.stringify\(\{ url: remoteUrl, \.\.\.\(provider === "google" \? \{ apiKey \} : \{\}\) \}\)/);
+  assert.match(script, /fetch\(providerEndpoints\(provider\)\.download, \{[\s\S]*accountCredits: Boolean\(resultMetadata\.accountCredits\)[\s\S]*reservationId: resultMetadata\.reservationId/);
   assert.match(script, /function videoFilename\(date = new Date\(\)\)/);
   assert.match(script, /return `video_\$\{day\}_\$\{time\}\.mp4`/);
   assert.match(script, /code === 1008 \|\| \/insufficient balance\/i\.test\(message\)/);
@@ -311,7 +311,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /google-quota-help"\)\.hidden = !text\.includes\("Google Veo 額度或速率限制"\)/);
   assert.match(html, /MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援/);
   assert.match(script, /apiError\(body, response\.ok \? "" : `\$\{service\} API 回傳 \$\{response\.status\}`, provider\)/);
-  assert.match(script, /async function pollVideoTask\(taskId, apiKey, model, signal, startedAt = Date\.now\(\)\)/);
+  assert.match(script, /async function pollVideoTask\(taskId, apiKey, model, signal, billing = \{\}, startedAt = Date\.now\(\)\)/);
   assert.match(script, /model\.provider === "byteplus" \? created\?\.id : model\.provider === "google" \? created\?\.name : created\?\.task_id/);
   assert.match(script, /model\.provider === "byteplus" \? task\.content\?\.video_url : task\.content\?\.url/);
   assert.match(script, /task\.response\?\.generateVideoResponse\?\.generatedSamples\?\.\[0\]\?\.video\?\.uri/);
@@ -322,9 +322,12 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /const inputs = generationInputs\(details\)\.resources[\s\S]*estimateVideoGenerationCost\([\s\S]*resources: inputs/);
   assert.match(script, /const accountCredits = usesAccountCredits\(\$\("video-model"\)\.value\)[\s\S]*if \(accountCredits\)[\s\S]*getCurrentSession\(\)[\s\S]*fetchMemberAccount\(session, \{ ledger: false \}\)/);
   assert.match(script, /!hasSufficientVideoCredit\(account\.balance, estimate\.total\)[\s\S]*生成額度不足，請先儲值再嘗試。/);
+  assert.match(script, /const accountCredits = usesAccountCredits\(modelId\)[\s\S]*Authorization: authorization[\s\S]*accountCredits,[\s\S]*idempotencyKey/);
+  assert.match(script, /created\?\.yumeewReservationId[\s\S]*generatedVideoMetadata\.reservationId = created\.yumeewReservationId/);
+  assert.match(script, /pollVideoTask\(taskId, apiKey, model, generationAbort\.signal, \{[\s\S]*accountCredits,[\s\S]*reservationId:/);
   assert.match(script, /payload\.watermark = false/);
   assert.match(script, /instances: \[\{ prompt: guidedPrompt,[\s\S]*sampleCount: 1[\s\S]*durationSeconds:[\s\S]*aspectRatio:/);
-  assert.match(script, /provider === "google" \? \{ apiKey \} : \{\}/);
+  assert.match(script, /provider === "google" \? \{[\s\S]*apiKey,[\s\S]*accountCredits:[\s\S]*reservationId:/);
   assert.match(script, /generate-video"\)\.addEventListener\("click", openGenerateConfirmation\)/);
   assert.match(script, /confirm-video-generation-form"\)\.addEventListener\("submit", confirmVideoGeneration\)/);
   assert.match(script, /taskState === "succeeded"/);

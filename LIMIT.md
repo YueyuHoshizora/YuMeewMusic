@@ -11,6 +11,8 @@
 | 分鏡 AI 分析 | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | 瀏覽器識別碼＋IP；Durable Object 精確冷卻 |
 | 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | 瀏覽器識別碼＋IP；Workers Rate Limiting Binding |
 | Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | 瀏覽器識別碼＋IP；Workers Rate Limiting Binding |
+| 會員影片額度預扣 | `member-api` `POST /v1/credits/video-reservations` | 每分鐘 60 次 | IP；D1 原子檢查會員可用餘額 |
+| 預扣確認／釋放 | `member-api` `POST /v1/internal/credits/reservations` | 每分鐘 30 次 | 服務 IP；HMAC 驗證 |
 
 所有 `OPTIONS` 預檢、健康檢查、模型與短效資源讀取、影片生成任務、狀態查詢及下載目前不計入上述限額。
 
@@ -45,6 +47,8 @@
 | Cron `0 * * * *` | 每小時刪除過期參考資源 | 排程事件 |
 
 Suno 限速 Binding：`SUNO_RATE_LIMITER`，namespace `7132501`，`10 / 60 秒`。
+
+帳戶扣點的影片任務會在呼叫模型前建立十分鐘 D1 預扣，取得任務 ID 後正式扣款；模型拒絕建立任務時立即釋放。成功任務的預扣識別碼與服務商對應會在 KV 保留兩小時，供後續查詢與下載授權使用。
 
 ## flux-klein
 

@@ -3579,12 +3579,12 @@ function providerEndpoints(provider) {
   return { create: CREATE_VIDEO_URL, query: QUERY_VIDEO_URL, download: DOWNLOAD_VIDEO_URL };
 }
 
-async function pollVideoTask(taskId, apiKey, model, signal, startedAt = Date.now()) {
+async function pollVideoTask(taskId, apiKey, model, signal, billing = {}, startedAt = Date.now()) {
   while (Date.now() - startedAt < POLL_TIMEOUT) {
     const result = await fetchJson(providerEndpoints(model.provider).query, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apiKey, taskId }),
+      body: JSON.stringify({ apiKey, taskId, ...billing }),
       cache: "no-store",
       signal,
     }, model.provider);
@@ -3632,6 +3632,7 @@ function generationRecordMetadata(modelId, prompt) {
     duration: Number($("video-duration").value),
     ratio: $("video-ratio").value,
     includeAudio: model.provider === "google" ? $("veo-include-audio").checked : true,
+    accountCredits: usesAccountCredits(modelId),
     prompt,
   };
 }
@@ -3856,7 +3857,14 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider, api
     const response = await fetch(providerEndpoints(provider).download, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: remoteUrl, ...(provider === "google" ? { apiKey } : {}) }),
+      body: JSON.stringify({
+        url: remoteUrl,
+        ...(provider === "google" ? {
+          apiKey,
+          accountCredits: Boolean(resultMetadata.accountCredits),
+          reservationId: resultMetadata.reservationId || "",
+        } : {}),
+      }),
       cache: "no-store",
     });
     if (!response.ok) throw Error(`影片下載回傳 ${response.status}`);
@@ -3908,7 +3916,7 @@ async function restorePendingGeneration() {
   const model = VIDEO_MODELS[metadata?.modelId];
   if (!pending?.taskId || !model) return;
   const apiKey = getApiKey(metadata.modelId)?.value || "";
-  if (!apiKey) {
+  if (!metadata.accountCredits && !apiKey) {
     setStatus(`有一個未完成的 ${metadata.modelLabel || model.label} 任務；設定 API KEY 後重新開啟頁面即可繼續查詢`, "error");
     return;
   }
@@ -3918,7 +3926,10 @@ async function restorePendingGeneration() {
   $("video-generation-lock-detail").textContent = `任務 ${pending.taskId}`;
   setStatus(`正在恢復 ${metadata.modelLabel || model.label} 生成任務…`);
   try {
-    const task = await pollVideoTask(pending.taskId, apiKey, model, generationAbort.signal);
+    const task = await pollVideoTask(pending.taskId, apiKey, model, generationAbort.signal, {
+      accountCredits: Boolean(metadata.accountCredits),
+      reservationId: metadata.reservationId || "",
+    });
     const saved = await showVideoResult(task.videoUrl, model.provider, apiKey, metadata);
     if (saved) await clearPendingGeneration();
     setStatus(saved ? "已取回先前的影片生成結果" : "影片已生成，將於下次開啟時再次嘗試保存", saved ? "success" : "error");
@@ -3945,13 +3956,15 @@ async function generateVideo() {
   const videoDetails = promptVideoDetails();
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
+  const accountCredits = usesAccountCredits(modelId);
   const apiKey = getApiKey(modelId)?.value || "";
-  if (!videoDetails || !apiKey || busy) return;
+  if (!videoDetails || (!accountCredits && !apiKey) || busy) return;
   showError();
   setBusy(true);
   generationAbort = new AbortController();
   let inputs = [];
   let pendingTaskSaved = false;
+  const idempotencyKey = crypto.randomUUID();
   $("video-generation-lock-title").textContent = "正在建立影片生成任務";
   $("video-generation-lock-detail").textContent = "請保持此頁面開啟，完成時間依服務狀態而定。";
   try {
@@ -3959,6 +3972,13 @@ async function generateVideo() {
     inputs = generation.resources;
     const prompt = completeVideoPrompt(videoDetails);
     generatedVideoMetadata = generationRecordMetadata(modelId, prompt);
+    let authorization = "";
+    if (accountCredits) {
+      const { session, error } = await getCurrentSession();
+      if (error) throw error;
+      if (!session?.access_token) throw Error("請先登入會員帳號。");
+      authorization = `Bearer ${session.access_token}`;
+    }
     setStatus(`正在建立 ${model.apiKey} 影片任務…`);
     const payload = await generationPayload(modelId, model, prompt, inputs, generationAbort.signal);
     if (model.provider === "byteplus") {
@@ -3967,18 +3987,28 @@ async function generateVideo() {
     }
     const created = await fetchJson(providerEndpoints(model.provider).create, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...(authorization ? { Authorization: authorization } : {}) },
       body: JSON.stringify({
         apiKey,
         payload,
+        accountCredits,
+        idempotencyKey,
+        billing: { includeAudio: generatedVideoMetadata.includeAudio },
       }),
       cache: "no-store",
       signal: generationAbort.signal,
     }, model.provider);
     const taskId = model.provider === "byteplus" ? created?.id : model.provider === "google" ? created?.name : created?.task_id;
     if (!taskId) throw Error(`${model.apiKey} 沒有回傳影片任務 ID。`);
+    if (accountCredits) {
+      if (!created?.yumeewReservationId) throw Error("影片任務已建立，但沒有取得額度預扣識別碼。");
+      generatedVideoMetadata.reservationId = created.yumeewReservationId;
+    }
     pendingTaskSaved = await savePendingGeneration(taskId, generatedVideoMetadata).then(() => true).catch(() => false);
-    const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal);
+    const task = await pollVideoTask(taskId, apiKey, model, generationAbort.signal, {
+      accountCredits,
+      reservationId: generatedVideoMetadata.reservationId || "",
+    });
     $("video-generation-lock-title").textContent = "影片已完成，正在載入結果";
     $("video-generation-lock-detail").textContent = "正在準備預覽與下載檔案…";
     const saved = await showVideoResult(task.videoUrl, model.provider, apiKey, generatedVideoMetadata);

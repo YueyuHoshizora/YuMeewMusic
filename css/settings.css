@@ -62,4 +62,5 @@ body.model-settings-body { min-width: 900px; }
 .api-key-details strong { margin-bottom: 5px; font-size: 15px; }
 .api-key-details span { color: var(--muted); font-size: 12px; }
 .api-key-masked { overflow: hidden; color: var(--foreground); font: 13px monospace; text-overflow: ellipsis; white-space: nowrap; }
+.api-key-masked.not-configured { color: var(--muted); font-family: inherit; }
 .api-key-manager > .model-status { display: block; max-width: none; margin-top: 16px; text-align: left; }

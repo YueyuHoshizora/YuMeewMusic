@@ -53,6 +53,10 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(script, /deleteCachedModel\(target\.keys\)/);
   assert.match(script, /deleteAllCachedModels\(\)/);
   assert.match(script, /listApiKeys\(\)/);
+  assert.match(script, /API_KEY_PROVIDERS\.map\(provider => \(\{ \.\.\.provider, \.\.\.stored\.get\(provider\.id\) \}\)\)/);
+  assert.match(script, /key\.value \? maskApiKey\(key\.value\) : '未設定'/);
+  assert.match(script, /button\.disabled = !key\.value/);
+  assert.match(script, /已設定 \$\{configuredCount\}／\$\{state\.apiKeys\.length\} 個服務供應商/);
   assert.match(html, /依服務供應商列出[\s\S]*相同供應商的模型共用一把金鑰/);
   assert.match(script, /maskApiKey\(key\.value\)/);
   assert.match(script, /deleteApiKey\(key\.id\)/);

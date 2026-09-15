@@ -8,6 +8,10 @@ const PROVIDER_LABELS = Object.freeze({
   google: "Google AI Studio",
 });
 
+export const API_KEY_PROVIDERS = Object.freeze(
+  Object.entries(PROVIDER_LABELS).map(([id, label]) => Object.freeze({ id, label })),
+);
+
 const LEGACY_MODEL_PROVIDERS = Object.freeze({
   "gpt-image-2.5-flare": "openai",
   "gpt-image-2.5-sunburst": "openai",

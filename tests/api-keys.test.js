@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { API_BILLING_STORAGE_KEY, API_KEY_STORAGE_KEY, deleteApiKey, getApiKey, listApiKeys, maskApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "../js/api-keys.js";
+import { API_BILLING_STORAGE_KEY, API_KEY_PROVIDERS, API_KEY_STORAGE_KEY, deleteApiKey, getApiKey, listApiKeys, maskApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "../js/api-keys.js";
 
 function createStorage() {
   const values = new Map();
@@ -12,6 +12,7 @@ function createStorage() {
 }
 
 test("API keys keep only the first and last three characters visible with at most five stars", () => {
+  assert.deepEqual(API_KEY_PROVIDERS.map(provider => provider.label), ["OpenAI", "MiniMax", "BytePlus", "Google AI Studio"]);
   assert.equal(maskApiKey("abc123456xyz"), "abc*****xyz");
   assert.equal(maskApiKey("abc1xyz"), "abc*xyz");
   assert.equal(maskApiKey("123456"), "*****");

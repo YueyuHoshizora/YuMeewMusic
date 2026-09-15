@@ -1,7 +1,7 @@
 import { applyTheme } from './themes.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { deleteAllCachedModels, deleteCachedModel, listCachedModels } from './indexeddb-model-cache.js';
-import { deleteApiKey, listApiKeys, maskApiKey } from './api-keys.js';
+import { API_KEY_PROVIDERS, deleteApiKey, listApiKeys, maskApiKey } from './api-keys.js';
 import { deleteAllStoredEntries, deleteStoredEntry, listStoredEntries } from './media-store.js';
 
 const $ = id => document.getElementById(id);
@@ -79,8 +79,9 @@ function render() {
 }
 
 function refreshApiKeys(message = '') {
-  state.apiKeys = listApiKeys();
-  $('api-key-empty').hidden = Boolean(state.apiKeys.length);
+  const stored = new Map(listApiKeys().map(key => [key.id, key]));
+  state.apiKeys = API_KEY_PROVIDERS.map(provider => ({ ...provider, ...stored.get(provider.id) }));
+  const configuredCount = state.apiKeys.filter(key => key.value).length;
   $('api-key-list').replaceChildren(...state.apiKeys.map(key => {
     const row = document.createElement('article');
     row.className = 'api-key-row';
@@ -89,20 +90,22 @@ function refreshApiKeys(message = '') {
     const name = document.createElement('strong');
     name.textContent = key.label;
     const id = document.createElement('span');
-    id.textContent = key.id;
+    id.textContent = '服務供應商';
     details.append(name, id);
     const masked = document.createElement('code');
     masked.className = 'api-key-masked';
-    masked.textContent = maskApiKey(key.value);
+    masked.textContent = key.value ? maskApiKey(key.value) : '未設定';
+    masked.classList.toggle('not-configured', !key.value);
     const button = document.createElement('button');
     button.className = 'model-delete';
     button.type = 'button';
     button.textContent = '刪除';
+    button.disabled = !key.value;
     button.addEventListener('click', () => requestDeleteApiKey(key));
     row.append(details, masked, button);
     return row;
   }));
-  $('api-key-status').textContent = message || (state.apiKeys.length ? `共 ${state.apiKeys.length} 組金鑰` : '目前沒有已保存的金鑰');
+  $('api-key-status').textContent = message || `已設定 ${configuredCount}／${state.apiKeys.length} 個服務供應商`;
 }
 
 function requestDeleteApiKey(key) {

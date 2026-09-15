@@ -83,6 +83,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /\$\("image-model"\)\.addEventListener\("change", syncModelDetails\)/);
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
   assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
+  assert.match(script, /const storedKey = getApiKey\(model\.provider\)[\s\S]*api-key-input"\)\.value = storedKey\?\.value \|\| ""/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey \}\)/);
   assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\?\.publicResource[\s\S]*flux-generation-confirm-dialog"\)\.showModal\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /function confirmFluxGeneration\(event\)[\s\S]*flux-generation-confirm-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);

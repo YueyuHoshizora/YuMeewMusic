@@ -182,12 +182,13 @@ function openApiKeyDialog() {
   const modelId = $("image-model").value;
   const model = IMAGE_MODELS[modelId];
   if (!model || model.apiKey === "Free" || busy) return;
+  const storedKey = getApiKey(model.provider);
   $("api-key-dialog-title").textContent = `${model.apiKey} API KEY`;
   $("api-key-dialog-description").textContent = `同一服務供應商的模型會共用這把金鑰。金鑰只會保存在目前瀏覽器。`;
-  $("api-key-input").value = "";
+  $("api-key-input").value = storedKey?.value || "";
   $("api-key-account-credits").checked = memberSignedIn && usesAccountCredits(modelId);
   syncApiKeyCreditControls();
-  $("api-key-input").placeholder = getApiKey(model.provider) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
+  $("api-key-input").placeholder = storedKey ? "已載入保存的 API KEY" : "輸入 API KEY";
   $("api-key-error").hidden = true;
   $("api-key-dialog").showModal();
   ($("api-key-input").disabled ? $("api-key-account-credits") : $("api-key-input")).focus();

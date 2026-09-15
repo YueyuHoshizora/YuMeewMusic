@@ -239,6 +239,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /"veo-3\.1-generate-preview": Object\.freeze\(\{[^}]*label: "Veo 3\.1"[^}]*provider: "google"[^}]*apiKey: "Google AI Studio"[^}]*resolutions: \["720p", "1080p"\][^}]*durations: \[4, 6, 8\][^}]*ratios: \["16:9", "9:16"\]/);
   assert.match(script, /model\.provider === "google"[\s\S]*"veo-audio-option"\)\.hidden = !veoAudio[\s\S]*"veo-include-audio"\)\.disabled = busy \|\| !veoAudio/);
   assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
+  assert.match(script, /const storedKey = getApiKey\(model\.provider\)[\s\S]*video-api-key-input"\)\.value = storedKey\?\.value \|\| ""/);
   assert.match(script, /getApiKey\(model\.provider\)/);
   assert.doesNotMatch(script, /copyApiKeyFromSource|syncApiKeySources|listApiKeys/);
   assert.doesNotMatch(html, /video-api-key-source|從其他模型複製/);

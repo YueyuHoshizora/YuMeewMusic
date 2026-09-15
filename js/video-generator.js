@@ -3430,15 +3430,16 @@ function openApiKeyDialog() {
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   if (!model || busy) return;
+  const storedKey = getApiKey(model.provider);
   $("video-api-key-dialog-title").textContent = `${model.apiKey} API KEY`;
   $("video-api-key-help").textContent = model.provider === "minimax"
     ? "MiniMax H3 系列須使用一般 Pay-as-you-go API KEY；Token Plan／Credit Key 不支援。金鑰只會保存在目前瀏覽器。"
     : model.provider === "google"
       ? "請使用 Google AI Studio Gemini API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 Google。"
       : "請使用 BytePlus ModelArk API KEY。金鑰只會保存在目前瀏覽器，並透過代理服務送至 BytePlus。";
-  $("video-api-key-input").value = "";
+  $("video-api-key-input").value = storedKey?.value || "";
   $("video-api-key-account-credits").checked = memberSignedIn && usesAccountCredits(modelId);
-  $("video-api-key-input").placeholder = getApiKey(model.provider) ? "輸入新金鑰以取代目前金鑰" : "輸入 API KEY";
+  $("video-api-key-input").placeholder = storedKey ? "已載入保存的 API KEY" : "輸入 API KEY";
   $("video-api-key-error").hidden = true;
   syncVideoApiKeyCreditControls();
   $("video-api-key-dialog").showModal();

@@ -8,6 +8,7 @@ import { createStoryboardReportPdf } from "./pdf-export.js";
 import { createStoryboardCardsPdf } from "./storyboard-pdf.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 import { parseStoryboardPrompt, referencedResourceNames } from "./video-prompt-mode.js";
+import { convertMediaFile } from "./converter-core.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -2659,6 +2660,7 @@ function videoProjectMetadata(includeCharacters, binaries) {
       resolution: $("video-resolution").value,
       duration: $("video-duration").value,
       ratio: $("video-ratio").value,
+      includeAudio: $("veo-include-audio").checked,
     },
   };
 }
@@ -3159,6 +3161,7 @@ function restoreResourceCounters(saved = {}) {
 
 function restoreGenerationSettings(generation = {}) {
   if (VIDEO_MODELS[generation.model]) $("video-model").value = generation.model;
+  if (typeof generation.includeAudio === "boolean") $("veo-include-audio").checked = generation.includeAudio;
   syncModelDetails();
   for (const [id, value] of [["video-resolution", generation.resolution], ["video-duration", generation.duration], ["video-ratio", generation.ratio]]) {
     const select = $(id);
@@ -3397,6 +3400,10 @@ function syncModelDetails() {
   const previousRatio = $("video-ratio").value;
   replaceOptions($("video-ratio"), ratios, ratios.includes(previousRatio) ? previousRatio : ratios[0]);
   $("video-api-key").textContent = usesAccountCredits(modelId) ? "帳戶扣點" : getApiKey(modelId) ? "已設定" : "未設定";
+  const veoAudio = model.provider === "google";
+  $("veo-audio-option").hidden = !veoAudio;
+  $("veo-include-audio").disabled = busy || !veoAudio;
+  $("veo-audio-option").parentElement.classList.toggle("veo-audio-visible", veoAudio);
   $("confirm-video-generation-message").textContent = `影片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
   syncResultHeading();
   syncGenerateAvailability();
@@ -3490,6 +3497,7 @@ function setBusy(value, showLock = value) {
   $("plain-prompt-mode").disabled = value;
   $("download-video").disabled = value || (!generatedVideoBlob && !generatedVideoRemoteUrl);
   $("open-video-history").disabled = value || !generationHistory.length;
+  $("veo-include-audio").disabled = value || VIDEO_MODELS[$("video-model").value]?.provider !== "google";
   syncGenerateAvailability();
   syncClearWorkspaceAvailability();
   syncStoryboardPdfAvailability();
@@ -3614,6 +3622,7 @@ function generationRecordMetadata(modelId, prompt) {
     resolution: $("video-resolution").value,
     duration: Number($("video-duration").value),
     ratio: $("video-ratio").value,
+    includeAudio: model.provider === "google" ? $("veo-include-audio").checked : true,
     prompt,
   };
 }
@@ -3844,7 +3853,19 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider, api
     if (!response.ok) throw Error(`影片下載回傳 ${response.status}`);
     const blob = await response.blob();
     if (!blob.size) throw Error("影片檔案內容為空。");
-    generatedVideoBlob = new Blob([blob], { type: blob.type || "video/mp4" });
+    const downloadedBlob = new Blob([blob], { type: blob.type || "video/mp4" });
+    if (provider === "google" && resultMetadata.includeAudio === false) {
+      $("video-generation-lock-title").textContent = "正在移除影片音訊";
+      $("video-generation-lock-detail").textContent = "Veo 影片已生成，正在建立無音訊版本…";
+      generatedVideoBlob = await convertMediaFile({
+        file: downloadedBlob,
+        format: "mp4",
+        inputKind: "video",
+        hasAudio: false,
+        signal: generationAbort?.signal,
+        onProgress: progress => { $("video-generation-lock-detail").textContent = `正在建立無音訊版本 · ${progress}%`; },
+      });
+    } else generatedVideoBlob = downloadedBlob;
     generatedVideoUrl = URL.createObjectURL(generatedVideoBlob);
     const historyRecord = await saveGenerationHistory(generatedVideoBlob, resultMetadata).catch(() => null);
     if (historyRecord) {
@@ -3854,7 +3875,9 @@ async function showVideoResult(remoteUrl, provider = generatedVideoProvider, api
     else showError("影片已生成，但瀏覽器無法保存生成歷史。");
     $("retry-save-video").hidden = true;
   } catch {
-    showError("影片已生成，但下載代理無法讀取影片檔案；仍可播放或開啟下載網址。保存與套用背景功能暫時無法使用。");
+    showError(provider === "google" && resultMetadata.includeAudio === false
+      ? "影片已生成，但瀏覽器無法建立無音訊版本；目前播放的遠端影片仍可能包含音訊。"
+      : "影片已生成，但下載代理無法讀取影片檔案；仍可播放或開啟下載網址。保存功能暫時無法使用。");
     $("retry-save-video").hidden = false;
   }
   presentVideo();
@@ -3994,7 +4017,7 @@ function openGenerateConfirmation() {
     ["生成任務", "1 個"],
     ["內容模式", isPromptMode() ? "題詞模式" : `${report.totalEntries} 個分鏡`],
     ["人物／資源", `${characters.length} 位／${resources.length} 個`],
-    ["影片音訊", model.provider === "byteplus" ? "啟用" : "依模型輸出"],
+    ["影片音訊", model.provider === "google" ? ($("veo-include-audio").checked ? "包含" : "不包含") : model.provider === "byteplus" ? "啟用" : "依模型輸出"],
     ["額度／費用", `依 ${model.apiKey} 帳戶方案計算`],
     ["題詞長度", `${report.promptLength} 字元`],
   ];
@@ -4151,6 +4174,7 @@ $("video-model").addEventListener("change", () => { syncModelDetails(); schedule
 $("video-resolution").addEventListener("change", () => { syncResultHeading(); scheduleAutoDraft(); });
 $("video-duration").addEventListener("change", () => scheduleAutoDraft());
 $("video-ratio").addEventListener("change", () => { syncResultHeading(); scheduleAutoDraft(); });
+$("veo-include-audio").addEventListener("change", () => scheduleAutoDraft());
 $("video-api-key").addEventListener("click", openApiKeyDialog);
 $("video-api-key-source").addEventListener("change", copyApiKeyFromSource);
 $("video-api-key-account-credits").addEventListener("change", syncVideoApiKeyCreditControls);

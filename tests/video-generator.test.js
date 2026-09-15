@@ -137,6 +137,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(html, /MiniMax-H3-Max|MiniMax H3 Max/);
   assert.match(html, /value="dreamina-seedance-2-0-260128">Seedance 2\.0<\/option>\s*<option value="dreamina-seedance-2-5-260628">Seedance 2\.5<\/option>/);
   assert.match(html, /value="veo-3\.1-generate-preview">Veo 3\.1<\/option>/);
+  assert.match(html, /id="veo-audio-option"[^>]*hidden[\s\S]*id="veo-include-audio"[^>]*type="checkbox"[^>]*checked/);
   assert.match(html, /id="video-api-key"[^>]*>未設定<\/button>/);
   assert.doesNotMatch(html, /影片模型與 API 尚未設定，後續加入模型後即可啟用生成/);
   assert.match(html, /id="generate-video"[^>]*disabled>▶ 生成影片<\/button>/);
@@ -233,6 +234,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /"dreamina-seedance-2-0-260128": Object\.freeze\(\{[^}]*label: "Seedance 2\.0"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p", "1080p", "4k"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 15/);
   assert.match(script, /"dreamina-seedance-2-5-260628": Object\.freeze\(\{[^}]*label: "Seedance 2\.5"[^}]*provider: "byteplus"[^}]*resolutions: \["480p", "720p"\][^}]*defaultResolution: "480p"[^}]*minimumDuration: 4[^}]*maximumDuration: 30/);
   assert.match(script, /"veo-3\.1-generate-preview": Object\.freeze\(\{[^}]*label: "Veo 3\.1"[^}]*provider: "google"[^}]*apiKey: "Google AI Studio"[^}]*resolutions: \["720p", "1080p"\][^}]*durations: \[4, 6, 8\][^}]*ratios: \["16:9", "9:16"\]/);
+  assert.match(script, /model\.provider === "google"[\s\S]*"veo-audio-option"\)\.hidden = !veoAudio[\s\S]*"veo-include-audio"\)\.disabled = busy \|\| !veoAudio/);
   assert.match(script, /saveApiKey\(modelId, model\.label, value\)/);
   assert.match(script, /listApiKeys\(\)\.filter\(key => key\.id !== modelId\)/);
   assert.match(html, /id="video-api-key-dialog"/);
@@ -310,6 +312,8 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /model\.provider === "byteplus" \? task\.content\?\.video_url : task\.content\?\.url/);
   assert.match(script, /task\.response\?\.generateVideoResponse\?\.generatedSamples\?\.\[0\]\?\.video\?\.uri/);
   assert.match(script, /payload\.generate_audio = true/);
+  assert.match(script, /includeAudio: model\.provider === "google" \? \$\("veo-include-audio"\)\.checked : true/);
+  assert.match(script, /provider === "google" && resultMetadata\.includeAudio === false[\s\S]*convertMediaFile\(\{[\s\S]*hasAudio: false/);
   assert.match(script, /payload\.watermark = false/);
   assert.match(script, /instances: \[\{ prompt: guidedPrompt,[\s\S]*sampleCount: 1[\s\S]*durationSeconds:[\s\S]*aspectRatio:/);
   assert.match(script, /provider === "google" \? \{ apiKey \} : \{\}/);

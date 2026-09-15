@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { calculateImageSize } from "../js/image-generation-settings.js";
+import { calculateImageSize, imageResolutionsForRatio } from "../js/image-generation-settings.js";
 import { extractImageGenerationIdentifiers, generationIdentifierHeaders, responseGenerationIdentifiers } from "../js/image-generation-identifiers.js";
 
 test("image generation identifiers preserve task, generation and request IDs", () => {
@@ -29,6 +29,26 @@ test("image generation settings calculate height from horizontal pixels", () => 
   assert.deepEqual(calculateImageSize("9:16", 1080), { ratio: "9:16", width: 1080, height: 1920 });
 });
 
+test("image resolution options stay under 2000px on both sides and scale with the ratio", () => {
+  for (const ratio of ["1:1", "4:3", "3:4", "16:9", "9:16"]) {
+    const resolutions = imageResolutionsForRatio(ratio);
+    assert.ok(resolutions.length > 0, ratio);
+    for (const { width, height } of resolutions) {
+      assert.ok(width < 2000, `${ratio} width ${width}`);
+      assert.ok(height < 2000, `${ratio} height ${height}`);
+    }
+    for (let i = 1; i < resolutions.length; i++) assert.ok(resolutions[i].width > resolutions[i - 1].width, ratio);
+  }
+  assert.deepEqual(
+    imageResolutionsForRatio("16:9").map(({ width }) => width),
+    [480, 512, 640, 720, 768, 1024, 1080, 1280, 1920],
+  );
+  assert.deepEqual(
+    imageResolutionsForRatio("9:16").map(({ width }) => width),
+    [480, 512, 640, 720, 768, 1024, 1080],
+  );
+});
+
 test("image-generator page exposes generation, download and background actions", () => {
   const html = readFileSync("image-generator.html", "utf8");
   const script = readFileSync("js/image-generator.js", "utf8");
@@ -46,8 +66,8 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
   assert.match(html, /id="generation-settings-title">生成設定/);
   assert.match(html, /id="image-aspect-ratio"[\s\S]*value="1:1"[\s\S]*value="4:3"[\s\S]*value="3:4"[\s\S]*value="16:9" selected[\s\S]*value="9:16"/);
-  assert.match(html, /id="image-width"[\s\S]*value="1280" selected/);
-  assert.match(html, /id="image-height">720px/);
+  assert.match(html, /id="image-width"[\s\S]*value="1280" selected>1280 × 720/);
+  assert.doesNotMatch(html, /id="image-height"|計算高度/);
   assert.match(html, /id="result-resolution">1280 × 720/);
   assert.match(html, /id="result-format">16:9 · JPEG/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);

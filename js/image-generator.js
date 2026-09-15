@@ -4,7 +4,7 @@ import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, s
 import { getApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 import { getCurrentSession, onAuthStateChange } from "./auth.js";
-import { calculateImageSize, IMAGE_RATIOS, IMAGE_WIDTHS } from "./image-generation-settings.js";
+import { calculateImageSize, IMAGE_RATIOS, imageResolutionsForRatio } from "./image-generation-settings.js";
 import { extractImageGenerationIdentifiers, generationIdentifierHeaders, responseGenerationIdentifiers } from "./image-generation-identifiers.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
@@ -226,17 +226,34 @@ function saveGenerationSettings(size) {
   } catch {}
 }
 
+function populateImageWidthOptions(preferredWidth = Number($("image-width").value)) {
+  const resolutions = imageResolutionsForRatio($("image-aspect-ratio").value);
+  const select = $("image-width");
+  select.replaceChildren(...resolutions.map(({ width, height }) => {
+    const option = document.createElement("option");
+    option.value = String(width);
+    option.textContent = `${width} × ${height}`;
+    return option;
+  }));
+  const widths = resolutions.map(resolution => resolution.width);
+  const matched = widths.includes(preferredWidth)
+    ? preferredWidth
+    : widths.reduce((closest, width) => Math.abs(width - preferredWidth) < Math.abs(closest - preferredWidth) ? width : closest, widths[0]);
+  select.value = String(matched);
+}
+
 function restoreGenerationSettings() {
+  let saved = null;
   try {
-    const saved = JSON.parse(localStorage.getItem(IMAGE_GENERATION_SETTINGS_KEY) || "null");
-    if (IMAGE_RATIOS[saved?.ratio]) $("image-aspect-ratio").value = saved.ratio;
-    if (IMAGE_WIDTHS.includes(Number(saved?.width))) $("image-width").value = String(saved.width);
+    saved = JSON.parse(localStorage.getItem(IMAGE_GENERATION_SETTINGS_KEY) || "null");
   } catch {}
+  if (IMAGE_RATIOS[saved?.ratio]) $("image-aspect-ratio").value = saved.ratio;
+  const savedWidth = Number(saved?.width);
+  populateImageWidthOptions(Number.isFinite(savedWidth) && savedWidth > 0 ? savedWidth : undefined);
 }
 
 function syncGenerationSettings({ save = true } = {}) {
   const size = generationSize();
-  $("image-height").textContent = `${size.height}px`;
   $("generation-size-summary").textContent = `${size.width} × ${size.height}`;
   $("result-resolution").textContent = `${size.width} × ${size.height}`;
   $("result-format").textContent = `${size.ratio} · JPEG`;
@@ -628,7 +645,10 @@ $("prompt-keywords").addEventListener("input", () => {
 $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("image-model").addEventListener("change", syncModelDetails);
-$("image-aspect-ratio").addEventListener("change", syncGenerationSettings);
+$("image-aspect-ratio").addEventListener("change", () => {
+  populateImageWidthOptions();
+  syncGenerationSettings();
+});
 $("image-width").addEventListener("change", syncGenerationSettings);
 $("model-api-key").addEventListener("click", openApiKeyDialog);
 $("api-key-account-credits").addEventListener("change", syncApiKeyCreditControls);

@@ -51,13 +51,10 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
 .generation-settings-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .generation-settings-heading h2 { margin: 0; color: var(--foreground); font-size: 16px; }
 .generation-settings-heading strong { color: var(--primary-text); font: 700 13px monospace; }
-.generation-settings-grid { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) minmax(120px, .65fr); align-items: end; gap: 12px; margin-top: 13px; }
+.generation-settings-grid { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr); align-items: end; gap: 12px; margin-top: 13px; }
 .generation-settings-grid label { display: block; }
 .generation-settings-grid .field-label { margin: 0 0 7px; }
 .generation-settings-grid .setting-select { width: 100%; }
-.generation-height { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 12px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 8px; padding: 8px 11px; background: var(--surface); }
-.generation-height span { color: var(--muted); font-size: 12px; }
-.generation-height strong { color: var(--foreground); font: 700 13px monospace; }
 .generation-size-note { margin: 9px 0 0; color: var(--muted); font-size: 11px; }
 .generation-size-note.error { color: var(--error-text); }
 .image-generation-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 16px 0 4px; }
@@ -119,7 +116,6 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
   .result-panel { padding: 18px; }
   .prompt-actions { grid-template-columns: 1fr; gap: 12px; }
   .generation-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .generation-height { grid-column: 1 / -1; }
   #confirm-image-generation-dialog { width: min(700px, calc(100vw - 32px)); }
   .generate-action { justify-items: stretch; }
   .prompt-actions .export-button { width: 100%; }
@@ -141,7 +137,6 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
   .enhance-option { align-items: flex-start; }
   .generation-options { grid-template-columns: 1fr; max-width: none; }
   .generation-settings-grid { grid-template-columns: 1fr; }
-  .generation-height { grid-column: auto; }
   .image-generation-summary { grid-template-columns: 1fr; }
   .model-api-key { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; }
   .model-api-key button { text-align: right; }

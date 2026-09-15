@@ -19,3 +19,13 @@ export function calculateImageSize(ratio, width) {
     height: Math.round(normalizedWidth * vertical / horizontal),
   };
 }
+
+const MAX_GENERATION_DIMENSION = 2000;
+
+export function imageResolutionsForRatio(ratio) {
+  const [horizontal, vertical] = IMAGE_RATIOS[ratio] || IMAGE_RATIOS["16:9"];
+  return [...IMAGE_WIDTHS]
+    .sort((a, b) => a - b)
+    .map(width => ({ width, height: Math.round(width * vertical / horizontal) }))
+    .filter(({ width, height }) => width < MAX_GENERATION_DIMENSION && height < MAX_GENERATION_DIMENSION);
+}

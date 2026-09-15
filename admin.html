@@ -68,7 +68,7 @@
               <div class="section-title"><span>03</span><h2>計費設定</h2></div>
               <p class="admin-intro">管理各模型使用帳戶扣點時的美元費率與免費輸入額度，設定會保存到 Cloudflare KV。</p>
               <form id="billing-form" class="billing-form">
-                <label class="billing-model" for="billing-model"><span>模型</span><select id="billing-model"><option value="minimax-h3">MiniMax H3</option><option value="seedance-2-0">Seedance 2.0</option><option value="seedance-2-5">Seedance 2.5</option></select></label>
+                <label class="billing-model" for="billing-model"><span>模型</span><select id="billing-model"><option value="minimax-h3">MiniMax H3</option><option value="seedance-2-0">Seedance 2.0</option><option value="seedance-2-5">Seedance 2.5</option><option value="veo-3-1">Veo 3.1</option></select></label>
                 <div class="billing-model-fields" data-billing-fields="minimax-h3">
                 <div class="billing-group">
                   <h3>影片生成</h3>
@@ -125,6 +125,22 @@
                       <label for="billing-seedance-25-720"><span>720P 倍率</span><span class="billing-rate-row"><input id="billing-seedance-25-720" name="multiplier720" type="number" min="0" step="0.001" value="1.525" required /><output data-billing-preview="multiplier720"></output></span></label>
                     </div>
                     <p class="billing-note">先將「基本係數 × 解析度倍率」無條件進位至小數第二位，再乘以影片秒數。</p>
+                  </div>
+                </div>
+                <div class="billing-model-fields" data-billing-fields="veo-3-1" hidden>
+                  <div class="billing-group">
+                    <h3>包含音訊</h3>
+                    <div class="billing-grid">
+                      <label for="billing-veo-audio-720"><span>720P 有音訊／秒</span><span class="billing-number"><b>$</b><input id="billing-veo-audio-720" name="audio720PerSecond" type="number" min="0" step="0.01" value="0.40" required /></span></label>
+                      <label for="billing-veo-audio-1080"><span>1080P 有音訊／秒</span><span class="billing-number"><b>$</b><input id="billing-veo-audio-1080" name="audio1080PerSecond" type="number" min="0" step="0.01" value="0.40" required /></span></label>
+                    </div>
+                  </div>
+                  <div class="billing-group">
+                    <h3>不包含音訊</h3>
+                    <div class="billing-grid">
+                      <label for="billing-veo-silent-720"><span>720P 無音訊／秒</span><span class="billing-number"><b>$</b><input id="billing-veo-silent-720" name="silent720PerSecond" type="number" min="0" step="0.01" value="0.20" required /></span></label>
+                      <label for="billing-veo-silent-1080"><span>1080P 無音訊／秒</span><span class="billing-number"><b>$</b><input id="billing-veo-silent-1080" name="silent1080PerSecond" type="number" min="0" step="0.01" value="0.20" required /></span></label>
+                    </div>
                   </div>
                 </div>
                 <button class="billing-save" type="submit">儲存計費設定</button>

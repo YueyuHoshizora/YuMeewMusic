@@ -3416,7 +3416,9 @@ function syncModelDetails() {
   $("veo-audio-option").hidden = !veoAudio;
   $("veo-include-audio").disabled = busy || !veoAudio;
   $("veo-audio-option").parentElement.classList.toggle("veo-audio-visible", veoAudio);
-  $("confirm-video-generation-message").textContent = `影片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
+  $("confirm-video-generation-message").textContent = usesAccountCredits(modelId)
+    ? "影片生成費用將會從帳戶額度扣除，是否確定開始生成？"
+    : `影片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
   syncResultHeading();
   syncGenerateAvailability();
 }
@@ -4087,11 +4089,22 @@ async function openGenerateConfirmation() {
     ["內容模式", isPromptMode() ? "題詞模式" : `${report.totalEntries} 個分鏡`],
     ["人物／資源", `${characters.length} 位／${resources.length} 個`],
     ["影片音訊", model.provider === "google" ? ($("veo-include-audio").checked ? "包含" : "不包含") : model.provider === "byteplus" ? "啟用" : "依模型輸出"],
-    ["額度／費用", `預估 ${estimatedFee}`],
+    ["額度／費用", estimatedFee],
     ["題詞長度", `${report.promptLength} 字元`],
   ];
   $("video-generation-summary").replaceChildren(...values.map(([label, value]) => {
     const item = document.createElement("span");
+    if (label === "額度／費用") {
+      const fee = document.createElement("span");
+      fee.className = "video-generation-estimated-fee";
+      const prefix = document.createElement("span");
+      prefix.textContent = "預估 ";
+      const amount = document.createElement("strong");
+      amount.textContent = value;
+      fee.append(prefix, amount);
+      item.append(document.createTextNode(label), fee);
+      return item;
+    }
     const strong = document.createElement("strong");
     strong.textContent = value;
     item.append(document.createTextNode(label), strong);

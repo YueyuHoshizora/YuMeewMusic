@@ -382,8 +382,10 @@ body.video-generator-body { min-width: 1280px; overflow-x: auto; }
 .video-resource-preview-stage audio { width: min(620px, calc(100% - 40px)); }
 .video-resource-preview-stage [hidden] { display: none; }
 .video-generation-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 16px 0 4px; }
-.video-generation-summary span { display: grid; gap: 3px; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; background: var(--surface); color: var(--muted); font-size: 10px; }
+.video-generation-summary > span { display: grid; gap: 3px; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; background: var(--surface); color: var(--muted); font-size: 10px; }
 .video-generation-summary strong { overflow-wrap: anywhere; color: var(--foreground); font-size: 13px; }
+.video-generation-estimated-fee { display: flex; align-items: baseline; gap: 4px; font-size: 13px; }
+.video-generation-estimated-fee strong { color: var(--primary-text); font-size: 14px; font-weight: 900; }
 #confirm-video-generation-dialog { width: 700px; max-width: none; }
 .video-history-dialog { width: 1060px; max-width: none; }
 .video-history-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }

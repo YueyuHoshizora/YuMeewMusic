@@ -146,6 +146,9 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="generate-video"[^>]*disabled>▶ 生成影片<\/button>/);
   assert.match(html, /id="confirm-video-generation-dialog"[^>]*aria-labelledby="confirm-video-generation-title"/);
   assert.match(html, /id="confirm-video-generation-message">影片生成會消耗 MiniMax 帳戶額度，是否確定開始生成？/);
+  assert.match(script, /usesAccountCredits\(modelId\)[\s\S]*影片生成費用將會從帳戶額度扣除，是否確定開始生成？/);
+  assert.match(script, /label === "額度／費用"[\s\S]*video-generation-estimated-fee[\s\S]*amount\.textContent = value/);
+  assert.match(css, /\.video-generation-estimated-fee strong\s*\{[^}]*font-weight:\s*900/);
   assert.match(html, /id="cancel-video-generation"[^>]*>取消<\/button>/);
   assert.match(html, /<button class="dialog-confirm" type="submit">確認生成<\/button>/);
   assert.match(html, /id="generated-video"[^>]*controls[^>]*playsinline[^>]*hidden/);

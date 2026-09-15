@@ -80,6 +80,42 @@ function formatUsd(value, signed = false) {
   return `${amount > 0 ? "+" : "-"}${formatted}`;
 }
 
+function safeResultUrl(value) {
+  try {
+    const url = new URL(typeof value === "string" ? value : "");
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function appendLedgerItem(cell, entry) {
+  const fallback = ({ topup: "儲值", consumption: "消費", refund: "退款", adjustment: "額度調整" }[entry.kind] || entry.kind);
+  const modelName = entry.model_name || entry.description || fallback;
+  const taskId = typeof entry.task_id === "string" ? entry.task_id.trim() : "";
+  if (!taskId) {
+    cell.textContent = modelName;
+    return;
+  }
+  const item = document.createElement("span");
+  item.className = "ledger-item";
+  const model = document.createElement("span");
+  model.textContent = modelName;
+  item.append(model);
+  const resultUrl = safeResultUrl(entry.result_url);
+  const task = document.createElement(resultUrl ? "a" : "span");
+  task.className = "ledger-task-id";
+  task.textContent = taskId;
+  if (resultUrl) {
+    task.href = resultUrl;
+    task.target = "_blank";
+    task.rel = "noopener noreferrer";
+    task.title = "在新分頁開啟生成結果";
+  }
+  item.append(task);
+  cell.append(item);
+}
+
 function renderLedgerPage(view) {
   const totalPages = Math.max(1, Math.ceil(view.entries.length / view.pageSize));
   view.page = Math.min(Math.max(view.page, 1), totalPages);
@@ -96,15 +132,11 @@ function renderLedgerPage(view) {
     const start = (view.page - 1) * view.pageSize;
     for (const entry of view.entries.slice(start, start + view.pageSize)) {
       const row = document.createElement("tr");
-      const values = [
-        formatDate(entry.created_at),
-        entry.description || ({ topup: "儲值", consumption: "消費", refund: "退款", adjustment: "額度調整" }[entry.kind] || entry.kind),
-        formatUsd(entry.amount, true),
-        formatUsd(entry.balance_after),
-      ];
+      const values = [formatDate(entry.created_at), null, formatUsd(entry.amount, true), formatUsd(entry.balance_after)];
       values.forEach((value, index) => {
         const cell = document.createElement("td");
-        cell.textContent = value;
+        if (index === 1) appendLedgerItem(cell, entry);
+        else cell.textContent = value;
         if (index >= 2) cell.className = "ledger-number";
         row.append(cell);
       });

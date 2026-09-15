@@ -49,6 +49,10 @@
 .ledger-panel th { color: var(--muted); font-size: 11px; letter-spacing: 1px; }
 .ledger-panel tbody tr:last-child td { border-bottom: 0; }
 .ledger-number { font-variant-numeric: tabular-nums; }
+.ledger-item { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.ledger-task-id { max-width: 420px; overflow-wrap: anywhere; color: var(--muted); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+a.ledger-task-id { color: var(--primary-text); text-decoration: underline; text-underline-offset: 3px; }
+a.ledger-task-id:hover { color: var(--primary); }
 .ledger-empty { padding: 35px 12px !important; color: var(--muted); text-align: center !important; }
 .ledger-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 16px; border-top: 1px solid var(--border); }
 .ledger-pagination span { min-width: 150px; color: var(--muted); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }

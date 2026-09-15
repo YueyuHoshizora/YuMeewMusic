@@ -90,6 +90,9 @@ test("member center reads the balance, top-up history and consumption history", 
   assert.match(script, /addEventListener\("change", enforceTopupRange\)/);
   assert.match(script, /TOPUP_PAGE_SIZE = 5/);
   assert.match(script, /CONSUMPTION_PAGE_SIZE = 10/);
+  assert.match(script, /function appendLedgerItem\(cell, entry\)[\s\S]*entry\.model_name[\s\S]*entry\.task_id[\s\S]*entry\.result_url/);
+  assert.match(script, /task\.target = "_blank"[\s\S]*task\.rel = "noopener noreferrer"/);
+  assert.match(script, /url\.protocol === "https:"/);
   assert.match(script, /Date\.parse\(right\.created_at\) - Date\.parse\(left\.created_at\)/);
   for (const id of ["topup-prev", "topup-page", "topup-next", "consumption-prev", "consumption-page", "consumption-next"]) {
     assert.match(html, new RegExp(`id="${id}"`));

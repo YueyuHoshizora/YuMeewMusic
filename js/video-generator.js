@@ -11,6 +11,7 @@ import { parseStoryboardPrompt, referencedResourceNames } from "./video-prompt-m
 import { convertMediaFile } from "./converter-core.js";
 import { fetchVideoBillingSettings } from "./member-api.js";
 import { estimateVideoGenerationCost } from "./video-billing.js";
+import { providerBillingUrl } from "./provider-billing.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -3403,6 +3404,10 @@ function syncModelDetails() {
   const previousRatio = $("video-ratio").value;
   replaceOptions($("video-ratio"), ratios, ratios.includes(previousRatio) ? previousRatio : ratios[0]);
   $("video-api-key").textContent = usesAccountCredits(modelId) ? "帳戶扣點" : getApiKey(modelId) ? "已設定" : "未設定";
+  const billingUrl = providerBillingUrl(model.provider);
+  $("video-provider-billing").href = billingUrl;
+  $("video-provider-billing").hidden = !billingUrl;
+  $("video-provider-billing").setAttribute("aria-label", `前往 ${model.apiKey} 儲值`);
   const veoAudio = model.provider === "google";
   $("veo-audio-option").hidden = !veoAudio;
   $("veo-include-audio").disabled = busy || !veoAudio;

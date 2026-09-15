@@ -24,6 +24,7 @@ test("administrator page manages margin, member top-ups and provider API keys th
   const html = readFileSync("admin.html", "utf8");
   const script = readFileSync("js/admin.js", "utf8");
   const api = readFileSync("js/member-api.js", "utf8");
+  const providerBilling = readFileSync("js/provider-billing.js", "utf8");
   for (const label of ["儲值換算設定", "會員人工加值", "計費設定", "平台 API KEY"]) assert.match(html, new RegExp(label));
   for (const panel of ["margin-settings", "member-topup", "billing-settings", "platform-api-keys"]) assert.match(html, new RegExp(`data-admin-panel="${panel}"`));
   assert.match(html, /class="panel admin-sidebar"[\s\S]*role="tablist"/);
@@ -52,11 +53,11 @@ test("administrator page manages margin, member top-ups and provider API keys th
   assert.match(script, /revalidateAdminPermission/);
   assert.match(script, /verifyAdminAccess\(session\)/);
   for (const operation of ["updateAdminTopupSettings(session", "updateAdminBillingSettings(session", "createAdminTopup(session", "saveAdminApiKey(session", "deleteAdminApiKey(session"]) assert.match(script, new RegExp(operation.replace("(", "\\(")));
-  assert.match(script, /PROVIDER_BILLING_URLS/);
-  assert.match(script, /https:\/\/platform\.openai\.com\/settings\/organization\/billing\/overview/);
-  assert.match(script, /https:\/\/platform\.minimax\.io\/console\/recharge-records/);
-  assert.match(script, /https:\/\/console\.byteplus\.com\/finance\/overview/);
-  assert.match(script, /https:\/\/aistudio\.google\.com\/billing\?billing=01FAA5-296897-6F043C&project=yueyuhoshizora/);
+  assert.match(script, /import \{ PROVIDER_BILLING_URLS \} from "\.\/provider-billing\.js"/);
+  assert.match(providerBilling, /https:\/\/platform\.openai\.com\/settings\/organization\/billing\/overview/);
+  assert.match(providerBilling, /https:\/\/platform\.minimax\.io\/console\/recharge-records/);
+  assert.match(providerBilling, /https:\/\/console\.byteplus\.com\/finance\/overview/);
+  assert.match(providerBilling, /https:\/\/aistudio\.google\.com\/billing\?billing=01FAA5-296897-6F043C&project=yueyuhoshizora/);
   for (const route of ["settings/topup", "admin/billing", "admin/members", "credits/topup", "admin/api-keys"]) assert.match(api, new RegExp(route));
   assert.doesNotMatch(script, /MEMBER_ADMIN_SECRET|PLATFORM_API_KEYS/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"admin\.html"/);

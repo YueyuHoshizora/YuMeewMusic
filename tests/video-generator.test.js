@@ -139,6 +139,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /value="veo-3\.1-generate-preview">Veo 3\.1<\/option>/);
   assert.match(html, /id="veo-audio-option"[^>]*hidden[\s\S]*id="veo-include-audio"[^>]*type="checkbox"[^>]*checked/);
   assert.match(html, /id="video-api-key"[^>]*>未設定<\/button>/);
+  assert.match(html, /id="video-provider-billing"[^>]*href="https:\/\/platform\.minimax\.io\/console\/recharge-records"[^>]*>儲值<\/a>/);
   assert.doesNotMatch(html, /影片模型與 API 尚未設定，後續加入模型後即可啟用生成/);
   assert.match(html, /id="generate-video"[^>]*disabled>▶ 生成影片<\/button>/);
   assert.match(html, /id="confirm-video-generation-dialog"[^>]*aria-labelledby="confirm-video-generation-title"/);
@@ -240,6 +241,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="video-api-key-dialog"/);
   assert.match(html, /id="video-api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
   assert.match(script, /usesAccountCredits\(modelId\) \? "帳戶扣點"/);
+  assert.match(script, /providerBillingUrl\(model\.provider\)[\s\S]*"video-provider-billing"\)\.href = billingUrl[\s\S]*前往 \$\{model\.apiKey\} 儲值/);
   assert.match(script, /function syncVideoApiKeyCreditControls\(\)[\s\S]*video-api-key-input"\)\.disabled = disabled/);
   assert.match(html, /id="google-quota-help"[^>]*hidden>[\s\S]*aistudio\.google\.com\/rate-limit[\s\S]*ai\.google\.dev\/gemini-api\/docs\/billing/);
   assert.match(script, /https:\/\/model-proxy\.yustellar\.idv\.tw\/minimax\/video/);

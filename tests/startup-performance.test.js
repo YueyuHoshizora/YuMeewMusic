@@ -76,9 +76,9 @@ test("production build installs a versioned same-origin static cache", () => {
   assert.match(build, /replace\("__BUILD_VERSION__", version\)/);
 });
 
-test("music rating enables up to eight WASM worker threads when cross-origin isolated", () => {
+test("music rating enables up to sixteen WASM worker threads when cross-origin isolated", () => {
   const worker = readFileSync("js/music-rating-worker.js", "utf8");
-  assert.match(worker, /const WASM_THREAD_LIMIT = 8/);
+  assert.match(worker, /const WASM_THREAD_LIMIT = 16/);
   assert.match(worker, /globalThis\.crossOriginIsolated/);
   assert.match(worker, /Math\.min\(WASM_THREAD_LIMIT, navigator\.hardwareConcurrency \|\| WASM_THREAD_LIMIT\)/);
 });

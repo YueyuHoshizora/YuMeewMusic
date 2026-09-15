@@ -9,7 +9,7 @@ const SEGMENT_SAMPLES = SAMPLE_RATE * 30;
 const HIDDEN_SIZE = 768;
 
 ort.env.wasm.wasmPaths = new URL("../vendor/onnxruntime-web/", import.meta.url).href;
-const WASM_THREAD_LIMIT = 8;
+const WASM_THREAD_LIMIT = 16;
 ort.env.wasm.numThreads = globalThis.crossOriginIsolated
   ? Math.min(WASM_THREAD_LIMIT, navigator.hardwareConcurrency || WASM_THREAD_LIMIT)
   : 1;

@@ -4,15 +4,17 @@ import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, s
 import { getApiKey, saveAccountCredits, saveApiKey, usesAccountCredits } from "./api-keys.js";
 import { clientIdentityHeaders } from "./client-identity.js";
 import { getCurrentSession, onAuthStateChange } from "./auth.js";
+import { calculateImageSize, IMAGE_RATIOS, IMAGE_WIDTHS } from "./image-generation-settings.js";
 
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 const IMAGE_HISTORY_LIMIT = 10;
+const IMAGE_GENERATION_SETTINGS_KEY = "yumeew-image-generation-settings";
 const $ = id => document.getElementById(id);
 
-async function callFlux2Klein4B({ prompt, enhance }) {
+async function callFlux2Klein4B({ prompt, enhance, width, height }) {
   return fetch(WORKER_URL, {
     method: "POST",
     headers: {
@@ -20,7 +22,7 @@ async function callFlux2Klein4B({ prompt, enhance }) {
       "Content-Type": "application/json",
       ...clientIdentityHeaders(),
     },
-    body: JSON.stringify({ prompt, enhance }),
+    body: JSON.stringify({ prompt, enhance, width, height }),
     cache: "no-store",
   });
 }
@@ -32,7 +34,7 @@ function base64ImageBlob(encoded, type = "image/jpeg") {
   return new Blob([bytes], { type });
 }
 
-async function callOpenAiImage({ model, prompt, apiKey }) {
+async function callOpenAiImage({ model, prompt, apiKey, width, height }) {
   const response = await fetch(OPENAI_IMAGE_URL, {
     method: "POST",
     headers: {
@@ -43,7 +45,7 @@ async function callOpenAiImage({ model, prompt, apiKey }) {
     body: JSON.stringify({
       model,
       prompt,
-      size: "1280x720",
+      size: `${width}x${height}`,
       quality: "auto",
       output_format: "jpeg",
     }),
@@ -62,12 +64,12 @@ async function callOpenAiImage({ model, prompt, apiKey }) {
   throw Error("OpenAI 沒有回傳可用的圖片資料。");
 }
 
-function callGptImage25Flare({ prompt, apiKey }) {
-  return callOpenAiImage({ model: "gpt-image-2.5-flare", prompt, apiKey });
+function callGptImage25Flare({ prompt, apiKey, width, height }) {
+  return callOpenAiImage({ model: "gpt-image-2.5-flare", prompt, apiKey, width, height });
 }
 
-function callGptImage25Sunburst({ prompt, apiKey }) {
-  return callOpenAiImage({ model: "gpt-image-2.5-sunburst", prompt, apiKey });
+function callGptImage25Sunburst({ prompt, apiKey, width, height }) {
+  return callOpenAiImage({ model: "gpt-image-2.5-sunburst", prompt, apiKey, width, height });
 }
 
 const IMAGE_MODELS = Object.freeze({
@@ -155,6 +157,44 @@ function showError(text = "") {
   $("generation-error").hidden = !text;
 }
 
+function generationSize() {
+  return calculateImageSize($("image-aspect-ratio").value, $("image-width").value);
+}
+
+function sizeSupportedBySelectedModel({ width, height }) {
+  const model = IMAGE_MODELS[$("image-model").value];
+  return !model?.publicResource || (width >= 256 && width <= 1920 && height >= 256 && height <= 1920);
+}
+
+function saveGenerationSettings(size) {
+  try {
+    localStorage.setItem(IMAGE_GENERATION_SETTINGS_KEY, JSON.stringify({ ratio: size.ratio, width: size.width }));
+  } catch {}
+}
+
+function restoreGenerationSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(IMAGE_GENERATION_SETTINGS_KEY) || "null");
+    if (IMAGE_RATIOS[saved?.ratio]) $("image-aspect-ratio").value = saved.ratio;
+    if (IMAGE_WIDTHS.includes(Number(saved?.width))) $("image-width").value = String(saved.width);
+  } catch {}
+}
+
+function syncGenerationSettings({ save = true } = {}) {
+  const size = generationSize();
+  $("image-height").textContent = `${size.height}px`;
+  $("generation-size-summary").textContent = `${size.width} × ${size.height}`;
+  $("result-resolution").textContent = `${size.width} × ${size.height}`;
+  $("result-format").textContent = `${size.ratio} · JPEG`;
+  const supported = sizeSupportedBySelectedModel(size);
+  $("generation-size-note").textContent = supported
+    ? "輸出尺寸會依生成比例自動計算。"
+    : "Flux.2 Klein 4B 的寬高皆不可超過 1920px，請降低水平像素或調整比例。";
+  $("generation-size-note").classList.toggle("error", !supported);
+  if (save) saveGenerationSettings(size);
+  syncGenerateAvailability();
+}
+
 function canUseSelectedImageModel() {
   const modelId = $("image-model").value;
   const model = IMAGE_MODELS[modelId];
@@ -165,7 +205,7 @@ function canUseSelectedImageModel() {
 }
 
 function syncGenerateAvailability() {
-  $("generate-image").disabled = busy || composing || !$("image-prompt").value.trim() || !canUseSelectedImageModel();
+  $("generate-image").disabled = busy || composing || !$("image-prompt").value.trim() || !canUseSelectedImageModel() || !sizeSupportedBySelectedModel(generationSize());
 }
 
 function syncModelDetails() {
@@ -175,6 +215,7 @@ function syncModelDetails() {
   const storedKey = isFree ? null : getApiKey(model?.provider);
   $("model-api-key").textContent = isFree ? "Free" : usesAccountCredits(modelId) ? (memberSignedIn ? "帳戶扣點" : "需登入") : storedKey ? "已設定" : "未設定";
   $("model-api-key").disabled = busy || isFree || !model;
+  syncGenerationSettings({ save: false });
   syncGenerateAvailability();
 }
 
@@ -233,6 +274,8 @@ function setBusy(value) {
   $("generation-lock").hidden = !value;
   syncModelDetails();
   $("image-model").disabled = value;
+  $("image-aspect-ratio").disabled = value;
+  $("image-width").disabled = value;
   $("image-prompt").disabled = value;
   $("enhance-prompt").disabled = value;
   $("prompt-keywords").disabled = value;
@@ -410,7 +453,8 @@ async function generateImage() {
     if (accountCredits && !memberSignedIn) throw Error("請先登入會員帳號，再使用帳戶扣點。");
     const apiKey = model.apiKey === "Free" || accountCredits ? "" : getApiKey(model.provider)?.value || "";
     if (model.apiKey !== "Free" && !accountCredits && !apiKey) throw Error("請先點擊 API KEY 並輸入金鑰。");
-    const response = await model.call({ prompt, enhance, apiKey });
+    const { width, height } = generationSize();
+    const response = await model.call({ prompt, enhance, apiKey, width, height });
     if (!response.ok) {
       let detail = "";
       let errorBody = null;
@@ -473,6 +517,8 @@ $("prompt-keywords").addEventListener("input", () => {
 $("compose-prompt").addEventListener("click", () => void composePrompt());
 
 $("image-model").addEventListener("change", syncModelDetails);
+$("image-aspect-ratio").addEventListener("change", syncGenerationSettings);
+$("image-width").addEventListener("change", syncGenerationSettings);
 $("model-api-key").addEventListener("click", openApiKeyDialog);
 $("api-key-account-credits").addEventListener("change", syncApiKeyCreditControls);
 $("api-key-form").addEventListener("submit", submitApiKey);
@@ -545,6 +591,8 @@ function restoreWhenIdle(task) {
   if (typeof globalThis.requestIdleCallback === "function") globalThis.requestIdleCallback(run, { timeout: 1200 });
   else setTimeout(run, 0);
 }
+restoreGenerationSettings();
+syncGenerationSettings({ save: false });
 restoreWhenIdle(() => {
   void restoreLastGeneratedImage();
   void loadGenerationHistory();

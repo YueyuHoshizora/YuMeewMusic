@@ -1,6 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { calculateImageSize } from "../js/image-generation-settings.js";
+
+test("image generation settings calculate height from horizontal pixels", () => {
+  assert.deepEqual(calculateImageSize("16:9", 1280), { ratio: "16:9", width: 1280, height: 720 });
+  assert.deepEqual(calculateImageSize("1:1", 512), { ratio: "1:1", width: 512, height: 512 });
+  assert.deepEqual(calculateImageSize("4:3", 640), { ratio: "4:3", width: 640, height: 480 });
+  assert.deepEqual(calculateImageSize("3:4", 720), { ratio: "3:4", width: 720, height: 960 });
+  assert.deepEqual(calculateImageSize("9:16", 1080), { ratio: "9:16", width: 1080, height: 1920 });
+});
 
 test("image-generator page exposes generation, download and background actions", () => {
   const html = readFileSync("image-generator.html", "utf8");
@@ -17,6 +26,12 @@ test("image-generator page exposes generation, download and background actions",
   assert.doesNotMatch(html, /id="prompt-count"|0 \/ 2048/);
   assert.doesNotMatch(script, /prompt-count/);
   assert.match(html, /id="image-model"[^>]*class="setting-select"/);
+  assert.match(html, /id="generation-settings-title">生成設定/);
+  assert.match(html, /id="image-aspect-ratio"[\s\S]*value="1:1"[\s\S]*value="4:3"[\s\S]*value="3:4"[\s\S]*value="16:9" selected[\s\S]*value="9:16"/);
+  assert.match(html, /id="image-width"[\s\S]*value="1280" selected/);
+  assert.match(html, /id="image-height">720px/);
+  assert.match(html, /id="result-resolution">1280 × 720/);
+  assert.match(html, /id="result-format">16:9 · JPEG/);
   assert.match(html, /value="flux-2-klein-4b"[^>]*selected[^>]*>Flux\.2 Klein 4B<\/option>/);
   assert.match(html, /value="flux-2-klein-4b"[\s\S]*value="gpt-image-2\.5-flare">GPT-Image-2\.5 Flare<\/option>[\s\S]*value="gpt-image-2\.5-sunburst"/);
   assert.match(html, /value="gpt-image-2\.5-sunburst">GPT-Image-2\.5 Sunburst<\/option>/);
@@ -65,16 +80,16 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(html, /id="enhance-prompt"[^>]*type="checkbox"[^>]*checked/);
   assert.match(html, /文字轉譯成Prompt/);
   assert.match(script, /const enhance = Boolean\(\$\("enhance-prompt"\)\.checked\)/);
-  assert.match(script, /async function callFlux2Klein4B\(\{ prompt, enhance \}\)/);
+  assert.match(script, /async function callFlux2Klein4B\(\{ prompt, enhance, width, height \}\)/);
   assert.match(script, /"flux-2-klein-4b": Object\.freeze\(\{[\s\S]*?label: "Flux\.2 Klein 4B"[\s\S]*?apiKey: "Free"[\s\S]*?publicResource: true[\s\S]*?call: callFlux2Klein4B/);
   assert.match(script, /"gpt-image-2\.5-sunburst": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Sunburst"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Sunburst/);
   assert.match(script, /"gpt-image-2\.5-flare": Object\.freeze\(\{[\s\S]*?label: "GPT-Image-2\.5 Flare"[\s\S]*?apiKey: "OpenAI"[\s\S]*?call: callGptImage25Flare/);
   assert.doesNotMatch(script, /model-provider-note|provider: "OpenAI Image API"/);
-  assert.match(script, /async function callOpenAiImage\(\{ model, prompt, apiKey \}\)/);
+  assert.match(script, /async function callOpenAiImage\(\{ model, prompt, apiKey, width, height \}\)/);
   assert.match(script, /model: "gpt-image-2\.5-flare"/);
   assert.match(script, /Authorization: `Bearer \$\{apiKey\}`/);
   assert.match(script, /model: "gpt-image-2\.5-sunburst"/);
-  assert.match(script, /size: "1280x720"/);
+  assert.match(script, /size: `\$\{width\}x\$\{height\}`/);
   assert.match(script, /output_format: "jpeg"/);
   assert.match(script, /image\?\.b64_json/);
   assert.match(script, /const modelId = \$\("image-model"\)\.value;\s*const model = IMAGE_MODELS\[modelId\]/);
@@ -84,7 +99,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
   assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
   assert.match(script, /const storedKey = getApiKey\(model\.provider\)[\s\S]*api-key-input"\)\.value = storedKey\?\.value \|\| ""/);
-  assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey \}\)/);
+  assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey, width, height \}\)/);
   assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\?\.publicResource[\s\S]*flux-generation-confirm-dialog"\)\.showModal\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /function confirmFluxGeneration\(event\)[\s\S]*flux-generation-confirm-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*flux-generation-confirm-form"\)\.addEventListener\("submit", confirmFluxGeneration\)/);
@@ -100,7 +115,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /accountCredits && !memberSignedIn[\s\S]*請先登入會員帳號，再使用帳戶扣點/);
   assert.match(script, /\$\("image-model"\)\.disabled = value/);
   assert.match(script, /\$\("enhance-prompt"\)\.disabled = value/);
-  assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance \}\)/);
+  assert.match(script, /body:\s*JSON\.stringify\(\{ prompt, enhance, width, height \}\)/);
   assert.match(script, /async function composePrompt\(\)/);
   assert.match(script, /async function toggleResultFullscreen\(\)/);
   assert.match(script, /resultFrame\.requestFullscreen\(\)/);

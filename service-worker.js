@@ -1,6 +1,22 @@
 const CACHE_NAME = "yumeew-static-__BUILD_VERSION__";
 const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image", "worker", "manifest"]);
 
+function isMusicRatingPage(url) {
+  return url.pathname.endsWith("/music-rating.html");
+}
+
+function withCrossOriginIsolation(response, url) {
+  if (!isMusicRatingPage(url) || !response || response.type === "error") return response;
+  const headers = new Headers(response.headers);
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("Cross-Origin-Embedder-Policy", "credentialless");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 self.addEventListener("message", event => {
   if (event.data?.type === "SKIP_WAITING") void self.skipWaiting();
 });
@@ -23,10 +39,12 @@ self.addEventListener("fetch", event => {
     event.respondWith((async () => {
       try {
         const response = await fetch(request, { cache: "no-store" });
-        if (response.ok) void caches.open(CACHE_NAME).then(cache => cache.put(request, response.clone()));
-        return response;
+        const isolatedResponse = withCrossOriginIsolation(response, url);
+        if (isolatedResponse.ok) void caches.open(CACHE_NAME).then(cache => cache.put(request, isolatedResponse.clone()));
+        return isolatedResponse;
       } catch {
-        return (await caches.match(request)) || Response.error();
+        const cached = await caches.match(request);
+        return cached ? withCrossOriginIsolation(cached, url) : Response.error();
       }
     })());
     return;

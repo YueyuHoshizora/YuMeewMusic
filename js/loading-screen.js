@@ -18,6 +18,7 @@ if (document.readyState === "loading") {
 
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || ["localhost", "127.0.0.1"].includes(location.hostname)) return;
+  const hadController = Boolean(navigator.serviceWorker.controller);
   let updateApproved = false;
   let pendingWorker = null;
 
@@ -45,7 +46,14 @@ async function registerServiceWorker() {
   };
 
   const reloadForUpdate = () => {
-    if (updateApproved) location.reload();
+    if (updateApproved) {
+      location.reload();
+      return;
+    }
+    if (!hadController && location.pathname.endsWith("/music-rating.html") && !sessionStorage.getItem("music-rating-isolation-reload")) {
+      sessionStorage.setItem("music-rating-isolation-reload", "1");
+      location.reload();
+    }
   };
   navigator.serviceWorker.addEventListener("controllerchange", reloadForUpdate);
   try {

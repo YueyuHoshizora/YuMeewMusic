@@ -10,8 +10,10 @@
 .rating-mode-switch { display: inline-flex; gap: 4px; margin-bottom: 18px; padding: 4px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
 .rating-mode-switch button { min-width: 128px; padding: 9px 16px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--muted); font-weight: 700; }
 .rating-mode-switch button.active { border-color: var(--primary); background: var(--tint); color: var(--primary-text); }
-.rating-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+.rating-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: start; gap: 22px; }
 .rating-source, .rating-process, .rating-results { padding: 24px; }
+.rating-source, .rating-process { min-width: 0; }
+.rating-process { padding: 20px; }
 .rating-source-form { margin-top: 20px; }
 .rating-url-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-top: 7px; }
 .rating-url-row .text-input { min-width: 0; height: 44px; }
@@ -28,9 +30,10 @@
 .rating-file-heading small { color: var(--muted); }
 .rating-source audio { width: 100%; margin-top: 18px; }
 .rating-compare-files { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.rating-compare-files > article { min-width: 0; }
 .rating-compare-files .rating-file-heading { height: 96px; margin-top: 0; padding: 12px; }
 .rating-file-heading > b { display: grid; width: 42px; height: 42px; flex: 0 0 auto; place-items: center; border: 1px solid var(--primary); border-radius: 10px; color: var(--primary-text); }
-.rating-compare-files audio { margin-top: 10px; }
+.rating-compare-files audio { display: block; width: 100%; min-width: 0; max-width: 100%; margin-top: 10px; }
 .rating-model { display: flex; min-height: 92px; flex-direction: column; justify-content: center; gap: 8px; margin: 20px 0; padding: 16px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); }
 .rating-model span { color: var(--muted); font-size: 13px; line-height: 1.55; }
 .rating-process .export-button { margin: 0; }

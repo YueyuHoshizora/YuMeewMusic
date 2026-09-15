@@ -32,3 +32,10 @@ test("song rating page is linked and deployable", () => {
   assert.match(readFileSync("scripts\/build.js", "utf8"), /music-rating\.html/);
   assert.equal(ratingVerdict(85), "表現非常突出");
 });
+
+test("comparison mode reserves more room for two audio players", () => {
+  const css = readFileSync("css/music-rating.css", "utf8");
+  assert.match(css, /\.rating-workspace\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) 260px/);
+  assert.match(css, /\.rating-compare-files > article\s*\{[^}]*min-width:\s*0/);
+  assert.match(css, /\.rating-compare-files audio\s*\{[^}]*max-width:\s*100%/);
+});

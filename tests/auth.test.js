@@ -33,9 +33,11 @@ test("administrator page manages margin, member top-ups and provider API keys th
   assert.match(html, /id="admin-topup-amount"[^>]*step="0\.01"/);
   assert.match(html, /id="billing-model"[\s\S]*value="minimax-h3">MiniMax H3/);
   assert.match(html, /value="seedance-2-0">Seedance 2\.0/);
+  assert.match(html, /value="seedance-2-5">Seedance 2\.5/);
   for (const value of ["0.303", "0.4651", "1", "2.5", "5.0761"]) assert.match(html, new RegExp(`value="${value.replace(".", "\\.")}"`));
   assert.match(html, /name="roundUpDecimals"[^>]*type="number"[^>]*value="2"[^>]*readonly/);
   assert.match(html, /基本係數 × 秒數 × 解析度倍率[\s\S]*無條件進位至小數第二位/);
+  assert.match(html, /data-billing-fields="seedance-2-5"[\s\S]*value="0\.6785"[\s\S]*value="1\.525"/);
   assert.match(html, /音效免費部數[\s\S]*音效超過後每部/);
   for (const value of ["0.08", "0.13", "999", "0.00", "5", "0.04"]) assert.match(html, new RegExp(`value="${value.replace(".", "\\.")}"`));
   assert.match(script, /crypto\.randomUUID\(\)/);

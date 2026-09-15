@@ -57,10 +57,14 @@ body.model-settings-body { min-width: 900px; }
 .cache-manager { padding: 28px; }
 .cache-row .model-details span { white-space: normal; line-height: 1.5; }
 .api-key-list { display: grid; gap: 10px; }
-.api-key-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr) 120px; align-items: center; gap: 20px; padding: 17px 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.api-key-row { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(180px, 1fr) 90px 90px; align-items: center; gap: 14px; padding: 17px 18px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
 .api-key-details strong, .api-key-details span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .api-key-details strong { margin-bottom: 5px; font-size: 15px; }
 .api-key-details span { color: var(--muted); font-size: 12px; }
 .api-key-masked { overflow: hidden; color: var(--foreground); font: 13px monospace; text-overflow: ellipsis; white-space: nowrap; }
 .api-key-masked.not-configured { color: var(--muted); font-family: inherit; }
+.api-key-edit { padding: 8px 12px; border: 1px solid var(--primary); border-radius: 8px; background: transparent; color: var(--primary-text); font: inherit; }
+.api-key-edit:hover { background: var(--hover); }
+.settings-api-key-label { display: block; margin: 18px 0 7px; color: var(--foreground); font-size: 13px; font-weight: 700; }
+#edit-api-key-input { width: 100%; box-sizing: border-box; font-family: monospace; }
 .api-key-manager > .model-status { display: block; max-width: none; margin-top: 16px; text-align: left; }

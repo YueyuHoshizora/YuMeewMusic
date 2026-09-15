@@ -135,6 +135,20 @@
       </form>
     </dialog>
 
+    <dialog id="edit-api-key-dialog" class="reset-dialog" aria-labelledby="edit-api-key-title">
+      <form id="edit-api-key-form" method="dialog">
+        <h2 id="edit-api-key-title">設定 API KEY</h2>
+        <p>同一服務供應商的模型會共用這把金鑰。金鑰只會保存在目前瀏覽器。</p>
+        <label class="settings-api-key-label" for="edit-api-key-input">API KEY</label>
+        <input id="edit-api-key-input" class="text-input" type="password" autocomplete="off" spellcheck="false" />
+        <p id="edit-api-key-error" class="model-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-edit-api-key" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">保存金鑰</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="delete-api-key-dialog" class="reset-dialog" aria-labelledby="delete-api-key-title">
       <form method="dialog">
         <h2 id="delete-api-key-title">刪除 API KEY？</h2>

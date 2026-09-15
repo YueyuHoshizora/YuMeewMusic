@@ -1,11 +1,11 @@
 import { applyTheme } from './themes.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { deleteAllCachedModels, deleteCachedModel, listCachedModels } from './indexeddb-model-cache.js';
-import { API_KEY_PROVIDERS, deleteApiKey, listApiKeys, maskApiKey } from './api-keys.js';
+import { API_KEY_PROVIDERS, deleteApiKey, listApiKeys, maskApiKey, saveApiKey } from './api-keys.js';
 import { deleteAllStoredEntries, deleteStoredEntry, listStoredEntries } from './media-store.js';
 
 const $ = id => document.getElementById(id);
-const state = { models: [], apiKeys: [], cache: [], pending: null, pendingApiKey: null, pendingCache: null, busy: false, cacheBusy: false };
+const state = { models: [], apiKeys: [], cache: [], pending: null, pendingApiKey: null, editingApiKey: null, pendingCache: null, busy: false, cacheBusy: false };
 const settings = loadSettings();
 applyTheme(settings.mode, settings.theme);
 $('interface-mode').value = settings.mode;
@@ -96,16 +96,51 @@ function refreshApiKeys(message = '') {
     masked.className = 'api-key-masked';
     masked.textContent = key.value ? maskApiKey(key.value) : '未設定';
     masked.classList.toggle('not-configured', !key.value);
-    const button = document.createElement('button');
-    button.className = 'model-delete';
-    button.type = 'button';
-    button.textContent = '刪除';
-    button.disabled = !key.value;
-    button.addEventListener('click', () => requestDeleteApiKey(key));
-    row.append(details, masked, button);
+    const edit = document.createElement('button');
+    edit.className = 'api-key-edit';
+    edit.type = 'button';
+    edit.textContent = key.value ? '修改' : '設定';
+    edit.addEventListener('click', () => requestEditApiKey(key));
+    const remove = document.createElement('button');
+    remove.className = 'model-delete';
+    remove.type = 'button';
+    remove.textContent = '刪除';
+    remove.disabled = !key.value;
+    remove.addEventListener('click', () => requestDeleteApiKey(key));
+    row.append(details, masked, edit, remove);
     return row;
   }));
   $('api-key-status').textContent = message || `已設定 ${configuredCount}／${state.apiKeys.length} 個服務供應商`;
+}
+
+function requestEditApiKey(key) {
+  state.editingApiKey = key;
+  $('edit-api-key-title').textContent = `${key.value ? '修改' : '設定'}「${key.label}」API KEY`;
+  $('edit-api-key-input').value = key.value || '';
+  $('edit-api-key-input').placeholder = key.value ? '已載入保存的 API KEY' : '輸入 API KEY';
+  $('edit-api-key-error').hidden = true;
+  $('edit-api-key-dialog').returnValue = '';
+  $('edit-api-key-dialog').showModal();
+  $('edit-api-key-input').focus();
+}
+
+function saveEditedApiKey(event) {
+  event.preventDefault();
+  const key = state.editingApiKey;
+  const value = $('edit-api-key-input').value.trim();
+  if (!key || !value) {
+    $('edit-api-key-error').textContent = '請輸入 API KEY。';
+    $('edit-api-key-error').hidden = false;
+    return;
+  }
+  if (!saveApiKey(key.id, key.label, value)) {
+    $('edit-api-key-error').textContent = '瀏覽器無法保存 API KEY。';
+    $('edit-api-key-error').hidden = false;
+    return;
+  }
+  state.editingApiKey = null;
+  $('edit-api-key-dialog').close();
+  refreshApiKeys(`已保存 ${key.label} 的 API KEY`);
 }
 
 function requestDeleteApiKey(key) {
@@ -255,6 +290,9 @@ async function confirmDelete() {
 
 $('delete-all-models').addEventListener('click', () => requestDelete());
 $('delete-all-cache').addEventListener('click', () => requestDeleteCache());
+$('edit-api-key-form').addEventListener('submit', saveEditedApiKey);
+$('cancel-edit-api-key').addEventListener('click', () => $('edit-api-key-dialog').close());
+$('edit-api-key-dialog').addEventListener('close', () => { state.editingApiKey = null; });
 $('interface-mode').addEventListener('change', saveAppearance);
 $('interface-theme').addEventListener('change', saveAppearance);
 for (const button of document.querySelectorAll('[data-settings-panel]')) {

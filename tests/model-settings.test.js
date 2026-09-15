@@ -47,6 +47,7 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(html, /<section id="cache-manager" class="panel settings-panel cache-manager"/);
   assert.match(html, /id="delete-cache-dialog"/);
   assert.match(html, /id="delete-api-key-dialog"/);
+  assert.match(html, /id="edit-api-key-dialog"[\s\S]*id="edit-api-key-input"[^>]*type="password"[\s\S]*保存金鑰/);
   assert.match(script, /saveSettings\(settings\)/);
   assert.match(script, /applyTheme\(settings\.mode, settings\.theme\)/);
   assert.match(script, /listCachedModels\(\)/);
@@ -55,7 +56,10 @@ test('model settings page exposes list and confirmed delete actions', () => {
   assert.match(script, /listApiKeys\(\)/);
   assert.match(script, /API_KEY_PROVIDERS\.map\(provider => \(\{ \.\.\.provider, \.\.\.stored\.get\(provider\.id\) \}\)\)/);
   assert.match(script, /key\.value \? maskApiKey\(key\.value\) : '未設定'/);
-  assert.match(script, /button\.disabled = !key\.value/);
+  assert.match(script, /edit\.textContent = key\.value \? '修改' : '設定'/);
+  assert.match(script, /remove\.disabled = !key\.value/);
+  assert.match(script, /function requestEditApiKey\(key\)[\s\S]*edit-api-key-input'\)\.value = key\.value \|\| ''/);
+  assert.match(script, /function saveEditedApiKey\(event\)[\s\S]*saveApiKey\(key\.id, key\.label, value\)[\s\S]*refreshApiKeys/);
   assert.match(script, /已設定 \$\{configuredCount\}／\$\{state\.apiKeys\.length\} 個服務供應商/);
   assert.match(html, /依服務供應商列出[\s\S]*相同供應商的模型共用一把金鑰/);
   assert.match(script, /maskApiKey\(key\.value\)/);

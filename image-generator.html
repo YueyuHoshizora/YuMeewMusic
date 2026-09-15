@@ -125,13 +125,14 @@
       <p>正在把文字轉換成畫面，請稍候…</p>
     </div>
 
-    <dialog id="flux-generation-confirm-dialog" class="reset-dialog" aria-labelledby="flux-generation-confirm-title">
-      <form id="flux-generation-confirm-form" method="dialog">
-        <h2 id="flux-generation-confirm-title">確認生成圖片</h2>
-        <p>此為公共資源，請勿濫用。</p>
+    <dialog id="confirm-image-generation-dialog" class="reset-dialog" aria-labelledby="confirm-image-generation-title">
+      <form id="confirm-image-generation-form" method="dialog">
+        <h2 id="confirm-image-generation-title">確認生成圖片</h2>
+        <p id="confirm-image-generation-message">圖片生成會消耗服務商帳戶額度，是否確定開始生成？</p>
+        <div id="image-generation-summary" class="image-generation-summary" aria-label="生成摘要"></div>
         <div class="dialog-actions">
-          <button id="cancel-flux-generation" class="text-button" type="button">取消</button>
-          <button class="dialog-confirm" type="submit">確定</button>
+          <button id="cancel-image-generation" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">確認生成</button>
         </div>
       </form>
     </dialog>

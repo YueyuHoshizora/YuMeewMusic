@@ -492,17 +492,47 @@ async function generateImage() {
 
 function requestImageGeneration() {
   if (busy || composing || $("generate-image").disabled) return;
-  const model = IMAGE_MODELS[$("image-model").value];
-  if (model?.publicResource) {
-    $("flux-generation-confirm-dialog").showModal();
-    return;
-  }
-  void generateImage();
+  const modelId = $("image-model").value;
+  const model = IMAGE_MODELS[modelId];
+  if (!model) return;
+  const size = generationSize();
+  const accountCredits = usesAccountCredits(modelId);
+  $("confirm-image-generation-message").textContent = model.publicResource
+    ? "此為公共資源，請勿濫用。是否確定開始生成？"
+    : accountCredits
+      ? "圖片生成費用將會從帳戶額度扣除，是否確定開始生成？"
+      : `圖片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
+  const estimatedFee = model.publicResource ? "Free" : accountCredits ? "帳戶扣點" : `依 ${model.apiKey} 計費`;
+  const values = [
+    ["生成模型", model.label],
+    ["生成比例", size.ratio],
+    ["輸出尺寸", `${size.width} × ${size.height}`],
+    ["生成數量", "1 張"],
+    ["題詞轉譯", $("enhance-prompt").checked ? "啟用" : "停用"],
+    ["預估費用", estimatedFee],
+  ];
+  $("image-generation-summary").replaceChildren(...values.map(([label, value]) => {
+    const item = document.createElement("span");
+    if (label === "預估費用") {
+      const fee = document.createElement("span");
+      fee.className = "image-generation-estimated-fee";
+      const amount = document.createElement("strong");
+      amount.textContent = value;
+      fee.append(amount);
+      item.append(document.createTextNode(label), fee);
+      return item;
+    }
+    const strong = document.createElement("strong");
+    strong.textContent = value;
+    item.append(document.createTextNode(label), strong);
+    return item;
+  }));
+  $("confirm-image-generation-dialog").showModal();
 }
 
-function confirmFluxGeneration(event) {
+function confirmImageGeneration(event) {
   event.preventDefault();
-  $("flux-generation-confirm-dialog").close();
+  $("confirm-image-generation-dialog").close();
   void generateImage();
 }
 
@@ -536,8 +566,8 @@ void getCurrentSession().then(({ session }) => {
 }).catch(() => {});
 
 $("generate-image").addEventListener("click", requestImageGeneration);
-$("flux-generation-confirm-form").addEventListener("submit", confirmFluxGeneration);
-$("cancel-flux-generation").addEventListener("click", () => $("flux-generation-confirm-dialog").close());
+$("confirm-image-generation-form").addEventListener("submit", confirmImageGeneration);
+$("cancel-image-generation").addEventListener("click", () => $("confirm-image-generation-dialog").close());
 $("open-image-history").addEventListener("click", () => { renderImageHistory(); $("image-history-dialog").showModal(); });
 $("close-image-history").addEventListener("click", () => $("image-history-dialog").close());
 $("image-history-dialog").addEventListener("close", releaseHistoryUrls);

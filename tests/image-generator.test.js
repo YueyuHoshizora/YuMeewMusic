@@ -51,7 +51,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(html, /id="image-history-dialog"[\s\S]*最多保留最近 10 張圖片/);
   assert.match(html, /只有按下「套用主畫面背景」才會取代主畫面的背景素材/);
   assert.match(html, /id="generation-lock"[^>]*hidden/);
-  assert.match(html, /id="flux-generation-confirm-dialog"[^>]*aria-labelledby="flux-generation-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-flux-generation"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
+  assert.match(html, /id="confirm-image-generation-dialog"[^>]*aria-labelledby="confirm-image-generation-title"[\s\S]*id="image-generation-summary"[^>]*aria-label="生成摘要"[\s\S]*id="cancel-image-generation"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確認生成<\/button>/);
   assert.match(css, /aspect-ratio:\s*16\s*\/\s*9/);
   assert.match(css, /\.generated-image-frame:fullscreen/);
   assert.match(css, /\.generated-image-frame\.fullscreen-fallback/);
@@ -100,9 +100,12 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
   assert.match(script, /const storedKey = getApiKey\(model\.provider\)[\s\S]*api-key-input"\)\.value = storedKey\?\.value \|\| ""/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey, width, height \}\)/);
-  assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\?\.publicResource[\s\S]*flux-generation-confirm-dialog"\)\.showModal\(\)[\s\S]*generateImage\(\)/);
-  assert.match(script, /function confirmFluxGeneration\(event\)[\s\S]*flux-generation-confirm-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
-  assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*flux-generation-confirm-form"\)\.addEventListener\("submit", confirmFluxGeneration\)/);
+  assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\.publicResource \? "Free"[\s\S]*image-generation-summary"\)\.replaceChildren[\s\S]*confirm-image-generation-dialog"\)\.showModal\(\)/);
+  assert.match(script, /function confirmImageGeneration\(event\)[\s\S]*confirm-image-generation-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
+  assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*confirm-image-generation-form"\)\.addEventListener\("submit", confirmImageGeneration\)/);
+  assert.match(script, /\["生成比例", size\.ratio\][\s\S]*\["輸出尺寸", `\$\{size\.width\} × \$\{size\.height\}`\][\s\S]*\["預估費用", estimatedFee\]/);
+  assert.match(css, /\.image-generation-summary\s*\{[^}]*grid-template-columns:\s*repeat\(3/);
+  assert.match(css, /\.image-generation-estimated-fee strong\s*\{[^}]*font-weight:\s*900/);
   assert.match(html, /id="api-key-input"[^>]*type="password"/);
   assert.match(html, /id="api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
   assert.match(script, /usesAccountCredits\(modelId\) \? \(memberSignedIn \? "帳戶扣點" : "需登入"\)/);

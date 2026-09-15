@@ -60,6 +60,12 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
 .generation-height strong { color: var(--foreground); font: 700 13px monospace; }
 .generation-size-note { margin: 9px 0 0; color: var(--muted); font-size: 11px; }
 .generation-size-note.error { color: var(--error-text); }
+.image-generation-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 16px 0 4px; }
+.image-generation-summary > span { display: grid; gap: 3px; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; background: var(--surface); color: var(--muted); font-size: 10px; }
+.image-generation-summary strong { overflow-wrap: anywhere; color: var(--foreground); font-size: 13px; }
+.image-generation-estimated-fee { display: flex; align-items: baseline; gap: 4px; font-size: 13px; }
+.image-generation-estimated-fee strong { color: var(--primary-text); font-size: 14px; font-weight: 900; }
+#confirm-image-generation-dialog { width: 700px; max-width: none; }
 .prompt-actions .export-button { width: 210px; }
 .generation-error { margin: 13px 0 0; padding: 11px 13px; border: 1px solid var(--error); border-radius: 8px; background: var(--error-surface); color: var(--error-text); font-size: 13px; line-height: 1.6; }
 .result-panel { padding: 20px; }
@@ -114,6 +120,7 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
   .prompt-actions { grid-template-columns: 1fr; gap: 12px; }
   .generation-settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .generation-height { grid-column: 1 / -1; }
+  #confirm-image-generation-dialog { width: min(700px, calc(100vw - 32px)); }
   .generate-action { justify-items: stretch; }
   .prompt-actions .export-button { width: 100%; }
 }
@@ -135,6 +142,7 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
   .generation-options { grid-template-columns: 1fr; max-width: none; }
   .generation-settings-grid { grid-template-columns: 1fr; }
   .generation-height { grid-column: auto; }
+  .image-generation-summary { grid-template-columns: 1fr; }
   .model-api-key { width: 100%; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; }
   .model-api-key button { text-align: right; }
   .result-heading { align-items: flex-start; }

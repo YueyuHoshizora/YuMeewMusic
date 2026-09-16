@@ -458,7 +458,7 @@ async function displayGeneratedImage(blob, restored = false, costUsd = 0) {
   await image.decode();
   image.hidden = false;
   $("empty-result").hidden = true;
-  const costSuffix = costUsd > 0 ? ` · 本次實際使用約 US$${costUsd.toFixed(4)}（估算）` : "";
+  const costSuffix = costUsd > 0 ? ` · 本次實際使用約 US$${(Math.ceil(costUsd * 100) / 100).toFixed(2)}（估算）` : "";
   status(`${restored ? "已載入上次生成結果" : "生成完成"} · ${image.naturalWidth} × ${image.naturalHeight}${costSuffix}`, "success");
 }
 

@@ -21,7 +21,12 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(source, /readSunoAudioResponse\(await fetch\(metadata\.audioUrl/);
   assert.match(script, /new URLSearchParams\(location\.search\)\.get\("q"\)/);
   assert.match(script, /if \(shared\) \$\("suno-url"\)\.value = shared;/);
-  assert.match(script, /prefillSharedUrlFromQueryString\(\);/);
+  assert.match(script, /const sharedUrlFromQueryString = prefillSharedUrlFromQueryString\(\);/);
+  assert.match(script, /async function autoRunFromQueryString\(\) \{/);
+  assert.match(script, /if \(!sharedUrlFromQueryString\) return;/);
+  assert.match(script, /await fetchSuno\(\{ preventDefault\(\) \{\} \}\);/);
+  assert.match(script, /if \(audioBlob\) await applyToMain\(\);/);
+  assert.match(script, /void autoRunFromQueryString\(\);/);
   assert.match(script, /audioBlob = await convertToWav\(playableBlob\)/);
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
   assert.match(source, /decryptSunoAudio\(encrypted, metadata\)/);

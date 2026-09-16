@@ -11,9 +11,10 @@ applyTheme(loadSettings().mode, loadSettings().theme);
 function prefillSharedUrlFromQueryString() {
   const shared = new URLSearchParams(location.search).get("q");
   if (shared) $("suno-url").value = shared;
+  return shared;
 }
 
-prefillSharedUrlFromQueryString();
+const sharedUrlFromQueryString = prefillSharedUrlFromQueryString();
 
 let audioBlob = null;
 let audioUrl = "";
@@ -164,3 +165,14 @@ $("suno-download").addEventListener("click", downloadAudio);
 $("suno-apply").addEventListener("click", () => applyToMain("./index.html", $("suno-apply")));
 $("suno-apply-recognize").addEventListener("click", () => applyToMain("./subtitle-editor.html?recognize=1", $("suno-apply-recognize")));
 window.addEventListener("unload", () => { if (audioUrl) URL.revokeObjectURL(audioUrl); });
+
+// 網址帶 ?q=<Suno 分享連結> 時，不只預填輸入框，直接自動跑完「取得音樂」＋「套用到主畫面」，
+// 讓擴充元件／其他頁面只要導到這個網址就能一次做完，不用再模擬點擊按鈕。
+// 只在真的有 q 參數時才自動執行；一般手動打開這個頁面不會有任何自動行為。
+async function autoRunFromQueryString() {
+  if (!sharedUrlFromQueryString) return;
+  await fetchSuno({ preventDefault() {} });
+  if (audioBlob) await applyToMain();
+}
+
+void autoRunFromQueryString();

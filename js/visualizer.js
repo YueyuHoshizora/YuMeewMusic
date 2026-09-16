@@ -82,6 +82,18 @@ export function drawBackground(canvas, img, darkness = 0) {
   c.fillRect(0, 0, w, h);
 }
 
+// Catmull-Rom spline: smoothly interpolates between p1 and p2 using their neighbours,
+// so a curve through discrete spectrum bins has no sharp joints or repeated segments.
+function catmullRom(p0, p1, p2, p3, t) {
+  const t2 = t * t, t3 = t2 * t;
+  return 0.5 * (
+    2 * p1 +
+    (p2 - p0) * t +
+    (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 +
+    (3 * p1 - 3 * p2 + p3 - p0) * t3
+  );
+}
+
 export function drawDynamic(canvas, t, b, img, s, includeSongDetails = true) {
   const c = canvas.getContext("2d");
   const w = canvas.width;
@@ -130,13 +142,41 @@ export function drawDynamic(canvas, t, b, img, s, includeSongDetails = true) {
   } else if (s.style >= 6) {
     drawExtra(c, w, h, t, values, gain, s.style);
   } else if (s.style === 3) {
-    c.beginPath();
-    for (let i = 0; i < 256; i++) {
-      const x = w * 0.12 + (i / 255) * w * 0.76;
-      const v = values[i % 64];
-      const y = cy + Math.sin(i * 0.15 + t * 2) * v * h * 0.18 * gain;
-      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    const left = w * 0.12, span = w * 0.76, amp = h * 0.16 * gain, points = 96;
+    const sampleAt = u => {
+      const pos = Math.min(62.999, u * 63), i1 = Math.floor(pos);
+      const i0 = Math.max(0, i1 - 1), i2 = Math.min(63, i1 + 1), i3 = Math.min(63, i1 + 2);
+      return Math.max(0, catmullRom(values[i0], values[i1], values[i2], values[i3], pos - i1));
+    };
+    const top = [], bottom = [];
+    for (let i = 0; i <= points; i++) {
+      const u = i / points,
+        x = left + u * span,
+        wobble = 1 + Math.sin(u * Math.PI * 3 + t * 1.6) * 0.1,
+        y = sampleAt(u) * amp * wobble;
+      top.push([x, cy - y]);
+      bottom.push([x, cy + y]);
     }
+    c.shadowBlur = 0;
+    const fill = c.createLinearGradient(0, cy - amp, 0, cy + amp);
+    fill.addColorStop(0, s.color + "00");
+    fill.addColorStop(0.5, s.color + "4d");
+    fill.addColorStop(1, s.color + "00");
+    c.beginPath();
+    c.moveTo(top[0][0], top[0][1]);
+    for (let i = 1; i <= points; i++) c.lineTo(top[i][0], top[i][1]);
+    for (let i = points; i >= 0; i--) c.lineTo(bottom[i][0], bottom[i][1]);
+    c.closePath();
+    c.fillStyle = fill;
+    c.fill();
+    c.shadowBlur = h * 0.013;
+    c.beginPath();
+    c.moveTo(top[0][0], top[0][1]);
+    for (let i = 1; i <= points; i++) c.lineTo(top[i][0], top[i][1]);
+    c.stroke();
+    c.beginPath();
+    c.moveTo(bottom[0][0], bottom[0][1]);
+    for (let i = 1; i <= points; i++) c.lineTo(bottom[i][0], bottom[i][1]);
     c.stroke();
   } else {
     for (let i = 0; i < 64; i++) {

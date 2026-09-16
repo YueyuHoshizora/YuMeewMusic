@@ -24,7 +24,7 @@ test("all renderers work at both requested resolutions", () => {
         {},
         {
           get: (_, key) =>
-            key === "createRadialGradient"
+            key === "createRadialGradient" || key === "createLinearGradient"
               ? () => ({ addColorStop() {} })
               : (...args) => {
                   calls++;
@@ -75,7 +75,7 @@ test("every statically referenced UI element exists and public assets are local"
 test("video frames can be painted as a cover background", () => {
   const calls = [];
   const context = new Proxy({}, {
-    get: (_, key) => key === "createRadialGradient" ? () => ({ addColorStop() {} }) : (...args) => calls.push([key, ...args]),
+    get: (_, key) => key === "createRadialGradient" || key === "createLinearGradient" ? () => ({ addColorStop() {} }) : (...args) => calls.push([key, ...args]),
     set: () => true,
   });
   const video = { videoWidth: 1920, videoHeight: 1080 };
@@ -97,7 +97,7 @@ test("new animations respond to audio and reproduce the same frame when seeking"
       {},
       {
         get: (_, key) =>
-          key === "createRadialGradient"
+          key === "createRadialGradient" || key === "createLinearGradient"
             ? () => ({ addColorStop() {} })
             : (...args) => commands.push([key, ...args]),
         set: (_, key, value) => {
@@ -125,7 +125,7 @@ test('position transforms only animation after background and restores every fra
   for (const height of [720, 1080]) for (let style = 0; style < STYLES.length; style++) {
     const calls = [];
     const context = new Proxy({}, {
-      get: (_, key) => key === 'createRadialGradient' ? () => ({addColorStop() {}}) : (...args) => calls.push([key, ...args]),
+      get: (_, key) => key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({addColorStop() {}}) : (...args) => calls.push([key, ...args]),
       set: () => true,
     });
     const width = height * 16 / 9;
@@ -144,7 +144,7 @@ test('song title and credits are painted inside landscape and portrait frames in
   for (const [width, height] of [[1920,1080],[1080,1920]]) for (let style = 0; style < STYLES.length; style++) {
     const text = [];
     const c = new Proxy({}, {
-      get: (_, key) => key === 'createRadialGradient' ? () => ({addColorStop(){}}) : key === 'fillText' ? (...args) => text.push(args) : () => {},
+      get: (_, key) => key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({addColorStop(){}}) : key === 'fillText' ? (...args) => text.push(args) : () => {},
       set: () => true,
     });
     draw({width,height,getContext:()=>c}, 0, null, null, {style,color:'#c5fa75',strength:70,darkness:45,positionX:50,positionY:50,songTitle:'測試歌曲',lyricist:'甲',composer:'乙'});
@@ -168,7 +168,7 @@ test("vinyl renders independent sleeve and circular record artwork", () => {
   const sleeve = {width: 800, height: 600}, record = {width: 600, height: 900};
   const commands = [];
   const context = new Proxy({}, {
-    get: (_, key) => key === 'createRadialGradient' ? () => ({addColorStop() {}}) : (...args) => commands.push([key, ...args]),
+    get: (_, key) => key === 'createRadialGradient' || key === 'createLinearGradient' ? () => ({addColorStop() {}}) : (...args) => commands.push([key, ...args]),
     set: () => true,
   });
   draw({width:1280,height:720,getContext:()=>context}, 3, null, null, {

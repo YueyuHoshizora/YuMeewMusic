@@ -11,6 +11,25 @@ const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
+// GPT Image（Flare／Sunburst）依 token 計費，OpenAI 未公開單一官方費率表；
+// 以下為目前已知公開資訊換算的估算費率（USD／百萬 token），實際請以 OpenAI
+// 帳單為準，如有落差請調整這三個常數。
+const GPT_IMAGE_USD_PER_MILLION_TEXT_INPUT = 5;
+const GPT_IMAGE_USD_PER_MILLION_IMAGE_INPUT = 8;
+const GPT_IMAGE_USD_PER_MILLION_OUTPUT = 30;
+
+function estimatedGptImageCostUsd(usage) {
+  if (!usage || typeof usage !== "object") return 0;
+  const textTokens = Number(usage.input_tokens_details?.text_tokens) || 0;
+  const imageTokens = Number(usage.input_tokens_details?.image_tokens) || 0;
+  const outputTokens = Number(usage.output_tokens) || 0;
+  const usd = (
+    textTokens * GPT_IMAGE_USD_PER_MILLION_TEXT_INPUT +
+    imageTokens * GPT_IMAGE_USD_PER_MILLION_IMAGE_INPUT +
+    outputTokens * GPT_IMAGE_USD_PER_MILLION_OUTPUT
+  ) / 1_000_000;
+  return Number.isFinite(usd) && usd > 0 ? usd : 0;
+}
 const IMAGE_HISTORY_LIMIT = 10;
 const IMAGE_GENERATION_SETTINGS_KEY = "yumeew-image-generation-settings";
 const $ = id => document.getElementById(id);
@@ -56,11 +75,13 @@ async function callOpenAiImage({ model, prompt, apiKey, width, height }) {
   const result = await response.json();
   const identifiers = extractImageGenerationIdentifiers(result, response.headers);
   const identifierHeaders = generationIdentifierHeaders(identifiers);
+  const costUsd = estimatedGptImageCostUsd(result?.usage);
+  const costHeaders = costUsd > 0 ? { "X-YuMeew-Estimated-Cost-USD": costUsd.toFixed(6) } : {};
   const image = result?.data?.[0];
   if (image?.b64_json) {
     return new Response(base64ImageBlob(image.b64_json), {
       status: 200,
-      headers: { "Content-Type": "image/jpeg", ...identifierHeaders },
+      headers: { "Content-Type": "image/jpeg", ...identifierHeaders, ...costHeaders },
     });
   }
   if (image?.url) {
@@ -69,7 +90,7 @@ async function callOpenAiImage({ model, prompt, apiKey, width, height }) {
     const imageBlob = await imageResponse.blob();
     return new Response(imageBlob, {
       status: 200,
-      headers: { "Content-Type": imageBlob.type || "image/jpeg", ...identifierHeaders },
+      headers: { "Content-Type": imageBlob.type || "image/jpeg", ...identifierHeaders, ...costHeaders },
     });
   }
   throw Error("OpenAI 沒有回傳可用的圖片資料。");
@@ -428,7 +449,7 @@ function releaseImage() {
   generatedBlob = null;
 }
 
-async function displayGeneratedImage(blob, restored = false) {
+async function displayGeneratedImage(blob, restored = false, costUsd = 0) {
   releaseImage();
   generatedBlob = blob;
   generatedUrl = URL.createObjectURL(generatedBlob);
@@ -437,7 +458,8 @@ async function displayGeneratedImage(blob, restored = false) {
   await image.decode();
   image.hidden = false;
   $("empty-result").hidden = true;
-  status(`${restored ? "已載入上次生成結果" : "生成完成"} · ${image.naturalWidth} × ${image.naturalHeight}`, "success");
+  const costSuffix = costUsd > 0 ? ` · 本次實際使用約 US$${costUsd.toFixed(4)}（估算）` : "";
+  status(`${restored ? "已載入上次生成結果" : "生成完成"} · ${image.naturalWidth} × ${image.naturalHeight}${costSuffix}`, "success");
 }
 
 async function restoreLastGeneratedImage() {
@@ -563,11 +585,12 @@ async function generateImage() {
     const identifiers = responseGenerationIdentifiers(response.headers);
     identifiers.localTaskId = progress.localTaskId;
     updateGenerationProgress(identifiers);
+    const estimatedCostUsd = Number(response.headers.get("X-YuMeew-Estimated-Cost-USD")) || 0;
     const blob = await response.blob();
     if (!blob.type.startsWith("image/") || !blob.size) throw Error("圖片服務沒有回傳可用的圖片。");
     const result = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
     stopGenerationProgress();
-    await displayGeneratedImage(result);
+    await displayGeneratedImage(result, false, estimatedCostUsd);
     const cachedFile = new File([result], imageFilename(), { type: result.type || "image/jpeg", lastModified: Date.now() });
     await saveGenerationHistory(result, prompt, modelId, identifiers).catch(() => showError("圖片已生成，但無法保存生成歷史。"));
     await saveStoredMedia("generated-image", cachedFile).catch(() => {

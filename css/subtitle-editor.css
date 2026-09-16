@@ -88,3 +88,5 @@ body.subtitle-editor-body { min-width: 1100px; }
 .history-button:not(:disabled):hover { background: var(--hover); }
 .editor-footer-history > span { margin-left: 2px; color: var(--muted); }
 .editor-save { width: auto; min-width: 200px; padding-inline: 18px; }
+.subtitle-extension-link { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.subtitle-extension-link .text-button { display: inline; padding: 0; margin-left: 2px; text-decoration: underline; }

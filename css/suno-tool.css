@@ -30,3 +30,5 @@ body.suno-tool-body { min-width: 960px; min-height: 100vh; }
 .suno-notes > div:first-child { border-left: 0; }
 .suno-notes strong { font-size: 14px; }
 .suno-notes span { color: var(--muted); font-size: 13px; line-height: 1.65; }
+.suno-extension-link { text-align: center; color: var(--muted); font-size: 12px; margin: 14px 0 0; }
+.suno-extension-link .text-button { display: inline; padding: 0; margin-left: 4px; text-decoration: underline; }

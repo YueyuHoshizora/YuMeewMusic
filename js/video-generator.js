@@ -3904,7 +3904,8 @@ async function restorePendingGeneration() {
   const metadata = pending?.metadata;
   const model = VIDEO_MODELS[metadata?.modelId];
   if (!pending?.taskId || !model) return;
-  const apiKey = getApiKey(model.provider)?.value || "";
+  // 帳戶扣點模式不該把使用者存的私人 API Key 送出去（跟 image-generator.js 的做法對齊）。
+  const apiKey = metadata.accountCredits ? "" : getApiKey(model.provider)?.value || "";
   if (!metadata.accountCredits && !apiKey) {
     setStatus(`有一個未完成的 ${metadata.modelLabel || model.label} 任務；設定 API KEY 後重新開啟頁面即可繼續查詢`, "error");
     return;
@@ -3946,7 +3947,8 @@ async function generateVideo() {
   const modelId = $("video-model").value;
   const model = VIDEO_MODELS[modelId];
   const accountCredits = usesAccountCredits(modelId);
-  const apiKey = getApiKey(model.provider)?.value || "";
+  // 帳戶扣點模式不該把使用者存的私人 API Key 送出去（跟 image-generator.js 的做法對齊）。
+  const apiKey = accountCredits ? "" : getApiKey(model.provider)?.value || "";
   if (!videoDetails || (!accountCredits && !apiKey) || busy) return;
   showError();
   setBusy(true);

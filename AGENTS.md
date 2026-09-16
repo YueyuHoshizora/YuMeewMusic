@@ -25,7 +25,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 | 頁面 | 功能 | 用到的模型／Worker |
 | --- | --- | --- |
-| `image-generator.html` 圖片生成器 | 文字生成圖片，最高 1280×720（寬高皆 <2000px） | Flux.2 Klein 4B（`flux-klein`，免費）、GPT-Image-2.5 Flare／Sunburst（OpenAI，經 `model-proxy` 帳戶扣點或使用者自帶 Key） |
+| `image-generator.html` 圖片生成器 | 文字生成圖片，依生成比例（1:1／4:3／3:4／16:9／9:16）自動列出寬高皆 <2000px 的常用解析度可選（16:9 最高到 1920×1080、9:16 最高到 1080×1920），預設 1280×720 | Flux.2 Klein 4B（`flux-klein`，免費）、GPT-Image-2.5 Flare／Sunburst（OpenAI，經 `model-proxy` 帳戶扣點或使用者自帶 Key） |
 | `video-generator.html` 影片生成器 | 分鏡編排＋文字生成影片，支援人物模板、多種鏡頭／燈光／動作描述 | MiniMax H3、Seedance 2.0／2.5（BytePlus）、Veo 3.1 Preview（Google），都經 `model-proxy` 代理 |
 | `vocal-separator.html` 人聲分離 | 最長 8 分鐘／150 MB 音樂分離人聲與伴奏，全程瀏覽器內執行 | Spleeter 2-stems 或 BS PolarFormer（ONNX Runtime Web，WebGPU 優先、WASM 備援），模型檔存 IndexedDB |
 | `image-video.html` 圖轉影片 | 多張圖片／影片素材排序＋進退場特效，輸出 MP4／透明 PNG MOV | 純瀏覽器端編碼，無外部服務 |

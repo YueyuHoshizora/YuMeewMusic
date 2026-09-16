@@ -41,6 +41,7 @@ next-env.d.ts
 /lyrics-transcriber/
 /storyboard-checker/
 /member-api/
+/suno-lyrics-bridge/
 
 # TypeScript build cache
 *.tsbuildinfo

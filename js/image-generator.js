@@ -10,6 +10,7 @@ import { extractImageGenerationIdentifiers, generationIdentifierHeaders, respons
 const WORKER_URL = "https://flux-klein-worker.yustellar.idv.tw/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein-worker.yustellar.idv.tw/autocomplete";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
+const MODEL_PROXY_IMAGE_URL = "https://model-proxy.yustellar.idv.tw/openai/image/generate";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 // GPT Image（Flare／Sunburst）依 token 計費，OpenAI 未公開單一官方費率表；
 // 以下為目前已知公開資訊換算的估算費率（USD／百萬 token），實際請以 OpenAI
@@ -96,11 +97,36 @@ async function callOpenAiImage({ model, prompt, apiKey, width, height }) {
   throw Error("OpenAI 沒有回傳可用的圖片資料。");
 }
 
-function callGptImage25Flare({ prompt, apiKey, width, height }) {
+async function callOpenAiImageAccountCredits({ model, prompt, width, height }) {
+  const { session, error } = await getCurrentSession();
+  if (error) throw error;
+  if (!session?.access_token) throw Error("請先登入會員帳號。");
+  return fetch(MODEL_PROXY_IMAGE_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt,
+      width,
+      height,
+      accountCredits: true,
+      idempotencyKey: crypto.randomUUID(),
+    }),
+    cache: "no-store",
+  });
+}
+
+function callGptImage25Flare({ prompt, apiKey, width, height, accountCredits }) {
+  if (accountCredits) return callOpenAiImageAccountCredits({ model: "gpt-image-2.5-flare", prompt, width, height });
   return callOpenAiImage({ model: "gpt-image-2.5-flare", prompt, apiKey, width, height });
 }
 
-function callGptImage25Sunburst({ prompt, apiKey, width, height }) {
+function callGptImage25Sunburst({ prompt, apiKey, width, height, accountCredits }) {
+  if (accountCredits) return callOpenAiImageAccountCredits({ model: "gpt-image-2.5-sunburst", prompt, width, height });
   return callOpenAiImage({ model: "gpt-image-2.5-sunburst", prompt, apiKey, width, height });
 }
 
@@ -569,7 +595,7 @@ async function generateImage() {
     const apiKey = model.apiKey === "Free" || accountCredits ? "" : getApiKey(model.provider)?.value || "";
     if (model.apiKey !== "Free" && !accountCredits && !apiKey) throw Error("請先點擊 API KEY 並輸入金鑰。");
     const { width, height } = generationSize();
-    const response = await model.call({ prompt, enhance, apiKey, width, height });
+    const response = await model.call({ prompt, enhance, apiKey, width, height, accountCredits });
     if (!response.ok) {
       let detail = "";
       let errorBody = null;
@@ -598,7 +624,7 @@ async function generateImage() {
     });
   } catch (error) {
     const corsHint = error instanceof TypeError
-      ? model?.apiKey === "OpenAI"
+      ? model?.apiKey === "OpenAI" && !usesAccountCredits(modelId)
         ? "目前無法從瀏覽器連線至 OpenAI Image API，請檢查網路或 API 服務狀態。"
         : "圖片服務目前不允許 GitHub Pages 跨網域讀取，請在 Worker 回應加入 Access-Control-Allow-Origin。"
       : "";

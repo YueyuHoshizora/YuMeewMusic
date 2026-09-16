@@ -139,7 +139,11 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
   assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
   assert.match(script, /const storedKey = getApiKey\(model\.provider\)[\s\S]*api-key-input"\)\.value = storedKey\?\.value \|\| ""/);
-  assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey, width, height \}\)/);
+  assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey, width, height, accountCredits \}\)/);
+  assert.match(script, /const MODEL_PROXY_IMAGE_URL = "https:\/\/model-proxy\.yustellar\.idv\.tw\/openai\/image\/generate";/);
+  assert.match(script, /async function callOpenAiImageAccountCredits\(/);
+  assert.match(script, /if \(accountCredits\) return callOpenAiImageAccountCredits\(\{ model: "gpt-image-2\.5-flare", prompt, width, height \}\);/);
+  assert.match(script, /if \(accountCredits\) return callOpenAiImageAccountCredits\(\{ model: "gpt-image-2\.5-sunburst", prompt, width, height \}\);/);
   assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\.publicResource \? "Free"[\s\S]*image-generation-summary"\)\.replaceChildren[\s\S]*confirm-image-generation-dialog"\)\.showModal\(\)/);
   assert.match(script, /function confirmImageGeneration\(event\)[\s\S]*confirm-image-generation-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*confirm-image-generation-form"\)\.addEventListener\("submit", confirmImageGeneration\)/);

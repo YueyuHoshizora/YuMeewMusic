@@ -34,6 +34,8 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 分鏡合理性檢查（`storyboard-checker` Worker）是影片生成器內建的輔助功能，不是獨立頁面。
 
+`suno-tool.html` 支援 `?q=<Suno 分享網址>` 查詢字串，載入時自動帶入分享連結輸入框（僅預填，不自動送出）。取得音樂後除了「套用到主畫面」（存進 `media-store.js` 的 `"audio"` IndexedDB 槽並跳轉 `index.html`），也可「套用並辨識字幕」，同樣存進 `"audio"` 槽後跳轉 `subtitle-editor.html?recognize=1`；`subtitle-editor.js` 讀到 `recognize=1` 且音訊／波形已就緒、目前沒有既有字幕時，會直接呼叫既有的 AI 字幕辨識（`requestSubtitleRecognition()` → Spleeter 人聲分離 → 上傳 `lyrics-transcriber`），把兩個工具串成一次操作；此路徑刻意不繞過既有的「已有字幕先跳確認覆寫對話框」邏輯。
+
 ### 會員與帳戶扣點
 
 所有頁面右上角顯示會員頭像與剩餘額度。會員身分、額度、交易紀錄由 `member-api`（Supabase Auth + Cloudflare D1）管理，瀏覽器只送 Supabase JWT，不直接碰 D1。「帳戶扣點」是圖片／影片生成的其中一種付款方式（另一種是使用者自帶第三方 API KEY），完整設計見下方〈限制與金流設計〉。

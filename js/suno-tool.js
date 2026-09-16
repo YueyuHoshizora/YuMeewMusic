@@ -140,25 +140,27 @@ function downloadAudio() {
   $("suno-status").textContent = `WAV 已開始下載 · ${formatBytes(audioBlob.size)}`;
 }
 
-async function applyToMain() {
+async function applyToMain(destination = "./index.html", triggerButton = $("suno-apply")) {
   if (!audioBlob || busy) return;
   setBusy(true);
-  $("suno-apply").textContent = "正在保存…";
+  const originalLabel = triggerButton.textContent;
+  triggerButton.textContent = "正在保存…";
   setError();
   try {
     const file = new File([audioBlob], fileName, { type: "audio/wav", lastModified: Date.now() });
     await saveStoredMedia("audio", file);
     void navigator.storage?.persist?.().catch(() => false);
-    $("suno-status").textContent = "音樂已保存，正在返回主畫面…";
-    location.href = "./index.html";
+    $("suno-status").textContent = "音樂已保存，正在前往下一步…";
+    location.href = destination;
   } catch (error) {
     setError(error?.message || "無法將音樂保存到主畫面。");
     setBusy(false);
-    $("suno-apply").textContent = "套用到主畫面";
+    triggerButton.textContent = originalLabel;
   }
 }
 
 $("suno-form").addEventListener("submit", fetchSuno);
 $("suno-download").addEventListener("click", downloadAudio);
-$("suno-apply").addEventListener("click", applyToMain);
+$("suno-apply").addEventListener("click", () => applyToMain("./index.html", $("suno-apply")));
+$("suno-apply-recognize").addEventListener("click", () => applyToMain("./subtitle-editor.html?recognize=1", $("suno-apply-recognize")));
 window.addEventListener("unload", () => { if (audioUrl) URL.revokeObjectURL(audioUrl); });

@@ -61,4 +61,10 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.equal((html.match(/data-time-field="start"/g) || []).length, 4);
   assert.equal((html.match(/data-time-field="end"/g) || []).length, 4);
   for (const delta of ['0.5', '0.1', '-0.5', '-0.1']) assert.match(html, new RegExp(`data-time-delta="${delta}"`));
+
+  assert.match(script, /function autoStartRecognitionFromQueryString\(\) \{/);
+  assert.match(script, /params\.get\('recognize'\) !== '1'/);
+  assert.match(script, /history\.replaceState\(null, '', location\.pathname\)/);
+  assert.match(script, /if \(!state\.audioFile \|\| !state\.waveformBuffer \|\| state\.cues\.length\) return;/);
+  assert.match(script, /void loadWorkspace\(\)\.then\(autoStartRecognitionFromQueryString\);/);
 });

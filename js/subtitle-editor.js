@@ -650,4 +650,12 @@ window.addEventListener('unload', () => {
   if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
 });
 
-void loadWorkspace();
+function autoStartRecognitionFromQueryString() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('recognize') !== '1') return;
+  history.replaceState(null, '', location.pathname);
+  if (!state.audioFile || !state.waveformBuffer || state.cues.length) return;
+  requestSubtitleRecognition();
+}
+
+void loadWorkspace().then(autoStartRecognitionFromQueryString);

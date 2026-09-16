@@ -15,6 +15,7 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(html, /id="suno-player"[^>]*controls/);
   assert.match(html, /id="suno-download"[^>]*>下載音樂（WAV）</);
   assert.match(html, /id="suno-apply"[^>]*>套用到主畫面</);
+  assert.match(html, /id="suno-apply-recognize"[^>]*>套用並辨識字幕</);
   assert.match(source, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
   assert.match(source, /\.\.\.clientIdentityHeaders\(\)/);
   assert.match(source, /readSunoAudioResponse\(await fetch\(metadata\.audioUrl/);
@@ -30,7 +31,9 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(script, /downloadBlob\(audioBlob, fileName\)/);
   assert.match(script, /new File\(\[audioBlob\], fileName, \{ type: "audio\/wav"/);
   assert.match(script, /saveStoredMedia\("audio", file\)/);
-  assert.match(script, /location\.href = "\.\/index\.html"/);
+  assert.match(script, /location\.href = destination;/);
+  assert.match(script, /applyToMain\("\.\/index\.html", \$\("suno-apply"\)\)/);
+  assert.match(script, /applyToMain\("\.\/subtitle-editor\.html\?recognize=1", \$\("suno-apply-recognize"\)\)/);
   assert.doesNotMatch(script, /localStorage/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/suno-tool\.html"[\s\S]*<strong>Suno 工具<\/strong>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"suno-tool\.html"/);

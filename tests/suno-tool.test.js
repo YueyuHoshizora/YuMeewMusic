@@ -18,6 +18,9 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(source, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
   assert.match(source, /\.\.\.clientIdentityHeaders\(\)/);
   assert.match(source, /readSunoAudioResponse\(await fetch\(metadata\.audioUrl/);
+  assert.match(script, /new URLSearchParams\(location\.search\)\.get\("q"\)/);
+  assert.match(script, /if \(shared\) \$\("suno-url"\)\.value = shared;/);
+  assert.match(script, /prefillSharedUrlFromQueryString\(\);/);
   assert.match(script, /audioBlob = await convertToWav\(playableBlob\)/);
   assert.match(script, /URL\.createObjectURL\(audioBlob\)/);
   assert.match(source, /decryptSunoAudio\(encrypted, metadata\)/);

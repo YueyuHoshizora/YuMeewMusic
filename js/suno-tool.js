@@ -8,6 +8,13 @@ const $ = id => document.getElementById(id);
 
 applyTheme(loadSettings().mode, loadSettings().theme);
 
+function prefillSharedUrlFromQueryString() {
+  const shared = new URLSearchParams(location.search).get("q");
+  if (shared) $("suno-url").value = shared;
+}
+
+prefillSharedUrlFromQueryString();
+
 let audioBlob = null;
 let audioUrl = "";
 let fileName = "suno-music.wav";

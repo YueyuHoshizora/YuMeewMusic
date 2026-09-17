@@ -33,9 +33,9 @@ const BAND_DEFAULTS = Object.freeze([
   Object.freeze({ name: "high", thresholdBase: -26, ratio: 2.2, attackMs: 4, releaseMs: 100 }),
 ]);
 
-export function masteredFilename(name) {
+export function masteredFilename(name, extension = "wav") {
   const base = String(name || "audio").replace(/\.[^.]+$/, "").replace(/[\\/:*?"<>|]+/g, "-") || "audio";
-  return `${base}-mastered.wav`;
+  return `${base}-mastered.${extension}`;
 }
 
 // ---------------------------------------------------------------------------

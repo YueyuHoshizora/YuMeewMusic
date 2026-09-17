@@ -2,6 +2,7 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { encodeStereoWav } from "./vocal-separator-core.js";
+import { encodeMedia } from "./export.js";
 import {
   MASTER_PRESETS,
   EQ_LEVEL_COUNT,
@@ -51,6 +52,10 @@ let sourceFile = null;
 let audioBuffer = null;
 let originalUrl = "";
 let resultBlob = null;
+let resultFlacBlob = null;
+let resultLeft = null;
+let resultRight = null;
+let resultToken = 0;
 let resultUrl = "";
 let downloadUrl = "";
 let processing = false;
@@ -383,6 +388,12 @@ function resetResult() {
   resultUrl = "";
   downloadUrl = "";
   resultBlob = null;
+  resultFlacBlob = null;
+  resultLeft = null;
+  resultRight = null;
+  resultToken++;
+  $("mastering-download-flac").disabled = false;
+  $("mastering-download-flac").textContent = "下載母帶 FLAC";
   $("mastering-preview").hidden = true;
   $("mastering-actions").hidden = true;
   $("mastering-loudness-compare").hidden = true;
@@ -512,6 +523,8 @@ async function startMastering() {
       impactLevel,
     });
     resultBlob = encodeStereoWav(result.left, result.right, audioBuffer.sampleRate);
+    resultLeft = result.left;
+    resultRight = result.right;
     resultUrl = URL.createObjectURL(resultBlob);
     $("mastering-compare-before").src = originalUrl;
     $("mastering-compare-after").src = resultUrl;
@@ -537,16 +550,61 @@ async function startMastering() {
   }
 }
 
-function downloadResult() {
-  if (!resultBlob) return;
+function triggerDownload(blob, filename) {
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
-  downloadUrl = URL.createObjectURL(resultBlob);
+  downloadUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = downloadUrl;
-  link.download = masteredFilename(sourceFile?.name);
+  link.download = filename;
   document.body.append(link);
   link.click();
   link.remove();
+}
+
+function downloadResult() {
+  if (!resultBlob) return;
+  triggerDownload(resultBlob, masteredFilename(sourceFile?.name, "wav"));
+}
+
+async function downloadFlacResult() {
+  if (!resultBlob || !resultLeft || !resultRight) return;
+  if (resultFlacBlob) {
+    triggerDownload(resultFlacBlob, masteredFilename(sourceFile?.name, "flac"));
+    return;
+  }
+  const token = resultToken;
+  const button = $("mastering-download-flac");
+  button.disabled = true;
+  button.textContent = "正在編碼 FLAC…";
+  try {
+    const flacBuffer = new AudioBuffer({
+      length: resultLeft.length,
+      numberOfChannels: 2,
+      sampleRate: audioBuffer.sampleRate,
+    });
+    flacBuffer.copyToChannel(resultLeft, 0);
+    flacBuffer.copyToChannel(resultRight, 1);
+    const blob = await encodeMedia({
+      format: "flac",
+      buffer: flacBuffer,
+      settings: { exportVolume: 100, eqBass: 0, eqMid: 0, eqTreble: 0 },
+      resolution: "1080",
+      fps: "60",
+      signal: new AbortController().signal,
+      onProgress: () => {},
+    });
+    if (token !== resultToken) return;
+    resultFlacBlob = blob;
+    triggerDownload(resultFlacBlob, masteredFilename(sourceFile?.name, "flac"));
+  } catch (cause) {
+    if (token !== resultToken) return;
+    error(cause?.message || "FLAC 編碼失敗，請改用 WAV 下載。");
+  } finally {
+    if (token === resultToken) {
+      button.disabled = false;
+      button.textContent = "下載母帶 FLAC";
+    }
+  }
 }
 
 async function applyResultToMain() {
@@ -607,6 +665,7 @@ $("mastering-impact").addEventListener("input", () => {
 });
 $("mastering-start").addEventListener("click", startMastering);
 $("mastering-download").addEventListener("click", downloadResult);
+$("mastering-download-flac").addEventListener("click", () => void downloadFlacResult());
 $("mastering-apply-main").addEventListener("click", applyResultToMain);
 window.addEventListener("unload", () => {
   if (originalUrl) URL.revokeObjectURL(originalUrl);

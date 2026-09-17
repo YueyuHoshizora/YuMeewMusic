@@ -37,6 +37,7 @@ test("masteredFilename sanitizes the source name and always ends in -mastered.wa
   assert.equal(masteredFilename("my song.mp3"), "my song-mastered.wav");
   assert.equal(masteredFilename('weird:/name*?.wav'), "weird-name--mastered.wav");
   assert.equal(masteredFilename(""), "audio-mastered.wav");
+  assert.equal(masteredFilename("my song.mp3", "flac"), "my song-mastered.flac");
 });
 
 test("splitBands reconstructs the original signal (Linkwitz-Riley bands sum back to unity)", () => {

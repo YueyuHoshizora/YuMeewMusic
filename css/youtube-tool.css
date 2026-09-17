@@ -18,7 +18,8 @@ body.youtube-tool-body { min-width: 960px; min-height: 100vh; }
 .youtube-copy-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
 .youtube-copy-row .text-input { height: 40px; }
 .youtube-copy-button { width: auto; min-width: 72px; margin: 0; }
-.youtube-channel-link { align-self: flex-start; width: auto; padding: 0; margin-top: 2px; text-decoration: underline; }
+.youtube-link-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 2px; }
+.youtube-channel-link { align-self: flex-start; width: auto; padding: 0; text-decoration: underline; }
 .youtube-thumb-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 18px; }
 .youtube-thumb-links a { padding: 6px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--foreground); font-size: 12px; text-decoration: none; }
 .youtube-thumb-links a:hover { border-color: var(--primary); color: var(--primary-text); }

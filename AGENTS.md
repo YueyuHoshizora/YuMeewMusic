@@ -36,7 +36,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 `suno-tool.html` 支援 `?q=<Suno 分享網址>` 查詢字串，載入時自動帶入分享連結輸入框（僅預填，不自動送出）。取得音樂後除了「套用到主畫面」（存進 `media-store.js` 的 `"audio"` IndexedDB 槽並跳轉 `index.html`），也可「套用並辨識字幕」，同樣存進 `"audio"` 槽後跳轉 `subtitle-editor.html?recognize=1`；`subtitle-editor.js` 讀到 `recognize=1` 且音訊／波形已就緒、目前沒有既有字幕時，會直接呼叫既有的 AI 字幕辨識（`requestSubtitleRecognition()` → Spleeter 人聲分離 → 上傳 `lyrics-transcriber`），把兩個工具串成一次操作；此路徑刻意不繞過既有的「已有字幕先跳確認覆寫對話框」邏輯。
 
-`youtube-tool.html` 分成「影片資訊」與「頻道資訊」兩個獨立表單，貼上公開 YouTube 影片或頻道連結（或裸 11 碼影片 ID／`@handle`）送到 `model-proxy` 的 `POST /youtube/resolve`，回傳資料由 Worker 解析公開頁面的 `<meta>` 標籤與內嵌 JSON 取得，不呼叫官方 YouTube Data API、不需要 API Key。影片封面直接用 `https://i.ytimg.com/vi/<videoId>/*.jpg` 這組固定網址組出各解析度連結，不經過 Worker；`maxresdefault.jpg` 在原始影片解析度不足時仍會回傳一張 120×90 的灰色佔位圖（HTTP 200，不會觸發 `onerror`），所以頁面預設用 `hqdefault.jpg` 當主要預覽圖，其餘解析度只作為可另開分頁的連結讓使用者自行確認。影片／頻道若沒有填寫關鍵字，TAG 清單會是空的，這是 YouTube 本身的限制，不是解析失敗。
+`youtube-tool.html` 分成「影片資訊」與「頻道資訊」兩個獨立表單，貼上公開 YouTube 影片或頻道連結（或裸 11 碼影片 ID／`@handle`）送到 `model-proxy` 的 `POST /youtube/resolve`，回傳資料由 Worker 解析公開頁面的 `<meta>` 標籤與內嵌 JSON 取得，不呼叫官方 YouTube Data API、不需要 API Key。影片封面直接用 `https://i.ytimg.com/vi/<videoId>/*.jpg` 這組固定網址組出各解析度連結，不經過 Worker；`maxresdefault.jpg` 在原始影片解析度不足時仍會回傳一張 120×90 的灰色佔位圖（HTTP 200，不會觸發 `onerror`），所以頁面預設用 `hqdefault.jpg` 當主要預覽圖，其餘解析度只作為可另開分頁的連結讓使用者自行確認。影片／頻道若沒有填寫關鍵字，TAG 清單會是空的，這是 YouTube 本身的限制，不是解析失敗。刻意不提供下載影片本體的功能（會繞過 YouTube 的串流保護且多半涉及著作權問題），影片結果只給「開啟原始影片」的外部連結直接跳轉到 YouTube 播放頁。
 
 ### 會員與帳戶扣點
 

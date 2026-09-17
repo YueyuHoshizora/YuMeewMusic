@@ -77,6 +77,13 @@ async function fetchVideoInfo(event) {
     $("yt-video-thumb").src = result.thumbnails?.high || result.thumbnails?.medium || result.thumbnails?.default || "";
     $("yt-video-title").value = result.title || "";
     $("yt-video-channel-id").value = result.channelId || "";
+    const watchLink = $("yt-video-watch-link");
+    if (result.sourceUrl) {
+      watchLink.href = result.sourceUrl;
+      watchLink.hidden = false;
+    } else {
+      watchLink.hidden = true;
+    }
     const channelLink = $("yt-video-channel-link");
     if (result.channelId) {
       channelLink.href = result.channelUrl;

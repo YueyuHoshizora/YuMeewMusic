@@ -19,6 +19,8 @@ test("YouTube tool page requests, copies, and renders video and channel info", (
   assert.match(script, /if \(result\.type !== "channel"\) throw Error/);
   assert.match(script, /navigator\.clipboard\.writeText/);
   assert.match(script, /renderTags\(\$\("yt-video-tags"\), result\.tags\)/);
+  assert.match(html, /id="yt-video-watch-link"[^>]*>開啟原始影片 ↗</);
+  assert.match(script, /watchLink\.href = result\.sourceUrl/);
   assert.match(script, /renderTags\(\$\("yt-channel-tags"\), result\.tags\)/);
   assert.doesNotMatch(script, /localStorage/);
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/youtube-tool\.html"[\s\S]*<strong>YouTube 工具<\/strong>/);

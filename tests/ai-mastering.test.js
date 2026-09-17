@@ -157,6 +157,27 @@ test("applyToneShapingEq's impact control boosts energy at the low-end shelf", (
   assert.ok(rms(cut) < rms(bypassed) * 0.85, `impact 拉到最低應該讓低頻變輕量：${rms(cut)} vs ${rms(bypassed)}`);
 });
 
+test("all 5 EQ levels are clearly distinguishable from their neighbors, not just the extremes vs. the middle", () => {
+  // 使用者要求：往左減弱、往右增強，而且 5 段彼此之間都要聽得出明顯差異，不能只有拉到
+  // 最左/最右才有感覺。這裡直接驗證：相鄰兩段之間的 RMS 差距都要超過一個門檻（換算成
+  // 大約 1.5 dB 的音量差，一般人在 A/B 比較下都聽得出來），而且是嚴格遞增（向右一定更強）。
+  const MIN_ADJACENT_RATIO = 10 ** (1.5 / 20); // 相鄰兩段至少要差約 1.5 dB 的音量
+  const presence = sine(EQ_PRESENCE_FREQUENCY_HZ, 0.2, 0.5);
+  const bass = sine(EQ_IMPACT_SHELF_FREQUENCY_HZ * 0.6, 0.2, 0.5);
+  for (const [signal, otherOption] of [
+    [presence, "impactLevel"],
+    [bass, "clarityLevel"],
+  ]) {
+    const levelOption = otherOption === "impactLevel" ? "clarityLevel" : "impactLevel";
+    const levels = Array.from({ length: EQ_LEVEL_COUNT }, (_, level) =>
+      rms(applyToneShapingEq(signal, SAMPLE_RATE, { [levelOption]: level, [otherOption]: EQ_DEFAULT_LEVEL })));
+    for (let i = 1; i < levels.length; i++) {
+      assert.ok(levels[i] > levels[i - 1] * MIN_ADJACENT_RATIO,
+        `level ${i} (${levels[i]}) should be clearly louder than level ${i - 1} (${levels[i - 1]})`);
+    }
+  }
+});
+
 test("masterAudioChannels accepts clarityLevel/impactLevel and still hits the loudness target without clipping", () => {
   const quiet = sine(220, 0.05, 3);
   const result = masterAudioChannels(quiet, quiet, SAMPLE_RATE, {

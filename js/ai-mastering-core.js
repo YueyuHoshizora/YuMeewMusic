@@ -10,8 +10,11 @@ export const MASTER_CROSSOVERS_HZ = Object.freeze([150, 1000, 5000]);
 // 一般人耳感受得到差異的頻段去逼近，不是真的把人聲與伴奏拆開處理。5 段、預設在正中間
 // （0 dB、不調整），對應介面上 1～5 的第 3 段。
 export const EQ_LEVEL_COUNT = 5;
-export const EQ_DEFAULT_LEVEL = 2; // 0-based 索引，5 段的正中間
-export const EQ_LEVEL_STEP_DB = 2.5;
+export const EQ_DEFAULT_LEVEL = 2; // 0-based 索引，5 段的正中間 = 預設（不調整）；
+// 往左（索引變小）減弱、往右（索引變大）增強。每一段之間差 EQ_LEVEL_STEP_DB，
+// 特意調得比一般「微調」用的 EQ 大，讓 5 段彼此之間都聽得出明顯差異，
+// 不會只有拉到最左/最右才有感覺。
+export const EQ_LEVEL_STEP_DB = 3.5;
 export const EQ_PRESENCE_FREQUENCY_HZ = 3200; // 人聲清晰度：子音與泛音集中、決定「聽不聽得清楚」的頻段
 export const EQ_PRESENCE_Q = 1;
 export const EQ_IMPACT_SHELF_FREQUENCY_HZ = 110; // 背景音震撼度：低頻的量感與衝擊力

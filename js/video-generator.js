@@ -27,8 +27,13 @@ const GOOGLE_CREATE_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/generate`;
 const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
 const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
 const RESOURCE_UPLOAD_URL = "https://model-proxy.yustellar.idv.tw/resources/upload";
-const STORYBOARD_CHECKER_URL = "https://storyboard-checker.yustellar.idv.tw/api/storyboard/check";
-const STORYBOARD_CHECKER_STATUS_URL = `${STORYBOARD_CHECKER_URL}/status`;
+// 分鏡 AI 分析有兩套後端：主要引擎是 inspiration-chat Worker（改呼叫 OpenRouter
+// 的 nex-agi/nex-n2.5-pro:free，回應更快、分析更準確——這顆 Worker 原本是「靈感
+// 激發」聊天頁面的後端，頁面下架後程式碼保留下來專職做這件事）；storyboard-checker
+// 是原本用 Cloudflare Workers AI 的舊版，沒有停用，當主要引擎失敗時的備援。兩邊的
+// 請求／回應 JSON 合約刻意做成一致，才能無腦切換，見 inspiration-chat/AGENTS.md。
+const STORYBOARD_PRIMARY_URL = "https://inspiration-chat.yustellar.idv.tw/api/storyboard/check";
+const STORYBOARD_FALLBACK_URL = "https://storyboard-checker.yustellar.idv.tw/api/storyboard/check";
 const STORYBOARD_CHECKER_POLL_INTERVAL = 3000;
 const STORYBOARD_CHECKER_TIMEOUT = 10 * 60 * 1000;
 const POLL_INTERVAL = 5000;
@@ -2451,12 +2456,20 @@ async function storyboardCheckerRequest(url, body) {
     cache: "no-store",
   });
   const payload = await response.json().catch(() => null);
-  if (!response.ok || !payload?.success) throw new Error(payload?.error || `AI 分析服務回應錯誤（${response.status}）。`);
+  if (!response.ok || !payload?.success) {
+    const failure = new Error(payload?.error || `AI 分析服務回應錯誤（${response.status}）。`);
+    failure.status = response.status;
+    throw failure;
+  }
   return payload;
 }
 
-async function waitForStoryboardAiReport(input) {
-  const created = await storyboardCheckerRequest(STORYBOARD_CHECKER_URL, input);
+// 對單一後端（主要引擎或備援）跑完整的「送出 → 視需要輪詢」流程。兩套後端目前都是
+// 同步回傳結果，不會真的觸發輪詢分支，但保留這段是為了以防任何一邊未來又改回排隊
+// 模式時不用重寫呼叫邏輯。
+async function runStoryboardBackend(checkUrl, input) {
+  const statusUrl = `${checkUrl}/status`;
+  const created = await storyboardCheckerRequest(checkUrl, input);
   if (created.status === "complete" || created.result) return parseStoryboardAiResult(created);
   const requestId = created.requestId;
   if (!requestId) throw new Error("AI 分析服務沒有回傳任務編號。");
@@ -2466,11 +2479,29 @@ async function waitForStoryboardAiReport(input) {
     const elapsed = Math.floor((Date.now() - startedAt) / 1000);
     $("video-generation-lock-title").textContent = "AI 正在分析分鏡";
     $("video-generation-lock-detail").textContent = `任務已排入佇列 · 已等待 ${elapsed} 秒`;
-    const status = await storyboardCheckerRequest(STORYBOARD_CHECKER_STATUS_URL, { requestId });
+    const status = await storyboardCheckerRequest(statusUrl, { requestId });
     if (status.status === "complete" || status.result) return parseStoryboardAiResult(status);
     if (["failed", "cancelled", "expired"].includes(status.status)) throw new Error("AI 分鏡分析任務未能完成。");
   }
   throw new Error("AI 分鏡分析等待超過 10 分鐘，請稍後重新嘗試。");
+}
+
+async function waitForStoryboardAiReport(input) {
+  try {
+    return await runStoryboardBackend(STORYBOARD_PRIMARY_URL, input);
+  } catch (primaryError) {
+    // 429（冷卻中）不重試備援：兩邊各自獨立冷卻，重試備援只會讓使用者在「主要引擎
+    // 冷卻中」跟「備援也冷卻中」之間困惑，不如直接把限流訊息原樣丟回去。
+    if (primaryError?.status === 429) throw primaryError;
+    console.warn("分鏡 AI 分析主要引擎失敗，改用 storyboard-checker 備援：", primaryError);
+    try {
+      return await runStoryboardBackend(STORYBOARD_FALLBACK_URL, input);
+    } catch (fallbackError) {
+      // 兩邊都失敗時，把備援的錯誤訊息回報給使用者（通常比主要引擎的錯誤更具體，
+      // 因為備援是最後一道防線，使用者需要知道的是「最終」失敗原因）。
+      throw fallbackError;
+    }
+  }
 }
 
 async function analyzeStoryboardsWithAi() {

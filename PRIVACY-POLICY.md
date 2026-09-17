@@ -61,9 +61,8 @@ Supabase 負責驗證登入身分。Cloudflare D1 保存會員識別碼、電子
 | AI 字幕辨識 | 瀏覽器分離後的人聲 WAV、字幕語言、選填完整歌詞及音訊時長 | 產生 SRT 字幕 |
 | 圖片生成與題詞補全 | 題詞、是否轉譯題詞、模型名稱、帳戶扣點設定或必要的 API KEY | 補全題詞或生成圖片 |
 | 影片生成 | 完整題詞、模型、解析度、比例、片長、引用的圖片／音訊／影片、已引用且啟用的人物資料，以及必要的 API KEY | 上傳參考資源並建立、查詢及下載影片生成任務 |
-| 分鏡 AI 分析 | 分鏡、全片風格、最終題詞及檢查所需的設定 | 產生分鏡分析報告 |
+| 分鏡 AI 分析 | 分鏡、全片風格、最終題詞及檢查所需的設定 | 產生分鏡分析報告；優先送到 inspiration-chat Worker（代理 OpenRouter），失敗時退回 storyboard-checker Worker（Cloudflare Workers AI）當備援，兩邊都不會保存分析內容 |
 | Suno 工具與歌曲評分 | 使用者輸入的公開 Suno 分享連結 | 解析公開音訊位置並在瀏覽器讀取音樂 |
-| 靈感激發聊天 | 您輸入的聊天訊息內容（不含帳號身分） | 呼叫 AI 模型產生創作靈感回覆，訊息僅存在於當次瀏覽器分頁記憶體，不寫入 `localStorage`／IndexedDB，離開或重新整理頁面即清空，Worker 與模型服務端也不會保存對話 |
 | 會員中心 | Supabase 登入權杖 | 驗證身分並讀取 D1 中屬於您的會員資料 |
 | 匯率試算 | 一般網路請求，不含儲值金額 | 取得臺灣銀行 USD/TWD 即期匯率資料 |
 
@@ -109,7 +108,7 @@ Supabase 負責驗證登入身分。Cloudflare D1 保存會員識別碼、電子
 - MiniMax、BytePlus／ModelArk 與 Google AI Studio：您選用相應影片模型時的生成服務。
 - [Hugging Face](https://huggingface.co/privacy)：下載在瀏覽器中使用的 AI 模型檔案。
 - [Suno](https://suno.com/privacy)：讀取您指定的公開分享頁面與音訊 CDN 資源。
-- [OpenRouter](https://openrouter.ai/privacy)：您使用「靈感激發」聊天功能時，代理呼叫 AI 模型產生回覆。
+- [OpenRouter](https://openrouter.ai/privacy)：您使用分鏡 AI 分析功能時，代理呼叫 AI 模型產生分析報告（主要引擎；備援引擎改用 Cloudflare Workers AI，見下方 Cloudflare 說明）。
 
 此外，本網站可能在取得您的同意、履行法律義務、回應主管機關或司法機關的合法要求、保護使用者生命身體財產、調查詐欺與濫用，或維護本網站合法權益所必要的範圍內提供資料。
 

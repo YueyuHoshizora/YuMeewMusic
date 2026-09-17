@@ -48,11 +48,12 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(html, /id="storyboard-ai-confirm-dialog"[^>]*aria-labelledby="storyboard-ai-confirm-title"[\s\S]*此為公共資源，請勿濫用。[\s\S]*id="cancel-storyboard-ai"[^>]*>取消<\/button>[\s\S]*class="dialog-confirm"[^>]*type="submit"[^>]*>確定<\/button>/);
   assert.match(css, /\.storyboard-ai-button \{[^}]*margin-right: auto/);
   assert.match(css, /\.storyboard-ai-report \{[^}]*max-height:[^}]*overflow-y: auto/);
-  assert.match(script, /const STORYBOARD_CHECKER_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
+  assert.match(script, /const STORYBOARD_PRIMARY_URL = "https:\/\/inspiration-chat\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
+  assert.match(script, /const STORYBOARD_FALLBACK_URL = "https:\/\/storyboard-checker\.yustellar\.idv\.tw\/api\/storyboard\/check"/);
   assert.match(script, /function storyboardCheckerRequest\(url, body\)[\s\S]*\.\.\.clientIdentityHeaders\(\)/);
   assert.match(script, /function storyboardAiRequest\(\)[\s\S]*orderedStoryboardEntries\(\)[\s\S]*storyboardAiScene\(finalStoryboard, scenes\.length \+ 1, true\)[\s\S]*scenes/);
-  assert.match(script, /const STORYBOARD_CHECKER_STATUS_URL = `\$\{STORYBOARD_CHECKER_URL\}\/status`/);
-  assert.match(script, /async function waitForStoryboardAiReport\(input\)[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_URL, input\)[\s\S]*created\.requestId[\s\S]*storyboardCheckerRequest\(STORYBOARD_CHECKER_STATUS_URL, \{ requestId \}\)[\s\S]*status\.status === "complete"[\s\S]*10 分鐘/);
+  assert.match(script, /async function runStoryboardBackend\(checkUrl, input\)[\s\S]*storyboardCheckerRequest\(checkUrl, input\)[\s\S]*created\.requestId[\s\S]*storyboardCheckerRequest\(statusUrl, \{ requestId \}\)[\s\S]*status\.status === "complete"[\s\S]*10 分鐘/);
+  assert.match(script, /async function waitForStoryboardAiReport\(input\)[\s\S]*runStoryboardBackend\(STORYBOARD_PRIMARY_URL, input\)[\s\S]*primaryError\?\.status === 429[\s\S]*runStoryboardBackend\(STORYBOARD_FALLBACK_URL, input\)/);
   assert.match(script, /function parseStoryboardAiResult\(payload\)[\s\S]*result\.choices\[0\]\?\.message\?\.content[\s\S]*Number\.isFinite\(Number\(result\.overall_score\)\)[\s\S]*AI 分析結果缺少必要的報告欄位/);
   assert.match(script, /async function analyzeStoryboardsWithAi\(\)[\s\S]*setBusy\(true\)[\s\S]*AI 正在分析分鏡[\s\S]*const report = await waitForStoryboardAiReport\(input\)[\s\S]*renderStoryboardAiReport\(report\)[\s\S]*openStoryboardAiPdf\(storyboardAiPdfWindow\)[\s\S]*setBusy\(false\)/);
   assert.match(script, /function openStoryboardAiConfirmation\(\)[\s\S]*storyboard-ai-confirm-dialog"\)\.showModal\(\)[\s\S]*function confirmStoryboardAiAnalysis\(event\)[\s\S]*storyboard-ai-confirm-dialog"\)\.close\(\)[\s\S]*prepareStoryboardAiPdfWindow\(\)[\s\S]*analyzeStoryboardsWithAi\(\)/);
@@ -425,4 +426,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影片生成器<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"video-generator\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-generator\.html"/);
+});
+
+test("storyboard AI analysis prefers the inspiration-chat engine and falls back to storyboard-checker, but never retries a 429 against the fallback", () => {
+  const script = readFileSync("js/video-generator.js", "utf8");
+  assert.match(script, /async function waitForStoryboardAiReport\(input\)[\s\S]*try \{[\s\S]*return await runStoryboardBackend\(STORYBOARD_PRIMARY_URL, input\)[\s\S]*\} catch \(primaryError\) \{[\s\S]*if \(primaryError\?\.status === 429\) throw primaryError;[\s\S]*return await runStoryboardBackend\(STORYBOARD_FALLBACK_URL, input\)/);
+  assert.match(script, /const failure = new Error\(payload\?\.error \|\| `AI 分析服務回應錯誤（\$\{response\.status\}）。`\);\s*failure\.status = response\.status;\s*throw failure;/);
 });

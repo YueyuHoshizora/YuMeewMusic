@@ -8,14 +8,14 @@
 | --- | --- | --- | --- |
 | Flux 圖片生成 | `flux-klein` `POST /generate` | 每 2 分鐘 1 次 | IP；Durable Object 精確冷卻 |
 | Flux 題詞補全 | `flux-klein` `POST /autocomplete` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
-| 分鏡 AI 分析 | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻 |
+| 分鏡 AI 分析（主要） | `inspiration-chat` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻 |
+| 分鏡 AI 分析（備援） | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻，跟主要引擎各自獨立計時 |
 | 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | IP；Workers Rate Limiting Binding |
 | Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 影片／圖片生成 | `model-proxy` `POST /*/video/generate`、`POST /openai/image/generate` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 資源上傳 | `model-proxy` `POST /resources/upload` | 每分鐘 20 次 | IP；Workers Rate Limiting Binding |
 | 會員影片額度預扣 | `member-api` `POST /v1/credits/video-reservations` | 每分鐘 60 次 | IP；D1 原子檢查會員可用餘額 |
 | 預扣確認／釋放 | `member-api` `POST /v1/internal/credits/reservations` | 每分鐘 30 次 | 服務 IP；HMAC 驗證 |
-| 靈感聊天 | `inspiration-chat` `POST /api/inspiration/chat` | 每 5 秒 1 次 | IP；Durable Object 精確冷卻 |
 
 所有 `OPTIONS` 預檢、健康檢查、模型與短效資源讀取、影片／查詢任務的查詢與下載目前不計入上述限額。
 
@@ -88,11 +88,13 @@ Rate Limiting Binding：
 
 正式端點：`https://storyboard-checker.yustellar.idv.tw`
 
+**現在是分鏡分析的備援引擎**：主站前端會優先打 `inspiration-chat` 的 `POST /api/storyboard/check`（見下一節），這個 Worker 失敗時才會退回來用這裡。這個 Worker 本身完全沒有停用、照常部署，跟 `inspiration-chat` 各自獨立冷卻、獨立計時。
+
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
 | `OPTIONS *` | CORS 預檢 | 不計入 |
 | `GET /` | 服務與模型狀態 | 不計入 |
-| `POST /api/storyboard/check` | 使用 AI 分析分鏡合理性 | 每 5 分鐘 1 次；單次最多 100 個 Scene |
+| `POST /api/storyboard/check` | 使用 AI（Cloudflare Workers AI，`@cf/zai-org/glm-4.7-flash`）分析分鏡合理性 | 每 5 分鐘 1 次；單次最多 100 個 Scene |
 | `POST /api/storyboard/check/status` | 舊佇列狀態端點 | 已停用，固定回傳 410；不計入 |
 
 分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object。分鏡資料通過驗證後才會開始 300 秒冷卻。
@@ -101,15 +103,16 @@ Rate Limiting Binding：
 
 正式端點：`https://inspiration-chat.yustellar.idv.tw`
 
+**這是分鏡分析的主要引擎**。這顆 Worker 原本是「靈感激發」聊天頁面的後端，那個頁面已經整個下架、`POST /api/inspiration/chat` 串流聊天端點也已經從程式碼拿掉；Worker 名稱維持不變，改做分鏡 AI 分析（沿用 `storyboard-checker` 的系統提示詞與 JSON Schema，改用 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 呼叫），回應比備援快、分析也更準確。
+
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
 | `OPTIONS *` | CORS 預檢 | 不計入 |
 | `GET /` | 服務資訊 | 不計入 |
-| `POST /api/inspiration/chat` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free`，以 SSE 串流回覆 | 每 5 秒 1 次；單次最多 40 則訊息、單則最多 4000 字、總長最多 20000 字 |
+| `POST /api/storyboard/check` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 分析分鏡合理性（JSON 結構化輸出，非串流） | 每 5 分鐘 1 次；單次最多 100 個 Scene |
+| `POST /api/storyboard/check/status` | 舊佇列狀態相容端點 | 已停用，固定回傳 410；不計入 |
 
-聊天請求使用 `INSPIRATION_COOLDOWN` Durable Object。冷卻時間刻意設為全站最短的 5 秒，因為這是對話式介面，使用者本來就會每隔幾秒送出一則訊息，不同於一次性生成類工具。
-
-前端（`inspiration.html`／`js/inspiration.js`）會在對話累積到約 12000 字或 30 則訊息時，主動把較舊的內容送一次請求給這個端點濃縮成摘要，只保留最近幾輪逐字內容，讓使用者可以理論上無限聊下去而不用手動開新對話；這次「壓縮請求」跟一般聊天訊息共用同一個端點與同一顆冷卻，Worker 端完全無感、不需要另外處理。上面的 40 則訊息／20000 字上限因此在正常使用下很少會被真的打到，主要是防止繞過前端直接打 API 的濫用情境。
+分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object，300 秒冷卻，跟 `storyboard-checker` 一致（兩邊各自獨立計時，互不影響）。主站前端（`js/video-generator.js` 的 `waitForStoryboardAiReport()`）優先呼叫這裡，失敗時（429 冷卻中除外）自動退回 `storyboard-checker` 當備援；兩邊的請求／回應 JSON 合約刻意做成一致，前端不需要另外處理。
 
 ## 維護注意事項
 

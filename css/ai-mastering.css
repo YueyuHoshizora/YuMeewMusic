@@ -53,3 +53,4 @@ body.mastering-body { min-width: 640px; overflow-x: hidden; }
   .mastering-rules > div { border-left: 0; border-top: 1px solid var(--border); }
   .mastering-rules > div:first-child { border-top: 0; }
 }
+.mastering-main > .separator-credit { text-align: center; }

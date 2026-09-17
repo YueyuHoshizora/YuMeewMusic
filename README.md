@@ -92,7 +92,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 - 可引用圖片、音訊、影片及已啟用的人物資料。
 - 生成結果可預覽、下載或套用為主畫面背景。
 - 生成前會整理模型、輸出規格、片長、分鏡、人物、資源與額度來源；分鏡檢查也會提示相鄰鏡頭的時間、場景、天氣、燈光與人物服裝連續性。
-- 分鏡 AI 分析優先呼叫 `inspiration-chat` Worker（改代理 OpenRouter 的 Nex-N2.5-Pro 免費模型，原本是已下架的「靈感激發」聊天頁面後端，回應比舊版更快、分析也更準確），失敗時自動退回 `storyboard-checker` Worker（Cloudflare Workers AI）當備援，使用者不會感覺到差異。
+- 分鏡 AI 分析優先呼叫 `storyboard-checker` Worker（Cloudflare Workers AI），失敗時自動退回 `inspiration-chat` Worker（改代理 OpenRouter 的 Nex-N2.5-Pro 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，目前先保留當備用引擎）當備援，使用者不會感覺到差異。
 - 生成任務 ID 會暫存至 IndexedDB，重新整理或稍後回到頁面時可繼續查詢。最近 10 個成功結果可保留為生成歷史、載入或選取兩個版本並排比較。
 - 生成歷史與人物模板保存在 IndexedDB；臨時引用資源不會持久保存。
 
@@ -177,7 +177,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 | AI 字幕辨識 | 瀏覽器 + 辨識服務 | 分離後的人聲 WAV、語言、選填歌詞與時長 |
 | 圖片生成器、影片生成器 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
 | Suno 工具 | Suno CDN + 解析 Worker | 公開分享連結；Worker 不保存音樂 |
-| 分鏡 AI 分析 | inspiration-chat Worker（主要）+ storyboard-checker Worker（備援）+ OpenRouter | 分鏡內容與全片風格；Worker 與模型服務端都不會保存分析內容 |
+| 分鏡 AI 分析 | storyboard-checker Worker（主要）+ inspiration-chat Worker（備援）+ OpenRouter | 分鏡內容與全片風格；Worker 與模型服務端都不會保存分析內容 |
 
 一般素材限制：
 

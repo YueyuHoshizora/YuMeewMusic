@@ -32,7 +32,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | `video-editor.html` 影片編輯 | 在主畫面影片上疊加圖層、特效、音訊 | 純瀏覽器端編碼，無外部服務 |
 | 其他工具（`converter.html`／`music-rating.html`／`suno-tool.html`） | 格式轉換、Suno 單曲評分（APEX 模型，`flux-klein` Worker 的 `runStoryboardCheck` 之外的另一套本機推論）、Suno 分享連結解析（`model-proxy` `/suno/resolve`） | 見各檔案 |
 
-分鏡合理性檢查是影片生成器內建的輔助功能，不是獨立頁面。主要引擎是 `inspiration-chat` Worker（呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，程式碼保留下來改做這件事），失敗時退回 `storyboard-checker` Worker（Cloudflare Workers AI `@cf/zai-org/glm-4.7-flash`）當備援，兩邊維持一致的分析標準與請求／回應格式。
+分鏡合理性檢查是影片生成器內建的輔助功能，不是獨立頁面。主要引擎退回原本的 `storyboard-checker` Worker（Cloudflare Workers AI `@cf/zai-org/glm-4.7-flash`），失敗時退回 `inspiration-chat` Worker（呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，目前先保留當備用引擎，之後有需要再切回來當主要）當備援，兩邊維持一致的分析標準與請求／回應格式。
 
 `suno-tool.html` 支援 `?q=<Suno 分享網址>` 查詢字串，載入時自動帶入分享連結輸入框（僅預填，不自動送出）。取得音樂後除了「套用到主畫面」（存進 `media-store.js` 的 `"audio"` IndexedDB 槽並跳轉 `index.html`），也可「套用並辨識字幕」，同樣存進 `"audio"` 槽後跳轉 `subtitle-editor.html?recognize=1`；`subtitle-editor.js` 讀到 `recognize=1` 且音訊／波形已就緒、目前沒有既有字幕時，會直接呼叫既有的 AI 字幕辨識（`requestSubtitleRecognition()` → Spleeter 人聲分離 → 上傳 `lyrics-transcriber`），把兩個工具串成一次操作；此路徑刻意不繞過既有的「已有字幕先跳確認覆寫對話框」邏輯。
 
@@ -100,7 +100,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | `flux-klein/` | 獨立 Worker | Flux.2 Klein 4B 圖片生成（免費資源） |
 | `lyrics-transcriber/` | 獨立 Worker | AI 字幕辨識 |
 | `storyboard-checker/` | 獨立 Worker | 分鏡合理性 AI 分析（Cloudflare Workers AI，現為備援） |
-| `inspiration-chat/` | 獨立 Worker | 原「靈感激發」聊天頁面代理，頁面已下架；程式碼保留改做分鏡 AI 分析主要引擎（OpenRouter 免費模型），比 storyboard-checker 更快更準 |
+| `inspiration-chat/` | 獨立 Worker | 原「靈感激發」聊天頁面代理，頁面已下架；程式碼保留改做分鏡 AI 分析備用引擎（OpenRouter 免費模型），目前先保留備用，主要引擎退回 storyboard-checker |
 
 每個 Worker 子專案自己有一份 `AGENTS.md`，內容是「這個 Worker 自己的規矩」（角色、端點、限流機制、程式碼風格、測試慣例），跟這份主文件互補、不重複。它們實際存在於磁碟上（只是被主站 `.gitignore` 排除），下面直接匯入內容，方便在主站這邊工作時也能看到：
 

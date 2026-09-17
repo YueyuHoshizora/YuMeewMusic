@@ -27,13 +27,13 @@ const GOOGLE_CREATE_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/generate`;
 const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
 const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
 const RESOURCE_UPLOAD_URL = "https://model-proxy.yustellar.idv.tw/resources/upload";
-// 分鏡 AI 分析有兩套後端：主要引擎是 inspiration-chat Worker（改呼叫 OpenRouter
-// 的 nex-agi/nex-n2.5-pro:free，回應更快、分析更準確——這顆 Worker 原本是「靈感
-// 激發」聊天頁面的後端，頁面下架後程式碼保留下來專職做這件事）；storyboard-checker
-// 是原本用 Cloudflare Workers AI 的舊版，沒有停用，當主要引擎失敗時的備援。兩邊的
-// 請求／回應 JSON 合約刻意做成一致，才能無腦切換，見 inspiration-chat/AGENTS.md。
-const STORYBOARD_PRIMARY_URL = "https://inspiration-chat.yustellar.idv.tw/api/storyboard/check";
-const STORYBOARD_FALLBACK_URL = "https://storyboard-checker.yustellar.idv.tw/api/storyboard/check";
+// 分鏡 AI 分析有兩套後端：主要引擎退回原本的 storyboard-checker Worker（Cloudflare
+// Workers AI，@cf/zai-org/glm-4.7-flash）；inspiration-chat Worker（改代理 OpenRouter
+// 的 nex-agi/nex-n2.5-pro:free——這顆 Worker 原本是「靈感激發」聊天頁面的後端，頁面
+// 下架後程式碼保留下來能做同一件事）先保留當備用，之後有需要再切回來當主要引擎。
+// 兩邊的請求／回應 JSON 合約刻意做成一致，才能無腦切換，見 inspiration-chat/AGENTS.md。
+const STORYBOARD_PRIMARY_URL = "https://storyboard-checker.yustellar.idv.tw/api/storyboard/check";
+const STORYBOARD_FALLBACK_URL = "https://inspiration-chat.yustellar.idv.tw/api/storyboard/check";
 const STORYBOARD_CHECKER_POLL_INTERVAL = 3000;
 const STORYBOARD_CHECKER_TIMEOUT = 10 * 60 * 1000;
 const POLL_INTERVAL = 5000;

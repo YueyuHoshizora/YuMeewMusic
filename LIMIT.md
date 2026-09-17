@@ -8,8 +8,8 @@
 | --- | --- | --- | --- |
 | Flux 圖片生成 | `flux-klein` `POST /generate` | 每 2 分鐘 1 次 | IP；Durable Object 精確冷卻 |
 | Flux 題詞補全 | `flux-klein` `POST /autocomplete` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
-| 分鏡 AI 分析（主要） | `inspiration-chat` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻 |
-| 分鏡 AI 分析（備援） | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻，跟主要引擎各自獨立計時 |
+| 分鏡 AI 分析（主要） | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻 |
+| 分鏡 AI 分析（備援） | `inspiration-chat` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻，跟主要引擎各自獨立計時 |
 | 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | IP；Workers Rate Limiting Binding |
 | Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 影片／圖片生成 | `model-proxy` `POST /*/video/generate`、`POST /openai/image/generate` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
@@ -88,7 +88,7 @@ Rate Limiting Binding：
 
 正式端點：`https://storyboard-checker.yustellar.idv.tw`
 
-**現在是分鏡分析的備援引擎**：主站前端會優先打 `inspiration-chat` 的 `POST /api/storyboard/check`（見下一節），這個 Worker 失敗時才會退回來用這裡。這個 Worker 本身完全沒有停用、照常部署，跟 `inspiration-chat` 各自獨立冷卻、獨立計時。
+**目前是分鏡分析的主要引擎**：主站前端會優先打這裡，失敗時（429 冷卻中除外）才退回 `inspiration-chat` 的 `POST /api/storyboard/check`（見下一節）當備援。跟 `inspiration-chat` 各自獨立冷卻、獨立計時。
 
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
@@ -103,7 +103,7 @@ Rate Limiting Binding：
 
 正式端點：`https://inspiration-chat.yustellar.idv.tw`
 
-**這是分鏡分析的主要引擎**。這顆 Worker 原本是「靈感激發」聊天頁面的後端，那個頁面已經整個下架、`POST /api/inspiration/chat` 串流聊天端點也已經從程式碼拿掉；Worker 名稱維持不變，改做分鏡 AI 分析（沿用 `storyboard-checker` 的系統提示詞與 JSON Schema，改用 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 呼叫），回應比備援快、分析也更準確。
+**目前先保留當分鏡分析的備用引擎**（主要引擎退回 `storyboard-checker`，需要時可以再切回來）。這顆 Worker 原本是「靈感激發」聊天頁面的後端，那個頁面已經整個下架、`POST /api/inspiration/chat` 串流聊天端點也已經從程式碼拿掉；Worker 名稱維持不變，改做分鏡 AI 分析（沿用 `storyboard-checker` 的系統提示詞與 JSON Schema，改用 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 呼叫）。
 
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
@@ -112,7 +112,7 @@ Rate Limiting Binding：
 | `POST /api/storyboard/check` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 分析分鏡合理性（JSON 結構化輸出，非串流） | 每 5 分鐘 1 次；單次最多 100 個 Scene |
 | `POST /api/storyboard/check/status` | 舊佇列狀態相容端點 | 已停用，固定回傳 410；不計入 |
 
-分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object，300 秒冷卻，跟 `storyboard-checker` 一致（兩邊各自獨立計時，互不影響）。主站前端（`js/video-generator.js` 的 `waitForStoryboardAiReport()`）優先呼叫這裡，失敗時（429 冷卻中除外）自動退回 `storyboard-checker` 當備援；兩邊的請求／回應 JSON 合約刻意做成一致，前端不需要另外處理。
+分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object，300 秒冷卻，跟 `storyboard-checker` 一致（兩邊各自獨立計時，互不影響）。主站前端（`js/video-generator.js` 的 `waitForStoryboardAiReport()`）目前優先呼叫 `storyboard-checker`，失敗時（429 冷卻中除外）才退回這裡當備援；兩邊的請求／回應 JSON 合約刻意做成一致，前端不需要另外處理，之後如果要切回這裡當主要引擎，只要調換 `js/video-generator.js` 裡 `STORYBOARD_PRIMARY_URL`／`STORYBOARD_FALLBACK_URL` 的網址即可。
 
 ## 維護注意事項
 

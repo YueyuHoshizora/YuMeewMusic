@@ -16,6 +16,7 @@ let resultBlob = null;
 let resultUrl = "";
 let downloadUrl = "";
 let processing = false;
+let loadToken = 0;
 
 function formatBytes(bytes) {
   if (bytes < 1024 ** 2) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -58,8 +59,12 @@ function resetResult() {
   $("mastering-result").removeAttribute("src");
 }
 
-async function loadFile(file) {
+async function loadFile(file, source = "upload") {
   if (!file || processing) return;
+  // 每次呼叫都拿一個新的 token；非同步解碼完成時如果 token 已經被更新的呼叫取代，
+  // 代表使用者在等待期間又選了別的音樂（或自動帶入與手動選擇剛好同時發生），
+  // 這時就捨棄這次結果，永遠以「最後一次」的選擇為準，不會互相覆蓋。
+  const token = ++loadToken;
   sourceFile = null;
   audioBuffer = null;
   $("mastering-preset").disabled = true;
@@ -75,32 +80,40 @@ async function loadFile(file) {
   $("mastering-file-name").textContent = file.name;
   $("mastering-file-help").textContent = "正在解碼音樂…";
   $("mastering-drop").disabled = true;
-  status("正在讀取音樂…");
+  status(source === "main" ? "偵測到主畫面音樂，正在帶入…" : "正在讀取音樂…");
   try {
     const arrayBuffer = await file.arrayBuffer();
     const context = new (window.AudioContext || window.webkitAudioContext)();
+    let decoded;
     try {
-      audioBuffer = await context.decodeAudioData(arrayBuffer);
+      decoded = await context.decodeAudioData(arrayBuffer);
     } finally {
       void context.close().catch(() => {});
     }
+    if (token !== loadToken) return;
+    audioBuffer = decoded;
     sourceFile = file;
+    $("mastering-source").textContent = source === "main" ? "主畫面音樂" : "本機上傳";
     $("mastering-duration").textContent = formatTime(audioBuffer.duration);
     $("mastering-channels").textContent = audioBuffer.numberOfChannels >= 2 ? "立體聲" : "單聲道";
     $("mastering-samplerate").textContent = `${Math.round(audioBuffer.sampleRate / 100) / 10} kHz`;
     $("mastering-size").textContent = formatBytes(file.size);
     $("mastering-file-info").hidden = false;
     $("mastering-original").src = URL.createObjectURL(file);
-    $("mastering-file-help").textContent = "點擊可更換檔案";
+    $("mastering-file-help").textContent = "點擊可更換音樂";
     $("mastering-preset").disabled = false;
     $("mastering-intensity").disabled = false;
     $("mastering-start").disabled = false;
-    status("已辨識音樂，選擇母帶設定後即可開始處理。", "success");
+    status(
+      source === "main" ? "已自動帶入主畫面音樂，可點擊上方更換。想母帶其他音樂就直接點擊選擇本機音樂。" : "已辨識音樂，選擇母帶設定後即可開始處理。",
+      "success",
+    );
   } catch (cause) {
+    if (token !== loadToken) return;
     $("mastering-file-help").textContent = "MP3 · WAV · M4A · FLAC · 100 MB 以內";
     error(cause?.message || "無法解碼這個音樂檔案，請確認格式是否受瀏覽器支援。");
   } finally {
-    $("mastering-drop").disabled = false;
+    if (token === loadToken) $("mastering-drop").disabled = false;
   }
 }
 
@@ -197,7 +210,7 @@ $("mastering-drop").addEventListener("click", () => {
   $("mastering-input").value = "";
   $("mastering-input").click();
 });
-$("mastering-input").addEventListener("change", event => loadFile(event.target.files?.[0]));
+$("mastering-input").addEventListener("change", event => loadFile(event.target.files?.[0], "upload"));
 for (const eventName of ["dragenter", "dragover"]) {
   $("mastering-drop").addEventListener(eventName, event => {
     event.preventDefault();
@@ -211,7 +224,7 @@ for (const eventName of ["dragleave", "drop"]) {
   });
 }
 $("mastering-drop").addEventListener("drop", event => {
-  if (!processing) void loadFile(event.dataTransfer.files?.[0]);
+  if (!processing) void loadFile(event.dataTransfer.files?.[0], "upload");
 });
 $("mastering-preset").addEventListener("change", updatePresetVisibility);
 $("mastering-intensity").addEventListener("input", () => {
@@ -232,11 +245,14 @@ function restoreWhenIdle(task) {
 }
 
 async function restoreSharedAudio() {
+  // 這是 requestIdleCallback 延後執行的自動帶入；如果使用者在它排到之前就已經手動選好
+  // 音樂了（sourceFile 已經有值），就不要用主畫面的音樂蓋掉使用者剛剛的選擇。
+  if (sourceFile) return;
   try {
     const record = await loadStoredMedia("audio");
-    if (record) await loadFile(unpackStoredMedia(record));
+    if (record && !sourceFile) await loadFile(unpackStoredMedia(record), "main");
   } catch (cause) {
-    status(`無法帶入共用音樂：${cause.message}`, "error");
+    if (!sourceFile) status(`無法帶入主畫面音樂：${cause.message}`, "error");
   }
 }
 

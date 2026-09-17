@@ -16,6 +16,7 @@ const pages = [
   "suno-tool.html",
   "image-generator.html",
   "video-generator.html",
+  "ai-mastering.html",
 ];
 
 test("every page loads the AdSense publisher script once", () => {

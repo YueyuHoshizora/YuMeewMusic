@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="在瀏覽器內自動進行多頻段壓縮與響度母帶處理，音樂不會上傳伺服器。" />
+    <title>AI 母帶 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/ai-mastering.css" />
+    <script type="module" src="./js/ai-mastering.js"></script>
+    <script type="module" src="./js/member-status.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
+  </head>
+  <body class="mastering-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
+    <header class="converter-header mastering-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">◑</span>YuMeew<span class="brand-sub">AI MASTERING</span></a>
+      <span class="local"><i></i>音樂只在瀏覽器內處理</span>
+    </header>
+    <main class="mastering-main">
+      <section class="mastering-heading">
+        <div>
+          <div class="eyebrow">LOCAL RULE-BASED DSP</div>
+          <h1>AI 母帶<span>。</span></h1>
+          <p>自動多頻段壓縮＋響度正規化＋峰值保護限幅器，一鍵把音樂調整到接近串流平台或其他目標的響度。全程規則式訊號處理，沒有使用任何訓練過的模型或上傳到伺服器。</p>
+        </div>
+        <span id="mastering-status" class="mastering-status" role="status">等待選擇音樂</span>
+      </section>
+
+      <section class="mastering-workspace">
+        <div class="panel mastering-source">
+          <div class="section-title"><span>01</span><h2>選擇音樂</h2></div>
+          <button id="mastering-drop" class="mastering-drop" type="button" aria-describedby="mastering-error">
+            <span class="mastering-drop-icon" aria-hidden="true">♫</span>
+            <span><strong id="mastering-file-name">選擇本機音樂</strong><small id="mastering-file-help">MP3 · WAV · M4A · FLAC · 100 MB 以內</small></span>
+          </button>
+          <input id="mastering-input" type="file" accept="audio/*,.mp3,.wav,.m4a,.flac" hidden />
+          <p id="mastering-error" class="mastering-error" role="alert" hidden></p>
+          <div id="mastering-file-info" class="mastering-file-info" hidden>
+            <dl>
+              <div><dt>長度</dt><dd id="mastering-duration">—</dd></div>
+              <div><dt>聲道</dt><dd id="mastering-channels">—</dd></div>
+              <div><dt>取樣率</dt><dd id="mastering-samplerate">—</dd></div>
+              <div><dt>檔案大小</dt><dd id="mastering-size">—</dd></div>
+            </dl>
+            <p class="separator-original-label">原音試聽（未處理）</p>
+            <audio id="mastering-original" controls preload="metadata" aria-label="原音試聽，未處理"></audio>
+          </div>
+        </div>
+
+        <div class="mastering-arrow" aria-hidden="true">→</div>
+
+        <div class="panel mastering-output mastering-settings">
+          <div class="section-title"><span>02</span><h2>母帶設定</h2></div>
+          <label class="field-label" for="mastering-preset">目標響度</label>
+          <select id="mastering-preset" class="setting-select" disabled>
+            <option value="streaming">串流平台（Spotify／YouTube，約 -14 LUFS）</option>
+            <option value="loud">強力／夜店（約 -9 LUFS）</option>
+            <option value="broadcast">廣播／有聲書（約 -16 LUFS）</option>
+            <option value="custom">自訂目標響度</option>
+          </select>
+          <div id="mastering-custom-lufs" class="mastering-custom-lufs" hidden>
+            <label class="field-label" for="mastering-custom-lufs-input">自訂目標（LUFS）</label>
+            <input id="mastering-custom-lufs-input" type="number" min="-30" max="-6" step="0.5" value="-14" />
+          </div>
+          <label class="field-label" for="mastering-intensity">壓縮強度</label>
+          <div class="mastering-intensity-row">
+            <input id="mastering-intensity" type="range" min="0" max="100" step="1" value="50" disabled />
+            <output id="mastering-intensity-value">50%</output>
+          </div>
+          <button id="mastering-start" class="export-button mastering-start" type="button" disabled>開始處理</button>
+          <progress id="mastering-progress" max="100" hidden></progress>
+          <div class="mastering-progress-row">
+            <span id="mastering-progress-text" hidden>正在處理，請保持此頁面開啟…</span>
+          </div>
+          <dl id="mastering-loudness-compare" class="mastering-loudness-compare" hidden>
+            <div><dt>處理前響度</dt><dd id="mastering-before-lufs">—</dd></div>
+            <div><dt>處理後響度</dt><dd id="mastering-after-lufs">—</dd></div>
+          </dl>
+          <div id="mastering-preview" class="mastering-preview" hidden>
+            <p class="separator-original-label">處理後試聽</p>
+            <audio id="mastering-result" controls preload="auto"></audio>
+          </div>
+          <div id="mastering-actions" class="mastering-actions" hidden>
+            <button id="mastering-download" class="text-button" type="button">下載母帶 WAV</button>
+            <button id="mastering-apply-main" class="export-button" type="button">套用到主畫面</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel mastering-rules">
+        <div><strong>處理方式</strong><span>4 段 Linkwitz-Riley 分頻各自動態壓縮，再依 ITU-R BS.1770-4 演算法量測響度並正規化，最後用峰值保護限幅器避免爆表。</span></div>
+        <div><strong>處理時間</strong><span>取決於音樂長度與裝置效能；處理時請保持此頁面開啟。</span></div>
+        <div><strong>隱私</strong><span>選擇的音樂全程只在瀏覽器記憶體處理，不會上傳到伺服器。</span></div>
+      </section>
+      <p class="separator-credit">母帶演算法：規則式多頻段動態壓縮＋ITU-R BS.1770-4 響度量測（自行實作，非訓練模型）</p>
+    </main>
+  </body>
+</html>

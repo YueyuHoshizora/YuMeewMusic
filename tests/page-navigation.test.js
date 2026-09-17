@@ -15,6 +15,7 @@ const secondaryPages = [
   "suno-tool.html",
   "image-generator.html",
   "video-generator.html",
+  "ai-mastering.html",
 ];
 
 test("secondary pages use the logo as their only header return control", () => {

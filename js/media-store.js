@@ -3,7 +3,7 @@ const STORE = "files";
 const ALLOWED_KINDS = new Set(["audio", "image", "subtitle", "generated-image", "generated-video"]);
 const ALLOWED_VALUE_KINDS = new Set(["image-video-project", "image-generation-history", "video-character-templates", "video-generator-draft", "video-generator-draft-resources", "video-generation-task", "video-generation-history"]);
 const ENTRY_DETAILS = Object.freeze({
-  audio: { page: "主畫面／人聲分離", field: "音樂檔案" },
+  audio: { page: "主畫面／人聲分離／AI 母帶", field: "音樂檔案" },
   image: { page: "主畫面", field: "背景素材" },
   subtitle: { page: "主畫面／字幕編輯器", field: "字幕檔案" },
   "generated-image": { page: "圖片生成器", field: "最後生成結果" },

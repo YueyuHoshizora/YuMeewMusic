@@ -1,11 +1,11 @@
 body.inspiration-body { min-width: 0; overflow-x: hidden; }
 .inspiration-header { justify-content: space-between; }
-.inspiration-main { max-width: 760px; padding-top: 34px; }
+.inspiration-main { max-width: 980px; padding-top: 34px; }
 .inspiration-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
-.inspiration-heading p { max-width: 480px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.inspiration-heading p { max-width: 640px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .inspiration-status { max-width: 180px; color: var(--muted); font-size: 13px; text-align: right; white-space: nowrap; }
 
-.inspiration-chat { display: flex; flex-direction: column; height: min(620px, 70vh); padding: 0; overflow: hidden; }
+.inspiration-chat { display: flex; flex-direction: column; height: min(680px, 74vh); padding: 0; overflow: hidden; }
 
 .inspiration-messages { display: flex; flex: 1; flex-direction: column; gap: 14px; overflow-y: auto; padding: 20px; }
 .inspiration-empty { margin: auto; max-width: 380px; color: var(--muted); font-size: 13px; line-height: 1.7; text-align: center; }
@@ -14,7 +14,7 @@ body.inspiration-body { min-width: 0; overflow-x: hidden; }
 .inspiration-message.user { justify-content: flex-end; }
 .inspiration-message.assistant { justify-content: flex-start; }
 .inspiration-message-content {
-  max-width: 78%;
+  max-width: 70%;
   margin: 0;
   padding: 11px 14px;
   border-radius: 14px;

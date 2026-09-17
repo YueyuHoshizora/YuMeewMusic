@@ -5,7 +5,7 @@ body.inspiration-body { min-width: 0; overflow-x: hidden; }
 .inspiration-heading p { max-width: 640px; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 .inspiration-status { max-width: 180px; color: var(--muted); font-size: 13px; text-align: right; white-space: nowrap; }
 
-.inspiration-chat { display: flex; flex-direction: column; height: min(680px, 74vh); padding: 0; overflow: hidden; }
+.inspiration-chat { display: flex; flex-direction: column; height: min(680px, 74dvh); padding: 0; overflow: hidden; }
 
 .inspiration-messages { display: flex; flex: 1; flex-direction: column; gap: 14px; overflow-y: auto; padding: 20px; }
 .inspiration-empty { margin: auto; max-width: 380px; color: var(--muted); font-size: 13px; line-height: 1.7; text-align: center; }
@@ -80,13 +80,40 @@ body.inspiration-body { min-width: 0; overflow-x: hidden; }
 .inspiration-send-button:disabled { opacity: 0.5; cursor: not-allowed; }
 .inspiration-send-button.stopping { background: var(--error); color: #fff; }
 
-.inspiration-rules { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
-.inspiration-rules > div { display: flex; flex-direction: column; gap: 4px; }
+.inspiration-rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 20px; padding: 0; overflow: hidden; }
+.inspiration-rules > div { display: flex; min-height: 96px; flex-direction: column; gap: 6px; padding: 18px 20px; border-left: 1px solid var(--border); }
+.inspiration-rules > div:first-child { border-left: 0; }
 .inspiration-rules strong { font-size: 13px; }
 .inspiration-rules span { color: var(--muted); font-size: 13px; line-height: 1.7; }
 
-@media (max-width: 560px) {
+/* 平板寬度：標題與狀態文字改成上下排列，避免說明文字被壓縮得太窄；規則區塊維持
+   三欄，但欄位變窄時允許文字換行。 */
+@media (max-width: 860px) {
   .inspiration-heading { flex-direction: column; align-items: start; gap: 10px; }
   .inspiration-status { max-width: none; text-align: left; }
-  .inspiration-message-content { max-width: 90%; }
+  .inspiration-chat { height: min(600px, 70dvh); }
+}
+
+/* 平板直向／大手機：三欄規則說明改成單欄堆疊，跟母帶頁面同款收合方式。 */
+@media (max-width: 720px) {
+  .inspiration-main { padding-top: 26px; }
+  .inspiration-rules { grid-template-columns: 1fr; margin-top: 16px; }
+  .inspiration-rules > div { min-height: 0; border-left: 0; border-top: 1px solid var(--border); }
+  .inspiration-rules > div:first-child { border-top: 0; }
+}
+
+/* 手機：頭部允許換行、聊天面板改成貼齊視窗高度、輸入列改成上下兩排，
+   送出鍵加大成整排寬度方便單手點按。 */
+@media (max-width: 560px) {
+  .inspiration-header { flex-wrap: wrap; height: auto; min-height: 82px; padding: 14px 4%; gap: 8px 16px; }
+  .inspiration-header .local { flex: 1 1 100%; }
+  .inspiration-heading h1 { font-size: 26px; }
+  .inspiration-heading p { font-size: 13px; }
+  .inspiration-chat { height: min(560px, 68dvh); border-radius: 10px; }
+  .inspiration-messages { padding: 14px; gap: 10px; }
+  .inspiration-message-content { max-width: 90%; font-size: 13.5px; padding: 10px 12px; }
+  .inspiration-input-row { flex-wrap: wrap; padding: 12px 14px; }
+  .inspiration-input { flex: 1 1 100%; }
+  .inspiration-input-actions { flex: 1 1 100%; justify-content: space-between; }
+  .inspiration-send-button { flex: 1; }
 }

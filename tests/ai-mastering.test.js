@@ -3,12 +3,18 @@ import assert from "node:assert/strict";
 import {
   MASTER_CROSSOVERS_HZ,
   MASTER_PRESETS,
+  EQ_LEVEL_COUNT,
+  EQ_DEFAULT_LEVEL,
+  EQ_PRESENCE_FREQUENCY_HZ,
+  EQ_IMPACT_SHELF_FREQUENCY_HZ,
   masteredFilename,
   splitBands,
   computeCompressorGainCurve,
   limitStereoChannels,
   measureIntegratedLoudness,
   measureTruePeakDb,
+  eqLevelToGainDb,
+  applyToneShapingEq,
   masterAudioChannels,
 } from "../js/ai-mastering-core.js";
 
@@ -112,6 +118,57 @@ test("measureTruePeakDb catches inter-sample peaks that sample-peak scanning mis
   const samplePeakDb = 20 * Math.log10(samplePeak);
   const truePeakDb = measureTruePeakDb([signal]);
   assert.ok(truePeakDb > samplePeakDb + 1, `true peak (${truePeakDb}) should clearly exceed sample peak (${samplePeakDb})`);
+});
+
+test("eqLevelToGainDb maps the 5-level EQ controls to 0 dB at the default (middle) level", () => {
+  assert.equal(EQ_LEVEL_COUNT, 5);
+  assert.equal(eqLevelToGainDb(EQ_DEFAULT_LEVEL), 0);
+  assert.ok(eqLevelToGainDb(0) < 0, "the lowest level should cut");
+  assert.ok(eqLevelToGainDb(EQ_LEVEL_COUNT - 1) > 0, "the highest level should boost");
+  // 兩端對稱：從正中間往下跟往上調整幾段，增益大小應該一樣、方向相反。
+  assert.equal(eqLevelToGainDb(0), -eqLevelToGainDb(EQ_LEVEL_COUNT - 1));
+  assert.equal(eqLevelToGainDb(-5), eqLevelToGainDb(0), "超出範圍要夾在最低那一段");
+  assert.equal(eqLevelToGainDb(99), eqLevelToGainDb(EQ_LEVEL_COUNT - 1), "超出範圍要夾在最高那一段");
+});
+
+test("applyToneShapingEq is a no-op at the default level and doesn't mutate the input", () => {
+  const signal = sine(1000, 0.3, 0.5);
+  const original = Float32Array.from(signal);
+  const output = applyToneShapingEq(signal, SAMPLE_RATE, { clarityLevel: EQ_DEFAULT_LEVEL, impactLevel: EQ_DEFAULT_LEVEL });
+  assert.deepEqual(signal, original, "輸入陣列不應該被就地修改");
+  for (let i = 0; i < output.length; i++) assert.ok(Math.abs(output[i] - signal[i]) < 1e-6);
+});
+
+test("applyToneShapingEq's clarity control boosts energy at the presence band without touching the impact band's default", () => {
+  const presence = sine(EQ_PRESENCE_FREQUENCY_HZ, 0.2, 0.5);
+  const bypassed = applyToneShapingEq(presence, SAMPLE_RATE, { clarityLevel: EQ_DEFAULT_LEVEL, impactLevel: EQ_DEFAULT_LEVEL });
+  const boosted = applyToneShapingEq(presence, SAMPLE_RATE, { clarityLevel: EQ_LEVEL_COUNT - 1, impactLevel: EQ_DEFAULT_LEVEL });
+  const cut = applyToneShapingEq(presence, SAMPLE_RATE, { clarityLevel: 0, impactLevel: EQ_DEFAULT_LEVEL });
+  assert.ok(rms(boosted) > rms(bypassed) * 1.2, `clarity 拉到最高應該讓人聲清晰度頻段更響：${rms(boosted)} vs ${rms(bypassed)}`);
+  assert.ok(rms(cut) < rms(bypassed) * 0.85, `clarity 拉到最低應該讓人聲清晰度頻段變小聲：${rms(cut)} vs ${rms(bypassed)}`);
+});
+
+test("applyToneShapingEq's impact control boosts energy at the low-end shelf", () => {
+  const bass = sine(EQ_IMPACT_SHELF_FREQUENCY_HZ * 0.6, 0.2, 0.5);
+  const bypassed = applyToneShapingEq(bass, SAMPLE_RATE, { clarityLevel: EQ_DEFAULT_LEVEL, impactLevel: EQ_DEFAULT_LEVEL });
+  const boosted = applyToneShapingEq(bass, SAMPLE_RATE, { clarityLevel: EQ_DEFAULT_LEVEL, impactLevel: EQ_LEVEL_COUNT - 1 });
+  const cut = applyToneShapingEq(bass, SAMPLE_RATE, { clarityLevel: EQ_DEFAULT_LEVEL, impactLevel: 0 });
+  assert.ok(rms(boosted) > rms(bypassed) * 1.2, `impact 拉到最高應該讓低頻更震撼：${rms(boosted)} vs ${rms(bypassed)}`);
+  assert.ok(rms(cut) < rms(bypassed) * 0.85, `impact 拉到最低應該讓低頻變輕量：${rms(cut)} vs ${rms(bypassed)}`);
+});
+
+test("masterAudioChannels accepts clarityLevel/impactLevel and still hits the loudness target without clipping", () => {
+  const quiet = sine(220, 0.05, 3);
+  const result = masterAudioChannels(quiet, quiet, SAMPLE_RATE, {
+    intensity: 50,
+    targetLufs: -14,
+    ceilingDb: -1,
+    clarityLevel: EQ_LEVEL_COUNT - 1,
+    impactLevel: 0,
+  });
+  assert.ok(Math.abs(result.afterLufs - (-14)) < 2, `expected close to -14 LUFS, got ${result.afterLufs}`);
+  const ceiling = 10 ** (-1 / 20) + 1e-6;
+  for (let i = 0; i < result.left.length; i++) assert.ok(Math.abs(result.left[i]) <= ceiling);
 });
 
 test("masterAudioChannels normalizes an over-quiet mix toward the target LUFS without clipping", () => {

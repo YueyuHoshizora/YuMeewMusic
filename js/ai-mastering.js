@@ -2,11 +2,13 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { encodeStereoWav } from "./vocal-separator-core.js";
-import { MASTER_PRESETS, masterAudioChannels, masteredFilename } from "./ai-mastering-core.js";
+import { MASTER_PRESETS, EQ_LEVEL_COUNT, EQ_DEFAULT_LEVEL, masterAudioChannels, masteredFilename } from "./ai-mastering-core.js";
 import { registerAudioPlayer, setupSimplePlayer } from "./audio-player.js";
 
 const $ = id => document.getElementById(id);
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
+// 5 段 EQ 調整器的文字說明，索引對應 1～5 段（陣列是 0-based，介面顯示的段數是 1-based）。
+const EQ_LEVEL_LABELS = ["最低", "偏低", "標準", "偏高", "最高"];
 
 const restored = loadSettings();
 applyTheme(restored.mode, restored.theme);
@@ -20,6 +22,11 @@ function resetMasteringDefaults() {
   $("mastering-custom-lufs-input").value = "-14";
   $("mastering-intensity").value = "50";
   $("mastering-intensity-value").textContent = "50%";
+  const defaultLevel = EQ_DEFAULT_LEVEL + 1; // 介面用 1-based（1～5 段），核心函式用 0-based
+  $("mastering-clarity").value = String(defaultLevel);
+  $("mastering-clarity-value").textContent = EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL];
+  $("mastering-impact").value = String(defaultLevel);
+  $("mastering-impact-value").textContent = EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL];
 }
 resetMasteringDefaults();
 window.addEventListener("pageshow", event => {
@@ -196,6 +203,8 @@ async function loadFile(file, source = "upload") {
   audioBuffer = null;
   $("mastering-preset").disabled = true;
   $("mastering-intensity").disabled = true;
+  $("mastering-clarity").disabled = true;
+  $("mastering-impact").disabled = true;
   $("mastering-start").disabled = true;
   $("mastering-file-info").hidden = true;
   resetResult();
@@ -233,6 +242,8 @@ async function loadFile(file, source = "upload") {
     $("mastering-file-help").textContent = "點擊可更換音樂";
     $("mastering-preset").disabled = false;
     $("mastering-intensity").disabled = false;
+    $("mastering-clarity").disabled = false;
+    $("mastering-impact").disabled = false;
     $("mastering-start").disabled = false;
     status(
       source === "main" ? "已自動帶入主畫面音樂，可點擊上方更換。想母帶其他音樂就直接點擊選擇本機音樂。" : "已辨識音樂，選擇母帶設定後即可開始處理。",
@@ -268,6 +279,8 @@ async function startMastering() {
   $("mastering-drop").disabled = true;
   $("mastering-preset").disabled = true;
   $("mastering-intensity").disabled = true;
+  $("mastering-clarity").disabled = true;
+  $("mastering-impact").disabled = true;
   $("mastering-start").disabled = true;
   $("mastering-progress").hidden = false;
   $("mastering-progress-text").hidden = false;
@@ -278,10 +291,15 @@ async function startMastering() {
     const left = audioBuffer.getChannelData(0);
     const right = audioBuffer.numberOfChannels >= 2 ? audioBuffer.getChannelData(1) : left;
     const intensity = Number($("mastering-intensity").value) || 0;
+    // 介面上的 1～5 段是 1-based，核心函式的 clarityLevel／impactLevel 是 0-based。
+    const clarityLevel = (Number($("mastering-clarity").value) || 1) - 1;
+    const impactLevel = (Number($("mastering-impact").value) || 1) - 1;
     const result = masterAudioChannels(left, right, audioBuffer.sampleRate, {
       intensity,
       targetLufs: targetLufs(),
       ceilingDb: -1,
+      clarityLevel,
+      impactLevel,
     });
     resultBlob = encodeStereoWav(result.left, result.right, audioBuffer.sampleRate);
     resultUrl = URL.createObjectURL(resultBlob);
@@ -301,6 +319,8 @@ async function startMastering() {
     $("mastering-drop").disabled = false;
     $("mastering-preset").disabled = false;
     $("mastering-intensity").disabled = false;
+    $("mastering-clarity").disabled = false;
+    $("mastering-impact").disabled = false;
     $("mastering-start").disabled = false;
     $("mastering-progress").hidden = true;
     $("mastering-progress-text").hidden = true;
@@ -361,6 +381,12 @@ $("mastering-drop").addEventListener("drop", event => {
 $("mastering-preset").addEventListener("change", updatePresetVisibility);
 $("mastering-intensity").addEventListener("input", () => {
   $("mastering-intensity-value").textContent = `${$("mastering-intensity").value}%`;
+});
+$("mastering-clarity").addEventListener("input", () => {
+  $("mastering-clarity-value").textContent = EQ_LEVEL_LABELS[Number($("mastering-clarity").value) - 1] || "標準";
+});
+$("mastering-impact").addEventListener("input", () => {
+  $("mastering-impact-value").textContent = EQ_LEVEL_LABELS[Number($("mastering-impact").value) - 1] || "標準";
 });
 $("mastering-start").addEventListener("click", startMastering);
 $("mastering-download").addEventListener("click", downloadResult);

@@ -5,6 +5,17 @@
 export const MASTER_SAMPLE_RATE_DEFAULT = 44100;
 export const MASTER_CROSSOVERS_HZ = Object.freeze([150, 1000, 5000]);
 
+// 即時 EQ 調整器：這個工具處理的是母帶混音後的完整音樂，並不是真正的人聲分離，所以
+// 「人聲清晰度」與「背景音震撼度」都是用「人聲常見的中高頻語音頻段」與「低頻量感」這兩個
+// 一般人耳感受得到差異的頻段去逼近，不是真的把人聲與伴奏拆開處理。5 段、預設在正中間
+// （0 dB、不調整），對應介面上 1～5 的第 3 段。
+export const EQ_LEVEL_COUNT = 5;
+export const EQ_DEFAULT_LEVEL = 2; // 0-based 索引，5 段的正中間
+export const EQ_LEVEL_STEP_DB = 2.5;
+export const EQ_PRESENCE_FREQUENCY_HZ = 3200; // 人聲清晰度：子音與泛音集中、決定「聽不聽得清楚」的頻段
+export const EQ_PRESENCE_Q = 1;
+export const EQ_IMPACT_SHELF_FREQUENCY_HZ = 110; // 背景音震撼度：低頻的量感與衝擊力
+
 export const MASTER_PRESETS = Object.freeze({
   streaming: Object.freeze({ label: "串流平台（Spotify／YouTube，約 -14 LUFS）", targetLufs: -14 }),
   loud: Object.freeze({ label: "強力／夜店（約 -9 LUFS）", targetLufs: -9 }),
@@ -228,6 +239,60 @@ export function kWeightFilter(samples, sampleRate) {
   return applyBiquadStage(applyBiquadStage(samples, stage1), stage2);
 }
 
+// ---------------------------------------------------------------------------
+// 即時 EQ 調整器：「人聲清晰度」用一個 peaking（鐘形）濾波器在人聲常見的中高頻頻段
+// 加減量感；「背景音震撼度」用一個 low-shelf 濾波器在低頻加減量感。都是業界常見的
+// RBJ Audio Cookbook biquad 公式，跟這個檔案其他濾波器一樣自行實作、不額外相依
+// audio-eq.js，維持整個檔案在 Node 也能單獨測試、沒有瀏覽器 API 依賴。
+// ---------------------------------------------------------------------------
+
+function peakingStage(frequencyHz, gainDb, q, sampleRate) {
+  const A = 10 ** (gainDb / 40);
+  const omega = (2 * Math.PI * Math.min(frequencyHz, sampleRate * 0.45)) / sampleRate;
+  const cosine = Math.cos(omega);
+  const sine = Math.sin(omega);
+  const alpha = sine / (2 * q);
+  const b0 = 1 + alpha * A;
+  const b1 = -2 * cosine;
+  const b2 = 1 - alpha * A;
+  const a0 = 1 + alpha / A;
+  const a1 = -2 * cosine;
+  const a2 = 1 - alpha / A;
+  return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0 };
+}
+
+function lowShelfStage(frequencyHz, gainDb, sampleRate) {
+  const A = 10 ** (gainDb / 40);
+  const omega = (2 * Math.PI * Math.min(frequencyHz, sampleRate * 0.45)) / sampleRate;
+  const cosine = Math.cos(omega);
+  const sine = Math.sin(omega);
+  const alpha = sine / Math.SQRT2; // Q = 1/√2：shelf 濾波器的標準（最平緩）斜率
+  const beta = 2 * Math.sqrt(A) * alpha;
+  const b0 = A * (A + 1 - (A - 1) * cosine + beta);
+  const b1 = 2 * A * (A - 1 - (A + 1) * cosine);
+  const b2 = A * (A + 1 - (A - 1) * cosine - beta);
+  const a0 = A + 1 + (A - 1) * cosine + beta;
+  const a1 = -2 * (A - 1 + (A + 1) * cosine);
+  const a2 = A + 1 + (A - 1) * cosine - beta;
+  return { b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0 };
+}
+
+// 介面上 1～5 段（1-based）換算成相對於正中間（EQ_DEFAULT_LEVEL）的 dB 增益。
+export function eqLevelToGainDb(level) {
+  const clamped = Math.max(0, Math.min(EQ_LEVEL_COUNT - 1, Math.round(Number(level))));
+  return (clamped - EQ_DEFAULT_LEVEL) * EQ_LEVEL_STEP_DB;
+}
+
+export function applyToneShapingEq(samples, sampleRate, options = {}) {
+  const { clarityLevel = EQ_DEFAULT_LEVEL, impactLevel = EQ_DEFAULT_LEVEL } = options;
+  const clarityDb = eqLevelToGainDb(clarityLevel);
+  const impactDb = eqLevelToGainDb(impactLevel);
+  let output = samples;
+  if (clarityDb !== 0) output = applyBiquadStage(output, peakingStage(EQ_PRESENCE_FREQUENCY_HZ, clarityDb, EQ_PRESENCE_Q, sampleRate));
+  if (impactDb !== 0) output = applyBiquadStage(output, lowShelfStage(EQ_IMPACT_SHELF_FREQUENCY_HZ, impactDb, sampleRate));
+  return output === samples ? Float32Array.from(samples) : output;
+}
+
 export function measureIntegratedLoudness(channels, sampleRate, channelWeights) {
   const weights = channelWeights || channels.map(() => 1);
   const weighted = channels.map(channel => kWeightFilter(channel, sampleRate));
@@ -319,10 +384,21 @@ export function measureTruePeakDb(channels) {
 // ---------------------------------------------------------------------------
 
 export function masterAudioChannels(left, right, sampleRate, options = {}) {
-  const { intensity = 50, targetLufs = -14, ceilingDb = -1, crossovers = MASTER_CROSSOVERS_HZ } = options;
+  const {
+    intensity = 50,
+    targetLufs = -14,
+    ceilingDb = -1,
+    crossovers = MASTER_CROSSOVERS_HZ,
+    clarityLevel = EQ_DEFAULT_LEVEL,
+    impactLevel = EQ_DEFAULT_LEVEL,
+  } = options;
+  // 「處理前」的響度／峰值仍量測原始輸入，讓使用者看到的「前後比較」是整個母帶處理
+  // （EQ 調整＋壓縮＋響度正規化＋限幅）真正帶來的差異，不是只看 EQ 那一步。
   const beforeLufs = measureIntegratedLoudness([left, right], sampleRate);
   const beforeTruePeakDb = measureTruePeakDb([left, right]);
-  const compressed = masterStereoChannels(left, right, sampleRate, { intensity, crossovers });
+  const shapedLeft = applyToneShapingEq(left, sampleRate, { clarityLevel, impactLevel });
+  const shapedRight = applyToneShapingEq(right, sampleRate, { clarityLevel, impactLevel });
+  const compressed = masterStereoChannels(shapedLeft, shapedRight, sampleRate, { intensity, crossovers });
   const afterCompressLufs = measureIntegratedLoudness([compressed.left, compressed.right], sampleRate);
   const gainDb = Number.isFinite(afterCompressLufs) ? Math.max(-24, Math.min(24, targetLufs - afterCompressLufs)) : 0;
   const gain = 10 ** (gainDb / 20);

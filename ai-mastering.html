@@ -79,6 +79,16 @@
             <input id="mastering-intensity" type="range" min="0" max="100" step="1" value="50" autocomplete="off" disabled />
             <output id="mastering-intensity-value">50%</output>
           </div>
+          <label class="field-label" for="mastering-clarity">人聲清晰度</label>
+          <div class="mastering-intensity-row">
+            <input id="mastering-clarity" type="range" min="1" max="5" step="1" value="3" autocomplete="off" disabled />
+            <output id="mastering-clarity-value">標準</output>
+          </div>
+          <label class="field-label" for="mastering-impact">背景音震撼度</label>
+          <div class="mastering-intensity-row">
+            <input id="mastering-impact" type="range" min="1" max="5" step="1" value="3" autocomplete="off" disabled />
+            <output id="mastering-impact-value">標準</output>
+          </div>
           <button id="mastering-start" class="export-button mastering-start" type="button" disabled>開始處理</button>
           <progress id="mastering-progress" max="100" hidden></progress>
           <div class="mastering-progress-row">
@@ -112,7 +122,7 @@
       </section>
 
       <section class="panel mastering-rules">
-        <div><strong>處理方式</strong><span>4 段 Linkwitz-Riley 分頻各自動態壓縮，再依 ITU-R BS.1770-4 演算法量測響度並正規化，最後用峰值保護限幅器避免爆表。</span></div>
+        <div><strong>處理方式</strong><span>先依人聲清晰度／背景音震撼度設定做 EQ 調整，再用 4 段 Linkwitz-Riley 分頻各自動態壓縮，依 ITU-R BS.1770-4 演算法量測響度並正規化，最後用峰值保護限幅器避免爆表。</span></div>
         <div><strong>處理時間</strong><span>取決於音樂長度與裝置效能；處理時請保持此頁面開啟。</span></div>
         <div><strong>隱私</strong><span>選擇的音樂全程只在瀏覽器記憶體處理，不會上傳到伺服器。</span></div>
       </section>

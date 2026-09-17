@@ -126,6 +126,7 @@ body.image-generator-body { min-width: 0; overflow-x: hidden; }
   .image-generator-header .brand { font-size: 21px; }
   .image-generator-header .brand-icon { width: 34px; height: 34px; }
   .image-generator-header .brand-sub { display: none; }
+  .image-generator-header .coffee-link img { height: 32px; }
   .image-generator-main { width: calc(100% - 24px); padding-top: 20px; }
   .image-generator-heading h1 { font-size: 27px; }
   .image-generator-heading p { font-size: 13px; }

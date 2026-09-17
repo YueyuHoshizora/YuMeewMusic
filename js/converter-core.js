@@ -73,6 +73,26 @@ export async function inspectMediaFile(file) {
   }
 }
 
+// conversion.isValid 只會告訴我們「不能轉換」，但不會說明原因；直接顯示同一句話，
+// 使用者遇到什麼樣的檔案、什麼樣的瀏覽器限制都看不出來，之後也很難排查。這裡改成讀取
+// conversion.discardedTracks，依實際原因給出比較有意義的訊息（例如來源編碼這個瀏覽器
+// 無法解碼、或這個瀏覽器無法編碼成所選格式），排除掉「使用者自己選擇捨棄」（例如轉純
+// 音訊時本來就會捨棄影片軌）這種預期內、不代表失敗原因的項目。
+export function describeConversionFailure(conversion) {
+  const blocking = (conversion.discardedTracks || []).filter(entry => entry.reason !== 'discarded_by_user');
+  const reasons = new Set(blocking.map(entry => entry.reason));
+  if (reasons.has('undecodable_source_codec') || reasons.has('unknown_source_codec')) {
+    return '目前的瀏覽器無法解碼這個檔案的來源影片／音訊編碼，請改用最新版 Chrome 或 Edge 再試一次，或先用其他工具轉換過來源檔案。';
+  }
+  if (reasons.has('no_encodable_target_codec')) {
+    return '目前的瀏覽器無法編碼成所選格式，請改用最新版 Chrome 或 Edge 再試一次。';
+  }
+  if (reasons.has('max_track_count_reached') || reasons.has('max_track_count_of_type_reached')) {
+    return '這個檔案包含的軌道數量超出目前支援的範圍，暫時無法轉換。';
+  }
+  return '目前的瀏覽器無法將這個檔案轉成所選格式。';
+}
+
 export async function convertMediaFile({ file, format, inputKind, hasAudio = true, audioChannels = 2, signal, onProgress = () => {} }) {
   const type = getFormat(format);
   if (inputKind === 'audio' && type.video) throw Error('音樂檔只能轉換成音訊格式。');
@@ -132,7 +152,7 @@ export async function convertMediaFile({ file, format, inputKind, hasAudio = tru
       await conversion.cancel();
       throw Error('已取消轉換。');
     }
-    if (!conversion.isValid) throw Error('目前的瀏覽器無法將這個檔案轉成所選格式。');
+    if (!conversion.isValid) throw Error(describeConversionFailure(conversion));
     conversion.onProgress = value => onProgress(Math.round(value * 100));
     await conversion.execute();
     if (signal?.aborted) throw Error('已取消轉換。');

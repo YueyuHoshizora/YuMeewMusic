@@ -6,6 +6,7 @@ import {
   conversionVideoOptions,
   converterFilename,
   converterFormats,
+  describeConversionFailure,
 } from '../js/converter-core.js';
 
 test('converter page exposes only formats valid for each input kind', () => {
@@ -17,6 +18,36 @@ test('converter page exposes only formats valid for each input kind', () => {
   assert.equal(converterFilename('movie.mov', 'mp4'), 'movie-converted.mp4');
   assert.throws(() => converterFilename('file', 'exe'));
   for (const format of converterFormats('video')) assert.ok(CONVERTER_FORMAT_LABELS[format]);
+});
+
+test('converter surfaces a specific reason when a conversion is invalid', () => {
+  // 使用者自己選擇捨棄的軌道（例如轉純音訊時本來就會捨棄影片軌）不該影響錯誤訊息判斷。
+  assert.match(
+    describeConversionFailure({ discardedTracks: [{ track: { type: 'video' }, reason: 'discarded_by_user' }] }),
+    /無法將這個檔案轉成所選格式/,
+  );
+  assert.match(
+    describeConversionFailure({
+      discardedTracks: [
+        { track: { type: 'video' }, reason: 'discarded_by_user' },
+        { track: { type: 'audio' }, reason: 'undecodable_source_codec' },
+      ],
+    }),
+    /無法解碼/,
+  );
+  assert.match(
+    describeConversionFailure({ discardedTracks: [{ track: { type: 'audio' }, reason: 'unknown_source_codec' }] }),
+    /無法解碼/,
+  );
+  assert.match(
+    describeConversionFailure({ discardedTracks: [{ track: { type: 'audio' }, reason: 'no_encodable_target_codec' }] }),
+    /無法編碼成所選格式/,
+  );
+  assert.match(
+    describeConversionFailure({ discardedTracks: [{ track: { type: 'audio' }, reason: 'max_track_count_reached' }] }),
+    /軌道數量超出/,
+  );
+  assert.match(describeConversionFailure({ discardedTracks: [] }), /無法將這個檔案轉成所選格式/);
 });
 
 test('converter preserves source dimensions without passing resize options', () => {

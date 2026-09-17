@@ -25,10 +25,7 @@ body.separator-body { min-width: 1000px; }
 .separator-process .export-button { margin-top: 0; }
 .separator-progress-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 54px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .separator-results { margin-top: 22px; }
-.separator-transport { display: grid; grid-template-columns: auto minmax(180px, 1fr) auto; align-items: center; gap: 16px; margin-top: 20px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 11px; background: var(--tint); }
-.separator-transport .export-button { width: auto; min-width: 140px; margin: 0; }
-.separator-transport input { width: 100%; }
-.separator-transport output { min-width: 92px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+.separator-results .audio-player { margin-top: 20px; }
 .separator-tracks { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 22px; }
 .separator-tracks article { padding: 18px; border: 1px solid var(--border); border-radius: 11px; background: var(--tint); }
 .separator-track-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }

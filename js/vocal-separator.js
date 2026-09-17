@@ -2,6 +2,7 @@ import { SEPARATOR_EQ_PROFILE } from "./audio-eq.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
+import { registerAudioPlayer, setupSimplePlayer } from "./audio-player.js";
 import {
   SEPARATOR_MAX_DURATION,
   SEPARATOR_SAMPLE_RATE,
@@ -18,6 +19,11 @@ const AUTOTUNE_SETTINGS_KEY = "yumeew.separator.autotune.v1";
 const TRACK_NAMES = ["vocals", "instrumental"];
 const EQ_BANDS = ["bass", "mid", "treble"];
 const restored = loadSettings();
+
+// 原音試聽用共用播放器元件；人聲／伴奏兩軌需要同步一起播放，歸在同一個群組（group）內，
+// 彼此不會互相暫停，但只要其中一軌開始播放，仍會暫停原音試聽（不同群組）。
+setupSimplePlayer($("separator-original"), $("separator-original-play"), $("separator-original-seek"), $("separator-original-time"));
+for (const track of TRACK_NAMES) registerAudioPlayer($(`separator-${track}`), { group: "separated" });
 applyTheme(restored.mode, restored.theme);
 
 let sourceFile = null;
@@ -199,7 +205,8 @@ function drawTrackSpectrum(track) {
 
 function pauseSeparatedPlayback() {
   for (const track of TRACK_NAMES) $(`separator-${track}`).pause();
-  $("separated-play").textContent = "▶ 同步播放";
+  $("separated-play").textContent = "▶";
+  $("separated-play").setAttribute("aria-label", "同步播放");
 }
 
 function renderSeparatedPlayback() {
@@ -229,7 +236,8 @@ async function toggleSeparatedPlayback() {
     if (time >= separatedDuration - 0.02) time = 0;
     for (const audio of audios) audio.currentTime = time;
     await Promise.all(audios.map(audio => audio.play()));
-    button.textContent = "Ⅱ 同步暫停";
+    button.textContent = "⏸";
+    button.setAttribute("aria-label", "同步暫停");
     if (!spectrumFrame) spectrumFrame = requestAnimationFrame(renderSeparatedPlayback);
   } catch (error) {
     pauseSeparatedPlayback();

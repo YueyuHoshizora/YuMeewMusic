@@ -3,7 +3,7 @@ import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { encodeStereoWav } from "./vocal-separator-core.js";
 import { MASTER_PRESETS, masterAudioChannels, masteredFilename } from "./ai-mastering-core.js";
-import { registerAudioPlayer } from "./audio-player.js";
+import { registerAudioPlayer, setupSimplePlayer } from "./audio-player.js";
 
 const $ = id => document.getElementById(id);
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -62,54 +62,6 @@ function error(text = "") {
   $("mastering-error").hidden = !text;
   $("mastering-drop").classList.toggle("invalid", Boolean(text));
   if (text) status(text, "error");
-}
-
-// 簡易播放器：一個播放鍵 + 一條拖曳軸 + 時間顯示，套用在「原音試聽」上。
-function setupSimplePlayer(audio, playButton, seekInput, timeOutput) {
-  registerAudioPlayer(audio);
-  let seeking = false;
-
-  function renderTime() {
-    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-    timeOutput.textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
-  }
-
-  playButton.addEventListener("click", () => {
-    if (!audio.src) return;
-    if (audio.paused) void audio.play().catch(() => {});
-    else audio.pause();
-  });
-  audio.addEventListener("play", () => {
-    playButton.textContent = "⏸";
-    playButton.setAttribute("aria-label", "暫停");
-  });
-  for (const eventName of ["pause", "ended"]) {
-    audio.addEventListener(eventName, () => {
-      playButton.textContent = "▶";
-      playButton.setAttribute("aria-label", "播放");
-    });
-  }
-  audio.addEventListener("loadedmetadata", () => {
-    seekInput.max = String(Number.isFinite(audio.duration) ? audio.duration : 0);
-    renderTime();
-  });
-  audio.addEventListener("timeupdate", () => {
-    if (!seeking) seekInput.value = String(audio.currentTime);
-    renderTime();
-  });
-  audio.addEventListener("emptied", () => {
-    seekInput.value = "0";
-    seekInput.max = "0";
-    renderTime();
-  });
-  seekInput.addEventListener("input", () => {
-    seeking = true;
-    timeOutput.textContent = `${formatTime(Number(seekInput.value))} / ${formatTime(audio.duration || 0)}`;
-  });
-  seekInput.addEventListener("change", () => {
-    audio.currentTime = Number(seekInput.value);
-    seeking = false;
-  });
 }
 
 // A/B 比較播放器：處理前／處理後共用同一組播放鍵、拖曳軸與時間顯示，

@@ -9,6 +9,7 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/vocal-separator.css" />
+    <link rel="stylesheet" href="./css/audio-player.css" />
     <script type="module" src="./js/vocal-separator.js"></script>
     <script type="module" src="./js/member-status.js"></script>
     <script type="module" src="./js/loading-screen.js"></script>
@@ -46,7 +47,14 @@
               <div><dt>檔案大小</dt><dd id="separator-size">—</dd></div>
             </dl>
             <p class="separator-original-label">原音試聽（未套用 EQ）；調整音效請使用下方同步播放。</p>
-            <audio id="separator-original" controls preload="metadata" aria-label="原音試聽，未套用 EQ"></audio>
+            <div class="audio-player">
+              <button id="separator-original-play" class="audio-player-button" type="button" aria-label="播放原音">▶</button>
+              <div class="audio-player-body">
+                <input id="separator-original-seek" class="audio-player-seek" type="range" min="0" max="0" step="0.01" value="0" aria-label="原音播放位置" />
+                <output id="separator-original-time" class="audio-player-time">0:00 / 0:00</output>
+              </div>
+            </div>
+            <audio id="separator-original" preload="metadata" aria-label="原音試聽，未套用 EQ" hidden></audio>
           </div>
         </div>
 
@@ -70,10 +78,12 @@
 
       <section id="separator-results" class="panel separator-results" hidden>
         <div class="section-title"><span>03</span><h2>分離結果</h2></div>
-        <div class="separator-transport">
-          <button id="separated-play" class="export-button" type="button">▶ 同步播放</button>
-          <input id="separated-position" type="range" min="0" max="0" step="0.01" value="0" aria-label="人聲與伴奏播放位置" />
-          <output id="separated-time">0:00 / 0:00</output>
+        <div class="audio-player">
+          <button id="separated-play" class="audio-player-button" type="button" aria-label="同步播放">▶</button>
+          <div class="audio-player-body">
+            <input id="separated-position" class="audio-player-seek" type="range" min="0" max="0" step="0.01" value="0" aria-label="人聲與伴奏播放位置" />
+            <output id="separated-time" class="audio-player-time">0:00 / 0:00</output>
+          </div>
         </div>
         <div class="separator-tracks">
           <article class="separator-track">

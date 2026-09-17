@@ -28,7 +28,7 @@ test("vocal separator page exposes its complete local workflow", () => {
   assert.match(html, /下載人聲 WAV/);
   assert.match(html, /id="download-mix"[^>]*>下載混合後 WAV</);
   assert.match(html, /id="apply-mix-main"[^>]*>套用到主畫面</);
-  assert.match(html, /id="separated-play"[^>]*>▶ 同步播放</);
+  assert.match(html, /id="separated-play"[^>]*aria-label="同步播放"[^>]*>▶</);
   assert.match(html, /id="vocals-spectrum"[^>]*aria-label="人聲即時頻譜"/);
   assert.match(html, /id="autotune-start"[^>]*>自動調音</);
   assert.match(html, /id="autotune-scale"/);

@@ -2,11 +2,16 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { presentRating, ratingVerdict } from "./music-rating-core.js";
 import { resolveSunoAudio } from "./suno-source.js";
+import { registerAudioPlayer } from "./audio-player.js";
 
 const $ = id => document.getElementById(id);
 const TARGET_SAMPLE_RATE = 16000;
 const WASM_THREAD_FALLBACKS = [4, 1];
 applyTheme(loadSettings().mode, loadSettings().theme);
+
+// 單曲評分與雙曲比較各自獨立的播放器，畫面上同時間只會有一個在播放：使用者切到另一個
+// 播放器時，原本在播的會自動暫停，不用自己手動協調。
+for (const player of [$("rating-player"), $("rating-player-a"), $("rating-player-b")]) registerAudioPlayer(player);
 
 let mode = "single";
 let sources = [];

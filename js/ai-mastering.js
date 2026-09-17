@@ -10,6 +10,21 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const restored = loadSettings();
 applyTheme(restored.mode, restored.theme);
 
+// 母帶設定（目標響度、壓縮強度）不寫入任何暫存（localStorage／sessionStorage 等），
+// 每次打開這個頁面一律固定從「串流平台」開始，不會被瀏覽器的表單記憶或上次選擇帶偏；
+// pageshow 也一併處理，涵蓋從瀏覽器上一頁／下一頁快取（bfcache）復原回來的情況。
+function resetMasteringDefaults() {
+  $("mastering-preset").value = "streaming";
+  $("mastering-custom-lufs").hidden = true;
+  $("mastering-custom-lufs-input").value = "-14";
+  $("mastering-intensity").value = "50";
+  $("mastering-intensity-value").textContent = "50%";
+}
+resetMasteringDefaults();
+window.addEventListener("pageshow", event => {
+  if (event.persisted) resetMasteringDefaults();
+});
+
 let sourceFile = null;
 let audioBuffer = null;
 let resultBlob = null;

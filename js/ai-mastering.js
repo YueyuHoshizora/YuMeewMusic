@@ -2,7 +2,18 @@ import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { encodeStereoWav } from "./vocal-separator-core.js";
-import { MASTER_PRESETS, EQ_LEVEL_COUNT, EQ_DEFAULT_LEVEL, masterAudioChannels, masteredFilename } from "./ai-mastering-core.js";
+import {
+  MASTER_PRESETS,
+  EQ_LEVEL_COUNT,
+  EQ_DEFAULT_LEVEL,
+  EQ_PRESENCE_FREQUENCY_HZ,
+  EQ_PRESENCE_Q,
+  EQ_IMPACT_SHELF_FREQUENCY_HZ,
+  eqLevelToGainDb,
+  measureIntegratedLoudness,
+  masterAudioChannels,
+  masteredFilename,
+} from "./ai-mastering-core.js";
 import { registerAudioPlayer, setupSimplePlayer } from "./audio-player.js";
 
 const $ = id => document.getElementById(id);
@@ -27,6 +38,9 @@ function resetMasteringDefaults() {
   $("mastering-clarity-value").textContent = EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL];
   $("mastering-impact").value = String(defaultLevel);
   $("mastering-impact-value").textContent = EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL];
+  // 循環播放試聽同樣不寫入任何暫存，每次打開頁面固定預設為開啟。
+  $("mastering-loop").checked = true;
+  $("mastering-original").loop = true;
 }
 resetMasteringDefaults();
 window.addEventListener("pageshow", event => {
@@ -41,6 +55,192 @@ let resultUrl = "";
 let downloadUrl = "";
 let processing = false;
 let loadToken = 0;
+
+// ---- 原音試聽波形圖 ----
+// 為了讓使用者在調整母帶設定時更直觀，原音試聽播放器下方會畫出整段音樂的波形，
+// 並在播放時同步畫出播放進度（已播放的部分用主色標示）。波形資料只在選檔時
+// 掃過一次整個緩衝區、分成固定段數存起來，畫面重繪（含每個動畫影格）只需要
+// 讀取這個已經算好的陣列，不會每一影格都重新掃過整首歌，避免長音樂卡頓。
+const WAVEFORM_BUCKETS = 600;
+let waveformPeaks = null;
+let waveformAnimationFrame = 0;
+
+function computeWaveformPeaks(buffer) {
+  const length = buffer.length;
+  const bucketSize = Math.max(1, Math.floor(length / WAVEFORM_BUCKETS));
+  const peaks = new Float32Array(WAVEFORM_BUCKETS);
+  const channels = [];
+  for (let c = 0; c < buffer.numberOfChannels; c++) channels.push(buffer.getChannelData(c));
+  for (let bucket = 0; bucket < WAVEFORM_BUCKETS; bucket++) {
+    const start = bucket * bucketSize;
+    const end = bucket === WAVEFORM_BUCKETS - 1 ? length : Math.min(start + bucketSize, length);
+    let peak = 0;
+    for (const data of channels) {
+      for (let i = start; i < end; i++) {
+        const abs = Math.abs(data[i]);
+        if (abs > peak) peak = abs;
+      }
+    }
+    peaks[bucket] = peak;
+  }
+  return peaks;
+}
+
+function drawWaveform() {
+  const canvas = $("mastering-waveform");
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = canvas.clientWidth || 600;
+  const cssHeight = canvas.clientHeight || 64;
+  const pixelWidth = Math.max(1, Math.round(cssWidth * dpr));
+  const pixelHeight = Math.max(1, Math.round(cssHeight * dpr));
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+  if (!waveformPeaks) return;
+  const rootStyle = getComputedStyle(document.documentElement);
+  const waveColor = rootStyle.getPropertyValue("--border").trim() || "#ccc";
+  const progressColor = rootStyle.getPropertyValue("--primary").trim() || "#4a90d9";
+  const mid = cssHeight / 2;
+  const barWidth = cssWidth / WAVEFORM_BUCKETS;
+  const duration = audioBuffer?.duration || 0;
+  const progress = duration > 0 ? Math.min(1, $("mastering-original").currentTime / duration) : 0;
+  const progressBucket = progress * WAVEFORM_BUCKETS;
+  for (let bucket = 0; bucket < WAVEFORM_BUCKETS; bucket++) {
+    const barHeight = Math.max(1.5, waveformPeaks[bucket] * (cssHeight - 6));
+    ctx.fillStyle = bucket <= progressBucket ? progressColor : waveColor;
+    ctx.fillRect(bucket * barWidth, mid - barHeight / 2, Math.max(1, barWidth - 0.5), barHeight);
+  }
+}
+
+function waveformTick() {
+  drawWaveform();
+  if (!$("mastering-original").paused) waveformAnimationFrame = requestAnimationFrame(waveformTick);
+  else waveformAnimationFrame = 0;
+}
+
+function startWaveformAnimation() {
+  if (waveformAnimationFrame) return;
+  waveformAnimationFrame = requestAnimationFrame(waveformTick);
+}
+
+function stopWaveformAnimation() {
+  if (waveformAnimationFrame) cancelAnimationFrame(waveformAnimationFrame);
+  waveformAnimationFrame = 0;
+  drawWaveform();
+}
+
+$("mastering-original").addEventListener("play", startWaveformAnimation);
+$("mastering-original").addEventListener("pause", stopWaveformAnimation);
+$("mastering-original").addEventListener("ended", stopWaveformAnimation);
+$("mastering-original").addEventListener("seeked", drawWaveform);
+window.addEventListener("resize", () => {
+  if (waveformPeaks) drawWaveform();
+});
+$("mastering-loop").addEventListener("change", () => {
+  $("mastering-original").loop = $("mastering-loop").checked;
+});
+
+// ---- 母帶設定即時預覽（Web Audio）----
+// 讓「目標響度／壓縮強度／人聲清晰度／背景音震撼度」這幾個設定在試聽原音時就能
+// 立即聽出差異，不用等到按下「開始處理」才知道效果。這裡用瀏覽器原生的 Web Audio
+// 節點組出一個近似的即時預覽鏈：EQ 沿用離線演算法一樣的頻率／Q 值常數與
+// eqLevelToGainDb 增益換算（人聲清晰度、背景音震撼度），壓縮強度則用單一顆
+// DynamicsCompressorNode 做近似（離線輸出仍然是真正的 4 段 Linkwitz-Riley 分頻
+// 各自動態壓縮，即時預覽只是給一個聽感方向的參考，正式結果以「開始處理」之後的
+// 離線演算法為準，這件事也寫在下面的「處理方式」說明裡）。
+let previewContext = null;
+let previewClarityFilter = null;
+let previewImpactFilter = null;
+let previewCompressor = null;
+let previewMakeupGain = null;
+let previewLoudnessGain = null;
+let sourceLufs = NaN;
+
+function ensurePreviewGraph() {
+  if (previewContext) return;
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) return;
+  try {
+    previewContext = new AudioContextCtor();
+    const source = previewContext.createMediaElementSource($("mastering-original"));
+    previewClarityFilter = previewContext.createBiquadFilter();
+    previewClarityFilter.type = "peaking";
+    previewClarityFilter.frequency.value = EQ_PRESENCE_FREQUENCY_HZ;
+    previewClarityFilter.Q.value = EQ_PRESENCE_Q;
+    previewImpactFilter = previewContext.createBiquadFilter();
+    previewImpactFilter.type = "lowshelf";
+    previewImpactFilter.frequency.value = EQ_IMPACT_SHELF_FREQUENCY_HZ;
+    previewCompressor = previewContext.createDynamicsCompressor();
+    previewCompressor.knee.value = 6;
+    previewCompressor.attack.value = 0.01;
+    previewCompressor.release.value = 0.25;
+    previewMakeupGain = previewContext.createGain();
+    previewLoudnessGain = previewContext.createGain();
+    source.connect(previewClarityFilter);
+    previewClarityFilter.connect(previewImpactFilter);
+    previewImpactFilter.connect(previewCompressor);
+    previewCompressor.connect(previewMakeupGain);
+    previewMakeupGain.connect(previewLoudnessGain);
+    previewLoudnessGain.connect(previewContext.destination);
+    applyPreviewSettings();
+  } catch (cause) {
+    previewContext = null;
+  }
+}
+
+function resumePreviewContext() {
+  if (previewContext && previewContext.state === "suspended") void previewContext.resume().catch(() => {});
+}
+
+function setPreviewParam(param, value) {
+  if (!previewContext || !param) return;
+  param.setTargetAtTime(value, previewContext.currentTime, 0.02);
+}
+
+// 壓縮強度（0～100，介面上的「壓縮強度」）換算成 DynamicsCompressorNode 的
+// threshold／ratio，只是近似值，用來讓這個設定在即時預覽時也聽得出差異。
+function applyPreviewIntensity(intensity) {
+  if (!previewContext) return;
+  const clamped = Math.max(0, Math.min(100, intensity));
+  const thresholdDb = -6 - clamped * 0.24; // -6 dB（0%）～ -30 dB（100%）
+  const ratio = 1.5 + clamped * 0.065; // 1.5:1（0%）～ 8:1（100%）
+  const makeupDb = clamped * 0.04; // 0～4 dB 補償，抵銷壓縮造成的音量下降感
+  setPreviewParam(previewCompressor.threshold, thresholdDb);
+  setPreviewParam(previewCompressor.ratio, ratio);
+  setPreviewParam(previewMakeupGain.gain, 10 ** (makeupDb / 20));
+}
+
+function applyPreviewEq(clarityLevel, impactLevel) {
+  if (!previewContext) return;
+  setPreviewParam(previewClarityFilter.gain, eqLevelToGainDb(clarityLevel));
+  setPreviewParam(previewImpactFilter.gain, eqLevelToGainDb(impactLevel));
+}
+
+function applyPreviewLoudness() {
+  if (!previewContext || !Number.isFinite(sourceLufs)) return;
+  const targetDb = Math.max(-24, Math.min(24, targetLufs() - sourceLufs));
+  setPreviewParam(previewLoudnessGain.gain, 10 ** (targetDb / 20));
+}
+
+function applyPreviewSettings() {
+  if (!previewContext) return;
+  const intensity = Number($("mastering-intensity").value) || 0;
+  const clarityLevel = (Number($("mastering-clarity").value) || 1) - 1;
+  const impactLevel = (Number($("mastering-impact").value) || 1) - 1;
+  applyPreviewIntensity(intensity);
+  applyPreviewEq(clarityLevel, impactLevel);
+  applyPreviewLoudness();
+}
+
+$("mastering-original").addEventListener("play", () => {
+  ensurePreviewGraph();
+  resumePreviewContext();
+});
 
 function formatBytes(bytes) {
   if (bytes < 1024 ** 2) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -201,6 +401,9 @@ async function loadFile(file, source = "upload") {
   const token = ++loadToken;
   sourceFile = null;
   audioBuffer = null;
+  waveformPeaks = null;
+  sourceLufs = NaN;
+  stopWaveformAnimation();
   $("mastering-preset").disabled = true;
   $("mastering-intensity").disabled = true;
   $("mastering-clarity").disabled = true;
@@ -229,6 +432,11 @@ async function loadFile(file, source = "upload") {
     if (token !== loadToken) return;
     audioBuffer = decoded;
     sourceFile = file;
+    waveformPeaks = computeWaveformPeaks(audioBuffer);
+    const loudnessLeft = audioBuffer.getChannelData(0);
+    const loudnessRight = audioBuffer.numberOfChannels >= 2 ? audioBuffer.getChannelData(1) : loudnessLeft;
+    sourceLufs = measureIntegratedLoudness([loudnessLeft, loudnessRight], audioBuffer.sampleRate);
+    drawWaveform();
     $("mastering-source").textContent = source === "main" ? "主畫面音樂" : "本機上傳";
     $("mastering-duration").textContent = formatTime(audioBuffer.duration);
     $("mastering-channels").textContent = audioBuffer.numberOfChannels >= 2 ? "立體聲" : "單聲道";
@@ -239,12 +447,14 @@ async function loadFile(file, source = "upload") {
     if (originalUrl) URL.revokeObjectURL(originalUrl);
     originalUrl = URL.createObjectURL(file);
     $("mastering-original").src = originalUrl;
+    $("mastering-original").loop = $("mastering-loop").checked;
     $("mastering-file-help").textContent = "點擊可更換音樂";
     $("mastering-preset").disabled = false;
     $("mastering-intensity").disabled = false;
     $("mastering-clarity").disabled = false;
     $("mastering-impact").disabled = false;
     $("mastering-start").disabled = false;
+    applyPreviewSettings();
     status(
       source === "main" ? "已自動帶入主畫面音樂，可點擊上方更換。想母帶其他音樂就直接點擊選擇本機音樂。" : "已辨識音樂，選擇母帶設定後即可開始處理。",
       "success",
@@ -378,15 +588,22 @@ for (const eventName of ["dragleave", "drop"]) {
 $("mastering-drop").addEventListener("drop", event => {
   if (!processing) void loadFile(event.dataTransfer.files?.[0], "upload");
 });
-$("mastering-preset").addEventListener("change", updatePresetVisibility);
+$("mastering-preset").addEventListener("change", () => {
+  updatePresetVisibility();
+  applyPreviewLoudness();
+});
+$("mastering-custom-lufs-input").addEventListener("input", applyPreviewLoudness);
 $("mastering-intensity").addEventListener("input", () => {
   $("mastering-intensity-value").textContent = `${$("mastering-intensity").value}%`;
+  applyPreviewIntensity(Number($("mastering-intensity").value) || 0);
 });
 $("mastering-clarity").addEventListener("input", () => {
   $("mastering-clarity-value").textContent = EQ_LEVEL_LABELS[Number($("mastering-clarity").value) - 1] || "標準";
+  applyPreviewEq((Number($("mastering-clarity").value) || 1) - 1, (Number($("mastering-impact").value) || 1) - 1);
 });
 $("mastering-impact").addEventListener("input", () => {
   $("mastering-impact-value").textContent = EQ_LEVEL_LABELS[Number($("mastering-impact").value) - 1] || "標準";
+  applyPreviewEq((Number($("mastering-clarity").value) || 1) - 1, (Number($("mastering-impact").value) || 1) - 1);
 });
 $("mastering-start").addEventListener("click", startMastering);
 $("mastering-download").addEventListener("click", downloadResult);
@@ -395,6 +612,7 @@ window.addEventListener("unload", () => {
   if (originalUrl) URL.revokeObjectURL(originalUrl);
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+  if (previewContext) void previewContext.close().catch(() => {});
 });
 
 function restoreWhenIdle(task) {

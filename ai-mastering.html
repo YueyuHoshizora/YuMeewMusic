@@ -55,6 +55,13 @@
                 <output id="mastering-original-time" class="audio-player-time">0:00 / 0:00</output>
               </div>
             </div>
+            <div class="mastering-waveform-row">
+              <canvas id="mastering-waveform" class="mastering-waveform" aria-hidden="true"></canvas>
+            </div>
+            <label class="mastering-loop-toggle" for="mastering-loop">
+              <input id="mastering-loop" type="checkbox" checked />
+              循環播放試聽
+            </label>
             <audio id="mastering-original" preload="metadata" aria-label="原音試聽，未處理" hidden></audio>
           </div>
         </div>
@@ -122,7 +129,7 @@
       </section>
 
       <section class="panel mastering-rules">
-        <div><strong>處理方式</strong><span>先依人聲清晰度／背景音震撼度設定做 EQ 調整，再用 4 段 Linkwitz-Riley 分頻各自動態壓縮，依 ITU-R BS.1770-4 演算法量測響度並正規化，最後用峰值保護限幅器避免爆表。</span></div>
+        <div><strong>處理方式</strong><span>先依人聲清晰度／背景音震撼度設定做 EQ 調整，再用 4 段 Linkwitz-Riley 分頻各自動態壓縮，依 ITU-R BS.1770-4 演算法量測響度並正規化，最後用峰值保護限幅器避免爆表。原音試聽播放時會即時套用目前的設定（用瀏覽器內建 Web Audio 節點做近似效果），方便邊調整邊聽；正式結果仍以按下「開始處理」後的離線演算法為準。</span></div>
         <div><strong>處理時間</strong><span>取決於音樂長度與裝置效能；處理時請保持此頁面開啟。</span></div>
         <div><strong>隱私</strong><span>選擇的音樂全程只在瀏覽器記憶體處理，不會上傳到伺服器。</span></div>
       </section>

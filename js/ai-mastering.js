@@ -3,6 +3,7 @@ import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
 import { encodeStereoWav } from "./vocal-separator-core.js";
 import { MASTER_PRESETS, masterAudioChannels, masteredFilename } from "./ai-mastering-core.js";
+import { registerAudioPlayer } from "./audio-player.js";
 
 const $ = id => document.getElementById(id);
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -27,6 +28,7 @@ window.addEventListener("pageshow", event => {
 
 let sourceFile = null;
 let audioBuffer = null;
+let originalUrl = "";
 let resultBlob = null;
 let resultUrl = "";
 let downloadUrl = "";
@@ -62,6 +64,160 @@ function error(text = "") {
   if (text) status(text, "error");
 }
 
+// 簡易播放器：一個播放鍵 + 一條拖曳軸 + 時間顯示，套用在「原音試聽」上。
+function setupSimplePlayer(audio, playButton, seekInput, timeOutput) {
+  registerAudioPlayer(audio);
+  let seeking = false;
+
+  function renderTime() {
+    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+    timeOutput.textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
+  }
+
+  playButton.addEventListener("click", () => {
+    if (!audio.src) return;
+    if (audio.paused) void audio.play().catch(() => {});
+    else audio.pause();
+  });
+  audio.addEventListener("play", () => {
+    playButton.textContent = "⏸";
+    playButton.setAttribute("aria-label", "暫停");
+  });
+  for (const eventName of ["pause", "ended"]) {
+    audio.addEventListener(eventName, () => {
+      playButton.textContent = "▶";
+      playButton.setAttribute("aria-label", "播放");
+    });
+  }
+  audio.addEventListener("loadedmetadata", () => {
+    seekInput.max = String(Number.isFinite(audio.duration) ? audio.duration : 0);
+    renderTime();
+  });
+  audio.addEventListener("timeupdate", () => {
+    if (!seeking) seekInput.value = String(audio.currentTime);
+    renderTime();
+  });
+  audio.addEventListener("emptied", () => {
+    seekInput.value = "0";
+    seekInput.max = "0";
+    renderTime();
+  });
+  seekInput.addEventListener("input", () => {
+    seeking = true;
+    timeOutput.textContent = `${formatTime(Number(seekInput.value))} / ${formatTime(audio.duration || 0)}`;
+  });
+  seekInput.addEventListener("change", () => {
+    audio.currentTime = Number(seekInput.value);
+    seeking = false;
+  });
+}
+
+// A/B 比較播放器：處理前／處理後共用同一組播放鍵、拖曳軸與時間顯示，
+// 切換 A/B 時會同步播放位置，並延續原本播放／暫停的狀態。
+function setupComparePlayer(beforeAudio, afterAudio, playButton, seekInput, timeOutput, beforeButton, afterButton) {
+  registerAudioPlayer(beforeAudio);
+  registerAudioPlayer(afterAudio);
+  let active = afterAudio;
+  let seeking = false;
+
+  function inactiveOf(audio) {
+    return audio === beforeAudio ? afterAudio : beforeAudio;
+  }
+
+  function renderTime() {
+    const duration = Number.isFinite(active.duration) ? active.duration : 0;
+    timeOutput.textContent = `${formatTime(active.currentTime)} / ${formatTime(duration)}`;
+  }
+
+  function updatePlayButton() {
+    const playing = !active.paused && !active.ended;
+    playButton.textContent = playing ? "⏸" : "▶";
+    playButton.setAttribute("aria-label", playing ? "暫停" : "播放");
+  }
+
+  function switchTo(audio) {
+    if (audio === active) return;
+    const wasPlaying = !active.paused && !active.ended;
+    inactiveOf(audio).pause();
+    audio.currentTime = active.currentTime;
+    active = audio;
+    beforeButton.setAttribute("aria-pressed", String(active === beforeAudio));
+    afterButton.setAttribute("aria-pressed", String(active === afterAudio));
+    seekInput.max = String(Number.isFinite(active.duration) ? active.duration : 0);
+    renderTime();
+    updatePlayButton();
+    if (wasPlaying) void active.play().catch(() => {});
+  }
+
+  playButton.addEventListener("click", () => {
+    if (!active.src) return;
+    if (active.paused) void active.play().catch(() => {});
+    else active.pause();
+  });
+  beforeButton.addEventListener("click", () => switchTo(beforeAudio));
+  afterButton.addEventListener("click", () => switchTo(afterAudio));
+
+  for (const audio of [beforeAudio, afterAudio]) {
+    audio.addEventListener("play", () => {
+      if (audio === active) updatePlayButton();
+    });
+    for (const eventName of ["pause", "ended"]) {
+      audio.addEventListener(eventName, () => {
+        if (audio === active) updatePlayButton();
+      });
+    }
+    audio.addEventListener("loadedmetadata", () => {
+      if (audio === active) {
+        seekInput.max = String(Number.isFinite(audio.duration) ? audio.duration : 0);
+        renderTime();
+      }
+    });
+    audio.addEventListener("timeupdate", () => {
+      if (audio !== active) return;
+      if (!seeking) seekInput.value = String(audio.currentTime);
+      renderTime();
+    });
+  }
+
+  seekInput.addEventListener("input", () => {
+    seeking = true;
+    timeOutput.textContent = `${formatTime(Number(seekInput.value))} / ${formatTime(active.duration || 0)}`;
+  });
+  seekInput.addEventListener("change", () => {
+    active.currentTime = Number(seekInput.value);
+    seeking = false;
+  });
+
+  return {
+    // 換了新的來源（重新選檔或重新產出母帶結果）之後呼叫：兩個播放器都暫停、
+    // 位置歸零，並固定回到「處理後」作為預設試聽對象。
+    reset() {
+      beforeAudio.pause();
+      afterAudio.pause();
+      beforeAudio.currentTime = 0;
+      afterAudio.currentTime = 0;
+      active = afterAudio;
+      beforeButton.setAttribute("aria-pressed", "false");
+      afterButton.setAttribute("aria-pressed", "true");
+      seekInput.value = "0";
+      seekInput.max = "0";
+      renderTime();
+      updatePlayButton();
+    },
+  };
+}
+
+setupSimplePlayer($("mastering-original"), $("mastering-original-play"), $("mastering-original-seek"), $("mastering-original-time"));
+const comparePlayer = setupComparePlayer(
+  $("mastering-compare-before"),
+  $("mastering-compare-after"),
+  $("mastering-compare-play"),
+  $("mastering-compare-seek"),
+  $("mastering-compare-time"),
+  $("mastering-ab-before"),
+  $("mastering-ab-after"),
+);
+
 function resetResult() {
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
@@ -71,7 +227,11 @@ function resetResult() {
   $("mastering-preview").hidden = true;
   $("mastering-actions").hidden = true;
   $("mastering-loudness-compare").hidden = true;
-  $("mastering-result").removeAttribute("src");
+  $("mastering-compare-before").pause();
+  $("mastering-compare-after").pause();
+  $("mastering-compare-before").removeAttribute("src");
+  $("mastering-compare-after").removeAttribute("src");
+  comparePlayer.reset();
 }
 
 async function loadFile(file, source = "upload") {
@@ -114,7 +274,10 @@ async function loadFile(file, source = "upload") {
     $("mastering-samplerate").textContent = `${Math.round(audioBuffer.sampleRate / 100) / 10} kHz`;
     $("mastering-size").textContent = formatBytes(file.size);
     $("mastering-file-info").hidden = false;
-    $("mastering-original").src = URL.createObjectURL(file);
+    $("mastering-original").pause();
+    if (originalUrl) URL.revokeObjectURL(originalUrl);
+    originalUrl = URL.createObjectURL(file);
+    $("mastering-original").src = originalUrl;
     $("mastering-file-help").textContent = "點擊可更換音樂";
     $("mastering-preset").disabled = false;
     $("mastering-intensity").disabled = false;
@@ -170,7 +333,9 @@ async function startMastering() {
     });
     resultBlob = encodeStereoWav(result.left, result.right, audioBuffer.sampleRate);
     resultUrl = URL.createObjectURL(resultBlob);
-    $("mastering-result").src = resultUrl;
+    $("mastering-compare-before").src = originalUrl;
+    $("mastering-compare-after").src = resultUrl;
+    comparePlayer.reset();
     $("mastering-before-lufs").textContent = formatLufs(result.beforeLufs);
     $("mastering-after-lufs").textContent = formatLufs(result.afterLufs);
     $("mastering-loudness-compare").hidden = false;
@@ -249,6 +414,7 @@ $("mastering-start").addEventListener("click", startMastering);
 $("mastering-download").addEventListener("click", downloadResult);
 $("mastering-apply-main").addEventListener("click", applyResultToMain);
 window.addEventListener("unload", () => {
+  if (originalUrl) URL.revokeObjectURL(originalUrl);
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
 });

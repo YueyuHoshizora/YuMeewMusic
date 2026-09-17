@@ -9,6 +9,7 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
     <link rel="stylesheet" href="./css/ai-mastering.css" />
+    <link rel="stylesheet" href="./css/audio-player.css" />
     <script type="module" src="./js/ai-mastering.js"></script>
     <script type="module" src="./js/member-status.js"></script>
     <script type="module" src="./js/loading-screen.js"></script>
@@ -47,7 +48,14 @@
               <div><dt>檔案大小</dt><dd id="mastering-size">—</dd></div>
             </dl>
             <p class="separator-original-label">原音試聽（未處理）</p>
-            <audio id="mastering-original" controls preload="metadata" aria-label="原音試聽，未處理"></audio>
+            <div class="audio-player">
+              <button id="mastering-original-play" class="audio-player-button" type="button" aria-label="播放原音">▶</button>
+              <div class="audio-player-body">
+                <input id="mastering-original-seek" class="audio-player-seek" type="range" min="0" max="0" step="0.01" value="0" aria-label="原音播放位置" />
+                <output id="mastering-original-time" class="audio-player-time">0:00 / 0:00</output>
+              </div>
+            </div>
+            <audio id="mastering-original" preload="metadata" aria-label="原音試聽，未處理" hidden></audio>
           </div>
         </div>
 
@@ -81,8 +89,20 @@
             <div><dt>處理後響度</dt><dd id="mastering-after-lufs">—</dd></div>
           </dl>
           <div id="mastering-preview" class="mastering-preview" hidden>
-            <p class="separator-original-label">處理後試聽</p>
-            <audio id="mastering-result" controls preload="auto"></audio>
+            <p class="separator-original-label">處理前後比較試聽</p>
+            <div class="audio-player">
+              <button id="mastering-compare-play" class="audio-player-button" type="button" aria-label="播放">▶</button>
+              <div class="audio-player-body">
+                <input id="mastering-compare-seek" class="audio-player-seek" type="range" min="0" max="0" step="0.01" value="0" aria-label="播放位置" />
+                <output id="mastering-compare-time" class="audio-player-time">0:00 / 0:00</output>
+              </div>
+              <div class="audio-player-ab-toggle" role="group" aria-label="播放來源">
+                <button id="mastering-ab-before" class="audio-player-ab-button" type="button" aria-pressed="false">處理前</button>
+                <button id="mastering-ab-after" class="audio-player-ab-button" type="button" aria-pressed="true">處理後</button>
+              </div>
+            </div>
+            <audio id="mastering-compare-before" preload="auto" hidden></audio>
+            <audio id="mastering-compare-after" preload="auto" hidden></audio>
           </div>
           <div id="mastering-actions" class="mastering-actions" hidden>
             <button id="mastering-download" class="text-button" type="button">下載母帶 WAV</button>

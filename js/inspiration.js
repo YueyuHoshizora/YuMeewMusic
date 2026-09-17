@@ -12,6 +12,17 @@ const WORKER_URL = "https://inspiration-chat.yustellar.idv.tw/api/inspiration/ch
 const COOLDOWN_SECONDS = 5;
 const MAX_MESSAGE_CHARS = 4000;
 
+// 對話累積到一定長度前，主動把較舊的內容濃縮成一段摘要，讓聊天理論上可以無限延續，
+// 不會一直撞到 Worker 端 MAX_TOTAL_CHARS／MAX_MESSAGES 的硬上限（那兩個上限還是保留
+// 當最後一道防線）。門檻抓在硬上限的六成左右，留出空間給摘要訊息本身與後續幾輪對話。
+const COMPRESS_TRIGGER_CHARS = 12000;
+const COMPRESS_TRIGGER_MESSAGES = 30;
+const COMPRESS_KEEP_RECENT = 6; // 保留最近 3 組使用者／助理往返，逐字保留不濃縮
+const COMPRESS_INSTRUCTION =
+  "請把以上對話內容濃縮成一段重點摘要，保留討論過的創作方向、已經決定或排除的想法、" +
+  "還沒解決的問題，控制在 500 字以內。只回傳摘要本身，不要加「以下是摘要」之類的開場白，" +
+  "也不要用條列格式。";
+
 const restored = loadSettings();
 applyTheme(restored.mode, restored.theme);
 
@@ -21,6 +32,7 @@ applyTheme(restored.mode, restored.theme);
 let conversation = [];
 let activeController = null;
 let cooldownTimer = null;
+let compressing = false;
 
 function status(text, mode = "") {
   $("inspiration-status").textContent = text;
@@ -61,6 +73,14 @@ function setBusy(busy) {
   $("inspiration-clear").disabled = busy;
   $("inspiration-send").textContent = busy ? "停止" : "送出";
   $("inspiration-send").classList.toggle("stopping", busy);
+}
+
+// 壓縮舊對話時沒有串流可以中止，跟「正在回覆」是不同的忙碌狀態，所以送出鍵直接鎖住
+// 而不是變成停止鍵。
+function setCompressing(active) {
+  $("inspiration-input").disabled = active;
+  $("inspiration-clear").disabled = active;
+  $("inspiration-send").disabled = active;
 }
 
 function startCooldown(seconds) {
@@ -142,6 +162,46 @@ async function streamChat(messages, { onDelta, signal }) {
   return receivedAny;
 }
 
+function conversationChars(list = conversation) {
+  return list.reduce((sum, message) => sum + message.content.length, 0);
+}
+
+// 檢查是否需要把較舊的對話濃縮成摘要；只在對話「已經結束一輪」（最後一則是助理回覆，
+// 或對話是空的）時呼叫，避免壓縮到還沒送出回覆的半截對話。壓縮本身也是一次打向
+// Worker 的請求，會吃掉一次 5 秒冷卻，所以完成後會照樣跑一次冷卻倒數，確保接在後面
+// 真正要送的訊息不會被 Worker 用 429 擋下來。壓縮失敗（網路問題、剛好卡冷卻等）就
+// 直接放棄，讓原本要送的訊息照舊送出，最壞情況只是繼續讓 Worker 的長度上限去擋。
+async function compressConversation() {
+  if (conversation.length <= COMPRESS_KEEP_RECENT) return;
+  if (conversationChars() < COMPRESS_TRIGGER_CHARS && conversation.length < COMPRESS_TRIGGER_MESSAGES) return;
+
+  const older = conversation.slice(0, conversation.length - COMPRESS_KEEP_RECENT);
+  const recent = conversation.slice(conversation.length - COMPRESS_KEEP_RECENT);
+
+  status("對話有點長了，先幫你整理一下重點…");
+  let summary = "";
+  try {
+    const receivedAny = await streamChat(
+      [...older, { role: "user", content: COMPRESS_INSTRUCTION }],
+      { onDelta: chunk => { summary += chunk; } },
+    );
+    if (!receivedAny || !summary.trim()) return;
+  } catch {
+    return;
+  }
+
+  conversation = [
+    { role: "user", content: `（先前對話摘要，作為背景參考，不需要特別回應）\n${summary.trim()}` },
+    { role: "assistant", content: "好，我記得目前討論的方向了，我們繼續。" },
+    ...recent,
+  ];
+
+  await new Promise(resolve => {
+    startCooldown(COOLDOWN_SECONDS);
+    setTimeout(resolve, COOLDOWN_SECONDS * 1000 + 300);
+  });
+}
+
 async function sendMessage(text) {
   const trimmed = text.trim();
   if (!trimmed || activeController) return;
@@ -219,18 +279,36 @@ function clearConversation() {
   status("準備好聊聊了");
 }
 
+async function handleSubmit(text) {
+  if (activeController || compressing) return;
+  compressing = true;
+  setCompressing(true);
+  try {
+    await compressConversation();
+  } finally {
+    compressing = false;
+    setCompressing(false);
+  }
+  await sendMessage(text);
+}
+
 $("inspiration-form").addEventListener("submit", event => {
   event.preventDefault();
   if (activeController) {
     activeController.abort();
     return;
   }
+  if (compressing) return;
   const input = $("inspiration-input");
+  if (!input.value.trim()) return;
   if (input.value.length > MAX_MESSAGE_CHARS) {
     error(`單則訊息最多 ${MAX_MESSAGE_CHARS} 字，請縮短內容。`);
     return;
   }
-  void sendMessage(input.value);
+  const text = input.value;
+  input.value = "";
+  autoResizeInput();
+  void handleSubmit(text);
 });
 
 $("inspiration-input").addEventListener("input", autoResizeInput);

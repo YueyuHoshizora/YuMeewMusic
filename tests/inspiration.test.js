@@ -44,3 +44,19 @@ test("aborting a reply keeps whatever text streamed in so far instead of losing 
   assert.match(script, /AbortError/);
   assert.match(script, /已中止/);
 });
+
+test("long conversations get auto-compressed instead of hitting a hard length wall", () => {
+  const script = readFileSync("js/inspiration.js", "utf8");
+  assert.match(script, /COMPRESS_TRIGGER_CHARS\s*=\s*12000/);
+  assert.match(script, /COMPRESS_TRIGGER_MESSAGES\s*=\s*30/);
+  assert.match(script, /COMPRESS_KEEP_RECENT\s*=\s*6/);
+  assert.match(script, /async function compressConversation\(/);
+  // 壓縮只能在一輪對話「已經結束」時觸發，不能砍到還沒回覆完的半截對話
+  assert.match(script, /if \(activeController \|\| compressing\) return;/);
+});
+
+test("the 限制 panel on the page explains auto-compression instead of telling users to start over", () => {
+  const html = readFileSync("inspiration.html", "utf8");
+  assert.match(html, /自動把較舊的內容濃縮成摘要/);
+  assert.doesNotMatch(html, /超過請重新整理頁面開新對話/);
+});

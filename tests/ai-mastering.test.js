@@ -99,6 +99,21 @@ test("measureTruePeakDb matches the known peak of a sine wave", () => {
   assert.ok(Math.abs(peakDb - 20 * Math.log10(0.5)) < 0.3, `unexpected peak dB: ${peakDb}`);
 });
 
+test("measureTruePeakDb catches inter-sample peaks that sample-peak scanning misses", () => {
+  // 刻意挑一個接近 Nyquist、相位又剛好讓取樣點避開類比波峰的高頻訊號：單純掃描取樣點
+  // 量到的峰值會明顯低於訊號實際的類比峰值，True Peak（4 倍過取樣）則應該量得到。
+  const sampleRate = 44100;
+  const frequency = (sampleRate / 2) * 0.996;
+  const amplitude = 0.98;
+  const phase = 0.3;
+  const signal = Float32Array.from({ length: 400 }, (_, i) => amplitude * Math.sin((2 * Math.PI * frequency * i) / sampleRate + phase));
+  let samplePeak = 0;
+  for (const value of signal) samplePeak = Math.max(samplePeak, Math.abs(value));
+  const samplePeakDb = 20 * Math.log10(samplePeak);
+  const truePeakDb = measureTruePeakDb([signal]);
+  assert.ok(truePeakDb > samplePeakDb + 1, `true peak (${truePeakDb}) should clearly exceed sample peak (${samplePeakDb})`);
+});
+
 test("masterAudioChannels normalizes an over-quiet mix toward the target LUFS without clipping", () => {
   const quiet = sine(220, 0.03, 4);
   const result = masterAudioChannels(quiet, quiet, SAMPLE_RATE, { intensity: 60, targetLufs: -14, ceilingDb: -1 });

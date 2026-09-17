@@ -261,9 +261,56 @@ export function measureIntegratedLoudness(channels, sampleRate, channelWeights) 
   return -0.691 + 10 * Math.log10(meanFinal);
 }
 
+// ITU-R BS.1770-4 Annex 2：單純掃描取樣點量到的只是「取樣點峰值」（sample peak），
+// 抓不到取樣點與取樣點之間、訊號經過 D/A 轉換或再壓成 MP3 這類有損格式時仍會真正發聲、
+// 可能爆音的峰值（inter-sample peak）。這裡改成規格書 Annex 2 公布的係數，做 4 倍過取樣
+// （4-phase、每個 phase 12 個 tap 的 polyphase FIR 內插濾波器）估計真正的 True Peak：
+// 對每個取樣點內插出 4 個相位的樣本，全部取絕對值後找最大值。
+const TRUE_PEAK_OVERSAMPLE_TAPS = Object.freeze([
+  [0.0017089843750, 0.0109863281250, -0.0196533203125, 0.0332031250000, -0.0594482421875, 0.1373291015625, 0.9721679687500, -0.1022949218750, 0.0476074218750, -0.0266113281250, 0.0148925781250, -0.0083007812500],
+  [-0.0291748046875, 0.0292968750000, -0.0517578125000, 0.0891113281250, -0.1665039062500, 0.4650878906250, 0.7797851562500, -0.2003173828125, 0.1015625000000, -0.0582275390625, 0.0330810546875, -0.0189208984375],
+  [-0.0189208984375, 0.0330810546875, -0.0582275390625, 0.1015625000000, -0.2003173828125, 0.7797851562500, 0.4650878906250, -0.1665039062500, 0.0891113281250, -0.0517578125000, 0.0292968750000, -0.0291748046875],
+  [-0.0083007812500, 0.0148925781250, -0.0266113281250, 0.0476074218750, -0.1022949218750, 0.9721679687500, 0.1373291015625, -0.0594482421875, 0.0332031250000, -0.0196533203125, 0.0109863281250, 0.0017089843750],
+]);
+
+// 每個 phase 都是 12 個 tap 的 FIR：taps[k] 對應輸入取樣點 i + (k - 5)。中段（索引不會
+// 超出陣列範圍的區段）直接展開成固定運算，避免逐點邊界檢查；開頭與結尾幾個取樣點另外用
+// 有邊界檢查的版本補齊，數量很少，不影響整體效能。
+function truePeakForChannel(samples) {
+  const length = samples.length;
+  let peak = 0;
+  for (let phase = 0; phase < TRUE_PEAK_OVERSAMPLE_TAPS.length; phase++) {
+    const taps = TRUE_PEAK_OVERSAMPLE_TAPS[phase];
+    const [h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11] = taps;
+    const start = 5;
+    const end = length - 7;
+    for (let i = start; i < end; i++) {
+      const lo = i - 5;
+      const acc =
+        h0 * samples[lo] + h1 * samples[lo + 1] + h2 * samples[lo + 2] + h3 * samples[lo + 3] +
+        h4 * samples[lo + 4] + h5 * samples[lo + 5] + h6 * samples[lo + 6] + h7 * samples[lo + 7] +
+        h8 * samples[lo + 8] + h9 * samples[lo + 9] + h10 * samples[lo + 10] + h11 * samples[lo + 11];
+      const abs = Math.abs(acc);
+      if (abs > peak) peak = abs;
+    }
+    for (let i = 0; i < start; i++) peak = Math.max(peak, Math.abs(truePeakSampleWithBounds(samples, taps, i)));
+    for (let i = Math.max(start, end); i < length; i++) peak = Math.max(peak, Math.abs(truePeakSampleWithBounds(samples, taps, i)));
+  }
+  return peak;
+}
+
+function truePeakSampleWithBounds(samples, taps, i) {
+  let acc = 0;
+  for (let k = 0; k < taps.length; k++) {
+    const idx = i - 5 + k;
+    if (idx >= 0 && idx < samples.length) acc += taps[k] * samples[idx];
+  }
+  return acc;
+}
+
 export function measureTruePeakDb(channels) {
   let peak = 0;
-  for (const channel of channels) for (let i = 0; i < channel.length; i++) peak = Math.max(peak, Math.abs(channel[i]));
+  for (const channel of channels) peak = Math.max(peak, truePeakForChannel(channel));
   return peak > 0 ? 20 * Math.log10(peak) : -Infinity;
 }
 

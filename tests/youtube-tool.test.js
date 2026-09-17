@@ -1,0 +1,28 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+
+test("YouTube tool page requests, copies, and renders video and channel info", () => {
+  const html = readFileSync("youtube-tool.html", "utf8");
+  const script = readFileSync("js/youtube-tool.js", "utf8");
+  const ids = [...html.matchAll(/id="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(ids).size, ids.length);
+  for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
+  for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
+  assert.match(html, /id="yt-video-url"[^>]*placeholder="https:\/\/www\.youtube\.com\/watch\?v=\.\.\."/);
+  assert.match(html, /id="yt-channel-url"[^>]*placeholder="https:\/\/www\.youtube\.com\/@handle"/);
+  assert.match(html, /id="yt-video-fetch"[^>]*>取得影片資訊</);
+  assert.match(html, /id="yt-channel-fetch"[^>]*>取得頻道資訊</);
+  assert.match(script, /YOUTUBE_PROXY_URL = "https:\/\/model-proxy\.yustellar\.idv\.tw\/youtube\/resolve"/);
+  assert.match(script, /\.\.\.clientIdentityHeaders\(\)/);
+  assert.match(script, /if \(result\.type !== "video"\) throw Error/);
+  assert.match(script, /if \(result\.type !== "channel"\) throw Error/);
+  assert.match(script, /navigator\.clipboard\.writeText/);
+  assert.match(script, /renderTags\(\$\("yt-video-tags"\), result\.tags\)/);
+  assert.match(script, /renderTags\(\$\("yt-channel-tags"\), result\.tags\)/);
+  assert.doesNotMatch(script, /localStorage/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/youtube-tool\.html"[\s\S]*<strong>YouTube 工具<\/strong>/);
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"youtube-tool\.html"/);
+  assert.match(readFileSync("scripts/build.js", "utf8"), /"css\/youtube-tool\.css"/);
+  assert.match(readFileSync("scripts/serve.js", "utf8"), /"youtube-tool\.html"/);
+});

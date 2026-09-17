@@ -134,8 +134,9 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 | AI 母帶 | 規則式多頻段動態壓縮＋響度正規化＋即時 EQ 調整器，將音樂處理到指定的目標響度與峰值上限 |
 | 歌曲評分 | 使用 Suno 分享連結，以 APEX 模型進行單曲評分或雙曲比較 |
 | Suno 工具 | 解析公開 Suno 分享連結，在瀏覽器解碼並轉成 WAV |
+| YouTube 工具 | 解析公開 YouTube 影片或頻道連結，取得頻道 ID、影片封面、影片標題、影片 TAG 與頻道 TAG |
 
-歌曲評分模型在本機執行，音樂不會送往評分伺服器。Suno 分享連結只保留在當前輸入框，不會寫入 `localStorage` 或 IndexedDB。
+歌曲評分模型在本機執行，音樂不會送往評分伺服器。Suno 分享連結、YouTube 連結只保留在當前輸入框，不會寫入 `localStorage` 或 IndexedDB。
 
 任意轉失敗時會依實際原因顯示訊息：來源影片／音訊編碼無法被目前瀏覽器解碼（例如舊版瀏覽器或未內建對應編碼器）會提示改用最新版 Chrome 或 Edge；MP3 與 FLAC 輸出使用內建的軟體編碼器（透過 Worker 執行的 WASM），非瀏覽器原生支援格式時才會啟用。
 
@@ -177,6 +178,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 | AI 字幕辨識 | 瀏覽器 + 辨識服務 | 分離後的人聲 WAV、語言、選填歌詞與時長 |
 | 圖片生成器、影片生成器 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
 | Suno 工具 | Suno CDN + 解析 Worker | 公開分享連結；Worker 不保存音樂 |
+| YouTube 工具 | model-proxy Worker | 公開影片或頻道連結；Worker 只讀取公開頁面中繼資料，不保存內容 |
 | 分鏡 AI 分析 | storyboard-checker Worker（主要）+ inspiration-chat Worker（備援）+ OpenRouter | 分鏡內容與全片風格；Worker 與模型服務端都不會保存分析內容 |
 
 一般素材限制：
@@ -225,6 +227,7 @@ npm run preview  # 預覽 dist/
 ├── converter.html             # 任意轉
 ├── music-rating.html          # 歌曲評分
 ├── suno-tool.html             # Suno 工具
+├── youtube-tool.html          # YouTube 工具
 ├── settings.html              # 設定與快取管理
 ├── css/                       # 頁面樣式
 ├── js/                        # UI、DSP、Canvas 與編碼邏輯

@@ -9,7 +9,7 @@
 本政策適用於：
 
 - [YuMeewMusic 正式網站](https://ezmusic.yustellar.idv.tw/)及其 PWA。
-- 本專案維護並由正式網站呼叫的會員、圖片生成、影片生成、字幕辨識、分鏡分析、Suno 解析、YouTube 公開資訊解析與資源代理服務。
+- 本專案維護並由正式網站呼叫的會員、圖片生成、影片生成、字幕辨識、分鏡分析、Suno 解析與資源代理服務。
 - 透過 Google OAuth 建立及使用的 YuMeewMusic 會員帳戶。
 
 本網站內含第三方網站、模型、API 或下載來源的連結。離開本網站後，資料處理方式由該第三方的條款與隱私權政策規範。
@@ -63,7 +63,6 @@ Supabase 負責驗證登入身分。Cloudflare D1 保存會員識別碼、電子
 | 影片生成 | 完整題詞、模型、解析度、比例、片長、引用的圖片／音訊／影片、已引用且啟用的人物資料，以及必要的 API KEY | 上傳參考資源並建立、查詢及下載影片生成任務 |
 | 分鏡 AI 分析 | 分鏡、全片風格、最終題詞及檢查所需的設定 | 產生分鏡分析報告；優先送到 storyboard-checker Worker（Cloudflare Workers AI），失敗時退回 inspiration-chat Worker（代理 OpenRouter）當備援，兩邊都不會保存分析內容 |
 | Suno 工具與歌曲評分 | 使用者輸入的公開 Suno 分享連結 | 解析公開音訊位置並在瀏覽器讀取音樂 |
-| YouTube 工具 | 使用者輸入的公開 YouTube 影片或頻道連結 | 解析公開頁面的標題、TAG 與頻道 ID |
 | 會員中心 | Supabase 登入權杖 | 驗證身分並讀取 D1 中屬於您的會員資料 |
 | 匯率試算 | 一般網路請求，不含儲值金額 | 取得臺灣銀行 USD/TWD 即期匯率資料 |
 
@@ -109,7 +108,6 @@ Supabase 負責驗證登入身分。Cloudflare D1 保存會員識別碼、電子
 - MiniMax、BytePlus／ModelArk 與 Google AI Studio：您選用相應影片模型時的生成服務。
 - [Hugging Face](https://huggingface.co/privacy)：下載在瀏覽器中使用的 AI 模型檔案。
 - [Suno](https://suno.com/privacy)：讀取您指定的公開分享頁面與音訊 CDN 資源。
-- [YouTube](https://policies.google.com/privacy)：讀取您指定的公開影片或頻道頁面中繼資料，不呼叫官方 YouTube Data API。
 - [OpenRouter](https://openrouter.ai/privacy)：分鏡 AI 分析的備用引擎，主要引擎（storyboard-checker）失敗時才會代理呼叫 AI 模型產生分析報告；主要引擎改用 Cloudflare Workers AI，見下方 Cloudflare 說明。
 
 此外，本網站可能在取得您的同意、履行法律義務、回應主管機關或司法機關的合法要求、保護使用者生命身體財產、調查詐欺與濫用，或維護本網站合法權益所必要的範圍內提供資料。

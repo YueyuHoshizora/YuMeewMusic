@@ -30,13 +30,11 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | `vocal-separator.html` 人聲分離 | 最長 8 分鐘／150 MB 音樂分離人聲與伴奏，全程瀏覽器內執行 | Spleeter 2-stems 或 BS PolarFormer（ONNX Runtime Web，WebGPU 優先、WASM 備援），模型檔存 IndexedDB |
 | `image-video.html` 圖轉影片 | 多張圖片／影片素材排序＋進退場特效，輸出 MP4／透明 PNG MOV | 純瀏覽器端編碼，無外部服務 |
 | `video-editor.html` 影片編輯 | 在主畫面影片上疊加圖層、特效、音訊 | 純瀏覽器端編碼，無外部服務 |
-| 其他工具（`converter.html`／`music-rating.html`／`suno-tool.html`／`youtube-tool.html`） | 格式轉換、Suno 單曲評分（APEX 模型，`flux-klein` Worker 的 `runStoryboardCheck` 之外的另一套本機推論）、Suno 分享連結解析（`model-proxy` `/suno/resolve`）、YouTube 影片／頻道公開資訊解析（`model-proxy` `/youtube/resolve`） | 見各檔案 |
+| 其他工具（`converter.html`／`music-rating.html`／`suno-tool.html`） | 格式轉換、Suno 單曲評分（APEX 模型，`flux-klein` Worker 的 `runStoryboardCheck` 之外的另一套本機推論）、Suno 分享連結解析（`model-proxy` `/suno/resolve`） | 見各檔案 |
 
 分鏡合理性檢查是影片生成器內建的輔助功能，不是獨立頁面。主要引擎退回原本的 `storyboard-checker` Worker（Cloudflare Workers AI `@cf/zai-org/glm-4.7-flash`），失敗時退回 `inspiration-chat` Worker（呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，目前先保留當備用引擎，之後有需要再切回來當主要）當備援，兩邊維持一致的分析標準與請求／回應格式。
 
 `suno-tool.html` 支援 `?q=<Suno 分享網址>` 查詢字串，載入時自動帶入分享連結輸入框（僅預填，不自動送出）。取得音樂後除了「套用到主畫面」（存進 `media-store.js` 的 `"audio"` IndexedDB 槽並跳轉 `index.html`），也可「套用並辨識字幕」，同樣存進 `"audio"` 槽後跳轉 `subtitle-editor.html?recognize=1`；`subtitle-editor.js` 讀到 `recognize=1` 且音訊／波形已就緒、目前沒有既有字幕時，會直接呼叫既有的 AI 字幕辨識（`requestSubtitleRecognition()` → Spleeter 人聲分離 → 上傳 `lyrics-transcriber`），把兩個工具串成一次操作；此路徑刻意不繞過既有的「已有字幕先跳確認覆寫對話框」邏輯。
-
-`youtube-tool.html` 分成「影片資訊」與「頻道資訊」兩個獨立表單，貼上公開 YouTube 影片或頻道連結（或裸 11 碼影片 ID／`@handle`）送到 `model-proxy` 的 `POST /youtube/resolve`，回傳資料由 Worker 解析公開頁面的 `<meta>` 標籤與內嵌 JSON 取得，不呼叫官方 YouTube Data API、不需要 API Key。影片封面直接用 `https://i.ytimg.com/vi/<videoId>/*.jpg` 這組固定網址組出各解析度連結，不經過 Worker；`maxresdefault.jpg` 在原始影片解析度不足時仍會回傳一張 120×90 的灰色佔位圖（HTTP 200，不會觸發 `onerror`），所以頁面預設用 `hqdefault.jpg` 當主要預覽圖，其餘解析度只作為可另開分頁的連結讓使用者自行確認。影片／頻道若沒有填寫關鍵字，TAG 清單會是空的，這是 YouTube 本身的限制，不是解析失敗。刻意不提供下載影片本體的功能（會繞過 YouTube 的串流保護且多半涉及著作權問題），影片結果只給「開啟原始影片」的外部連結直接跳轉到 YouTube 播放頁。
 
 ### 會員與帳戶扣點
 
@@ -66,7 +64,6 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 ├── converter.html             # 任意轉
 ├── music-rating.html          # 歌曲評分
 ├── suno-tool.html             # Suno 工具
-├── youtube-tool.html          # YouTube 工具
 ├── ai-mastering.html          # AI 母帶
 ├── settings.html              # 設定與快取管理
 ├── css/                       # 頁面樣式（跟 html/js 同名三胞胎，見下方架構慣例）
@@ -80,7 +77,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 | 分類 | 檔案（舉例） | 用途 |
 | --- | --- | --- |
-| 頁面控制器（三胞胎的 JS） | `image-generator.js`／`video-generator.js`／`vocal-separator.js`／`image-video.js`／`video-editor.js`／`converter.js`／`music-rating.js`／`suno-tool.js`／`youtube-tool.js`／`ai-mastering.js`／`subtitle-editor.js`／`app.js`（主畫面） | 每個頁面自己的事件綁定、狀態機、與後端／Worker 溝通邏輯 |
+| 頁面控制器（三胞胎的 JS） | `image-generator.js`／`video-generator.js`／`vocal-separator.js`／`image-video.js`／`video-editor.js`／`converter.js`／`music-rating.js`／`suno-tool.js`／`ai-mastering.js`／`subtitle-editor.js`／`app.js`（主畫面） | 每個頁面自己的事件綁定、狀態機、與後端／Worker 溝通邏輯 |
 | 視覺渲染 | `visualizer.js`（Canvas 2D 頻譜／節奏動畫）、`styles.js`（19 種樣式定義） | 主畫面的即時繪製核心 |
 | 音訊處理 | `audio-eq.js`（三段 EQ）、`trim.js`／`trim-range.js`／`trim-time.js`（裁剪）、`export.js`（PCM 縮放、frame timing）、`vocal-separator-core.js`／`vocal-separator-worker.js`（Spleeter／PolarFormer 分離）、`vocal-autotune-core.js`／`vocal-autotune-worker.js`（人聲自動調音） | DSP 與音訊編輯，多半搭配 Web Worker 跑重運算 |
 | 編碼與輸出 | `formats.js`（輸出格式定義）、`video-profile.js`（H.264 Profile／Level 對應解析度與 fps）、`png-mov.js`（透明通道 MOV）、`dimensions.js`（解析度換算）、`video-effects.js`（進退場特效）、`image-sequence.js`（圖轉影片排程） | 對接 WebCodecs／MediaBunny 的編碼參數計算，本身不直接碰編碼器 API |

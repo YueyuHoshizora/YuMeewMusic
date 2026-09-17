@@ -12,7 +12,6 @@
 | 分鏡 AI 分析（備援） | `inspiration-chat` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻，跟主要引擎各自獨立計時 |
 | 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | IP；Workers Rate Limiting Binding |
 | Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
-| YouTube 解析 | `model-proxy` `POST /youtube/resolve` | 每分鐘 20 次 | IP；Workers Rate Limiting Binding |
 | 影片／圖片生成 | `model-proxy` `POST /*/video/generate`、`POST /openai/image/generate` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 資源上傳 | `model-proxy` `POST /resources/upload` | 每分鐘 20 次 | IP；Workers Rate Limiting Binding |
 | 會員影片額度預扣 | `member-api` `POST /v1/credits/video-reservations` | 每分鐘 60 次 | IP；D1 原子檢查會員可用餘額 |
@@ -39,7 +38,6 @@
 | `GET /resources/:id` | 模型服務讀取短效參考資源 | 不計入；資源預設保留 2 小時 |
 | `GET /models/:filename` | 下載瀏覽器端允許清單內的模型 | 不計入 |
 | `POST /suno/resolve` | 解析公開 Suno 分享連結 | 每分鐘 10 次 |
-| `POST /youtube/resolve` | 解析公開 YouTube 影片或頻道連結 | 每分鐘 20 次 |
 | `POST /openai/image/generate` | 建立 OpenAI 圖片生成請求 | 每分鐘 10 次 |
 | `POST /minimax/video/generate` | 建立 MiniMax 影片任務 | 每分鐘 10 次 |
 | `POST /minimax/video/query` | 查詢 MiniMax 任務 | 不計入 |
@@ -55,7 +53,6 @@
 Rate Limiting Binding：
 
 - `SUNO_RATE_LIMITER`，namespace `7132501`，`10 / 60 秒`（`/suno/resolve`）。
-- `YOUTUBE_RATE_LIMITER`，namespace `7132506`，`20 / 60 秒`（`/youtube/resolve`）。
 - `GENERATION_RATE_LIMITER`，namespace `7132504`，`10 / 60 秒`（三個服務商的 `/*/video/generate` 與 `/openai/image/generate` 共用同一個限流器）。
 - `UPLOAD_RATE_LIMITER`，namespace `7132505`，`20 / 60 秒`（`/resources/upload`）。
 

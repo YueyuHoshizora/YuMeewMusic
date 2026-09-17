@@ -31,6 +31,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | `image-video.html` 圖轉影片 | 多張圖片／影片素材排序＋進退場特效，輸出 MP4／透明 PNG MOV | 純瀏覽器端編碼，無外部服務 |
 | `video-editor.html` 影片編輯 | 在主畫面影片上疊加圖層、特效、音訊 | 純瀏覽器端編碼，無外部服務 |
 | 其他工具（`converter.html`／`music-rating.html`／`suno-tool.html`） | 格式轉換、Suno 單曲評分（APEX 模型，`flux-klein` Worker 的 `runStoryboardCheck` 之外的另一套本機推論）、Suno 分享連結解析（`model-proxy` `/suno/resolve`） | 見各檔案 |
+| 靈感激發（`inspiration.html`） | 跟 AI 聊天找創作靈感的聊天介面，回覆即時串流顯示 | `inspiration-chat` Worker 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free`（免費模型）；固定用這一個模型，沒有帳戶扣點也沒有自帶 API KEY 的概念 |
 
 分鏡合理性檢查（`storyboard-checker` Worker）是影片生成器內建的輔助功能，不是獨立頁面。
 
@@ -64,6 +65,8 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 ├── converter.html             # 任意轉
 ├── music-rating.html          # 歌曲評分
 ├── suno-tool.html             # Suno 工具
+├── ai-mastering.html          # AI 母帶
+├── inspiration.html           # 靈感激發
 ├── settings.html              # 設定與快取管理
 ├── css/                       # 頁面樣式（跟 html/js 同名三胞胎，見下方架構慣例）
 ├── js/                        # UI、DSP、Canvas 與編碼邏輯（見下方模組地圖）
@@ -76,7 +79,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 | 分類 | 檔案（舉例） | 用途 |
 | --- | --- | --- |
-| 頁面控制器（三胞胎的 JS） | `image-generator.js`／`video-generator.js`／`vocal-separator.js`／`image-video.js`／`video-editor.js`／`converter.js`／`music-rating.js`／`suno-tool.js`／`subtitle-editor.js`／`app.js`（主畫面） | 每個頁面自己的事件綁定、狀態機、與後端／Worker 溝通邏輯 |
+| 頁面控制器（三胞胎的 JS） | `image-generator.js`／`video-generator.js`／`vocal-separator.js`／`image-video.js`／`video-editor.js`／`converter.js`／`music-rating.js`／`suno-tool.js`／`ai-mastering.js`／`inspiration.js`／`subtitle-editor.js`／`app.js`（主畫面） | 每個頁面自己的事件綁定、狀態機、與後端／Worker 溝通邏輯 |
 | 視覺渲染 | `visualizer.js`（Canvas 2D 頻譜／節奏動畫）、`styles.js`（19 種樣式定義） | 主畫面的即時繪製核心 |
 | 音訊處理 | `audio-eq.js`（三段 EQ）、`trim.js`／`trim-range.js`／`trim-time.js`（裁剪）、`export.js`（PCM 縮放、frame timing）、`vocal-separator-core.js`／`vocal-separator-worker.js`（Spleeter／PolarFormer 分離）、`vocal-autotune-core.js`／`vocal-autotune-worker.js`（人聲自動調音） | DSP 與音訊編輯，多半搭配 Web Worker 跑重運算 |
 | 編碼與輸出 | `formats.js`（輸出格式定義）、`video-profile.js`（H.264 Profile／Level 對應解析度與 fps）、`png-mov.js`（透明通道 MOV）、`dimensions.js`（解析度換算）、`video-effects.js`（進退場特效）、`image-sequence.js`（圖轉影片排程） | 對接 WebCodecs／MediaBunny 的編碼參數計算，本身不直接碰編碼器 API |
@@ -99,6 +102,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | `flux-klein/` | 獨立 Worker | Flux.2 Klein 4B 圖片生成（免費資源） |
 | `lyrics-transcriber/` | 獨立 Worker | AI 字幕辨識 |
 | `storyboard-checker/` | 獨立 Worker | 分鏡合理性 AI 分析 |
+| `inspiration-chat/` | 獨立 Worker | 「靈感激發」聊天頁面代理，呼叫 OpenRouter 免費模型並串流回覆 |
 
 每個 Worker 子專案自己有一份 `AGENTS.md`，內容是「這個 Worker 自己的規矩」（角色、端點、限流機制、程式碼風格、測試慣例），跟這份主文件互補、不重複。它們實際存在於磁碟上（只是被主站 `.gitignore` 排除），下面直接匯入內容，方便在主站這邊工作時也能看到：
 
@@ -107,6 +111,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 @flux-klein/AGENTS.md
 @lyrics-transcriber/AGENTS.md
 @storyboard-checker/AGENTS.md
+@inspiration-chat/AGENTS.md
 
 改一個功能如果同時牽涉主站與某個 Worker（例如額度計費），要記得這是**兩個獨立的 git 歷史**，分開 commit、分開推送，訊息裡不要假設對方 repo 也一起動了。
 

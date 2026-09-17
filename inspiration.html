@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="跟 AI 聊聊，幫音樂、歌詞、MV 畫面或視覺風格找靈感，回覆即時串流顯示，對話不會保存。" />
+    <title>靈感激發 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/inspiration.css" />
+    <script type="module" src="./js/inspiration.js"></script>
+    <script type="module" src="./js/member-status.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
+  </head>
+  <body class="inspiration-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
+    <header class="inspiration-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">◑</span>YuMeew<span class="brand-sub">INSPIRATION</span></a>
+      <span class="local"><i></i>對話不會保存，離開就清空</span>
+    </header>
+
+    <main class="inspiration-main">
+      <section class="inspiration-heading">
+        <div>
+          <div class="eyebrow">CREATIVE CHAT</div>
+          <h1>靈感激發<span>。</span></h1>
+          <p>卡關的時候找它聊聊：音樂、歌詞、MV 畫面、視覺風格，什麼想法都可以丟出來。對話只存在這個分頁，不會寫入任何裝置儲存空間，重新整理就會清空。</p>
+        </div>
+        <span id="inspiration-status" class="inspiration-status" role="status">準備好聊聊了</span>
+      </section>
+
+      <section class="panel inspiration-chat">
+        <div id="inspiration-messages" class="inspiration-messages" role="log" aria-live="polite" aria-label="對話紀錄">
+          <p class="inspiration-empty" id="inspiration-empty">丟一句「最近想寫一首關於＿＿的歌」或「幫我的 MV 想幾個開場畫面」試試看，也可以單純聊聊卡關的地方。</p>
+        </div>
+        <p id="inspiration-error" class="inspiration-error" role="alert" hidden></p>
+        <form id="inspiration-form" class="inspiration-input-row">
+          <textarea id="inspiration-input" class="inspiration-input" placeholder="想聊點什麼？（Enter 送出，Shift + Enter 換行）" rows="1" maxlength="4000" aria-label="輸入訊息"></textarea>
+          <div class="inspiration-input-actions">
+            <button id="inspiration-clear" class="text-button" type="button">清空對話</button>
+            <button id="inspiration-send" class="inspiration-send-button" type="submit">送出</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel inspiration-rules">
+        <div><strong>模型</strong><span>Nex-N2.5-Pro（OpenRouter 免費模型），由獨立 Worker 代理呼叫並即時串流回覆。</span></div>
+        <div><strong>隱私</strong><span>對話內容只會送到代理 Worker 與 OpenRouter，Worker 不保存任何訊息；重新整理或關閉分頁就會清空，不會寫入 localStorage 或 IndexedDB。</span></div>
+        <div><strong>限制</strong><span>每 5 秒最多送出一則訊息；單則訊息上限 4000 字，單次對話總長度上限約 20000 字，超過請重新整理頁面開新對話。</span></div>
+      </section>
+    </main>
+  </body>
+</html>

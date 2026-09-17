@@ -10,7 +10,7 @@ const types = {
   ".wasm": "application/wasm",
   ".svg": "image/svg+xml",
 };
-const allowed = new Set(["index.html", "account.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "favicon.svg"]);
+const allowed = new Set(["index.html", "account.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "inspiration.html", "favicon.svg"]);
 createServer(async (req, res) => {
   try {
     if (req.method !== "GET" && req.method !== "HEAD") {

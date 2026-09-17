@@ -42,6 +42,7 @@ next-env.d.ts
 /storyboard-checker/
 /member-api/
 /suno-lyrics-bridge/
+/inspiration-chat/
 
 # TypeScript build cache
 *.tsbuildinfo

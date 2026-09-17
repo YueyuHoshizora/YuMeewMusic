@@ -15,6 +15,7 @@
 | 資源上傳 | `model-proxy` `POST /resources/upload` | 每分鐘 20 次 | IP；Workers Rate Limiting Binding |
 | 會員影片額度預扣 | `member-api` `POST /v1/credits/video-reservations` | 每分鐘 60 次 | IP；D1 原子檢查會員可用餘額 |
 | 預扣確認／釋放 | `member-api` `POST /v1/internal/credits/reservations` | 每分鐘 30 次 | 服務 IP；HMAC 驗證 |
+| 靈感聊天 | `inspiration-chat` `POST /api/inspiration/chat` | 每 5 秒 1 次 | IP；Durable Object 精確冷卻 |
 
 所有 `OPTIONS` 預檢、健康檢查、模型與短效資源讀取、影片／查詢任務的查詢與下載目前不計入上述限額。
 
@@ -95,6 +96,18 @@ Rate Limiting Binding：
 | `POST /api/storyboard/check/status` | 舊佇列狀態端點 | 已停用，固定回傳 410；不計入 |
 
 分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object。分鏡資料通過驗證後才會開始 300 秒冷卻。
+
+## inspiration-chat
+
+正式端點：`https://inspiration-chat.yustellar.idv.tw`
+
+| 事件 | 用途 | 限額／附註 |
+| --- | --- | --- |
+| `OPTIONS *` | CORS 預檢 | 不計入 |
+| `GET /` | 服務資訊 | 不計入 |
+| `POST /api/inspiration/chat` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free`，以 SSE 串流回覆 | 每 5 秒 1 次；單次最多 40 則訊息、單則最多 4000 字、總長最多 20000 字 |
+
+聊天請求使用 `INSPIRATION_COOLDOWN` Durable Object。冷卻時間刻意設為全站最短的 5 秒，因為這是對話式介面，使用者本來就會每隔幾秒送出一則訊息，不同於一次性生成類工具。
 
 ## 維護注意事項
 

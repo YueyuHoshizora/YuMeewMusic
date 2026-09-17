@@ -1,4 +1,4 @@
-body.mastering-body { min-width: 1000px; }
+body.mastering-body { min-width: 640px; overflow-x: hidden; }
 .mastering-header { justify-content: space-between; }
 .mastering-main { max-width: 1180px; padding-top: 34px; }
 .mastering-heading { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 25px; }
@@ -6,9 +6,8 @@ body.mastering-body { min-width: 1000px; }
 .mastering-status { max-width: 300px; color: var(--muted); font-size: 13px; text-align: right; }
 .mastering-status.success { color: var(--primary-text); }
 .mastering-status.error { color: var(--error-text); }
-.mastering-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); align-items: stretch; }
-.mastering-source, .mastering-output { min-height: 390px; }
-.mastering-arrow { display: grid; place-items: center; color: var(--primary); font-size: 26px; }
+.mastering-workspace { display: flex; flex-direction: column; gap: 20px; }
+.mastering-arrow { display: grid; place-items: center; padding: 2px 0; color: var(--primary); font-size: 22px; transform: rotate(90deg); }
 .mastering-drop { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 112px; margin-top: 25px; padding: 18px; border: 1px dashed var(--border); border-radius: 11px; background: var(--tint); color: var(--foreground); text-align: left; }
 .mastering-drop:hover, .mastering-drop.dragging { border-color: var(--primary); background: var(--hover); }
 .mastering-drop.invalid { border-color: var(--error); background: var(--error-surface); }
@@ -50,9 +49,6 @@ body.mastering-body { min-width: 1000px; }
 .mastering-rules strong { font-size: 14px; }
 .mastering-rules span { color: var(--muted); font-size: 13px; line-height: 1.7; }
 @media (max-width: 1040px) {
-  body.mastering-body { min-width: 0; overflow-x: hidden; }
-  .mastering-workspace { grid-template-columns: 1fr; }
-  .mastering-arrow { display: none; }
   .mastering-rules { grid-template-columns: 1fr; }
   .mastering-rules > div { border-left: 0; border-top: 1px solid var(--border); }
   .mastering-rules > div:first-child { border-top: 0; }

@@ -25,14 +25,14 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 | 頁面 | 功能 | 用到的模型／Worker |
 | --- | --- | --- |
-| `image-generator.html` 圖片生成器 | 文字生成圖片，依生成比例（1:1／4:3／3:4／16:9／9:16）自動列出寬高皆 <2000px 的常用解析度可選（16:9 最高到 1920×1080、9:16 最高到 1080×1920），預設 1280×720 | Flux.2 Klein 4B（`flux-klein`，免費）、GPT-Image-2.5 Flare／Sunburst（OpenAI，經 `model-proxy` 帳戶扣點或使用者自帶 Key） |
-| `video-generator.html` 影片生成器 | 分鏡編排＋文字生成影片，支援人物模板、多種鏡頭／燈光／動作描述 | MiniMax H3、Seedance 2.0／2.5（BytePlus）、Veo 3.1 Preview（Google），都經 `model-proxy` 代理 |
+| `image-generator.html` 圖片生成 | 文字生成圖片，依生成比例（1:1／4:3／3:4／16:9／9:16）自動列出寬高皆 <2000px 的常用解析度可選（16:9 最高到 1920×1080、9:16 最高到 1080×1920），預設 1280×720 | Flux.2 Klein 4B（`flux-klein`，免費）、GPT-Image-2.5 Flare／Sunburst（OpenAI，經 `model-proxy` 帳戶扣點或使用者自帶 Key） |
+| `video-generator.html` 影片生成 | 分鏡編排＋文字生成影片，支援人物模板、多種鏡頭／燈光／動作描述 | MiniMax H3、Seedance 2.0／2.5（BytePlus）、Veo 3.1 Preview（Google），都經 `model-proxy` 代理 |
 | `vocal-separator.html` 人聲分離 | 最長 8 分鐘／150 MB 音樂分離人聲與伴奏，全程瀏覽器內執行 | Spleeter 2-stems 或 BS PolarFormer（ONNX Runtime Web，WebGPU 優先、WASM 備援），模型檔存 IndexedDB |
 | `image-video.html` 圖轉影片 | 多張圖片／影片素材排序＋進退場特效，輸出 MP4／透明 PNG MOV | 純瀏覽器端編碼，無外部服務 |
 | `video-editor.html` 影片編輯 | 在主畫面影片上疊加圖層、特效、音訊 | 純瀏覽器端編碼，無外部服務 |
 | 其他工具（`converter.html`／`music-rating.html`／`suno-tool.html`） | 格式轉換、Suno 單曲評分（APEX 模型，`flux-klein` Worker 的 `runStoryboardCheck` 之外的另一套本機推論）、Suno 分享連結解析（`model-proxy` `/suno/resolve`） | 見各檔案 |
 
-分鏡合理性檢查是影片生成器內建的輔助功能，不是獨立頁面。主要引擎退回原本的 `storyboard-checker` Worker（Cloudflare Workers AI `@cf/zai-org/glm-4.7-flash`），失敗時退回 `inspiration-chat` Worker（呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，目前先保留當備用引擎，之後有需要再切回來當主要）當備援，兩邊維持一致的分析標準與請求／回應格式。
+分鏡合理性檢查是影片生成內建的輔助功能，不是獨立頁面。主要引擎退回原本的 `storyboard-checker` Worker（Cloudflare Workers AI `@cf/zai-org/glm-4.7-flash`），失敗時退回 `inspiration-chat` Worker（呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，目前先保留當備用引擎，之後有需要再切回來當主要）當備援，兩邊維持一致的分析標準與請求／回應格式。
 
 `suno-tool.html` 支援 `?q=<Suno 分享網址>` 查詢字串，載入時自動帶入分享連結輸入框（僅預填，不自動送出）。取得音樂後除了「套用到主畫面」（存進 `media-store.js` 的 `"audio"` IndexedDB 槽並跳轉 `index.html`），也可「套用並辨識字幕」，同樣存進 `"audio"` 槽後跳轉 `subtitle-editor.html?recognize=1`；`subtitle-editor.js` 讀到 `recognize=1` 且音訊／波形已就緒、目前沒有既有字幕時，會直接呼叫既有的 AI 字幕辨識（`requestSubtitleRecognition()` → Spleeter 人聲分離 → 上傳 `lyrics-transcriber`），把兩個工具串成一次操作；此路徑刻意不繞過既有的「已有字幕先跳確認覆寫對話框」邏輯。
 
@@ -56,8 +56,8 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 ```text
 ├── index.html                 # 音樂視覺工作室（主畫面）
 ├── subtitle-editor.html       # 字幕編輯器
-├── image-generator.html       # 圖片生成器
-├── video-generator.html       # 影片生成器
+├── image-generator.html       # 圖片生成
+├── video-generator.html       # 影片生成
 ├── vocal-separator.html       # 人聲分離
 ├── image-video.html           # 圖轉影片
 ├── video-editor.html          # 影片編輯
@@ -84,7 +84,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | 字幕與素材 | `subtitles.js`（SRT／ASS／TXT 解析）、`fonts.js`（內建字幕字型）、`background-video.js`（循環背景影片） | |
 | 儲存與快取 | `media-store.js`（IndexedDB 媒體封裝／解封裝）、`settings.js`（`localStorage` 設定，白名單制只存必要欄位）、`indexeddb-model-cache.js`（AI 模型檔快取）、`undo-history.js`（共用復原／重做，字幕編輯器與其他編輯器共用同一個 factory） | |
 | 會員與計費 | `auth.js`（Supabase session）、`account.js`／`member-status.js`（會員狀態顯示）、`api-keys.js`（第三方 API KEY 存取＋`usesAccountCredits()`）、`provider-billing.js`（第三方費率查詢 URL）、`video-billing.js`（`roundUpCurrency()`、額度是否足夠判斷）、`admin.js`（管理後台） | 額度顯示與計費輔助邏輯；實際扣款在 Worker 端（見下方〈金流設計〉） |
-| 影片生成器專屬 | `video-prompt-mode.js`（分鏡文字模式解析）、`video-project-file.js`（專案檔匯入／匯出）、`video-resources.js`（引用資源管理）、`video-editor-core.js`（圖層時間計算）、`video-generator-pwa.js`（PWA／離線） | |
+| 影片生成專屬 | `video-prompt-mode.js`（分鏡文字模式解析）、`video-project-file.js`（專案檔匯入／匯出）、`video-resources.js`（引用資源管理）、`video-editor-core.js`（圖層時間計算）、`video-generator-pwa.js`（PWA／離線） | |
 | 共用小工具 | `themes.js`（深色／淺色主題，**只能改 CSS 屬性，不能動到渲染或輸出設定**）、`client-identity.js`（`X-YuMeew-Client-ID` 標頭產生與讀取）、`image-generation-identifiers.js`／`image-generation-settings.js`（見下方安全與金流章節）、`loading-screen.js`、`model-settings.js` | |
 
 新增檔案時先判斷屬於哪一類、看同類檔案的既有寫法，不要自己發明新的資料流模式（例如不要繞過 `media-store.js` 自己操作 IndexedDB）。

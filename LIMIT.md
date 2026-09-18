@@ -121,7 +121,7 @@ Rate Limiting Binding：
 
 分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object，300 秒冷卻，跟 `storyboard-checker` 一致（兩邊各自獨立計時，互不影響）。主站前端（`js/video-generator.js` 的 `waitForStoryboardAiReport()`）目前優先呼叫 `storyboard-checker`，失敗時（429 冷卻中除外）才退回這裡當備援；兩邊的請求／回應 JSON 合約刻意做成一致，前端不需要另外處理，之後如果要切回這裡當主要引擎，只要調換 `js/video-generator.js` 裡 `STORYBOARD_PRIMARY_URL`／`STORYBOARD_FALLBACK_URL` 的網址即可。
 
-MV 動畫場景生成用途完全不同（把文字轉成畫面規格，不是分析分鏡），刻意不用 5 分鐘冷卻的 Durable Object——使用者會針對單一分鏡反覆調整重試，改用 `MV_SCENE_RATE_LIMITER`（namespace `7132506`，每分鐘 10 次），跟 `flux-klein` 的 `/autocomplete` 同一種機制。前端（`js/mv-animation.js`）在 AI 呼叫失敗或超過限流時，會自動改用本機關鍵字模板（`js/mv-scenes.js` 的 `fallbackSceneSpec()`），不會讓匯出失敗。
+MV 動畫場景生成用途完全不同（把文字轉成畫面規格，不是分析分鏡），刻意不用 5 分鐘冷卻的 Durable Object——使用者會針對單一分鏡反覆調整重試，改用 `MV_SCENE_RATE_LIMITER`（namespace `7132506`，每分鐘 10 次），跟 `flux-klein` 的 `/autocomplete` 同一種機制。前端（動畫生成頁面的 `js/animation-generator.js`）在 AI 呼叫失敗或超過限流時，會自動改用本機關鍵字模板（`js/animation-scenes.js` 的 `fallbackSceneSpec()`），不會讓匯出失敗。
 
 ## 維護注意事項
 

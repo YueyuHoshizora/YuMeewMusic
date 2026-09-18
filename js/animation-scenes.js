@@ -1,12 +1,13 @@
 import { spectrum } from "./visualizer.js";
 
-// Each MV storyboard card carries a "scene spec" — a small structured description of a
-// 2.5D parallax illustration (sky/ground/character/prop layers, a camera movement, and an
-// optional particle effect) produced either by the AI scene generator
-// (inspiration-chat's POST /api/mv-scene/generate, see js/mv-animation.js) or, when that
-// call is unavailable, by fallbackSceneSpec() below using local keyword matching. Both
-// sources produce the exact same shape so this renderer never needs to know which one it
-// is drawing — that is the point of constraining the AI's JSON Schema to this vocabulary.
+// Each storyboard card in the animation generator (animation-generator.html) carries a
+// "scene spec" — a small structured description of a 2.5D parallax illustration
+// (sky/ground/character/prop layers, a camera movement, and an optional particle effect)
+// produced either by the AI scene generator (inspiration-chat's POST /api/mv-scene/generate,
+// see js/animation-generator.js) or, when that call is unavailable, by fallbackSceneSpec()
+// below using local keyword matching. Both sources produce the exact same shape so this
+// renderer never needs to know which one it is drawing — that is the point of constraining
+// the AI's JSON Schema to this vocabulary.
 //
 // Every frame is a pure function of (t, buffer, spec); positions use a fixed hash instead
 // of Math.random() so seeking and export stay frame-identical, matching the determinism
@@ -32,6 +33,7 @@ function clamp01(v) {
 }
 
 function energyOf(buffer, t, from = 0, to = 64) {
+  if (!buffer) return 0;
   const values = spectrum(buffer, t);
   let sum = 0;
   for (let i = from; i < to; i++) sum += values[i];
@@ -191,8 +193,8 @@ const DEFAULT_TEMPLATE = {
 
 /**
  * Deterministic, offline keyword-matched scene spec for when the AI scene generator
- * (js/mv-animation.js's callMvSceneGenerator) is unavailable, rate-limited, or returns an
- * unparsable/invalid result. Shares the exact same output shape as the AI schema so
+ * (js/animation-generator.js's ensureCardScene()) is unavailable, rate-limited, or returns
+ * an unparsable/invalid result. Shares the exact same output shape as the AI schema so
  * drawMvScene() never has to special-case which source produced a card's spec.
  */
 export function fallbackSceneSpec(description = "", accent = "#7ee0ff") {

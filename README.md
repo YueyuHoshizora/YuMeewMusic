@@ -132,7 +132,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 | --- | --- |
 | 任意轉 | 在瀏覽器內轉換影片與音訊格式 |
 | AI 母帶 | 規則式多頻段動態壓縮＋響度正規化＋即時 EQ 調整器，將音樂處理到指定的目標響度與峰值上限 |
-| MV 動畫 | 加入音樂後編排分鏡（比照影片生成的分鏡卡片），輸入場景描述與鏡頭語言，交給 AI 生成 2.5D 分層插畫規格並用 Canvas 繪製動畫（AI 無法使用時改用本機關鍵字模板），可引用參考人物或上傳分鏡專屬參考圖，以 WebCodecs 編碼成 MP4／MOV／WebM |
+| 動畫生成 | 分鏡編輯介面完全比照影片生成器（分鏡卡片、人物模板持久化、全片風格、分鏡合理性檢查、專案匯出入），輸入場景、鏡頭、視角、燈光、動作與對話後交給 AI 生成 2.5D 分層插畫規格，在瀏覽器用 Canvas 繪製並以 WebCodecs 編碼成 MP4／MOV／WebM，不需要上傳音樂 |
 | 歌曲評分 | 使用 Suno 分享連結，以 APEX 模型進行單曲評分或雙曲比較 |
 | Suno 工具 | 解析公開 Suno 分享連結，在瀏覽器解碼並轉成 WAV |
 
@@ -179,7 +179,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 | 圖片生成、影片生成 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
 | Suno 工具 | Suno CDN + 解析 Worker | 公開分享連結；Worker 不保存音樂 |
 | 分鏡 AI 分析 | storyboard-checker Worker（主要）+ inspiration-chat Worker（備援）+ OpenRouter | 分鏡內容與全片風格；Worker 與模型服務端都不會保存分析內容 |
-| MV 動畫 | 瀏覽器 + inspiration-chat Worker（AI 場景生成，選用） | 只有分鏡的場景描述、鏡頭語言、景別、氛圍等文字會送出；不含音樂、參考圖或參考人物；服務端不會保存內容。AI 無法使用時自動改用本機關鍵字模板，不送出任何資料 |
+| 動畫生成 | 瀏覽器 + inspiration-chat Worker（AI 場景生成）+ storyboard-checker／inspiration-chat（選用的分鏡合理性檢查，主要送 storyboard-checker，失敗時退回 inspiration-chat 當備援） | 只有分鏡欄位文字（場景、鏡頭、視角、燈光、動作、對話、全片風格）會送出；不含音樂或圖片；服務端不會保存內容。AI 場景生成無法使用時自動改用本機關鍵字模板，不送出任何資料。人物模板（含參考圖）保存在本機 IndexedDB，不會上傳 |
 
 一般素材限制：
 

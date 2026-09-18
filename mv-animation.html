@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.buymeacoffee.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://i.ytimg.com https://*.supabase.co https://*.buymeacoffee.com https://img.buymeacoffee.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://model-proxy.yustellar.idv.tw https://member-api.yustellar.idv.tw https://flux-klein-worker.yustellar.idv.tw https://lyrics-transcriber.yustellar.idv.tw https://storyboard-checker.yustellar.idv.tw https://inspiration-chat.yustellar.idv.tw https://api.openai.com wss://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self';" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="加入音樂後，用 Canvas 節奏動畫直接在瀏覽器內生成並匯出動畫 MV，不會上傳伺服器。" />
+    <title>MV 動畫 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/mv-animation.css" />
+    <script type="module" src="./js/mv-animation.js"></script>
+    <script type="module" src="./js/member-status.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
+  </head>
+  <body class="mv-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
+    <header class="converter-header mv-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">♪</span>YuMeew<span class="brand-sub">MV ANIMATION</span></a>
+      <span class="local"><i></i>音樂與畫面只在瀏覽器內處理</span>
+      <a class="coffee-link" href="https://www.buymeacoffee.com/yustellar" target="_blank" rel="noopener noreferrer" aria-label="請我喝杯咖啡（另開分頁）">
+        <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=yustellar&button_colour=BD5FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" alt="Buy me a coffee" loading="lazy" />
+      </a>
+    </header>
+    <main class="mv-main">
+      <section class="mv-heading">
+        <div>
+          <div class="eyebrow">LOCAL CANVAS MV</div>
+          <h1>MV 動畫<span>。</span></h1>
+          <p>加入音樂，選擇節奏動畫樣式與畫面設定，直接在瀏覽器用 Canvas 逐幀繪製並編碼成影片。全程使用瀏覽器內建的 WebCodecs，不會把音樂或畫面送到伺服器。</p>
+        </div>
+        <span id="mv-status" class="mv-status" role="status">等待選擇音樂</span>
+      </section>
+
+      <section class="mv-workspace">
+        <div class="panel mv-source">
+          <div class="section-title"><span>01</span><h2>加入音樂</h2></div>
+          <button id="mv-drop" class="converter-drop" type="button" aria-describedby="mv-error">
+            <span class="converter-drop-icon" aria-hidden="true">＋</span>
+            <span><strong id="mv-file-name">選擇音樂</strong><small>MP3 · WAV · M4A · FLAC，最長 20 分鐘</small></span>
+          </button>
+          <input id="mv-input" type="file" accept="audio/*" hidden />
+          <p id="mv-error" class="converter-error" role="alert" hidden></p>
+
+          <div id="mv-preview-block" class="mv-preview-block" hidden>
+            <div id="mv-canvas-wrap" class="canvas-wrap" role="button" tabindex="0" aria-label="放大即時預覽至全螢幕" title="點一下全螢幕，再點一下恢復">
+              <canvas id="mv-canvas" width="1280" height="720" aria-label="MV 動畫預覽"></canvas>
+              <span class="fullscreen-hint" aria-hidden="true">⛶ 點擊全螢幕</span>
+            </div>
+            <div class="transport">
+              <button id="mv-play" class="play" type="button" aria-label="播放" disabled>▶</button>
+              <span id="mv-time" class="time">00:00</span>
+              <div class="seek-area"><input id="mv-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="播放進度" disabled /></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mv-arrow" aria-hidden="true">→</div>
+
+        <div class="panel mv-output">
+          <div class="section-title"><span>02</span><h2>動畫與畫面設定</h2></div>
+
+          <label class="field-label" for="mv-style">節奏樣式</label>
+          <select id="mv-style" class="setting-select" disabled></select>
+
+          <div class="color-picker">
+            <input id="mv-color" type="color" value="#7ee0ff" disabled />
+            <span>動畫顏色</span>
+          </div>
+
+          <label class="range-label" for="mv-strength">強度<output id="mv-strength-output">60</output></label>
+          <input id="mv-strength" type="range" min="0" max="100" value="60" disabled />
+
+          <label class="range-label" for="mv-darkness">背景暗度<output id="mv-darkness-output">0</output></label>
+          <input id="mv-darkness" type="range" min="0" max="100" value="0" disabled />
+
+          <div class="mv-aspect-row">
+            <div>
+              <label class="field-label" for="mv-aspect-ratio">畫面比例</label>
+              <select id="mv-aspect-ratio" class="setting-select" disabled>
+                <option value="16:9">16:9</option>
+                <option value="9:16">9:16</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="mv-resolution">解析度</label>
+              <select id="mv-resolution" class="setting-select" disabled>
+                <option value="480">480p</option>
+                <option value="720" selected>720p</option>
+                <option value="1080">1080p</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="mv-fps">影格率</label>
+              <select id="mv-fps" class="setting-select" disabled>
+                <option value="30" selected>30 fps</option>
+                <option value="60">60 fps</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="mv-format">輸出格式</label>
+              <select id="mv-format" class="setting-select" disabled>
+                <option value="mp4" selected>MP4</option>
+                <option value="mov">MOV</option>
+                <option value="webm">WebM</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="mv-start" class="export-button" type="button" disabled>開始生成 MV</button>
+          <progress id="mv-progress" value="0" max="100" aria-label="生成進度" hidden></progress>
+          <div class="converter-progress-row">
+            <span id="mv-progress-text" hidden>正在準備…</span>
+            <span id="mv-export-note" class="export-note"></span>
+            <button id="mv-cancel" class="text-button" type="button" hidden>取消生成</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="mv-rules panel">
+        <div><strong>繪製方式</strong><span>沿用主畫面的頻譜動畫繪製邏輯，每一幀依音樂當下的 64-bin FFT 頻譜即時運算，跟主畫面節奏動畫、輸出結果完全一致。</span></div>
+        <div><strong>本機編碼</strong><span>匯出使用瀏覽器內建 WebCodecs（透過 MediaBunny）硬體優先編碼，跟主畫面、圖轉影片共用同一套本機編碼管線，不使用 ffmpeg.wasm 或任何伺服器端轉檔。</span></div>
+        <div><strong>隱私</strong><span>選擇的音樂與生成的影片全程只在瀏覽器記憶體處理，不會上傳到任何伺服器。</span></div>
+      </section>
+    </main>
+  </body>
+</html>

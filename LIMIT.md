@@ -10,6 +10,7 @@
 | Flux 題詞補全 | `flux-klein` `POST /autocomplete` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 分鏡 AI 分析（主要） | `storyboard-checker` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻 |
 | 分鏡 AI 分析（備援） | `inspiration-chat` `POST /api/storyboard/check` | 每 5 分鐘 1 次 | IP；Durable Object 精確冷卻，跟主要引擎各自獨立計時 |
+| MV 動畫場景生成 | `inspiration-chat` `POST /api/mv-scene/generate` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 歌詞辨識 | `lyrics-transcriber` `POST /` | 每分鐘 1 次 | IP；Workers Rate Limiting Binding |
 | Suno 解析 | `model-proxy` `POST /suno/resolve` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 影片／圖片生成 | `model-proxy` `POST /*/video/generate`、`POST /openai/image/generate` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
@@ -115,6 +116,12 @@ Rate Limiting Binding：
 | `GET /` | 服務資訊 | 不計入 |
 | `POST /api/storyboard/check` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 分析分鏡合理性（JSON 結構化輸出，非串流） | 每 5 分鐘 1 次；單次最多 100 個 Scene；JSON 最多 256 KB |
 | `POST /api/storyboard/check/status` | 舊佇列狀態相容端點 | 已停用，固定回傳 410；不計入 |
+| `POST /api/mv-scene/generate` | 依 MV 動畫工具的單一分鏡場景描述與鏡頭語言，代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 生成 Canvas 2.5D 分層規格 | 每分鐘 10 次；JSON 最多 256 KB |
+
+
+分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object，300 秒冷卻，跟 `storyboard-checker` 一致（兩邊各自獨立計時，互不影響）。主站前端（`js/video-generator.js` 的 `waitForStoryboardAiReport()`）目前優先呼叫 `storyboard-checker`，失敗時（429 冷卻中除外）才退回這裡當備援；兩邊的請求／回應 JSON 合約刻意做成一致，前端不需要另外處理，之後如果要切回這裡當主要引擎，只要調換 `js/video-generator.js` 裡 `STORYBOARD_PRIMARY_URL`／`STORYBOARD_FALLBACK_URL` 的網址即可。
+
+MV 動畫場景生成用途完全不同（把文字轉成畫面規格，不是分析分鏡），刻意不用 5 分鐘冷卻的 Durable Object——使用者會針對單一分鏡反覆調整重試，改用 `MV_SCENE_RATE_LIMITER`（namespace `7132506`，每分鐘 10 次），跟 `flux-klein` 的 `/autocomplete` 同一種機制。前端（動畫生成頁面的 `js/animation-generator.js`）在 AI 呼叫失敗或超過限流時，會自動改用本機關鍵字模板（`js/animation-scenes.js` 的 `fallbackSceneSpec()`），不會讓匯出失敗。
 
 ## 維護注意事項
 

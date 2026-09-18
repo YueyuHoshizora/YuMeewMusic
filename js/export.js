@@ -57,6 +57,7 @@ export async function encodeMedia({
   signal,
   onProgress,
   onEncodingMode = () => {},
+  drawFrame = draw,
 }) {
   const m = await import("../vendor/mediabunny.min.mjs");
   const type = getFormat(format);
@@ -159,7 +160,7 @@ export async function encodeMedia({
         try {
           if (image?.seekTime) await image.seekTime(frame.timestamp);
           else image?.setTime?.(frame.timestamp);
-          draw(canvas, frame.timestamp, buffer, backgroundSample || image, settings);
+          drawFrame(canvas, frame.timestamp, buffer, backgroundSample || image, settings);
         } finally {
           backgroundSample?.close();
         }

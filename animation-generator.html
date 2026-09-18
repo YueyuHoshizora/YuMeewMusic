@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark" data-theme="lime">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.buymeacoffee.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://i.ytimg.com https://*.supabase.co https://*.buymeacoffee.com https://img.buymeacoffee.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://model-proxy.yustellar.idv.tw https://member-api.yustellar.idv.tw https://flux-klein-worker.yustellar.idv.tw https://lyrics-transcriber.yustellar.idv.tw https://storyboard-checker.yustellar.idv.tw https://inspiration-chat.yustellar.idv.tw https://api.openai.com wss://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self';" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
+    <meta name="viewport" content="width=1280" />
+    <meta name="description" content="用分鏡描述與鏡頭語言請 AI 生成 2.5D 動畫畫面，介面比照影片生成器，全程在瀏覽器內編碼，不會上傳伺服器。" />
+    <title>動畫生成 · YuMeew</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/image-generator.css" />
+    <link rel="stylesheet" href="./css/video-generator.css" />
+    <link rel="stylesheet" href="./css/animation-generator.css" />
+    <script type="module" src="./js/animation-generator.js"></script>
+    <script type="module" src="./js/member-status.js"></script>
+    <script type="module" src="./js/loading-screen.js"></script>
+  </head>
+  <body class="image-generator-body video-generator-body animation-generator-body" aria-busy="true">
+    <div id="feature-loading" class="feature-loading" role="status" aria-live="polite"><div class="feature-loading-card"><span class="feature-loading-spinner" aria-hidden="true"></span><strong>功能載入中</strong><small>正在準備頁面功能…</small></div></div>
+    <header class="image-generator-header">
+      <a class="brand" href="./" aria-label="返回 YuMeew 主畫面"><span class="brand-icon" aria-hidden="true">◆</span>YuMeew<span class="brand-sub">ANIMATION GENERATOR</span></a>
+      <span class="local"><i></i>分鏡文字送到 AI 生成畫面規格，畫面本身全程在瀏覽器繪製</span>
+      <a class="coffee-link" href="https://www.buymeacoffee.com/yustellar" target="_blank" rel="noopener noreferrer" aria-label="請我喝杯咖啡（另開分頁）">
+        <img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=yustellar&button_colour=BD5FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" alt="Buy me a coffee" loading="lazy" />
+      </a>
+    </header>
+
+    <main class="image-generator-main">
+      <section class="image-generator-heading">
+        <div>
+          <div class="eyebrow">STORYBOARD TO 2.5D ANIMATION</div>
+          <h1>動畫生成<span>。</span></h1>
+          <p>介面比照影片生成器：輸入場景、鏡頭運動、視角、燈光、動作與人物對話，交給 AI 把每張分鏡轉成 2.5D 向量插畫畫面，在瀏覽器用 Canvas 繪製並編碼成影片。不需要上傳音樂。</p>
+        </div>
+        <span id="video-generation-status" class="generation-status" role="status" aria-live="polite">尚未加入分鏡</span>
+      </section>
+
+      <section id="video-description-panel" class="panel prompt-panel video-description-panel">
+        <div class="video-section-heading">
+          <span>分鏡</span>
+        </div>
+        <div class="video-section-content">
+          <div class="video-prompt-field">
+            <div class="video-prompt-heading">
+              <button id="open-film-style" class="video-prompt-add video-film-style-button" type="button">全片風格</button>
+              <button id="inspect-storyboards" class="video-prompt-add video-storyboard-inspect-button" type="button">檢查分鏡</button>
+              <button id="open-character-template" class="video-prompt-add video-character-template-button" type="button">人物模板</button>
+              <button id="open-video-prompt-builder" class="video-prompt-add" type="button">新增分鏡</button>
+            </div>
+            <div id="video-prompt" class="storyboard-list" role="region" aria-label="分鏡列表"></div>
+            <div class="video-project-actions">
+              <button id="export-video-project" class="video-prompt-add video-project-button" type="button" disabled>匯出設定</button>
+              <button id="select-video-project" class="video-prompt-add video-project-button" type="button">匯入設定</button>
+              <button id="clear-video-resources" class="video-prompt-add video-project-clear" type="button" disabled>清除所有分鏡</button>
+              <input id="video-project-input" type="file" accept="application/json" hidden />
+              <span id="video-auto-draft-status" class="video-auto-draft-status" role="status" aria-live="polite">正在檢查自動儲存草稿…</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="video-settings-panel" class="panel prompt-panel">
+        <div class="video-section-heading">預覽與輸出</div>
+        <div class="video-section-content animation-preview-section">
+          <div class="animation-preview-column">
+            <div id="mv-canvas-wrap" class="canvas-wrap" role="button" tabindex="0" aria-label="放大即時預覽至全螢幕" title="點一下全螢幕，再點一下恢復">
+              <canvas id="mv-canvas" width="1280" height="720" aria-label="動畫預覽"></canvas>
+              <span class="fullscreen-hint" aria-hidden="true">⛶ 點擊全螢幕</span>
+            </div>
+            <div class="transport">
+              <button id="mv-play" class="play" type="button" aria-label="播放">▶</button>
+              <span id="mv-time" class="time">00:00</span>
+              <div class="seek-area"><input id="mv-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="播放進度" /></div>
+            </div>
+          </div>
+          <div class="animation-output-column">
+            <label class="range-label" for="mv-darkness">背景暗度<output id="mv-darkness-output">0</output></label>
+            <input id="mv-darkness" type="range" min="0" max="100" value="0" />
+            <div class="mv-aspect-row">
+              <div>
+                <label class="field-label" for="mv-aspect-ratio">畫面比例</label>
+                <select id="mv-aspect-ratio" class="setting-select">
+                  <option value="16:9">16:9</option>
+                  <option value="9:16">9:16</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="mv-resolution">解析度</label>
+                <select id="mv-resolution" class="setting-select">
+                  <option value="480">480p</option>
+                  <option value="720" selected>720p</option>
+                  <option value="1080">1080p</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="mv-fps">影格率</label>
+                <select id="mv-fps" class="setting-select">
+                  <option value="30" selected>30 fps</option>
+                  <option value="60">60 fps</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="mv-format">輸出格式</label>
+                <select id="mv-format" class="setting-select">
+                  <option value="mp4" selected>MP4</option>
+                  <option value="mov">MOV</option>
+                  <option value="webm">WebM</option>
+                </select>
+              </div>
+            </div>
+            <button id="generate-video" class="export-button" type="button" disabled>▶ 生成動畫</button>
+            <p id="video-generation-error" class="generation-error" role="alert" hidden></p>
+            <span id="mv-export-note" class="export-note"></span>
+          </div>
+        </div>
+      </section>
+
+      <section id="video-result-panel" class="panel result-panel video-result-panel">
+        <div class="video-section-heading video-result-summary"><span class="video-result-title"><span id="result-video-resolution">720p</span><strong>生成結果</strong></span><small id="result-video-ratio">16:9 · MP4</small></div>
+        <div class="video-section-content">
+          <div id="generated-video-frame" class="generated-image-frame generated-video-frame" aria-label="生成動畫預覽區">
+            <div id="empty-video-result" class="empty-result"><span aria-hidden="true">▶</span><strong>生成的動畫會出現在這裡</strong><small>加入分鏡並點擊「生成動畫」後即可開始生成</small></div>
+            <video id="generated-video" controls playsinline hidden></video>
+          </div>
+          <div class="result-actions">
+            <button id="download-video" class="reset-settings" type="button" disabled>↓ 下載動畫</button>
+            <button id="open-video-history" class="reset-settings" type="button" disabled>生成歷史</button>
+          </div>
+          <p class="result-storage-note">最後一次生成結果與最近 10 個版本會保存在目前瀏覽器，並可下載影片檔。</p>
+        </div>
+      </section>
+    </main>
+
+    <div id="video-generation-lock" class="generation-lock" role="status" aria-live="assertive" hidden>
+      <div class="generation-loader" aria-hidden="true"><span></span><span></span><span></span></div>
+      <strong id="video-generation-lock-title">正在生成</strong>
+      <small id="video-generation-lock-detail"></small>
+    </div>
+
+    <dialog id="storyboard-inspection-dialog" class="reset-dialog storyboard-inspection-dialog" aria-labelledby="storyboard-inspection-title">
+      <div>
+        <h2 id="storyboard-inspection-title">分鏡檢查</h2>
+        <div id="storyboard-inspection-summary" class="storyboard-inspection-summary" aria-label="分鏡檢查摘要"></div>
+        <div id="storyboard-inspection-result" class="storyboard-inspection-result"></div>
+        <section id="storyboard-ai-report" class="storyboard-ai-report" aria-live="polite" hidden></section>
+        <div class="dialog-actions">
+          <button id="reflow-storyboard-times" class="video-prompt-add video-storyboard-time-button" type="button">重新接續時間</button>
+          <button id="analyze-storyboards-ai" class="video-prompt-add storyboard-ai-button" type="button">AI 分析</button>
+          <button id="close-storyboard-inspection" class="dialog-confirm" type="button">關閉</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="storyboard-ai-confirm-dialog" class="reset-dialog" aria-labelledby="storyboard-ai-confirm-title">
+      <form id="storyboard-ai-confirm-form" method="dialog">
+        <h2 id="storyboard-ai-confirm-title">確認 AI 分析</h2>
+        <p>此為公共資源，請勿濫用。</p>
+        <div class="dialog-actions">
+          <button id="cancel-storyboard-ai" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">確定</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="export-video-project-dialog" class="reset-dialog video-project-dialog" aria-labelledby="export-video-project-title">
+      <form id="export-video-project-form" method="dialog">
+        <h2 id="export-video-project-title">匯出設定</h2>
+        <p>保存全片風格與分鏡列表，可選擇是否一併包含人物模板。</p>
+        <label class="video-project-check" for="export-active-characters">
+          <input id="export-active-characters" type="checkbox" checked />
+          <span><strong>包含啟用的人物</strong><small id="export-character-count">目前沒有啟用的人物</small></span>
+        </label>
+        <p class="video-project-note">檔案為 JSON 格式，人物參考圖以 Base64 內嵌。</p>
+        <div class="dialog-actions">
+          <button id="cancel-export-video-project" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">匯出設定</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="import-video-project-dialog" class="reset-dialog video-project-dialog" aria-labelledby="import-video-project-title">
+      <form id="import-video-project-form" method="dialog">
+        <h2 id="import-video-project-title">匯入設定</h2>
+        <p id="import-video-project-name" class="video-project-file-name"></p>
+        <div id="import-video-project-summary" class="video-project-summary" aria-label="設定檔內容"></div>
+        <label class="video-project-check" for="import-project-characters">
+          <input id="import-project-characters" type="checkbox" />
+          <span><strong>匯入人物並複寫</strong><small id="import-character-count">保留目前瀏覽器中的人物模板</small></span>
+        </label>
+        <p id="import-video-project-error" class="generation-error" role="alert" hidden></p>
+        <div class="dialog-actions">
+          <button id="cancel-import-video-project" class="text-button" type="button">取消</button>
+          <button id="confirm-import-video-project" class="dialog-confirm" type="submit">匯入設定</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="film-style-dialog" class="reset-dialog film-style-dialog" aria-labelledby="film-style-title">
+      <form id="film-style-form" method="dialog">
+        <h2 id="film-style-title">全片風格</h2>
+        <p>設定整部動畫共用的視覺方向，所有分鏡會沿用這些設定。</p>
+        <div class="film-style-fields">
+          <label for="film-style-primary"><span>主要風格</span>
+            <select id="film-style-primary" class="setting-select">
+              <option value="" selected>不指定</option>
+              <option value="電影寫實">電影寫實</option>
+              <option value="獨立電影">獨立電影</option>
+              <option value="藝術電影">藝術電影</option>
+              <option value="紀錄片">紀錄片</option>
+              <option value="動作電影">動作電影</option>
+              <option value="浪漫電影">浪漫電影</option>
+              <option value="驚悚懸疑">驚悚懸疑</option>
+              <option value="科幻電影">科幻電影</option>
+              <option value="奇幻電影">奇幻電影</option>
+              <option value="復古膠片">復古膠片</option>
+              <option value="夢幻柔焦">夢幻柔焦</option>
+              <option value="超現實">超現實</option>
+              <option value="音樂錄影帶">音樂錄影帶</option>
+              <option value="動畫電影">動畫電影</option>
+              <option value="日系電影">日系電影</option>
+              <option value="custom">自訂風格</option>
+            </select>
+          </label>
+          <label id="film-style-primary-custom-wrap" for="film-style-primary-custom" hidden><span>自訂主要風格</span><input id="film-style-primary-custom" class="text-input" type="text" placeholder="輸入自訂風格" /></label>
+          <label for="film-style-era"><span>年代質感</span><select id="film-style-era" class="setting-select"><option value="" selected>不指定</option><option value="1920 年代默片">1920 年代默片</option><option value="1950 年代經典電影">1950 年代經典電影</option><option value="1980 年代復古">1980 年代復古</option><option value="1990 年代錄影帶">1990 年代錄影帶</option><option value="現代電影">現代電影</option><option value="未來電影">未來電影</option></select></label>
+          <label for="film-style-color"><span>色彩基調</span><select id="film-style-color" class="setting-select"><option value="" selected>不指定</option><option value="自然色彩">自然色彩</option><option value="低飽和">低飽和</option><option value="高飽和">高飽和</option><option value="冷色調">冷色調</option><option value="暖色調">暖色調</option><option value="黑白">黑白</option></select></label>
+          <label for="film-style-texture"><span>畫面質感</span><select id="film-style-texture" class="setting-select"><option value="" selected>不指定</option><option value="乾淨數位">乾淨數位</option><option value="電影膠片">電影膠片</option><option value="粗顆粒">粗顆粒</option><option value="夢幻柔焦">夢幻柔焦</option><option value="銳利細節">銳利細節</option><option value="高對比戲劇感">高對比戲劇感</option></select></label>
+          <label for="film-style-framing"><span>畫面比例感</span><select id="film-style-framing" class="setting-select"><option value="" selected>不指定</option><option value="電影寬銀幕構圖">電影寬銀幕</option><option value="標準電影構圖">標準電影</option><option value="直式短片構圖">直式短片</option></select></label>
+          <label for="film-style-narrator-voice"><span>旁白聲線</span>
+            <select id="film-style-narrator-voice" class="setting-select">
+              <option value="" selected>不指定</option>
+              <optgroup label="女聲">
+                <option value="女聲／溫柔知性">溫柔知性</option>
+                <option value="女聲／清亮自然">清亮自然</option>
+                <option value="女聲／甜美活潑">甜美活潑</option>
+              </optgroup>
+              <optgroup label="男聲">
+                <option value="男聲／沉穩厚實">沉穩厚實</option>
+                <option value="男聲／清朗青年">清朗青年</option>
+              </optgroup>
+              <option value="custom">自訂聲線</option>
+            </select>
+          </label>
+          <label id="film-style-narrator-custom-wrap" for="film-style-narrator-custom" hidden><span>自訂旁白聲線</span><input id="film-style-narrator-custom" class="text-input" type="text" placeholder="例如：中性、略帶沙啞的平靜聲線" /></label>
+          <label class="film-style-notes" for="film-style-notes"><span>自訂補充</span><textarea id="film-style-notes" class="text-input" rows="4" placeholder="例如：雨夜城市帶有孤獨壓迫感"></textarea></label>
+        </div>
+        <div class="dialog-actions">
+          <button id="cancel-film-style" class="text-button" type="button">取消</button>
+          <button id="apply-film-style" class="dialog-confirm" type="button">套用風格</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="character-template-dialog" class="reset-dialog character-template-dialog" aria-labelledby="character-template-title">
+      <div>
+        <div class="character-template-heading">
+          <div><h2 id="character-template-title">人物模板</h2><p>建立動畫中會出現的人物設定，會保存在目前瀏覽器。</p></div>
+          <button id="add-character" class="video-prompt-add" type="button">＋ 新增人物</button>
+        </div>
+        <div id="character-template-list" class="character-template-list"></div>
+        <p id="character-template-empty" class="character-template-empty">尚未建立人物，請點選「新增人物」。</p>
+        <div class="dialog-actions">
+          <button id="close-character-template" class="dialog-confirm" type="button">關閉</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="character-editor-dialog" class="reset-dialog character-editor-dialog" aria-labelledby="character-editor-title">
+      <form id="character-editor-form" method="dialog">
+        <h2 id="character-editor-title">新增人物</h2>
+        <div class="character-editor-fields">
+          <label class="character-reference-field" for="character-reference"><span>參考圖（必填）</span>
+            <span id="character-reference-box" class="character-reference-box">
+              <input id="character-reference" class="character-reference-input" type="file" accept="image/*" required />
+              <img id="character-reference-preview" class="character-reference-preview" alt="人物參考圖預覽" hidden />
+              <span id="character-reference-placeholder" class="character-reference-placeholder"><strong>＋</strong><span>點選選擇人物參考圖</span><small>支援瀏覽器可讀取的圖片格式</small></span>
+              <small id="character-reference-name" class="character-reference-name">尚未選擇圖片</small>
+            </span>
+          </label>
+          <div class="character-editor-details">
+            <label for="character-name"><span>名字（必填）</span><input id="character-name" class="text-input" type="text" placeholder="例如：小雨" required /></label>
+            <label for="character-voice"><span>聲線</span>
+              <select id="character-voice" class="setting-select">
+                <option value="" selected>不指定</option>
+                <optgroup label="女聲">
+                  <option value="女聲／溫柔知性">溫柔知性</option>
+                  <option value="女聲／甜美活潑">甜美活潑</option>
+                </optgroup>
+                <optgroup label="男聲">
+                  <option value="男聲／沉穩厚實">沉穩厚實</option>
+                  <option value="男聲／清朗青年">清朗青年</option>
+                </optgroup>
+                <option value="custom">自訂聲線</option>
+              </select>
+            </label>
+            <label id="character-voice-custom-wrap" for="character-voice-custom" hidden><span>自訂聲線</span><input id="character-voice-custom" class="text-input" type="text" placeholder="例如：中性、略帶沙啞的平靜聲線" /></label>
+            <label for="character-tone"><span>口氣</span><input id="character-tone" class="text-input" type="text" placeholder="例如：溫柔、冷靜而堅定" /></label>
+            <label for="character-style"><span>風格</span><input id="character-style" class="text-input" type="text" placeholder="例如：日系動畫、寫實電影感" /></label>
+            <label for="character-clothing"><span>服裝</span><input id="character-clothing" class="text-input" type="text" placeholder="例如：深藍色長外套與白色圍巾" /></label>
+          </div>
+        </div>
+        <div class="dialog-actions character-editor-actions">
+          <button id="delete-character" class="character-remove" type="button" hidden>刪除人物</button>
+          <button id="cancel-character-editor" class="text-button" type="button">取消</button>
+          <button class="dialog-confirm" type="submit">儲存人物</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="video-prompt-builder-dialog" class="reset-dialog video-prompt-builder-dialog" aria-labelledby="video-prompt-builder-title">
+      <form id="video-prompt-builder-form" method="dialog">
+        <div class="video-prompt-builder-heading">
+          <h2 id="video-prompt-builder-title">分鏡內容</h2>
+        </div>
+        <div class="video-prompt-builder-fields">
+          <label class="video-storyboard-summary-field" for="video-prompt-summary">
+            <span>分鏡描述（選填，僅顯示在卡片標題）</span>
+            <input id="video-prompt-summary" class="text-input" type="text" placeholder="例如：貓咪追球" />
+          </label>
+          <div class="video-prompt-time-fields">
+            <label for="video-prompt-start"><span>開始時間（秒）</span><input id="video-prompt-start" class="text-input" type="number" min="0" step="0.1" inputmode="decimal" required /></label>
+            <label for="video-prompt-end"><span>結束時間（秒）</span><input id="video-prompt-end" class="text-input" type="number" min="0" step="0.1" inputmode="decimal" required /></label>
+          </div>
+          <label for="video-prompt-scene"><span>場景</span><textarea id="video-prompt-scene" class="text-input" rows="2" placeholder="例如：一隻橘貓在夕陽下的草地追著球跑"></textarea></label>
+          <div class="video-prompt-camera-field">
+            <span>鏡頭</span>
+            <div class="video-camera-selects">
+              <select id="video-prompt-camera" class="setting-select" aria-label="運鏡方式">
+                <option value="" selected>選擇運鏡方式</option>
+                <optgroup label="基本運鏡">
+                  <option value="固定鏡頭">固定鏡頭</option>
+                  <option value="向左搖攝">向左搖攝</option>
+                  <option value="向右搖攝">向右搖攝</option>
+                  <option value="向上搖攝">向上搖攝</option>
+                  <option value="向下搖攝">向下搖攝</option>
+                  <option value="向前推進">向前推進</option>
+                  <option value="向後拉遠">向後拉遠</option>
+                  <option value="向左平移">向左平移</option>
+                  <option value="向右平移">向右平移</option>
+                </optgroup>
+                <option value="custom">自訂運鏡（開放輸入）</option>
+              </select>
+              <select id="video-prompt-camera-speed" class="setting-select" aria-label="運鏡速度" disabled>
+                <option value="緩慢">緩慢</option>
+                <option value="" selected>正常速度</option>
+                <option value="快速">快速</option>
+              </select>
+            </div>
+            <input id="video-prompt-camera-custom" class="text-input video-camera-custom" type="text" aria-label="自訂運鏡" placeholder="輸入自訂運鏡" hidden />
+          </div>
+          <div class="video-prompt-view-field">
+            <span>視角</span>
+            <div class="video-view-selects">
+              <select id="video-prompt-shot-size" class="setting-select" aria-label="景別">
+                <option value="" selected>選擇景別</option>
+                <option value="大遠景">大遠景</option>
+                <option value="遠景">遠景</option>
+                <option value="全景">全景</option>
+                <option value="中景">中景</option>
+                <option value="近景">近景</option>
+                <option value="特寫">特寫</option>
+                <option value="大特寫">大特寫</option>
+              </select>
+              <select id="video-prompt-view-angle" class="setting-select" aria-label="觀看角度">
+                <option value="" selected>選擇觀看角度</option>
+                <optgroup label="高度與俯仰">
+                  <option value="平視">平視</option>
+                  <option value="高角度俯拍">高角度俯拍</option>
+                  <option value="低角度仰拍">低角度仰拍</option>
+                  <option value="鳥瞰視角">鳥瞰視角</option>
+                </optgroup>
+                <optgroup label="觀看方向">
+                  <option value="正面視角">正面視角</option>
+                  <option value="側面視角">側面視角</option>
+                  <option value="背面視角">背面視角</option>
+                  <option value="第一人稱視角">第一人稱視角</option>
+                  <option value="越肩視角">越肩視角</option>
+                </optgroup>
+                <option value="custom">自訂視角（開放輸入）</option>
+              </select>
+            </div>
+            <input id="video-prompt-view-custom" class="text-input video-view-custom" type="text" aria-label="自訂視角" placeholder="輸入自訂視角" hidden />
+            <span class="video-view-caption">畫面主體（可複選）</span>
+            <div id="video-prompt-view-subjects" class="video-view-subjects" aria-label="選擇畫面主體"></div>
+            <label id="video-prompt-viewpoint-wrap" class="video-viewpoint-character" for="video-prompt-viewpoint-character" hidden>
+              <span>視點角色</span>
+              <select id="video-prompt-viewpoint-character" class="setting-select" aria-label="視點角色"></select>
+            </label>
+          </div>
+          <div class="video-prompt-lighting-field">
+            <span>燈光</span>
+            <select id="video-prompt-lighting" class="setting-select" aria-label="燈光類型">
+              <option value="" selected>選擇燈光類型</option>
+              <optgroup label="自然光與環境光">
+                <option value="柔光">柔光</option>
+                <option value="硬光">硬光</option>
+                <option value="黃金時刻陽光">黃金時刻陽光</option>
+                <option value="藍色時刻暮光">藍色時刻暮光</option>
+                <option value="月光">月光</option>
+                <option value="燭光">燭光</option>
+                <option value="霓虹燈光">霓虹燈光</option>
+              </optgroup>
+              <optgroup label="電影風格布光">
+                <option value="高調布光">高調布光</option>
+                <option value="低調布光">低調布光</option>
+                <option value="剪影">剪影</option>
+                <option value="體積光">體積光</option>
+              </optgroup>
+              <option value="custom">自訂燈光（開放輸入）</option>
+            </select>
+            <div class="video-lighting-selects">
+              <select id="video-prompt-lighting-temperature" class="setting-select" aria-label="燈光色溫" disabled>
+                <option value="暖色">暖色</option>
+                <option value="" selected>中性色溫</option>
+                <option value="冷色">冷色</option>
+              </select>
+              <select id="video-prompt-lighting-intensity" class="setting-select" aria-label="燈光強度" disabled>
+                <option value="微弱的">微弱</option>
+                <option value="柔和的">柔和</option>
+                <option value="" selected>正常強度</option>
+                <option value="強烈的">強烈</option>
+              </select>
+            </div>
+            <input id="video-prompt-lighting-custom" class="text-input video-lighting-custom" type="text" aria-label="自訂燈光" placeholder="輸入自訂燈光" hidden />
+          </div>
+          <label for="video-prompt-sound"><span>音效</span><input id="video-prompt-sound" class="text-input" type="text" placeholder="例如：雨聲與遠方的雷聲" /></label>
+          <div class="video-prompt-action-field">
+            <span>動作</span>
+            <div class="video-action-selects">
+              <select id="video-prompt-action-character" class="setting-select" aria-label="執行角色"></select>
+              <select id="video-prompt-action-category" class="setting-select" aria-label="動作類別">
+                <option value="" selected>選擇動作類別</option>
+                <option value="movement">基本移動</option>
+                <option value="gaze">頭部與視線</option>
+                <option value="expression">表情</option>
+                <option value="gesture">手勢與肢體</option>
+                <option value="object">物件互動</option>
+                <option value="interaction">人物互動</option>
+                <option value="environment">環境反應</option>
+              </select>
+              <select id="video-prompt-action-type" class="setting-select" aria-label="動作內容" disabled>
+                <option value="" selected>選擇動作內容</option>
+              </select>
+              <select id="video-prompt-action-style" class="setting-select" aria-label="速度或力度">
+                <option value="" selected>正常速度／力度</option>
+                <option value="緩慢地">緩慢</option>
+                <option value="快速地">快速</option>
+                <option value="輕柔地">輕柔</option>
+                <option value="突然">突然</option>
+              </select>
+            </div>
+            <input id="video-prompt-action-custom" class="text-input video-action-custom" type="text" aria-label="自訂動作" placeholder="輸入自訂動作" hidden />
+            <span class="video-action-caption">目標／物件</span>
+            <input id="video-prompt-action-target" class="text-input" type="text" aria-label="動作目標或物件" placeholder="目標／物件" />
+            <span class="video-action-caption">動作補充</span>
+            <textarea id="video-prompt-action-detail" class="text-input" rows="2" aria-label="動作補充" placeholder="補充連續動作或細節"></textarea>
+          </div>
+          <div class="video-dialogue-field">
+            <div class="video-dialogue-heading"><span>人物與對話</span><button id="add-video-dialogue" class="video-dialogue-add" type="button">＋ 新增對話</button></div>
+            <div id="video-dialogue-list" class="video-dialogue-list"></div>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button id="cancel-video-prompt-builder" class="text-button" type="button">取消</button>
+          <button id="submit-video-prompt-builder" class="dialog-confirm" type="submit">加入分鏡</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="video-history-dialog" class="reset-dialog video-history-dialog" aria-labelledby="video-history-title">
+      <div>
+        <div class="video-history-heading"><div><h2 id="video-history-title">生成歷史</h2><p>最多保留最近 10 個版本；勾選兩個版本可並排比較。</p></div><button id="close-video-history" class="dialog-confirm" type="button">關閉</button></div>
+        <div id="video-history-list" class="video-history-list"></div>
+        <div class="dialog-actions"><button id="compare-video-history" class="dialog-confirm" type="button" disabled>比較所選版本</button></div>
+      </div>
+    </dialog>
+
+    <dialog id="video-compare-dialog" class="reset-dialog video-compare-dialog" aria-labelledby="video-compare-title">
+      <div>
+        <h2 id="video-compare-title">版本比較</h2>
+        <div id="video-compare-grid" class="video-compare-grid"></div>
+        <div class="dialog-actions"><button id="close-video-compare" class="dialog-confirm" type="button">關閉</button></div>
+      </div>
+    </dialog>
+  </body>
+</html>

@@ -3051,6 +3051,13 @@ function sanitizedImportedHtml(html) {
       return;
     }
     if (node.nodeType !== Node.ELEMENT_NODE || ["SCRIPT", "STYLE", "IFRAME", "OBJECT"].includes(node.tagName)) return;
+    // 防禦性：從來源模板移除危險屬性，即使目前邏輯不複製屬性，
+    // 也能防止未來修改意外引入 on* 事件處理器或 javascript: 網址。
+    for (const attr of [...node.attributes]) {
+      if (attr.name.startsWith("on") || ["href", "src", "action", "formaction", "xlink:href"].includes(attr.name)) {
+        node.removeAttribute(attr.name);
+      }
+    }
     if (node.tagName === "BR") {
       target.append(document.createElement("br"));
       return;

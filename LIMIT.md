@@ -37,18 +37,19 @@
 | `POST /resources/upload` | 上傳圖片、音訊或影片參考資源 | 每分鐘 20 次；每個檔案最多 50 MB（邊讀邊計算位元組數強制執行，不受 `Content-Length` 是否誠實回報影響）；不接受 `image/svg+xml`，避免瀏覽器直接開啟資源網址時執行內嵌腳本 |
 | `GET /resources/:id` | 模型服務讀取短效參考資源 | 不計入；資源預設保留 2 小時 |
 | `GET /models/:filename` | 下載瀏覽器端允許清單內的模型 | 不計入 |
-| `POST /suno/resolve` | 解析公開 Suno 分享連結 | 每分鐘 10 次 |
-| `POST /openai/image/generate` | 建立 OpenAI 圖片生成請求 | 每分鐘 10 次 |
-| `POST /minimax/video/generate` | 建立 MiniMax 影片任務 | 每分鐘 10 次 |
-| `POST /minimax/video/query` | 查詢 MiniMax 任務 | 不計入 |
-| `POST /minimax/video/download` | 代理下載 MiniMax 結果 | 不計入 |
-| `POST /byteplus/video/generate` | 建立 Seedance 影片任務 | 每分鐘 10 次 |
-| `POST /byteplus/video/query` | 查詢 Seedance 任務 | 不計入 |
-| `POST /byteplus/video/download` | 代理下載 Seedance 結果 | 不計入 |
-| `POST /google/video/generate` | 建立 Veo 影片任務 | 每分鐘 10 次 |
-| `POST /google/video/query` | 查詢 Veo 任務 | 不計入 |
-| `POST /google/video/download` | 代理下載 Veo 結果 | 不計入 |
+| `POST /suno/resolve` | 解析公開 Suno 分享連結 | 每分鐘 10 次；JSON 最多 256 KB |
+| `POST /openai/image/generate` | 建立 OpenAI 圖片生成請求 | 每分鐘 10 次；JSON 最多 256 KB |
+| `POST /minimax/video/generate` | 建立 MiniMax 影片任務 | 每分鐘 10 次；JSON 最多 256 KB |
+| `POST /minimax/video/query` | 查詢 MiniMax 任務 | 不計入；JSON 最多 256 KB |
+| `POST /minimax/video/download` | 代理下載 MiniMax 結果 | 不計入；JSON 最多 256 KB |
+| `POST /byteplus/video/generate` | 建立 Seedance 影片任務 | 每分鐘 10 次；JSON 最多 256 KB |
+| `POST /byteplus/video/query` | 查詢 Seedance 任務 | 不計入；JSON 最多 256 KB |
+| `POST /byteplus/video/download` | 代理下載 Seedance 結果 | 不計入；JSON 最多 256 KB |
+| `POST /google/video/generate` | 建立 Veo 影片任務 | 每分鐘 10 次；JSON 最多 256 KB |
+| `POST /google/video/query` | 查詢 Veo 任務 | 不計入；JSON 最多 256 KB |
+| `POST /google/video/download` | 代理下載 Veo 結果 | 不計入；JSON 最多 256 KB |
 | Cron `0 * * * *` | 每小時刪除過期參考資源 | 排程事件 |
+
 
 Rate Limiting Binding：
 
@@ -65,8 +66,9 @@ Rate Limiting Binding：
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
 | `OPTIONS *` | CORS 預檢 | 不計入 |
-| `POST /autocomplete` | 將零散詞語組成題詞 | 每分鐘 10 次 |
-| `POST /generate` | 使用 Flux.2 Klein 4B 生成圖片 | 每 2 分鐘 1 次 |
+| `POST /autocomplete` | 將零散詞語組成題詞 | 每分鐘 10 次；JSON 最多 64 KB |
+| `POST /generate` | 使用 Flux.2 Klein 4B 生成圖片 | 每 2 分鐘 1 次；JSON 最多 64 KB |
+
 
 題詞補全 Binding：`AUTOCOMPLETE_RATE_LIMITER`，namespace `7132502`，`10 / 60 秒`。
 
@@ -80,7 +82,8 @@ Rate Limiting Binding：
 | --- | --- | --- |
 | `OPTIONS /` | CORS 預檢 | 不計入 |
 | `GET /` | 模型、模式與服務狀態 | 不計入 |
-| `POST /` | 接收人聲音訊與完整歌詞並產生 SRT | 每分鐘 1 次；音訊最多 20 MB |
+| `POST /` | 接收人聲音訊與完整歌詞並產生 SRT | 每分鐘 1 次；整包 multipart 最多 21 MB（音訊最多 20 MB，另留 1 MB 給歌詞與表單開銷）；超過上限在解析 `formData()` 之前回 413 |
+
 
 歌詞辨識 Binding：`LYRICS_RATE_LIMITER`，namespace `7132503`，`1 / 60 秒`。檔案、歌詞與基本參數通過驗證後才會計入。
 
@@ -94,8 +97,9 @@ Rate Limiting Binding：
 | --- | --- | --- |
 | `OPTIONS *` | CORS 預檢 | 不計入 |
 | `GET /` | 服務與模型狀態 | 不計入 |
-| `POST /api/storyboard/check` | 使用 AI（Cloudflare Workers AI，`@cf/zai-org/glm-4.7-flash`）分析分鏡合理性 | 每 5 分鐘 1 次；單次最多 100 個 Scene |
+| `POST /api/storyboard/check` | 使用 AI（Cloudflare Workers AI，`@cf/zai-org/glm-4.7-flash`）分析分鏡合理性 | 每 5 分鐘 1 次；單次最多 100 個 Scene；JSON 最多 256 KB |
 | `POST /api/storyboard/check/status` | 舊佇列狀態端點 | 已停用，固定回傳 410；不計入 |
+
 
 分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object。分鏡資料通過驗證後才會開始 300 秒冷卻。
 
@@ -109,8 +113,9 @@ Rate Limiting Binding：
 | --- | --- | --- |
 | `OPTIONS *` | CORS 預檢 | 不計入 |
 | `GET /` | 服務資訊 | 不計入 |
-| `POST /api/storyboard/check` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 分析分鏡合理性（JSON 結構化輸出，非串流） | 每 5 分鐘 1 次；單次最多 100 個 Scene |
+| `POST /api/storyboard/check` | 代理呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 分析分鏡合理性（JSON 結構化輸出，非串流） | 每 5 分鐘 1 次；單次最多 100 個 Scene；JSON 最多 256 KB |
 | `POST /api/storyboard/check/status` | 舊佇列狀態相容端點 | 已停用，固定回傳 410；不計入 |
+
 
 分鏡分析使用 `STORYBOARD_COOLDOWN` Durable Object，300 秒冷卻，跟 `storyboard-checker` 一致（兩邊各自獨立計時，互不影響）。主站前端（`js/video-generator.js` 的 `waitForStoryboardAiReport()`）目前優先呼叫 `storyboard-checker`，失敗時（429 冷卻中除外）才退回這裡當備援；兩邊的請求／回應 JSON 合約刻意做成一致，前端不需要另外處理，之後如果要切回這裡當主要引擎，只要調換 `js/video-generator.js` 裡 `STORYBOARD_PRIMARY_URL`／`STORYBOARD_FALLBACK_URL` 的網址即可。
 
@@ -119,5 +124,7 @@ Rate Limiting Binding：
 - Workers Rate Limiting Binding 的計數器由 Cloudflare 各節點維護，適合限制突發流量，但不是精確計費系統。
 - 2 分鐘與 5 分鐘限制使用 SQLite Durable Objects，避免 60 秒週期無法表達較長冷卻時間。
 - 限流鍵只使用 `CF-Connecting-IP`（Cloudflare 邊緣網路自行填入，客戶端無法偽造）。過去曾額外混入前端在 `localStorage` 產生、透過 `X-YuMeew-Client-ID` 傳送的瀏覽器識別碼，用意是讓共用網路的不同瀏覽器分開計數；但這個值完全由前端自行產生、沒有簽章也沒有驗證，攻擊者只要每次請求換一個新的合法格式字串，就能讓限流器把每次請求都當成「新使用者」而完全繞過限制。弱點掃描發現此問題後已改為只用 IP 當限流鍵；`X-YuMeew-Client-ID` header 仍會被接受（CORS 允許清單保留），但不再影響限流判斷。
-- `Origin` 限制與頻率限制分開運作。請求必須先通過正式網站來源檢查。
+- `Origin` 限制與頻率限制分開運作。請求必須先通過正式網站來源檢查。`Origin` 只是瀏覽器 CORS 閘門，不是身分驗證——非瀏覽器客戶端可以偽造；免費 AI 端點因此不改成強制登入，改用請求體位元組上限壓住偽造來源造成的 CPU／記憶體放大。
+- JSON 請求體上限：`member-api` 16 KB、`flux-klein` 64 KB、`model-proxy`／`storyboard-checker`／`inspiration-chat` 256 KB。`lyrics-transcriber` 整包 multipart 21 MB。超過回 HTTP 413；用 `Content-Length` 預檢加上邊讀邊計數，不依賴客戶端是否誠實回報大小。
 - 修改數值時，需同步更新 Worker 程式、`wrangler.jsonc`、測試與本文件。
+

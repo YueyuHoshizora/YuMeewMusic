@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.buymeacoffee.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://i.ytimg.com https://*.supabase.co https://*.buymeacoffee.com https://img.buymeacoffee.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://model-proxy.yustellar.idv.tw https://member-api.yustellar.idv.tw https://flux-klein-worker.yustellar.idv.tw https://lyrics-transcriber.yustellar.idv.tw https://storyboard-checker.yustellar.idv.tw https://inspiration-chat.yustellar.idv.tw https://api.openai.com wss://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self';" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="加入音樂後編排分鏡，用 Canvas 手繪動畫場景直接在瀏覽器內生成並匯出動畫 MV，不會上傳伺服器。" />
+    <meta name="description" content="加入音樂後編排分鏡，用場景描述與鏡頭語言請 AI 生成 2.5D 動畫畫面，直接在瀏覽器內匯出動畫 MV，不會上傳伺服器。" />
     <title>MV 動畫 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -28,7 +28,7 @@
         <div>
           <div class="eyebrow">LOCAL CANVAS MV</div>
           <h1>MV 動畫<span>。</span></h1>
-          <p>加入音樂，依時間軸編排分鏡（貓咪追球、煙火慶典、音符雨等手繪場景），直接在瀏覽器用 Canvas 逐幀繪製並編碼成影片，比照影片生成的分鏡卡片操作方式。全程使用瀏覽器內建的 WebCodecs，不會把音樂或畫面送到伺服器。</p>
+          <p>加入音樂，依時間軸編排分鏡，為每個分鏡輸入場景描述與鏡頭語言，交給 AI 生成 2.5D 向量插畫動畫畫面，直接在瀏覽器用 Canvas 逐幀繪製並編碼成影片，比照影片生成的分鏡卡片操作方式。全程使用瀏覽器內建的 WebCodecs，音樂與畫面不會送到伺服器。</p>
         </div>
         <span id="mv-status" class="mv-status" role="status">等待選擇音樂</span>
       </section>
@@ -68,7 +68,7 @@
 
         <div class="panel mv-output">
           <div class="section-title"><span>02</span><h2>分鏡</h2></div>
-          <p class="mv-storyboard-help">依時間軸依序加入分鏡，每個分鏡可各自選擇動畫場景、顏色，並可額外引用參考圖或已建立的參考人物，匯出時會依開始／結束時間切換畫面，就像影片生成的分鏡卡片。</p>
+          <p class="mv-storyboard-help">依時間軸依序加入分鏡，每個分鏡輸入場景描述與鏡頭語言後按「AI 生成 2.5D 畫面」，AI 會把文字轉成分層插畫規格；AI 暫時無法使用時會自動改用本機關鍵字模板，仍可正常匯出。也可額外引用參考圖或已建立的參考人物，匯出時依開始／結束時間切換畫面，就像影片生成的分鏡卡片。</p>
           <div id="mv-storyboard" class="mv-storyboard"></div>
           <button id="mv-add-scene" class="text-button mv-add-scene" type="button" disabled>＋ 新增分鏡</button>
 
@@ -124,10 +124,10 @@
       </section>
 
       <section class="mv-rules panel">
-        <div><strong>繪製方式</strong><span>比照影片生成的分鏡概念：依時間軸切換不同的手繪 Canvas 場景動畫（貓咪追球、煙火慶典、音符雨），並依當下音樂的頻譜能量調整彈跳、粒子與強度，跟主畫面的頻譜視覺化是不同的繪製邏輯。</span></div>
-        <div><strong>參考圖與人物</strong><span>可在「人物」清單建立可重複引用的人物並上傳一張參考圖，或直接在單一分鏡上傳專屬參考圖；圖片會以相框樣式疊加在該分鏡畫面右下角，跟該分鏡的手繪場景一起輸出。</span></div>
-        <div><strong>本機編碼</strong><span>匯出使用瀏覽器內建 WebCodecs（透過 MediaBunny）硬體優先編碼，跟主畫面、圖轉影片共用同一套本機編碼管線，不使用 ffmpeg.wasm 或任何伺服器端轉檔。</span></div>
-        <div><strong>隱私</strong><span>選擇的音樂、上傳的參考圖與人物、生成的影片全程只在瀏覽器記憶體處理，不會上傳到任何伺服器；重新整理頁面後人物清單不會保留。</span></div>
+        <div><strong>繪製方式</strong><span>比照影片生成的分鏡概念：每個分鏡的場景描述＋鏡頭語言送給 AI（inspiration-chat Worker，nex-agi/nex-n2.5-pro:free）轉成分層插畫規格，再依時間軸切換不同的畫面，用 Canvas 2.5D（多層視差＋鏡頭運動）繪製，並依當下音樂的頻譜能量調整彈跳、粒子與強度，是向量插畫風格而非相片級真實感。</span></div>
+        <div><strong>AI 生成與備援</strong><span>只有分鏡描述文字（不含音樂或圖片）會送到 AI 服務用於生成畫面規格；AI 暫時無法使用或超過限流時，會自動改用本機關鍵字模板，畫面仍會依描述選擇合理的配色與元素，不會讓匯出失敗。</span></div>
+        <div><strong>參考圖與人物</strong><span>可在「人物」清單建立可重複引用的人物並上傳一張參考圖，或直接在單一分鏡上傳專屬參考圖；圖片只在瀏覽器本機處理，會以相框樣式疊加在該分鏡畫面右下角一起輸出。</span></div>
+        <div><strong>本機編碼</strong><span>匯出使用瀏覽器內建 WebCodecs（透過 MediaBunny）硬體優先編碼，跟主畫面、圖轉影片共用同一套本機編碼管線，不使用 ffmpeg.wasm 或任何伺服器端轉檔；重新整理頁面後人物清單不會保留。</span></div>
       </section>
     </main>
   </body>

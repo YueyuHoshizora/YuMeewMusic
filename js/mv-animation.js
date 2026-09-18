@@ -1,8 +1,10 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { SCENES, drawMvScene } from "./mv-scenes.js";
+import { drawMvScene, fallbackSceneSpec, isValidSceneSpec } from "./mv-scenes.js";
 import { exportFilename } from "./formats.js";
 import { encodeMedia } from "./export.js";
+
+const MV_SCENE_URL = "https://inspiration-chat.yustellar.idv.tw/api/mv-scene/generate";
 
 const $ = (id) => document.getElementById(id);
 const MAX_FILE_SIZE = 300 * 1024 * 1024;
@@ -149,23 +151,39 @@ $("mv-character-input").addEventListener("change", async (event) => {
   }
 });
 
-// ---- 分鏡（storyboard）----
-// 比照影片生成的分鏡卡片：依時間軸依序排列，每張卡片各自選擇動畫場景、顏色，
-// 並可引用參考人物或上傳專屬參考圖；匯出時 drawMvScene() 會依當下時間找出對應
-// 卡片再繪製，參考圖／人物則疊加成相框樣式的畫面裝飾。
-function resetStoryboard(duration) {
-  for (const card of settings.storyboard) if (card.refImageThumbUrl) URL.revokeObjectURL(card.refImageThumbUrl);
-  cardSeq = 0;
-  settings.storyboard = [{
+const SHOT_SIZES = Object.freeze(["", "遠景", "全景", "中景", "近景", "特寫", "空拍"]);
+
+function newCard(start, end) {
+  return {
     id: cardSeq++,
-    scene: 0,
-    color: "#7ee0ff",
-    start: 0,
-    end: duration,
+    start,
+    end,
+    description: "",
+    camera: "",
+    shot: "",
+    mood: "",
+    accent: "#7ee0ff",
+    spec: null,
+    specSource: "",
+    specNote: "",
+    generating: false,
     characterId: null,
     refImage: null,
     refImageThumbUrl: "",
-  }];
+  };
+}
+
+// ---- 分鏡（storyboard）----
+// 比照影片生成的分鏡卡片：依時間軸依序排列，每張卡片各自輸入場景描述與鏡頭語言，
+// 呼叫 inspiration-chat 的 AI 場景生成端點把文字轉成一份 Canvas 2.5D 分層規格
+// （js/mv-scenes.js 的 drawMvScene() 依規格繪製），AI 無法使用時退回本機關鍵字模板，
+// 兩者輸出形狀一致，渲染器不需要分辨來源。卡片也可引用參考人物或上傳專屬參考圖；
+// 匯出時 drawMvScene() 會依當下時間找出對應卡片再繪製，參考圖／人物疊加成相框樣式
+// 的畫面裝飾。
+function resetStoryboard(duration) {
+  for (const card of settings.storyboard) if (card.refImageThumbUrl) URL.revokeObjectURL(card.refImageThumbUrl);
+  cardSeq = 0;
+  settings.storyboard = [newCard(0, duration)];
   refreshResolvedImages();
   renderStoryboard();
 }
@@ -187,6 +205,50 @@ function syncStoryboardButtons() {
     card.querySelector(".mv-move-down").disabled = disabled || index === cards.length - 1;
     card.querySelector(".mv-remove").disabled = disabled || cards.length <= 1;
   });
+}
+
+// 呼叫 AI 場景生成端點；任何失敗（網路、限流、格式錯誤）都會退回本機關鍵字模板，
+// 讓匯出永遠有畫面可用，只是提示使用者目前用的是備援場景。
+async function generateCardScene(card) {
+  const description = card.description.trim();
+  if (!description) {
+    error("請先輸入場景描述再生成畫面。");
+    return;
+  }
+  error();
+  card.generating = true;
+  renderStoryboard();
+  try {
+    const response = await fetch(MV_SCENE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description,
+        camera: card.camera.trim() || undefined,
+        shot: card.shot || undefined,
+        mood: card.mood.trim() || undefined,
+        duration: Math.max(0.1, Math.min(60, card.end - card.start)),
+      }),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      const retryAfter = body?.retryAfter;
+      throw new Error(retryAfter ? `AI 生成過於頻繁，請在 ${retryAfter} 秒後再試，暫時使用本機備援場景。` : (body?.error || "AI 場景生成暫時無法使用，改用本機備援場景。"));
+    }
+    const spec = typeof body?.result === "string" ? JSON.parse(body.result) : body?.result;
+    if (!isValidSceneSpec(spec)) throw new Error("AI 回傳的畫面規格格式異常，改用本機備援場景。");
+    card.spec = spec;
+    card.specSource = "ai";
+    card.specNote = spec.mood ? `AI 已生成畫面（${spec.mood}）` : "AI 已生成畫面";
+  } catch (generateError) {
+    card.spec = fallbackSceneSpec(description, card.accent);
+    card.specSource = "fallback";
+    card.specNote = generateError.message || "AI 場景生成失敗，已改用本機備援場景。";
+  } finally {
+    card.generating = false;
+    renderStoryboard();
+    renderFrame();
+  }
 }
 
 function renderStoryboard() {
@@ -223,34 +285,51 @@ function renderStoryboard() {
     actions.append(upButton, downButton, removeButton);
     head.append(title, actions);
 
+    const descriptionField = document.createElement("div");
+    descriptionField.className = "mv-scene-card-field";
+    const descriptionLabel = document.createElement("label");
+    descriptionLabel.textContent = "場景描述";
+    const descriptionInput = document.createElement("textarea");
+    descriptionInput.className = "mv-scene-card-description";
+    descriptionInput.rows = 2;
+    descriptionInput.maxLength = 500;
+    descriptionInput.placeholder = "例如：一隻橘貓在夕陽下的草地追著球跑，氣氛溫馨愉快。";
+    descriptionInput.value = card.description;
+    descriptionInput.addEventListener("change", () => { card.description = descriptionInput.value; });
+    descriptionLabel.append(descriptionInput);
+    descriptionField.append(descriptionLabel);
+
     const row = document.createElement("div");
     row.className = "mv-scene-card-row";
 
-    const sceneSelect = document.createElement("select");
-    sceneSelect.className = "setting-select";
-    sceneSelect.setAttribute("aria-label", "動畫場景");
-    SCENES.forEach((label, sceneIndex) => {
+    const cameraInput = document.createElement("input");
+    cameraInput.type = "text";
+    cameraInput.className = "mv-scene-card-camera";
+    cameraInput.maxLength = 200;
+    cameraInput.placeholder = "鏡頭語言，例如：由左至右平移、推近";
+    cameraInput.setAttribute("aria-label", "鏡頭語言");
+    cameraInput.value = card.camera;
+    cameraInput.addEventListener("change", () => { card.camera = cameraInput.value; });
+
+    const shotSelect = document.createElement("select");
+    shotSelect.className = "setting-select";
+    shotSelect.setAttribute("aria-label", "景別");
+    SHOT_SIZES.forEach((label) => {
       const option = document.createElement("option");
-      option.value = String(sceneIndex);
-      option.textContent = label;
-      if (sceneIndex === card.scene) option.selected = true;
-      sceneSelect.append(option);
+      option.value = label;
+      option.textContent = label || "景別：未指定";
+      if (label === card.shot) option.selected = true;
+      shotSelect.append(option);
     });
-    sceneSelect.addEventListener("change", () => {
-      card.scene = Number(sceneSelect.value);
-      renderFrame();
-    });
+    shotSelect.addEventListener("change", () => { card.shot = shotSelect.value; });
 
     const colorWrap = document.createElement("div");
     colorWrap.className = "color-picker";
     const colorInput = document.createElement("input");
     colorInput.type = "color";
-    colorInput.value = card.color;
-    colorInput.setAttribute("aria-label", "分鏡顏色");
-    colorInput.addEventListener("input", () => {
-      card.color = colorInput.value;
-      renderFrame();
-    });
+    colorInput.value = card.accent;
+    colorInput.setAttribute("aria-label", "強調色（AI 生成失敗時的備援場景會使用）");
+    colorInput.addEventListener("input", () => { card.accent = colorInput.value; });
     colorWrap.append(colorInput);
 
     const startField = document.createElement("div");
@@ -291,7 +370,20 @@ function renderStoryboard() {
     startInput.addEventListener("change", commitTimes);
     endInput.addEventListener("change", commitTimes);
 
-    row.append(sceneSelect, colorWrap, startField, endField);
+    row.append(cameraInput, shotSelect, colorWrap, startField, endField);
+
+    const generateRow = document.createElement("div");
+    generateRow.className = "mv-scene-card-generate-row";
+    const generateButton = document.createElement("button");
+    generateButton.type = "button";
+    generateButton.className = "text-button mv-scene-card-generate";
+    generateButton.textContent = card.generating ? "生成中…" : "AI 生成 2.5D 畫面";
+    generateButton.disabled = card.generating || Boolean(controller);
+    generateButton.addEventListener("click", () => void generateCardScene(card));
+    const noteEl = document.createElement("span");
+    noteEl.className = `mv-scene-card-note ${card.specSource}`;
+    noteEl.textContent = card.specNote || "尚未生成畫面，匯出時會先用本機備援場景。";
+    generateRow.append(generateButton, noteEl);
 
     // 參考圖／參考人物：兩者皆可設定，drawMvScene 依 resolvedImage 優先使用分鏡自己
     // 上傳的參考圖，否則退回引用的人物參考圖。
@@ -379,7 +471,7 @@ function renderStoryboard() {
 
     refRow.append(characterSelect, imageWrap);
 
-    el.append(head, row, refRow);
+    el.append(head, descriptionField, row, generateRow, refRow);
     el.id = `mv-card-${card.id}`;
     container.append(el);
   });
@@ -417,16 +509,7 @@ $("mv-add-scene").addEventListener("click", () => {
   }
   error();
   const end = Math.min(duration, start + Math.min(4, duration - start));
-  settings.storyboard.push({
-    id: cardSeq++,
-    scene: settings.storyboard.length % SCENES.length,
-    color: "#7ee0ff",
-    start,
-    end,
-    characterId: null,
-    refImage: null,
-    refImageThumbUrl: "",
-  });
+  settings.storyboard.push(newCard(start, end));
   renderStoryboard();
   renderFrame();
 });

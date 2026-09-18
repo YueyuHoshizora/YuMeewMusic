@@ -34,7 +34,11 @@ body.mv-body { min-width: 1000px; }
 .mv-scene-card-actions button { width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--foreground); font-size: 12px; cursor: pointer; }
 .mv-scene-card-actions button:hover:not(:disabled) { border-color: var(--primary); color: var(--primary-text); }
 .mv-scene-card-actions button:disabled { opacity: .4; cursor: not-allowed; }
-.mv-scene-card-row { display: grid; grid-template-columns: minmax(0, 1.4fr) auto minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; }
+.mv-scene-card-field { margin-bottom: 10px; }
+.mv-scene-card-field label { display: block; font-size: 11px; color: var(--muted); }
+.mv-scene-card-description { width: 100%; margin-top: 4px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--foreground); padding: 8px; font: inherit; font-size: 13px; resize: vertical; min-height: 44px; }
+.mv-scene-card-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .9fr) auto minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; }
+.mv-scene-card-camera { height: 34px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--foreground); padding: 0 10px; font: inherit; font-size: 13px; }
 .mv-scene-card-row .setting-select { margin-bottom: 0; }
 .mv-scene-card-row .color-picker { margin-bottom: 0; }
 .mv-scene-card-time { display: flex; flex-direction: column; gap: 3px; }
@@ -58,4 +62,10 @@ body.mv-body { min-width: 1000px; }
 .mv-scene-card-ref-image { display: flex; align-items: center; gap: 6px; }
 .mv-scene-card-ref-thumb { width: 30px; height: 30px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); }
 .mv-scene-card-ref-image button { height: 30px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--foreground); padding: 0 10px; font-size: 12px; cursor: pointer; }
+.mv-scene-card-generate-row { display: flex; align-items: center; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.mv-scene-card-generate { border: 1px solid var(--primary); border-radius: 999px; padding: 6px 14px; font-size: 12px; color: var(--primary-text); }
+.mv-scene-card-generate:hover:not(:disabled) { background: var(--hover); }
+.mv-scene-card-note { font-size: 12px; color: var(--muted); }
+.mv-scene-card-note.ai { color: var(--primary-text); }
+.mv-scene-card-note.fallback { color: var(--error-text); }
 .mv-scene-card-ref-image button:hover { border-color: var(--primary); color: var(--primary-text); }

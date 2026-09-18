@@ -1,7 +1,7 @@
 const DATABASE = "yumeew-media-v1";
 const STORE = "files";
 const ALLOWED_KINDS = new Set(["audio", "image", "subtitle", "generated-image", "generated-video"]);
-const ALLOWED_VALUE_KINDS = new Set(["image-video-project", "image-generation-history", "video-character-templates", "video-generator-draft", "video-generator-draft-resources", "video-generation-task", "video-generation-history", "mv-character-templates"]);
+const ALLOWED_VALUE_KINDS = new Set(["image-video-project", "image-generation-history", "video-character-templates", "video-generator-draft", "video-generator-draft-resources", "video-generation-task", "video-generation-history"]);
 const ENTRY_DETAILS = Object.freeze({
   audio: { page: "主畫面／人聲分離／AI 母帶", field: "音樂檔案" },
   image: { page: "主畫面", field: "背景素材" },
@@ -15,7 +15,6 @@ const ENTRY_DETAILS = Object.freeze({
   "video-generator-draft-resources": { page: "影片生成", field: "草稿媒體資源" },
   "video-generation-task": { page: "影片生成", field: "進行中的生成任務" },
   "video-generation-history": { page: "影片生成", field: "生成歷史" },
-  "mv-character-templates": { page: "動畫生成", field: "人物模板" },
 });
 
 function requireKind(kind, values = false) {

@@ -150,7 +150,7 @@ $("mv-character-input").addEventListener("change", async (event) => {
 });
 
 // ---- 分鏡（storyboard）----
-// 比照影片生成器的分鏡卡片：依時間軸依序排列，每張卡片各自選擇動畫場景、顏色，
+// 比照影片生成的分鏡卡片：依時間軸依序排列，每張卡片各自選擇動畫場景、顏色，
 // 並可引用參考人物或上傳專屬參考圖；匯出時 drawMvScene() 會依當下時間找出對應
 // 卡片再繪製，參考圖／人物則疊加成相框樣式的畫面裝飾。
 function resetStoryboard(duration) {

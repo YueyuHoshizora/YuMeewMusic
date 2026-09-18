@@ -6,15 +6,15 @@ const ENTRY_DETAILS = Object.freeze({
   audio: { page: "主畫面／人聲分離／AI 母帶", field: "音樂檔案" },
   image: { page: "主畫面", field: "背景素材" },
   subtitle: { page: "主畫面／字幕編輯器", field: "字幕檔案" },
-  "generated-image": { page: "圖片生成器", field: "最後生成結果" },
-  "generated-video": { page: "影片生成器", field: "最後生成結果" },
+  "generated-image": { page: "圖片生成", field: "最後生成結果" },
+  "generated-video": { page: "影片生成", field: "最後生成結果" },
   "image-video-project": { page: "圖轉影片", field: "素材專案" },
-  "image-generation-history": { page: "圖片生成器", field: "生成歷史" },
-  "video-character-templates": { page: "影片生成器", field: "人物模板" },
-  "video-generator-draft": { page: "影片生成器", field: "自動儲存草稿" },
-  "video-generator-draft-resources": { page: "影片生成器", field: "草稿媒體資源" },
-  "video-generation-task": { page: "影片生成器", field: "進行中的生成任務" },
-  "video-generation-history": { page: "影片生成器", field: "生成歷史" },
+  "image-generation-history": { page: "圖片生成", field: "生成歷史" },
+  "video-character-templates": { page: "影片生成", field: "人物模板" },
+  "video-generator-draft": { page: "影片生成", field: "自動儲存草稿" },
+  "video-generator-draft-resources": { page: "影片生成", field: "草稿媒體資源" },
+  "video-generation-task": { page: "影片生成", field: "進行中的生成任務" },
+  "video-generation-history": { page: "影片生成", field: "生成歷史" },
 });
 
 function requireKind(kind, values = false) {

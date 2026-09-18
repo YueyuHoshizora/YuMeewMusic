@@ -133,9 +133,9 @@ test("media cache entries identify their page and field and can be cleared", asy
   let entries = await listStoredEntries(database);
   assert.equal(entries.length, 3);
   assert.equal(entries.find(entry => entry.key === "audio").field, "音樂檔案");
-  assert.equal(entries.find(entry => entry.key === "generated-image").page, "圖片生成器");
+  assert.equal(entries.find(entry => entry.key === "generated-image").page, "圖片生成");
   assert.equal(entries.find(entry => entry.key === "generated-image").size, generated.size);
-  assert.equal(entries.find(entry => entry.key === "generated-video").page, "影片生成器");
+  assert.equal(entries.find(entry => entry.key === "generated-video").page, "影片生成");
   await deleteStoredEntry("audio", database);
   entries = await listStoredEntries(database);
   assert.deepEqual(entries.map(entry => entry.key), ["generated-image", "generated-video"]);
@@ -176,7 +176,7 @@ test("image generation history persists in IndexedDB and appears in cache manage
   assert.deepEqual(await loadStoredValue("image-generation-history", database), history);
   const entries = await listStoredEntries(database);
   const entry = entries.find(item => item.key === "image-generation-history");
-  assert.equal(entry.page, "圖片生成器");
+  assert.equal(entry.page, "圖片生成");
   assert.equal(entry.field, "生成歷史");
   assert.equal(entry.size, image.size);
 });

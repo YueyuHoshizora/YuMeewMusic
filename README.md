@@ -70,7 +70,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 
 ## 獨立工具
 
-### 圖片生成器
+### 圖片生成
 
 輸入文字後可使用 Flux.2 Klein 4B、GPT-Image-2.5 Flare 或 GPT-Image-2.5 Sunburst 生成 1280 × 720 圖片。
 
@@ -79,7 +79,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 - 只有按下「套用主畫面背景」才會取代目前背景素材。
 - 需要金鑰的模型會依服務供應商共用 API KEY，並保存在目前瀏覽器的 `localStorage`。
 
-### 影片生成器
+### 影片生成
 
 支援 MiniMax H3、Seedance 2.0、Seedance 2.5 與 Veo 3.1 Preview。
 
@@ -132,7 +132,7 @@ AI 辨識會先在瀏覽器用 Spleeter 分離人聲，再將衍生的人聲處�
 | --- | --- |
 | 任意轉 | 在瀏覽器內轉換影片與音訊格式 |
 | AI 母帶 | 規則式多頻段動態壓縮＋響度正規化＋即時 EQ 調整器，將音樂處理到指定的目標響度與峰值上限 |
-| MV 動畫 | 加入音樂後編排分鏡（比照影片生成器的分鏡卡片），依時間軸切換手繪 Canvas 場景動畫，並可引用參考人物或上傳分鏡專屬參考圖，以 WebCodecs 編碼成 MP4／MOV／WebM |
+| MV 動畫 | 加入音樂後編排分鏡（比照影片生成的分鏡卡片），依時間軸切換手繪 Canvas 場景動畫，並可引用參考人物或上傳分鏡專屬參考圖，以 WebCodecs 編碼成 MP4／MOV／WebM |
 | 歌曲評分 | 使用 Suno 分享連結，以 APEX 模型進行單曲評分或雙曲比較 |
 | Suno 工具 | 解析公開 Suno 分享連結，在瀏覽器解碼並轉成 WAV |
 
@@ -176,7 +176,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 | 人聲分離、歌曲評分 | 瀏覽器 | 只下載模型；不送出音樂 |
 | AI 母帶 | 瀏覽器 | 無 |
 | AI 字幕辨識 | 瀏覽器 + 辨識服務 | 分離後的人聲 WAV、語言、選填歌詞與時長 |
-| 圖片生成器、影片生成器 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
+| 圖片生成、影片生成 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
 | Suno 工具 | Suno CDN + 解析 Worker | 公開分享連結；Worker 不保存音樂 |
 | 分鏡 AI 分析 | storyboard-checker Worker（主要）+ inspiration-chat Worker（備援）+ OpenRouter | 分鏡內容與全片風格；Worker 與模型服務端都不會保存分析內容 |
 
@@ -218,8 +218,8 @@ npm run preview  # 預覽 dist/
 ```text
 ├── index.html                 # 音樂視覺工作室
 ├── subtitle-editor.html       # 字幕編輯器
-├── image-generator.html         # 圖片生成器
-├── video-generator.html       # 影片生成器
+├── image-generator.html         # 圖片生成
+├── video-generator.html       # 影片生成
 ├── vocal-separator.html       # 人聲分離
 ├── image-video.html           # 圖轉影片
 ├── video-editor.html          # 影片編輯

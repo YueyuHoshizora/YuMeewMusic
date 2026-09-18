@@ -11,7 +11,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.equal(new Set(ids).size, ids.length);
   for (const [, id] of script.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), id);
   for (const [, path] of html.matchAll(/(?:src|href)="\.\/([^"#?]+)(?:\?[^"#]*)?"/g)) assert.ok(existsSync(path), path);
-  assert.match(html, /<title>影片生成器 · YuMeew<\/title>/);
+  assert.match(html, /<title>影片生成 · YuMeew<\/title>/);
   assert.match(html, /<meta name="viewport" content="width=1280" \/>/);
   assert.match(html, /<a class="brand" href="\.\/" aria-label="返回 YuMeew 主畫面"/);
   assert.doesNotMatch(html, /data-confirm-return/);
@@ -423,7 +423,7 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /if \(removeResourceMentionAtCaret\(event, editor\)\) return/);
   assert.doesNotMatch(script, /video-(?:description|settings|result)-panel"\)\.addEventListener\("toggle"/);
   assert.match(script, /loadGenerationHistory\(\)\.then\(async \(\) => \{[\s\S]*restorePendingGeneration\(\)[\s\S]*restoreWhenIdle\(\(\) => restoreLastGeneratedVideo\(\)\)/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影片生成器<\/a>/);
+  assert.match(readFileSync("index.html", "utf8"), /href="\.\/video-generator\.html"[^>]*>影片生成<\/a>/);
   assert.match(readFileSync("scripts/build.js", "utf8"), /"video-generator\.html"/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-generator\.html"/);
 });

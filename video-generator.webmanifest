@@ -1,7 +1,7 @@
 {
   "id": "./video-generator.html",
-  "name": "YuMeew 影片生成器",
-  "short_name": "影片生成器",
+  "name": "YuMeew 影片生成",
+  "short_name": "影片生成",
   "description": "建立分鏡、管理人物與參考資源，並透過 AI 生成影片。",
   "lang": "zh-Hant",
   "start_url": "./video-generator.html",

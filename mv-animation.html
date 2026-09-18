@@ -5,7 +5,7 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://pagead2.googlesyndication.com https://*.buymeacoffee.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://i.ytimg.com https://*.supabase.co https://*.buymeacoffee.com https://img.buymeacoffee.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://model-proxy.yustellar.idv.tw https://member-api.yustellar.idv.tw https://flux-klein-worker.yustellar.idv.tw https://lyrics-transcriber.yustellar.idv.tw https://storyboard-checker.yustellar.idv.tw https://inspiration-chat.yustellar.idv.tw https://api.openai.com wss://*.supabase.co; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self';" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7132586781018963" crossorigin="anonymous"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="加入音樂後，用 Canvas 節奏動畫直接在瀏覽器內生成並匯出動畫 MV，不會上傳伺服器。" />
+    <meta name="description" content="加入音樂後編排分鏡，用 Canvas 手繪動畫場景直接在瀏覽器內生成並匯出動畫 MV，不會上傳伺服器。" />
     <title>MV 動畫 · YuMeew</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./css/style.css" />
@@ -28,7 +28,7 @@
         <div>
           <div class="eyebrow">LOCAL CANVAS MV</div>
           <h1>MV 動畫<span>。</span></h1>
-          <p>加入音樂，選擇節奏動畫樣式與畫面設定，直接在瀏覽器用 Canvas 逐幀繪製並編碼成影片。全程使用瀏覽器內建的 WebCodecs，不會把音樂或畫面送到伺服器。</p>
+          <p>加入音樂，依時間軸編排分鏡（貓咪追球、煙火慶典、音符雨等手繪場景），直接在瀏覽器用 Canvas 逐幀繪製並編碼成影片，比照影片生成器的分鏡卡片操作方式。全程使用瀏覽器內建的 WebCodecs，不會把音樂或畫面送到伺服器。</p>
         </div>
         <span id="mv-status" class="mv-status" role="status">等待選擇音樂</span>
       </section>
@@ -54,22 +54,27 @@
               <div class="seek-area"><input id="mv-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="播放進度" disabled /></div>
             </div>
           </div>
+
+          <div class="mv-character-panel">
+            <div class="field-label">參考人物（選用）</div>
+            <p class="mv-storyboard-help">先在這裡建立人物並上傳一張參考圖，分鏡卡片就能重複引用同一位人物；也可以在單一分鏡直接上傳專屬的參考圖。</p>
+            <div id="mv-characters" class="mv-characters"></div>
+            <button id="mv-add-character" class="text-button mv-add-character" type="button" disabled>＋ 新增人物</button>
+            <input id="mv-character-input" type="file" accept="image/*" hidden />
+          </div>
         </div>
 
         <div class="mv-arrow" aria-hidden="true">→</div>
 
         <div class="panel mv-output">
-          <div class="section-title"><span>02</span><h2>動畫與畫面設定</h2></div>
+          <div class="section-title"><span>02</span><h2>分鏡</h2></div>
+          <p class="mv-storyboard-help">依時間軸依序加入分鏡，每個分鏡可各自選擇動畫場景、顏色，並可額外引用參考圖或已建立的參考人物，匯出時會依開始／結束時間切換畫面，就像影片生成器的分鏡卡片。</p>
+          <div id="mv-storyboard" class="mv-storyboard"></div>
+          <button id="mv-add-scene" class="text-button mv-add-scene" type="button" disabled>＋ 新增分鏡</button>
 
-          <label class="field-label" for="mv-style">節奏樣式</label>
-          <select id="mv-style" class="setting-select" disabled></select>
+          <div class="section-title mv-screen-title"><span>03</span><h2>畫面設定</h2></div>
 
-          <div class="color-picker">
-            <input id="mv-color" type="color" value="#7ee0ff" disabled />
-            <span>動畫顏色</span>
-          </div>
-
-          <label class="range-label" for="mv-strength">強度<output id="mv-strength-output">60</output></label>
+          <label class="range-label" for="mv-strength">音樂反應強度<output id="mv-strength-output">60</output></label>
           <input id="mv-strength" type="range" min="0" max="100" value="60" disabled />
 
           <label class="range-label" for="mv-darkness">背景暗度<output id="mv-darkness-output">0</output></label>
@@ -119,9 +124,10 @@
       </section>
 
       <section class="mv-rules panel">
-        <div><strong>繪製方式</strong><span>沿用主畫面的頻譜動畫繪製邏輯，每一幀依音樂當下的 64-bin FFT 頻譜即時運算，跟主畫面節奏動畫、輸出結果完全一致。</span></div>
+        <div><strong>繪製方式</strong><span>比照影片生成器的分鏡概念：依時間軸切換不同的手繪 Canvas 場景動畫（貓咪追球、煙火慶典、音符雨），並依當下音樂的頻譜能量調整彈跳、粒子與強度，跟主畫面的頻譜視覺化是不同的繪製邏輯。</span></div>
+        <div><strong>參考圖與人物</strong><span>可在「人物」清單建立可重複引用的人物並上傳一張參考圖，或直接在單一分鏡上傳專屬參考圖；圖片會以相框樣式疊加在該分鏡畫面右下角，跟該分鏡的手繪場景一起輸出。</span></div>
         <div><strong>本機編碼</strong><span>匯出使用瀏覽器內建 WebCodecs（透過 MediaBunny）硬體優先編碼，跟主畫面、圖轉影片共用同一套本機編碼管線，不使用 ffmpeg.wasm 或任何伺服器端轉檔。</span></div>
-        <div><strong>隱私</strong><span>選擇的音樂與生成的影片全程只在瀏覽器記憶體處理，不會上傳到任何伺服器。</span></div>
+        <div><strong>隱私</strong><span>選擇的音樂、上傳的參考圖與人物、生成的影片全程只在瀏覽器記憶體處理，不會上傳到任何伺服器；重新整理頁面後人物清單不會保留。</span></div>
       </section>
     </main>
   </body>

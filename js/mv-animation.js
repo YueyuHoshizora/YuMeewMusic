@@ -1,12 +1,13 @@
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
-import { STYLES } from "./styles.js";
-import { draw } from "./visualizer.js";
+import { SCENES, drawMvScene } from "./mv-scenes.js";
 import { exportFilename } from "./formats.js";
 import { encodeMedia } from "./export.js";
 
 const $ = (id) => document.getElementById(id);
 const MAX_FILE_SIZE = 300 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
+const MIN_SEGMENT = 0.5;
 
 const restored = loadSettings();
 applyTheme(restored.mode, restored.theme);
@@ -18,9 +19,15 @@ let audioUrl = "";
 let animationFrame = 0;
 let controller = null;
 let downloadUrl = "";
+let cardSeq = 0;
+let characterSeq = 0;
 
 const canvas = $("mv-canvas");
-const settings = { style: 0, color: "#7ee0ff", strength: 60, darkness: 0, positionX: 0, positionY: 0 };
+const settings = { storyboard: [], strength: 60, darkness: 0 };
+// Reference people: named, reusable across storyboard cards. Not persisted (matches the
+// "temporary reference resources are not kept" rule used by the video generator's own
+// per-scene references), so the list is intentionally in-memory only for this session.
+let characters = [];
 
 function status(text, mode = "") {
   const el = $("mv-status");
@@ -40,22 +47,9 @@ function formatTime(seconds) {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-function populateStyles() {
-  const select = $("mv-style");
-  select.innerHTML = "";
-  STYLES.forEach((label, index) => {
-    if (label === "無") return;
-    const option = document.createElement("option");
-    option.value = String(index);
-    option.textContent = label;
-    select.append(option);
-  });
-  select.value = String(settings.style);
-}
-
 function renderFrame() {
   if (!buffer) return;
-  draw(canvas, audioEl?.currentTime || 0, buffer, null, settings);
+  drawMvScene(canvas, audioEl?.currentTime || 0, buffer, null, settings);
 }
 
 function tick() {
@@ -67,10 +61,377 @@ function tick() {
 }
 
 function setControlsEnabled(enabled) {
-  for (const id of ["mv-style", "mv-color", "mv-strength", "mv-darkness", "mv-aspect-ratio", "mv-resolution", "mv-fps", "mv-format", "mv-start"])
+  for (const id of ["mv-add-scene", "mv-add-character", "mv-strength", "mv-darkness", "mv-aspect-ratio", "mv-resolution", "mv-fps", "mv-format", "mv-start"])
     $(id).disabled = !enabled;
+  for (const card of $("mv-storyboard").children) {
+    for (const control of card.querySelectorAll("select, input, button")) control.disabled = !enabled;
+  }
+  for (const chip of $("mv-characters").children) {
+    for (const control of chip.querySelectorAll("input, button")) control.disabled = !enabled;
+  }
+  syncStoryboardButtons();
 }
 
+// ---- 參考人物（可重複引用於多個分鏡）----
+function refreshResolvedImages() {
+  for (const card of settings.storyboard)
+    card.resolvedImage = card.refImage || characters.find((person) => person.id === card.characterId)?.bitmap || null;
+}
+
+function removeCharacter(id) {
+  const index = characters.findIndex((person) => person.id === id);
+  if (index < 0) return;
+  URL.revokeObjectURL(characters[index].thumbUrl);
+  characters[index].bitmap.close?.();
+  characters.splice(index, 1);
+  for (const card of settings.storyboard) if (card.characterId === id) card.characterId = null;
+  refreshResolvedImages();
+  renderCharacters();
+  renderStoryboard();
+  renderFrame();
+}
+
+function renderCharacters() {
+  const container = $("mv-characters");
+  container.textContent = "";
+  characters.forEach((person) => {
+    const chip = document.createElement("div");
+    chip.className = "mv-character-chip";
+    const thumb = document.createElement("img");
+    thumb.className = "mv-character-thumb";
+    thumb.src = person.thumbUrl;
+    thumb.alt = "";
+    const nameInput = document.createElement("input");
+    nameInput.className = "mv-character-name";
+    nameInput.value = person.name;
+    nameInput.setAttribute("aria-label", "人物名稱");
+    nameInput.addEventListener("change", () => {
+      person.name = nameInput.value.trim() || "人物";
+      nameInput.value = person.name;
+      renderStoryboard();
+    });
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.textContent = "✕";
+    removeButton.setAttribute("aria-label", `刪除人物 ${person.name}`);
+    removeButton.addEventListener("click", () => removeCharacter(person.id));
+    chip.append(thumb, nameInput, removeButton);
+    container.append(chip);
+  });
+}
+
+$("mv-add-character").addEventListener("click", () => $("mv-character-input").click());
+$("mv-character-input").addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    error("請選擇圖片檔案作為人物參考圖。");
+    return;
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    error("參考圖大小不可超過 20 MB。");
+    return;
+  }
+  try {
+    const bitmap = await createImageBitmap(file);
+    characters.push({
+      id: characterSeq++,
+      name: `人物 ${characters.length + 1}`,
+      bitmap,
+      thumbUrl: URL.createObjectURL(file),
+    });
+    error();
+    renderCharacters();
+    renderStoryboard();
+  } catch {
+    error("無法讀取這張參考圖，請換一張圖片再試。");
+  }
+});
+
+// ---- 分鏡（storyboard）----
+// 比照影片生成器的分鏡卡片：依時間軸依序排列，每張卡片各自選擇動畫場景、顏色，
+// 並可引用參考人物或上傳專屬參考圖；匯出時 drawMvScene() 會依當下時間找出對應
+// 卡片再繪製，參考圖／人物則疊加成相框樣式的畫面裝飾。
+function resetStoryboard(duration) {
+  for (const card of settings.storyboard) if (card.refImageThumbUrl) URL.revokeObjectURL(card.refImageThumbUrl);
+  cardSeq = 0;
+  settings.storyboard = [{
+    id: cardSeq++,
+    scene: 0,
+    color: "#7ee0ff",
+    start: 0,
+    end: duration,
+    characterId: null,
+    refImage: null,
+    refImageThumbUrl: "",
+  }];
+  refreshResolvedImages();
+  renderStoryboard();
+}
+
+function clampStoryboardToDuration(duration) {
+  for (const card of settings.storyboard) {
+    card.start = Math.max(0, Math.min(card.start, duration));
+    card.end = Math.max(card.start + MIN_SEGMENT, Math.min(card.end, duration));
+  }
+  const last = settings.storyboard[settings.storyboard.length - 1];
+  if (last) last.end = duration;
+}
+
+function syncStoryboardButtons() {
+  const cards = [...$("mv-storyboard").children];
+  cards.forEach((card, index) => {
+    const disabled = !buffer || Boolean(controller);
+    card.querySelector(".mv-move-up").disabled = disabled || index === 0;
+    card.querySelector(".mv-move-down").disabled = disabled || index === cards.length - 1;
+    card.querySelector(".mv-remove").disabled = disabled || cards.length <= 1;
+  });
+}
+
+function renderStoryboard() {
+  const container = $("mv-storyboard");
+  container.textContent = "";
+  settings.storyboard.forEach((card, index) => {
+    const el = document.createElement("div");
+    el.className = "mv-scene-card";
+
+    const head = document.createElement("div");
+    head.className = "mv-scene-card-head";
+    const title = document.createElement("strong");
+    title.textContent = `分鏡 ${String(index + 1).padStart(2, "0")}`;
+    const actions = document.createElement("div");
+    actions.className = "mv-scene-card-actions";
+    const upButton = document.createElement("button");
+    upButton.type = "button";
+    upButton.className = "mv-move-up";
+    upButton.textContent = "↑";
+    upButton.setAttribute("aria-label", "上移分鏡");
+    upButton.addEventListener("click", () => moveCard(card.id, -1));
+    const downButton = document.createElement("button");
+    downButton.type = "button";
+    downButton.className = "mv-move-down";
+    downButton.textContent = "↓";
+    downButton.setAttribute("aria-label", "下移分鏡");
+    downButton.addEventListener("click", () => moveCard(card.id, 1));
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "mv-remove";
+    removeButton.textContent = "✕";
+    removeButton.setAttribute("aria-label", "刪除分鏡");
+    removeButton.addEventListener("click", () => removeCard(card.id));
+    actions.append(upButton, downButton, removeButton);
+    head.append(title, actions);
+
+    const row = document.createElement("div");
+    row.className = "mv-scene-card-row";
+
+    const sceneSelect = document.createElement("select");
+    sceneSelect.className = "setting-select";
+    sceneSelect.setAttribute("aria-label", "動畫場景");
+    SCENES.forEach((label, sceneIndex) => {
+      const option = document.createElement("option");
+      option.value = String(sceneIndex);
+      option.textContent = label;
+      if (sceneIndex === card.scene) option.selected = true;
+      sceneSelect.append(option);
+    });
+    sceneSelect.addEventListener("change", () => {
+      card.scene = Number(sceneSelect.value);
+      renderFrame();
+    });
+
+    const colorWrap = document.createElement("div");
+    colorWrap.className = "color-picker";
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorInput.value = card.color;
+    colorInput.setAttribute("aria-label", "分鏡顏色");
+    colorInput.addEventListener("input", () => {
+      card.color = colorInput.value;
+      renderFrame();
+    });
+    colorWrap.append(colorInput);
+
+    const startField = document.createElement("div");
+    startField.className = "mv-scene-card-time";
+    const startLabel = document.createElement("label");
+    startLabel.textContent = "開始（秒）";
+    const startInput = document.createElement("input");
+    startInput.type = "number";
+    startInput.min = "0";
+    startInput.step = "0.1";
+    startInput.value = card.start.toFixed(1);
+    startLabel.append(startInput);
+    startField.append(startLabel);
+
+    const endField = document.createElement("div");
+    endField.className = "mv-scene-card-time";
+    const endLabel = document.createElement("label");
+    endLabel.textContent = "結束（秒）";
+    const endInput = document.createElement("input");
+    endInput.type = "number";
+    endInput.min = "0";
+    endInput.step = "0.1";
+    endInput.value = card.end.toFixed(1);
+    endLabel.append(endInput);
+    endField.append(endLabel);
+
+    const commitTimes = () => {
+      const duration = buffer?.duration ?? 0;
+      let start = Math.max(0, Math.min(Number(startInput.value) || 0, duration));
+      let end = Math.max(0, Math.min(Number(endInput.value) || 0, duration));
+      if (end - start < MIN_SEGMENT) end = Math.min(duration, start + MIN_SEGMENT);
+      card.start = start;
+      card.end = end;
+      startInput.value = start.toFixed(1);
+      endInput.value = end.toFixed(1);
+      renderFrame();
+    };
+    startInput.addEventListener("change", commitTimes);
+    endInput.addEventListener("change", commitTimes);
+
+    row.append(sceneSelect, colorWrap, startField, endField);
+
+    // 參考圖／參考人物：兩者皆可設定，drawMvScene 依 resolvedImage 優先使用分鏡自己
+    // 上傳的參考圖，否則退回引用的人物參考圖。
+    const refRow = document.createElement("div");
+    refRow.className = "mv-scene-card-ref-row";
+
+    const characterSelect = document.createElement("select");
+    characterSelect.className = "setting-select";
+    characterSelect.setAttribute("aria-label", "引用人物");
+    const noneOption = document.createElement("option");
+    noneOption.value = "";
+    noneOption.textContent = "引用人物：無";
+    characterSelect.append(noneOption);
+    characters.forEach((person) => {
+      const option = document.createElement("option");
+      option.value = String(person.id);
+      option.textContent = person.name;
+      if (person.id === card.characterId) option.selected = true;
+      characterSelect.append(option);
+    });
+    characterSelect.addEventListener("change", () => {
+      card.characterId = characterSelect.value === "" ? null : Number(characterSelect.value);
+      refreshResolvedImages();
+      renderFrame();
+    });
+
+    const imageWrap = document.createElement("div");
+    imageWrap.className = "mv-scene-card-ref-image";
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.hidden = true;
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files?.[0];
+      fileInput.value = "";
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        error("請選擇圖片檔案作為參考圖。");
+        return;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        error("參考圖大小不可超過 20 MB。");
+        return;
+      }
+      try {
+        const bitmap = await createImageBitmap(file);
+        if (card.refImageThumbUrl) URL.revokeObjectURL(card.refImageThumbUrl);
+        card.refImage?.close?.();
+        card.refImage = bitmap;
+        card.refImageThumbUrl = URL.createObjectURL(file);
+        error();
+        refreshResolvedImages();
+        renderStoryboard();
+        renderFrame();
+      } catch {
+        error("無法讀取這張參考圖，請換一張圖片再試。");
+      }
+    });
+    if (card.refImage) {
+      const thumb = document.createElement("img");
+      thumb.className = "mv-scene-card-ref-thumb";
+      thumb.src = card.refImageThumbUrl;
+      thumb.alt = "";
+      const clearButton = document.createElement("button");
+      clearButton.type = "button";
+      clearButton.textContent = "移除參考圖";
+      clearButton.addEventListener("click", () => {
+        URL.revokeObjectURL(card.refImageThumbUrl);
+        card.refImage.close?.();
+        card.refImage = null;
+        card.refImageThumbUrl = "";
+        refreshResolvedImages();
+        renderStoryboard();
+        renderFrame();
+      });
+      imageWrap.append(thumb, clearButton);
+    } else {
+      const uploadButton = document.createElement("button");
+      uploadButton.type = "button";
+      uploadButton.textContent = "上傳參考圖";
+      uploadButton.addEventListener("click", () => fileInput.click());
+      imageWrap.append(uploadButton);
+    }
+    imageWrap.append(fileInput);
+
+    refRow.append(characterSelect, imageWrap);
+
+    el.append(head, row, refRow);
+    el.id = `mv-card-${card.id}`;
+    container.append(el);
+  });
+  syncStoryboardButtons();
+}
+
+function moveCard(id, direction) {
+  const index = settings.storyboard.findIndex((card) => card.id === id);
+  const target = index + direction;
+  if (index < 0 || target < 0 || target >= settings.storyboard.length) return;
+  [settings.storyboard[index], settings.storyboard[target]] = [settings.storyboard[target], settings.storyboard[index]];
+  renderStoryboard();
+  renderFrame();
+}
+
+function removeCard(id) {
+  if (settings.storyboard.length <= 1) return;
+  const removed = settings.storyboard.find((card) => card.id === id);
+  if (removed?.refImageThumbUrl) URL.revokeObjectURL(removed.refImageThumbUrl);
+  removed?.refImage?.close?.();
+  settings.storyboard = settings.storyboard.filter((card) => card.id !== id);
+  clampStoryboardToDuration(buffer?.duration ?? 0);
+  renderStoryboard();
+  renderFrame();
+}
+
+$("mv-add-scene").addEventListener("click", () => {
+  if (!buffer) return;
+  const duration = buffer.duration;
+  const last = settings.storyboard[settings.storyboard.length - 1];
+  const start = last ? last.end : 0;
+  if (duration - start < MIN_SEGMENT) {
+    error(`剩餘時間不足 ${MIN_SEGMENT} 秒，無法再新增分鏡。`);
+    return;
+  }
+  error();
+  const end = Math.min(duration, start + Math.min(4, duration - start));
+  settings.storyboard.push({
+    id: cardSeq++,
+    scene: settings.storyboard.length % SCENES.length,
+    color: "#7ee0ff",
+    start,
+    end,
+    characterId: null,
+    refImage: null,
+    refImageThumbUrl: "",
+  });
+  renderStoryboard();
+  renderFrame();
+});
+
+// ---- 音樂載入與播放預覽 ----
 function resetAudio() {
   cancelAnimationFrame(animationFrame);
   if (audioEl) {
@@ -115,6 +476,7 @@ async function loadFile(file) {
     $("mv-preview-block").hidden = false;
     $("mv-play").disabled = false;
     $("mv-seek").disabled = false;
+    resetStoryboard(decoded.duration);
     setControlsEnabled(true);
     renderFrame();
     status(`已載入：${file.name}（${formatTime(decoded.duration)}）`, "success");
@@ -161,8 +523,6 @@ $("mv-seek").addEventListener("input", () => {
   renderFrame();
 });
 
-$("mv-style").addEventListener("change", () => { settings.style = Number($("mv-style").value); renderFrame(); });
-$("mv-color").addEventListener("input", () => { settings.color = $("mv-color").value; renderFrame(); });
 $("mv-strength").addEventListener("input", () => {
   settings.strength = Number($("mv-strength").value);
   $("mv-strength-output").textContent = String(settings.strength);
@@ -214,6 +574,7 @@ $("mv-start").addEventListener("click", async () => {
   if (!buffer || controller) return;
   audioEl?.pause();
   error();
+  clampStoryboardToDuration(buffer.duration);
   controller = new AbortController();
   setControlsEnabled(false);
   $("mv-drop").disabled = true;
@@ -239,6 +600,7 @@ $("mv-start").addEventListener("click", async () => {
       aspectRatio: $("mv-aspect-ratio").value,
       fps,
       signal: controller.signal,
+      drawFrame: drawMvScene,
       onEncodingMode: (mode) => {
         $("mv-export-note").textContent =
           mode === "prefer-hardware" ? "硬體編碼優先（由瀏覽器決定實際加速方式）"
@@ -282,12 +644,9 @@ window.addEventListener("beforeunload", (event) => {
 window.addEventListener("unload", () => {
   resetAudio();
   if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+  for (const card of settings.storyboard) if (card.refImageThumbUrl) URL.revokeObjectURL(card.refImageThumbUrl);
+  for (const person of characters) URL.revokeObjectURL(person.thumbUrl);
 });
 
-populateStyles();
-$("mv-color").value = settings.color;
-$("mv-strength").value = String(settings.strength);
 $("mv-strength-output").textContent = String(settings.strength);
-$("mv-darkness").value = String(settings.darkness);
 $("mv-darkness-output").textContent = String(settings.darkness);
-renderFrame();

@@ -12,7 +12,7 @@ const types = {
   ".txt": "text/plain; charset=utf-8",
   ".xml": "application/xml; charset=utf-8",
 };
-const allowed = new Set(["index.html", "account.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "animation-generator.html", "favicon.svg", "robots.txt", "sitemap.xml"]);
+const allowed = new Set(["index.html", "account.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "favicon.svg", "robots.txt", "sitemap.xml"]);
 createServer(async (req, res) => {
   try {
     if (req.method !== "GET" && req.method !== "HEAD") {

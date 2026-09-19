@@ -239,7 +239,7 @@ npm run preview  # 預覽 dist/
 
 推送至 `main` 後，[GitHub Pages 工作流程](.github/workflows/pages.yml) 會依序執行測試、建立 `dist/` 並部署。正式網站使用自訂網域 [the-music.app](https://the-music.app/)。
 
-`robots.txt` 與 `sitemap.xml` 隨靜態站一起部署，各公開頁面另外帶有 `<link rel="canonical">`、Open Graph 與 Twitter Card 中繼標籤（`og:title`／`og:description`／`og:image`／`og:url`）；`account.html`、`admin.html` 屬會員／管理員限定頁面，兩者皆標示 `noindex, nofollow` 並列於 `robots.txt` 的 `Disallow`，不納入 `sitemap.xml`。新增公開頁面時記得同步加進 `sitemap.xml` 與各頁 `<head>` 的中繼標籤。
+`robots.txt` 與 `sitemap.xml` 隨靜態站一起部署，各公開頁面另外帶有 `<link rel="canonical">`、Open Graph 與 Twitter Card 中繼標籤（`og:title`／`og:description`／`og:image`／`og:url`，共用 `icons/og-image.png` 這張 1200×630 社群分享圖）；`account.html`、`admin.html` 屬會員／管理員限定頁面，兩者皆標示 `noindex, nofollow` 並列於 `robots.txt` 的 `Disallow`，不納入 `sitemap.xml`。新增公開頁面時記得同步加進 `sitemap.xml` 與各頁 `<head>` 的中繼標籤。
 
 需要雲端 API 或公開連結解析的功能由獨立的 [model-proxy-worker](https://github.com/YueyuHoshizora/model-proxy-worker) 提供介面。
 

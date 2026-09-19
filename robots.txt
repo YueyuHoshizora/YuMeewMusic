@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /account.html
+Disallow: /admin.html
+
+Sitemap: https://the-music.app/sitemap.xml

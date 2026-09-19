@@ -15,7 +15,7 @@ await bundleJavaScript({
 });
 await rm("dist", { recursive: true, force: true });
 await mkdir("dist", { recursive: true });
-for (const path of ["index.html", "account.html", "admin.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "animation-generator.html", "video-generator.webmanifest", "favicon.svg", "ads.txt", "service-worker.js", "CNAME", "icons", "css", "js", "vendor"])
+for (const path of ["index.html", "account.html", "admin.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "animation-generator.html", "video-generator.webmanifest", "favicon.svg", "ads.txt", "robots.txt", "sitemap.xml", "service-worker.js", "CNAME", "icons", "css", "js", "vendor"])
   await cp(path, `dist/${path}`, { recursive: true });
 // A single content-derived version keeps entry points and app modules in sync after deploys.
 const htmlFiles = ["index.html", "account.html", "admin.html", "settings.html", "subtitle-editor.html", "converter.html", "video-editor.html", "image-video.html", "vocal-separator.html", "music-rating.html", "suno-tool.html", "image-generator.html", "video-generator.html", "ai-mastering.html", "animation-generator.html"];

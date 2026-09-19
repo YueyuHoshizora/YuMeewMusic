@@ -2,7 +2,7 @@
 
 YuMeew 是以純 HTML、CSS 與原生 JavaScript 製作的瀏覽器音樂視覺工作室。你可以加入音樂、背景素材與字幕，製作頻譜或黑膠動畫，再輸出成影片或音訊。
 
-[立即使用 YuMeew](https://ezmusic.yustellar.idv.tw/)
+[立即使用 YuMeew](https://the-music.app/)
 
 ## 主要特色
 
@@ -237,7 +237,7 @@ npm run preview  # 預覽 dist/
 
 ## 部署
 
-推送至 `main` 後，[GitHub Pages 工作流程](.github/workflows/pages.yml) 會依序執行測試、建立 `dist/` 並部署。正式網站使用自訂網域 [ezmusic.yustellar.idv.tw](https://ezmusic.yustellar.idv.tw/)。
+推送至 `main` 後，[GitHub Pages 工作流程](.github/workflows/pages.yml) 會依序執行測試、建立 `dist/` 並部署。正式網站使用自訂網域 [the-music.app](https://the-music.app/)。
 
 需要雲端 API 或公開連結解析的功能由獨立的 [model-proxy-worker](https://github.com/YueyuHoshizora/model-proxy-worker) 提供介面。
 

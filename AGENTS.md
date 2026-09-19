@@ -6,7 +6,7 @@
 
 ## 專案是什麼
 
-YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室：原生 HTML、CSS、JavaScript（ES modules），沒有任何前端框架（沒有 React／Vue／Svelte）。使用者在瀏覽器內載入音樂、繪製頻譜／節奏動畫、加字幕，再用瀏覽器原生能力（WebCodecs／MediaBunny 等）編碼輸出成影片或音訊。正式網站：https://ezmusic.yustellar.idv.tw/（自訂網域，部署在 GitHub Pages）。
+YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室：原生 HTML、CSS、JavaScript（ES modules），沒有任何前端框架（沒有 React／Vue／Svelte）。使用者在瀏覽器內載入音樂、繪製頻譜／節奏動畫、加字幕，再用瀏覽器原生能力（WebCodecs／MediaBunny 等）編碼輸出成影片或音訊。正式網站：https://the-music.app/（自訂網域，部署在 GitHub Pages）。
 
 核心原則：**能在瀏覽器本機完成的事，就不要送到伺服器**。這既是隱私承諾也是安全邊界——每多一個會把資料送出瀏覽器的路徑，就多一個可能外洩或被濫用的攻擊面。改動任何功能前，先確認這個原則有沒有被破壞——詳細的「哪些功能會送出什麼資料」對照表在 README.md 的〈檔案與隱私〉一節，等同於本專案的隱私承諾，改動時要一併更新那張表，並確認 [PRIVACY-POLICY.md](./PRIVACY-POLICY.md) 的措辭還對得上。
 
@@ -195,7 +195,7 @@ Node.js 需求：22 以上。**主站沒有任何 npm 執行期相依套件**（
 
 五個 Worker 雖然各自獨立部署，但共用同一套安全慣例，新增 Worker 或端點時延續這些模式（更完整的審查用 checklist 見 [CLAUDE.md](./CLAUDE.md)）：
 
-1. **Origin allowlist 是第一道關卡**：每個 Worker 的 `fetch()` 一開始就檢查 `Origin` 標頭是否等於正式站網域（`https://ezmusic.yustellar.idv.tw`），不符合就直接 403（`OPTIONS` 預檢也一樣檢查）。這個檢查在**限流之前**執行——沒有正確 Origin 的請求連限流計數都不會消耗，避免被拿來當放大器。
+1. **Origin allowlist 是第一道關卡**：每個 Worker 的 `fetch()` 一開始就檢查 `Origin` 標頭是否等於正式站網域（`https://the-music.app`），不符合就直接 403（`OPTIONS` 預檢也一樣檢查）。這個檢查在**限流之前**執行——沒有正確 Origin 的請求連限流計數都不會消耗，避免被拿來當放大器。
 2. **雙層限流**：短週期、高頻的端點用 Workers Rate Limiting Binding（例如 `AUTOCOMPLETE_RATE_LIMITER`、`LYRICS_RATE_LIMITER`，60 秒週期），需要更長冷卻時間（2～5 分鐘）的用 SQLite Durable Object（`CooldownLimiter` 類別，`flux-klein`／`storyboard-checker` 都有各自一份）。限流鍵是 `CF-Connecting-IP` ＋前端產生並存在 `localStorage` 的 32 位隨機瀏覽器識別碼（`X-YuMeew-Client-ID` 標頭）組合而成。完整規則、目前哪些端點不計入限流，見 [LIMIT.md](./LIMIT.md)——**改動任何端點的限流數值、新增端點、改變是否計入限流，都必須同步更新 LIMIT.md**。
 3. **機密只存在伺服器端，不回傳給瀏覽器**：平台自己的 API 金鑰（供帳戶扣點路徑使用）存在 `member-api`／`model-proxy` 共用的 `PLATFORM_API_KEYS` KV namespace（`8b01eb4ed3fb418eb74233d3ac7ae71f`），key 命名慣例是 `provider:${provider}`。
 4. **Worker 之間的內部呼叫用 HMAC，不是明碼比對**：`model-proxy` 呼叫 `member-api` 的 `/v1/internal/credits/reservations` 時，用共用密鑰＋時間戳算 HMAC-SHA256 簽章，並用 `constantTimeEqual()` 做抗時序攻擊的比對。

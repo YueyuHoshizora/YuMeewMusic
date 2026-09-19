@@ -8,7 +8,7 @@ YuMeew 是持續更新的靜態網站，目前只支援正式網站與 `main` �
 
 | 版本 | 安全更新 |
 | --- | --- |
-| [正式網站](https://ezmusic.yustellar.idv.tw/)／`main` 最新版本 | 支援 |
+| [正式網站](https://the-music.app/)／`main` 最新版本 | 支援 |
 | 舊提交、分支、Fork、自行修改或第三方重新部署版本 | 不支援 |
 
 安全修正通常直接發布至最新版本，不保證為舊版本提供回溯修正。
@@ -43,7 +43,7 @@ YuMeew 是持續更新的靜態網站，目前只支援正式網站與 `main` �
 
 適合通報的問題包括但不限於：
 
-- 可在 `ezmusic.yustellar.idv.tw` 執行未授權程式碼的 XSS 或內容注入。
+- 可在 `the-music.app` 執行未授權程式碼的 XSS 或內容注入。
 - 本不應離開瀏覽器的本機媒體、草稿、人物資料或模型資料遭到傳送或外洩。
 - API KEY、存取權杖、部署密鑰或其他敏感資料意外出現在原始碼、建置成品、紀錄或網路請求中。
 - IndexedDB、`localStorage`、Cache Storage 或 Service Worker 的跨使用者、跨來源或非預期存取。

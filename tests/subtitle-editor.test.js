@@ -49,7 +49,7 @@ test('standalone subtitle editor has every referenced control and local page ass
   assert.match(script, /\$\('recognition-lyrics'\)\.disabled = value/);
   assert.match(html, /id="cancel-recognition"[^>]*hidden/);
   assert.match(script, /\$\('cancel-recognition'\)\.hidden = !value/);
-  assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.yustellar\.idv\.tw'/);
+  assert.match(script, /fetch\('https:\/\/lyrics-transcriber\.the-music\.app'/);
   assert.match(script, /headers: clientIdentityHeaders\(\)/);
   assert.equal((script.match(/\bfetch\s*\(/g) || []).length, 1);
   assert.match(script, /parseSubtitles\(text, 'srt'\)/);

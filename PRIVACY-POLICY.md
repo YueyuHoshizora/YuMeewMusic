@@ -8,7 +8,7 @@
 
 本政策適用於：
 
-- [YuMeewMusic 正式網站](https://ezmusic.yustellar.idv.tw/)及其 PWA。
+- [YuMeewMusic 正式網站](https://the-music.app/)及其 PWA。
 - 本專案維護並由正式網站呼叫的會員、圖片生成、影片生成、字幕辨識、分鏡分析、Suno 解析與資源代理服務。
 - 透過 Google OAuth 建立及使用的 YuMeewMusic 會員帳戶。
 

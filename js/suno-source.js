@@ -1,6 +1,6 @@
 import { clientIdentityHeaders } from "./client-identity.js";
 
-export const SUNO_PROXY_URL = "https://model-proxy.yustellar.idv.tw/suno/resolve";
+export const SUNO_PROXY_URL = "https://model-proxy.the-music.app/suno/resolve";
 export const SUNO_MAX_AUDIO_BYTES = 300 * 1024 * 1024;
 
 function base64Bytes(value) {

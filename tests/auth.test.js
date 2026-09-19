@@ -120,7 +120,7 @@ test("member center reads the balance, top-up history and consumption history", 
 
 test("the browser reaches credit data only through the member Worker", () => {
   const config = readFileSync("js/member-api-config.js", "utf8");
-  assert.match(config, /MEMBER_API_URL = "https:\/\/member-api\.yustellar\.idv\.tw"/);
+  assert.match(config, /MEMBER_API_URL = "https:\/\/member-api\.the-music\.app"/);
   assert.doesNotMatch(config, /database_id|MEMBER_ADMIN_SECRET|service_role/i);
   for (const file of ["js/account.js", "js/member-status.js", "js/member-api.js"])
     assert.doesNotMatch(readFileSync(file, "utf8"), /D1Database|MEMBERS_DB|MEMBER_ADMIN_SECRET/, file);

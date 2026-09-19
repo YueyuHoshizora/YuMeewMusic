@@ -17,7 +17,7 @@ test("Suno tool page resolves, converts, previews and applies public audio", () 
   assert.match(html, /id="suno-apply"[^>]*>套用到主畫面</);
   assert.match(html, /id="suno-apply-recognize"[^>]*>套用並辨識字幕</);
   assert.match(html, /id="suno-apply-mastering"[^>]*>套用到 AI 母帶</);
-  assert.match(source, /model-proxy\.yustellar\.idv\.tw\/suno\/resolve/);
+  assert.match(source, /model-proxy\.the-music\.app\/suno\/resolve/);
   assert.match(source, /\.\.\.clientIdentityHeaders\(\)/);
   assert.match(source, /readSunoAudioResponse\(await fetch\(metadata\.audioUrl/);
   assert.match(script, /new URLSearchParams\(location\.search\)\.get\("q"\)/);

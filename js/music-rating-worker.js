@@ -1,7 +1,7 @@
 import { loadModelBytes } from "./indexeddb-model-cache.js";
 import * as ort from "../vendor/onnxruntime-web/ort.all.min.mjs";
 
-const MODEL_BASE = "https://model-proxy.yustellar.idv.tw/models";
+const MODEL_BASE = "https://model-proxy.the-music.app/models";
 const MERT_URL = `${MODEL_BASE}/mert-apex-uint8.onnx`;
 const HEAD_URL = `${MODEL_BASE}/apex-head.onnx`;
 const SAMPLE_RATE = 16000;

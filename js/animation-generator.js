@@ -20,9 +20,9 @@ import { encodeMedia } from "./export.js";
 // - 生成完成後不會直接觸發下載，而是比照影片生成器放進下方「生成結果」播放區（<video>
 //   元素＋下載／生成歷史按鈕），生成歷史最多保留 10 個版本，草稿（分鏡＋全片風格＋輸出
 //   設定）改動後 900ms 自動儲存到 IndexedDB，重新整理頁面會自動還原。
-const MV_SCENE_URL = "https://inspiration-chat.the-music.app/api/mv-scene/generate";
-const STORYBOARD_PRIMARY_URL = "https://storyboard-checker.the-music.app/api/storyboard/check";
-const STORYBOARD_FALLBACK_URL = "https://inspiration-chat.the-music.app/api/storyboard/check";
+const MV_SCENE_URL = "https://inspiration-chat.plain-leaf-e871.workers.dev/api/mv-scene/generate";
+const STORYBOARD_PRIMARY_URL = "https://storyboard-checker.plain-leaf-e871.workers.dev/api/storyboard/check";
+const STORYBOARD_FALLBACK_URL = "https://inspiration-chat.plain-leaf-e871.workers.dev/api/storyboard/check";
 const DRAFT_KEY = "mv-generator-draft";
 const HISTORY_KEY = "mv-generation-history";
 const HISTORY_LIMIT = 10;

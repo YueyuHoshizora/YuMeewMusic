@@ -110,8 +110,8 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(css, /@keyframes mobile-result-fullscreen-in/);
   assert.match(css, /\.autocomplete-row\s*\{\s*grid-template-columns:\s*1fr/);
   assert.match(css, /\.result-actions\s*\{\s*grid-template-columns:\s*1fr/);
-  assert.match(script, /https:\/\/flux-klein-worker\.the-music\.app\/generate/);
-  assert.match(script, /https:\/\/flux-klein-worker\.the-music\.app\/autocomplete/);
+  assert.match(script, /https:\/\/flux-klein\.plain-leaf-e871\.workers\.dev\/generate/);
+  assert.match(script, /https:\/\/flux-klein\.plain-leaf-e871\.workers\.dev\/autocomplete/);
   assert.match(script, /https:\/\/api\.openai\.com\/v1\/images\/generations/);
   assert.match(script, /method:\s*"POST"/);
   assert.match(script, /"Content-Type":\s*"application\/json"/);
@@ -140,7 +140,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /saveApiKey\(model\.provider, model\.apiKey, value\)/);
   assert.match(script, /const storedKey = getApiKey\(model\.provider\)[\s\S]*api-key-input"\)\.value = storedKey\?\.value \|\| ""/);
   assert.match(script, /const response = await model\.call\(\{ prompt, enhance, apiKey, width, height, accountCredits \}\)/);
-  assert.match(script, /const MODEL_PROXY_IMAGE_URL = "https:\/\/model-proxy\.the-music\.app\/openai\/image\/generate";/);
+  assert.match(script, /const MODEL_PROXY_IMAGE_URL = "https:\/\/model-proxy\.plain-leaf-e871\.workers\.dev\/openai\/image\/generate";/);
   assert.match(script, /async function callOpenAiImageAccountCredits\(/);
   assert.match(script, /if \(accountCredits\) return callOpenAiImageAccountCredits\(\{ model: "gpt-image-2\.5-flare", prompt, width, height \}\);/);
   assert.match(script, /if \(accountCredits\) return callOpenAiImageAccountCredits\(\{ model: "gpt-image-2\.5-sunburst", prompt, width, height \}\);/);

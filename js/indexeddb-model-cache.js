@@ -28,7 +28,7 @@ export function cachedModelIdentity(key) {
   const text = String(key);
   try {
     const url = new URL(text);
-    if (url.hostname === 'model-proxy.the-music.app' && url.pathname.startsWith('/models/')) {
+    if (url.hostname === 'model-proxy.plain-leaf-e871.workers.dev' && url.pathname.startsWith('/models/')) {
       return { id: 'yumeew:apex-music-rating', name: 'APEX 歌曲評分', source: 'APEX · MERT-v1-95M' };
     }
     const parts = url.pathname.split('/').filter(Boolean);

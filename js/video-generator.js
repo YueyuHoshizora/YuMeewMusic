@@ -14,26 +14,26 @@ import { fetchMemberAccount, fetchVideoBillingSettings } from "./member-api.js";
 import { estimateVideoGenerationCost, hasSufficientVideoCredit } from "./video-billing.js";
 import { providerBillingUrl } from "./provider-billing.js";
 
-const VIDEO_PROXY_URL = "https://model-proxy.the-music.app/minimax/video";
+const VIDEO_PROXY_URL = "https://model-proxy.plain-leaf-e871.workers.dev/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
 const QUERY_VIDEO_URL = `${VIDEO_PROXY_URL}/query`;
 const DOWNLOAD_VIDEO_URL = `${VIDEO_PROXY_URL}/download`;
-const BYTEPLUS_VIDEO_PROXY_URL = "https://model-proxy.the-music.app/byteplus/video";
+const BYTEPLUS_VIDEO_PROXY_URL = "https://model-proxy.plain-leaf-e871.workers.dev/byteplus/video";
 const BYTEPLUS_CREATE_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/generate`;
 const BYTEPLUS_QUERY_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/query`;
 const BYTEPLUS_DOWNLOAD_VIDEO_URL = `${BYTEPLUS_VIDEO_PROXY_URL}/download`;
-const GOOGLE_VIDEO_PROXY_URL = "https://model-proxy.the-music.app/google/video";
+const GOOGLE_VIDEO_PROXY_URL = "https://model-proxy.plain-leaf-e871.workers.dev/google/video";
 const GOOGLE_CREATE_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/generate`;
 const GOOGLE_QUERY_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/query`;
 const GOOGLE_DOWNLOAD_VIDEO_URL = `${GOOGLE_VIDEO_PROXY_URL}/download`;
-const RESOURCE_UPLOAD_URL = "https://model-proxy.the-music.app/resources/upload";
+const RESOURCE_UPLOAD_URL = "https://model-proxy.plain-leaf-e871.workers.dev/resources/upload";
 // 分鏡 AI 分析有兩套後端：主要引擎退回原本的 storyboard-checker Worker（Cloudflare
 // Workers AI，@cf/zai-org/glm-4.7-flash）；inspiration-chat Worker（改代理 OpenRouter
 // 的 nex-agi/nex-n2.5-pro:free——這顆 Worker 原本是「靈感激發」聊天頁面的後端，頁面
 // 下架後程式碼保留下來能做同一件事）先保留當備用，之後有需要再切回來當主要引擎。
 // 兩邊的請求／回應 JSON 合約刻意做成一致，才能無腦切換，見 inspiration-chat/AGENTS.md。
-const STORYBOARD_PRIMARY_URL = "https://storyboard-checker.the-music.app/api/storyboard/check";
-const STORYBOARD_FALLBACK_URL = "https://inspiration-chat.the-music.app/api/storyboard/check";
+const STORYBOARD_PRIMARY_URL = "https://storyboard-checker.plain-leaf-e871.workers.dev/api/storyboard/check";
+const STORYBOARD_FALLBACK_URL = "https://inspiration-chat.plain-leaf-e871.workers.dev/api/storyboard/check";
 const STORYBOARD_CHECKER_POLL_INTERVAL = 3000;
 const STORYBOARD_CHECKER_TIMEOUT = 10 * 60 * 1000;
 const POLL_INTERVAL = 5000;

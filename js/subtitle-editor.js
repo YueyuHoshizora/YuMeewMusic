@@ -146,7 +146,7 @@ async function uploadVocals(wav, audioDuration, run) {
   form.append('language', $('recognition-language').value);
   form.append('lyrics', $('recognition-lyrics').value);
   form.append('duration', String(audioDuration));
-  const response = await fetch('https://lyrics-transcriber.the-music.app', {
+  const response = await fetch('https://lyrics-transcriber.plain-leaf-e871.workers.dev', {
     method: 'POST',
     headers: clientIdentityHeaders(),
     body: form,

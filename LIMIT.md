@@ -29,7 +29,7 @@
 
 ## model-proxy
 
-正式端點：`https://model-proxy.the-music.app`
+正式端點：`https://model-proxy.plain-leaf-e871.workers.dev`
 
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
@@ -62,7 +62,7 @@ Rate Limiting Binding：
 
 ## flux-klein
 
-正式端點：`https://flux-klein-worker.the-music.app`
+正式端點：`https://flux-klein.plain-leaf-e871.workers.dev`
 
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
@@ -77,7 +77,7 @@ Rate Limiting Binding：
 
 ## lyrics-transcriber
 
-正式端點：`https://lyrics-transcriber.the-music.app`
+正式端點：`https://lyrics-transcriber.plain-leaf-e871.workers.dev`
 
 | 事件 | 用途 | 限額／附註 |
 | --- | --- | --- |
@@ -90,7 +90,7 @@ Rate Limiting Binding：
 
 ## storyboard-checker
 
-正式端點：`https://storyboard-checker.the-music.app`
+正式端點：`https://storyboard-checker.plain-leaf-e871.workers.dev`
 
 **目前是分鏡分析的主要引擎**：主站前端會優先打這裡，失敗時（429 冷卻中除外）才退回 `inspiration-chat` 的 `POST /api/storyboard/check`（見下一節）當備援。跟 `inspiration-chat` 各自獨立冷卻、獨立計時。
 
@@ -106,7 +106,7 @@ Rate Limiting Binding：
 
 ## inspiration-chat
 
-正式端點：`https://inspiration-chat.the-music.app`
+正式端點：`https://inspiration-chat.plain-leaf-e871.workers.dev`
 
 **目前先保留當分鏡分析的備用引擎**（主要引擎退回 `storyboard-checker`，需要時可以再切回來）。這顆 Worker 原本是「靈感激發」聊天頁面的後端，那個頁面已經整個下架、`POST /api/inspiration/chat` 串流聊天端點也已經從程式碼拿掉；Worker 名稱維持不變，改做分鏡 AI 分析（沿用 `storyboard-checker` 的系統提示詞與 JSON Schema，改用 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 呼叫）。
 

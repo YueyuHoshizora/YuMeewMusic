@@ -7,10 +7,10 @@ import { getCurrentSession, onAuthStateChange } from "./auth.js";
 import { calculateImageSize, IMAGE_RATIOS, imageResolutionsForRatio } from "./image-generation-settings.js";
 import { extractImageGenerationIdentifiers, generationIdentifierHeaders, responseGenerationIdentifiers } from "./image-generation-identifiers.js";
 
-const WORKER_URL = "https://flux-klein-worker.the-music.app/generate";
-const AUTOCOMPLETE_URL = "https://flux-klein-worker.the-music.app/autocomplete";
+const WORKER_URL = "https://flux-klein.plain-leaf-e871.workers.dev/generate";
+const AUTOCOMPLETE_URL = "https://flux-klein.plain-leaf-e871.workers.dev/autocomplete";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
-const MODEL_PROXY_IMAGE_URL = "https://model-proxy.the-music.app/openai/image/generate";
+const MODEL_PROXY_IMAGE_URL = "https://model-proxy.plain-leaf-e871.workers.dev/openai/image/generate";
 const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
 // GPT Image（Flare／Sunburst）依 token 計費，OpenAI 未公開單一官方費率表；
 // 以下為目前已知公開資訊換算的估算費率（USD／百萬 token），實際請以 OpenAI

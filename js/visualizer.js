@@ -689,27 +689,6 @@ function drawExtra(c, w, h, t, values, gain, style) {
       c.stroke();
       c.restore();
     }
-  } else if (style === 31) {
-    // Bottom-edge dual bar clusters with a global cyan-to-magenta hue gradient.
-    c.shadowBlur = h * 0.012;
-    const barCount = 28,
-      gapRatio = 0.28,
-      clusterWidth = w * 0.34,
-      barSlot = clusterWidth / barCount,
-      barW = barSlot * (1 - gapRatio),
-      maxBar = h * 0.36;
-    const drawBar = (x, v) => {
-      const bar = Math.max(h * 0.006, v * gain * maxBar);
-      const hue = 185 + (x / w) * 110;
-      const color = `hsl(${hue}, 92%, 62%)`;
-      c.shadowColor = color;
-      c.fillStyle = color;
-      c.fillRect(x, h - bar, barW, bar);
-    };
-    for (let i = 0; i < barCount; i++) {
-      drawBar(i * barSlot, values[i % 64]);
-      drawBar(w - clusterWidth + i * barSlot, values[(63 - i) % 64]);
-    }
   }
   c.globalAlpha = 1;
 }

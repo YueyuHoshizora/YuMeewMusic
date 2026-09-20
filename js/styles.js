@@ -31,5 +31,4 @@ export const STYLES = Object.freeze([
   "極光帷幕",
   "心電脈動",
   "幾何萬花筒",
-  "漸層音牆",
 ]);

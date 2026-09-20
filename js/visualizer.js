@@ -109,7 +109,10 @@ export function drawDynamic(canvas, t, b, img, s, includeSongDetails = true) {
   // Translate only the visualizer, after painting the fixed background.
   c.save();
   const position = key => Number.isFinite(s[key]) ? Math.max(-50, Math.min(50, s[key])) : 0;
-  c.translate(w * position("positionX") / 100, h * position("positionY") / 100);
+  // Gradient wall stays pinned to the bottom edge; position offsets don't apply to it.
+  if (s.style !== 31) {
+    c.translate(w * position("positionX") / 100, h * position("positionY") / 100);
+  }
   // Keep circular and radial styles within the narrow side of portrait frames.
   c.translate(0, (h - Math.min(w, h)) / 2);
   h = Math.min(w, h);
@@ -688,6 +691,27 @@ function drawExtra(c, w, h, t, values, gain, style) {
       c.globalAlpha = 1;
       c.stroke();
       c.restore();
+    }
+  } else if (style === 31) {
+    // Bottom-edge dual bar clusters with a global cyan-to-magenta hue gradient.
+    c.shadowBlur = h * 0.012;
+    const barCount = 28,
+      gapRatio = 0.28,
+      clusterWidth = w * 0.34,
+      barSlot = clusterWidth / barCount,
+      barW = barSlot * (1 - gapRatio),
+      maxBar = h * 0.36;
+    const drawBar = (x, v) => {
+      const bar = Math.max(h * 0.006, v * gain * maxBar);
+      const hue = 185 + (x / w) * 110;
+      const color = `hsl(${hue}, 92%, 62%)`;
+      c.shadowColor = color;
+      c.fillStyle = color;
+      c.fillRect(x, h - bar, barW, bar);
+    };
+    for (let i = 0; i < barCount; i++) {
+      drawBar(i * barSlot, values[i % 64]);
+      drawBar(w - clusterWidth + i * barSlot, values[(63 - i) % 64]);
     }
   }
   c.globalAlpha = 1;

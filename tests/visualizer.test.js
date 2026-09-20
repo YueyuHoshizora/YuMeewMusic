@@ -133,7 +133,9 @@ test('position transforms only animation after background and restores every fra
     const settings = {style, color:'#c5fa75', strength:70, darkness:45, positionX:25, positionY:-20};
     draw(canvas, .5, null, null, settings);
     const translation = calls.findIndex(call => call[0] === 'translate');
-    assert.deepEqual(calls[translation], ['translate', width * .25, -height * .2]);
+    // Gradient wall (style 31) intentionally ignores position offsets, staying pinned to the bottom edge.
+    const expected = style === 31 ? ['translate', 0, 0] : ['translate', width * .25, -height * .2];
+    assert.deepEqual(calls[translation], expected);
     assert.equal(calls[translation - 1][0], 'save');
     assert.ok(calls.slice(0, translation).some(call => call[0] === 'fillRect'));
     assert.equal(calls.at(-1)[0], 'restore');

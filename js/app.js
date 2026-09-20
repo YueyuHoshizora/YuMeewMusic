@@ -350,7 +350,7 @@ function mini(index) {
         path.setAttribute("fill", "none");
         svg.append(path);
       }
-    } else {
+    } else if (index === 23) {
       const centers = [[30, 20], [60, 20], [90, 20], [45, 42], [75, 42], [105, 42]];
       for (const [hx, hy] of centers) {
         const points = [];
@@ -363,6 +363,119 @@ function mini(index) {
         path.setAttribute("stroke", "currentColor");
         path.setAttribute("stroke-width", "1.4");
         path.setAttribute("fill", "none");
+        svg.append(path);
+      }
+    } else if (index === 24) {
+      const points = [];
+      for (let i = 0; i <= 96; i++) {
+        const u = i / 96, a = u * Math.PI * 2,
+          r = 6 + Math.abs(Math.cos(5 * a)) * 20;
+        points.push(`${i ? "L" : "M"}${75 + Math.cos(a) * r},${32 + Math.sin(a) * r * 0.85}`);
+      }
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", points.join(" ") + " Z");
+      path.setAttribute("stroke", "currentColor");
+      path.setAttribute("stroke-width", "1.4");
+      path.setAttribute("fill", "none");
+      svg.append(path);
+    } else if (index === 25) {
+      const heights = [10, 22, 14, 30, 18, 26, 12, 20];
+      const stepW = 130 / heights.length;
+      const points = ["M10,55"];
+      heights.forEach((hgt, i) => {
+        const x0 = 10 + i * stepW, x1 = 10 + (i + 1) * stepW, y = 55 - hgt;
+        points.push(`L${x0},${y}`, `L${x1},${y}`);
+      });
+      points.push("L140,55Z");
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", points.join(" "));
+      path.setAttribute("stroke", "currentColor");
+      path.setAttribute("stroke-width", "1.4");
+      path.setAttribute("fill", "currentColor");
+      path.setAttribute("opacity", "0.6");
+      svg.append(path);
+    } else if (index === 26) {
+      const bubbles = [[20, 45, 6], [42, 25, 9], [65, 40, 5], [88, 18, 10], [110, 38, 6], [130, 26, 8]];
+      for (const [x, y, r] of bubbles) {
+        const circle = document.createElementNS(ns, "circle");
+        circle.setAttribute("cx", String(x));
+        circle.setAttribute("cy", String(y));
+        circle.setAttribute("r", String(r));
+        circle.setAttribute("stroke", "currentColor");
+        circle.setAttribute("stroke-width", "1.4");
+        circle.setAttribute("fill", "none");
+        svg.append(circle);
+        const highlight = document.createElementNS(ns, "circle");
+        highlight.setAttribute("cx", String(x - r * 0.3));
+        highlight.setAttribute("cy", String(y - r * 0.3));
+        highlight.setAttribute("r", String(r * 0.25));
+        highlight.setAttribute("fill", "currentColor");
+        svg.append(highlight);
+      }
+    } else if (index === 27) {
+      const nodes = 10, r = 24, pts = [];
+      for (let i = 0; i < nodes; i++) {
+        const a = (i / nodes) * Math.PI * 2;
+        pts.push([75 + Math.cos(a) * r, 32 + Math.sin(a) * r * 0.85]);
+      }
+      for (let i = 0; i < nodes; i++) {
+        for (const step of [1, nodes / 2]) {
+          const [x0, y0] = pts[i], [x1, y1] = pts[(i + step) % nodes];
+          const line = document.createElementNS(ns, "line");
+          line.setAttribute("x1", String(x0));
+          line.setAttribute("y1", String(y0));
+          line.setAttribute("x2", String(x1));
+          line.setAttribute("y2", String(y1));
+          line.setAttribute("stroke", "currentColor");
+          line.setAttribute("stroke-width", "0.8");
+          line.setAttribute("opacity", "0.5");
+          svg.append(line);
+        }
+      }
+      for (const [x, y] of pts) {
+        const circle = document.createElementNS(ns, "circle");
+        circle.setAttribute("cx", String(x));
+        circle.setAttribute("cy", String(y));
+        circle.setAttribute("r", "2");
+        circle.setAttribute("fill", "currentColor");
+        svg.append(circle);
+      }
+    } else if (index === 28) {
+      for (let band = 0; band < 3; band++) {
+        const yTop = 8 + band * 8;
+        const points = [];
+        for (let i = 0; i <= 8; i++) {
+          const u = i / 8, x = 10 + u * 130 + Math.sin(u * Math.PI * 2.5 + band) * 4;
+          points.push(`${i ? "L" : "M"}${x},${yTop + Math.sin(u * Math.PI * 3 + band) * 4 + 14}`);
+        }
+        for (let i = 8; i >= 0; i--) {
+          const u = i / 8, x = 10 + u * 130 + Math.sin(u * Math.PI * 2.5 + band) * 4;
+          points.push(`L${x},${yTop}`);
+        }
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", points.join(" ") + "Z");
+        path.setAttribute("fill", "currentColor");
+        path.setAttribute("opacity", String(0.25 - band * 0.05));
+        svg.append(path);
+      }
+    } else if (index === 29) {
+      const path = document.createElementNS(ns, "path");
+      path.setAttribute("d", "M8 32L45 32L52 14L58 48L64 22L70 32L142 32");
+      path.setAttribute("stroke", "currentColor");
+      path.setAttribute("stroke-width", "2");
+      path.setAttribute("fill", "none");
+      svg.append(path);
+    } else {
+      for (let seg = 0; seg < 6; seg++) {
+        const a = (seg / 6) * Math.PI * 2;
+        const x1 = 75 + Math.cos(a) * 8, y1 = 32 + Math.sin(a) * 8 * 0.85;
+        const x2 = 75 + Math.cos(a + 0.5) * 22, y2 = 32 + Math.sin(a + 0.5) * 22 * 0.85;
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", `M75,32 L${x1},${y1} L${x2},${y2}Z`);
+        path.setAttribute("stroke", "currentColor");
+        path.setAttribute("stroke-width", "1.2");
+        path.setAttribute("fill", "currentColor");
+        path.setAttribute("opacity", "0.3");
         svg.append(path);
       }
     }

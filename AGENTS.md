@@ -17,7 +17,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 ### 音樂視覺工作室（`index.html`，主畫面）
 
 - **素材與畫面**：載入音樂（MP3／WAV／M4A／FLAC）、背景圖片或靜音循環影片、歌曲資訊、字幕（SRT／ASS／含時間碼 TXT）、個人識別（文字或圖片浮水印）。
-- **節奏動畫**：23 種樣式（見 `js/styles.js` 的 `STYLES` 陣列）＋「無」，都是 Canvas 2D 即時繪製，資料來源是 `js/visualizer.js` 的 `spectrum()`（64-bin FFT）。黑膠唱片樣式額外支援封套滑出＋每分鐘 33⅓ 轉動畫。
+- **節奏動畫**：30 種樣式（見 `js/styles.js` 的 `STYLES` 陣列）＋「無」，都是 Canvas 2D 即時繪製，資料來源是 `js/visualizer.js` 的 `spectrum()`（64-bin FFT）。黑膠唱片樣式額外支援封套滑出＋每分鐘 33⅓ 轉動畫。
 - **播放與裁剪**：瀏覽器內即時預覽、裁剪範圍、三段 EQ，裁剪只影響播放／輸出範圍，不修改原始檔案。
 - **字幕編輯器**（`subtitle-editor.html`）：獨立頁面，波形＋可拖曳字幕時間帶，AI 字幕辨識先在瀏覽器用 Spleeter 分離人聲，再把處理過的人聲（單聲道／16 kHz／16-bit PCM WAV）送到 `lyrics-transcriber` Worker。
 
@@ -78,7 +78,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | 分類 | 檔案（舉例） | 用途 |
 | --- | --- | --- |
 | 頁面控制器（三胞胎的 JS） | `image-generator.js`／`video-generator.js`／`vocal-separator.js`／`image-video.js`／`video-editor.js`／`converter.js`／`music-rating.js`／`suno-tool.js`／`ai-mastering.js`／`subtitle-editor.js`／`app.js`（主畫面） | 每個頁面自己的事件綁定、狀態機、與後端／Worker 溝通邏輯 |
-| 視覺渲染 | `visualizer.js`（Canvas 2D 頻譜／節奏動畫）、`styles.js`（23 種樣式定義） | 主畫面的即時繪製核心 |
+| 視覺渲染 | `visualizer.js`（Canvas 2D 頻譜／節奏動畫）、`styles.js`（30 種樣式定義） | 主畫面的即時繪製核心 |
 | 音訊處理 | `audio-eq.js`（三段 EQ）、`trim.js`／`trim-range.js`／`trim-time.js`（裁剪）、`export.js`（PCM 縮放、frame timing）、`vocal-separator-core.js`／`vocal-separator-worker.js`（Spleeter／PolarFormer 分離）、`vocal-autotune-core.js`／`vocal-autotune-worker.js`（人聲自動調音） | DSP 與音訊編輯，多半搭配 Web Worker 跑重運算 |
 | 編碼與輸出 | `formats.js`（輸出格式定義）、`video-profile.js`（H.264 Profile／Level 對應解析度與 fps）、`png-mov.js`（透明通道 MOV）、`dimensions.js`（解析度換算）、`video-effects.js`（進退場特效）、`image-sequence.js`（圖轉影片排程） | 對接 WebCodecs／MediaBunny 的編碼參數計算，本身不直接碰編碼器 API |
 | 字幕與素材 | `subtitles.js`（SRT／ASS／TXT 解析）、`fonts.js`（內建字幕字型）、`background-video.js`（循環背景影片） | |
@@ -113,7 +113,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 
 改一個功能如果同時牽涉主站與某個 Worker（例如額度計費），要記得這是**兩個獨立的 git 歷史**，分開 commit、分開推送，訊息裡不要假設對方 repo 也一起動了。
 
-主站本身的目錄結構、各獨立工具頁面、23 種節奏動畫清單，請見 README.md 的〈專案結構〉一節，這裡不重複。
+主站本身的目錄結構、各獨立工具頁面、30 種節奏動畫清單，請見 README.md 的〈專案結構〉一節，這裡不重複。
 
 ## 限制與金流設計
 

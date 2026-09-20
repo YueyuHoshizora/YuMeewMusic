@@ -94,6 +94,14 @@ function catmullRom(p0, p1, p2, p3, t) {
   );
 }
 
+// One heartbeat cycle (P wave, QRS spike, T wave) sampled at phase u in [0, 1).
+function ecgPulse(u) {
+  const p = Math.exp(-(((u - 0.16) * 22) ** 2)) * 0.18;
+  const qrs = Math.exp(-(((u - 0.32) * 55) ** 2)) - Math.exp(-(((u - 0.28) * 90) ** 2)) * 0.5;
+  const t2 = Math.exp(-(((u - 0.55) * 14) ** 2)) * 0.3;
+  return p + qrs + t2;
+}
+
 export function drawDynamic(canvas, t, b, img, s, includeSongDetails = true) {
   const c = canvas.getContext("2d");
   const w = canvas.width;
@@ -540,6 +548,146 @@ function drawExtra(c, w, h, t, values, gain, style) {
         c.closePath();
         c.stroke();
       }
+    }
+  } else if (style === 24) {
+    // Polar rose: a k-petal rose curve traced in one stroke, each lobe's reach set by its bin.
+    const k = 5;
+    c.beginPath();
+    for (let i = 0; i <= 240; i++) {
+      const u = i / 240,
+        a = u * Math.PI * 2,
+        v = values[Math.floor(u * 63)] * gain,
+        radius = h * (0.05 + Math.abs(Math.cos(k * a + t * 0.3)) * (0.14 + v * 0.24));
+      const x = cx + Math.cos(a) * radius,
+        y = cy + Math.sin(a) * radius;
+      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    }
+    c.closePath();
+    c.stroke();
+  } else if (style === 25) {
+    // Staircase: the spectrum drawn as one continuous stepped skyline instead of separate bars.
+    const bars = 32,
+      left = w * 0.1,
+      span = w * 0.8,
+      baseline = h * 0.72;
+    c.beginPath();
+    c.moveTo(left, baseline);
+    for (let i = 0; i < bars; i++) {
+      const v = values[i * 2] * gain,
+        x0 = left + (i / bars) * span,
+        x1 = left + ((i + 1) / bars) * span,
+        y = baseline - h * (0.02 + v * 0.4);
+      c.lineTo(x0, y);
+      c.lineTo(x1, y);
+    }
+    c.lineTo(left + span, baseline);
+    c.closePath();
+    c.globalAlpha = 0.45;
+    c.fill();
+    c.globalAlpha = 1;
+    c.stroke();
+  } else if (style === 26) {
+    // Liquid bubbles: fewer, larger drifting circles with a rim and an inner highlight.
+    const bubbles = 14;
+    for (let i = 0; i < bubbles; i++) {
+      const v = values[(i * 5) % 64] * gain,
+        phase = (i / bubbles + t * (0.18 + v * 0.25)) % 1,
+        baseX = w * (0.1 + ((i * 0.37) % 1) * 0.8),
+        x = baseX + Math.sin(t * 1.3 + i) * w * 0.02,
+        y = h * (0.82 - phase * 0.65),
+        radius = h * (0.012 + v * 0.03) * (0.5 + Math.sin(phase * Math.PI) * 0.5);
+      c.globalAlpha = 0.25 + Math.sin(phase * Math.PI) * 0.55;
+      c.beginPath();
+      c.arc(x, y, radius, 0, Math.PI * 2);
+      c.stroke();
+      c.globalAlpha = 0.5;
+      c.beginPath();
+      c.arc(x - radius * 0.3, y - radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (style === 27) {
+    // Mesh web: nodes on a ring linked to their neighbour and near-opposite, edges glow with combined energy.
+    const nodes = 16,
+      radius = h * 0.24,
+      pts = [];
+    for (let i = 0; i < nodes; i++) {
+      const v = values[i * 4] * gain,
+        a = (i / nodes) * Math.PI * 2 + t * 0.1,
+        r = radius * (0.7 + v * 0.5);
+      pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r, v]);
+    }
+    for (let i = 0; i < nodes; i++) {
+      const [x0, y0, v0] = pts[i];
+      for (const step of [1, nodes / 2]) {
+        const [x1, y1, v1] = pts[(i + step) % nodes];
+        c.globalAlpha = 0.12 + (v0 + v1) * 0.35;
+        c.beginPath();
+        c.moveTo(x0, y0);
+        c.lineTo(x1, y1);
+        c.stroke();
+      }
+      c.globalAlpha = 0.6 + v0 * 0.4;
+      c.beginPath();
+      c.arc(x0, y0, h * (0.003 + v0 * 0.006), 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (style === 28) {
+    // Aurora curtain: vertical ribbons of light that sway sideways and stretch with the spectrum.
+    const bands = 4,
+      cols = 48;
+    for (let band = 0; band < bands; band++) {
+      const yTop = h * (0.12 + band * 0.045),
+        xAt = u =>
+          w * (0.08 + u * 0.84) +
+          Math.sin(u * Math.PI * 2.5 + t * (0.6 + band * 0.2) + band * 1.7) * w * 0.025;
+      c.globalAlpha = 0.22 - band * 0.03;
+      c.beginPath();
+      for (let i = 0; i <= cols; i++) {
+        const u = i / cols,
+          v = values[Math.floor(u * 63)] * gain,
+          y = yTop + h * (0.08 + v * 0.4);
+        i ? c.lineTo(xAt(u), y) : c.moveTo(xAt(u), y);
+      }
+      for (let i = cols; i >= 0; i--) c.lineTo(xAt(i / cols), yTop);
+      c.closePath();
+      c.fill();
+    }
+  } else if (style === 29) {
+    // ECG pulse: a heartbeat trace whose spike height tracks overall energy.
+    const points = 200,
+      left = w * 0.08,
+      span = w * 0.84;
+    c.beginPath();
+    for (let i = 0; i <= points; i++) {
+      const u = i / points,
+        phase = (u + t * 0.15) % 1,
+        y = cy - ecgPulse(phase) * h * (0.16 + energy * gain * 0.32),
+        x = left + u * span;
+      i ? c.lineTo(x, y) : c.moveTo(x, y);
+    }
+    c.stroke();
+  } else if (style === 30) {
+    // Kaleidoscope: a jagged fragment repeated with mirrored radial symmetry around the centre.
+    const segments = 8;
+    for (let seg = 0; seg < segments; seg++) {
+      c.save();
+      c.translate(cx, cy);
+      c.rotate((seg / segments) * Math.PI * 2 + t * 0.2);
+      if (seg % 2) c.scale(1, -1);
+      c.beginPath();
+      c.moveTo(0, 0);
+      for (let i = 0; i < 8; i++) {
+        const v = values[(seg * 8 + i) % 64] * gain,
+          a = (i / 8) * (Math.PI / segments),
+          r = h * (0.05 + v * 0.32);
+        c.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      }
+      c.closePath();
+      c.globalAlpha = 0.35;
+      c.fill();
+      c.globalAlpha = 1;
+      c.stroke();
+      c.restore();
     }
   }
   c.globalAlpha = 1;

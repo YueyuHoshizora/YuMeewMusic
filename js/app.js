@@ -312,6 +312,62 @@ function mini(index) {
     svg.append(path);
     return svg;
   }
+  if (index >= 20) {
+    if (index === 20) {
+      for (let col = 0; col < 7; col++) {
+        for (let p = 0; p < 3; p++) {
+          const circle = document.createElementNS(ns, "circle");
+          circle.setAttribute("cx", String(12 + col * 21));
+          circle.setAttribute("cy", String(55 - p * 14 - (col % 3) * 4));
+          circle.setAttribute("r", String(1.4 + p * 0.5));
+          circle.setAttribute("fill", "currentColor");
+          svg.append(circle);
+        }
+      }
+    } else if (index === 21) {
+      const fill = document.createElementNS(ns, "path");
+      fill.setAttribute("d", "M8 45L24 28L38 38L54 15L70 34L86 20L102 40L118 24L134 45Z");
+      fill.setAttribute("fill", "currentColor");
+      fill.setAttribute("opacity", "0.85");
+      svg.append(fill);
+      const reflection = document.createElementNS(ns, "path");
+      reflection.setAttribute("d", "M8 45L24 52L38 47L54 58L70 49L86 55L102 46L118 53L134 45");
+      reflection.setAttribute("stroke", "currentColor");
+      reflection.setAttribute("stroke-width", "1.4");
+      reflection.setAttribute("fill", "none");
+      reflection.setAttribute("opacity", "0.4");
+      svg.append(reflection);
+    } else if (index === 22) {
+      for (let blade = 0; blade < 5; blade++) {
+        const a = (blade / 5) * Math.PI * 2;
+        const path = document.createElementNS(ns, "path");
+        const x1 = 75 + Math.cos(a) * 6, y1 = 32 + Math.sin(a) * 6;
+        const x2 = 75 + Math.cos(a + 0.5) * 24, y2 = 32 + Math.sin(a + 0.5) * 24;
+        const x3 = 75 + Math.cos(a) * 26, y3 = 32 + Math.sin(a) * 26;
+        path.setAttribute("d", `M${x1},${y1} Q${x2},${y2} ${x3},${y3}`);
+        path.setAttribute("stroke", "currentColor");
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("fill", "none");
+        svg.append(path);
+      }
+    } else {
+      const centers = [[30, 20], [60, 20], [90, 20], [45, 42], [75, 42], [105, 42]];
+      for (const [hx, hy] of centers) {
+        const points = [];
+        for (let k = 0; k <= 6; k++) {
+          const a = (k / 6) * Math.PI * 2;
+          points.push(`${k ? "L" : "M"}${hx + Math.cos(a) * 10},${hy + Math.sin(a) * 10}`);
+        }
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("d", points.join(" ") + " Z");
+        path.setAttribute("stroke", "currentColor");
+        path.setAttribute("stroke-width", "1.4");
+        path.setAttribute("fill", "none");
+        svg.append(path);
+      }
+    }
+    return svg;
+  }
   if (index >= 12) {
     const paths = [
       "M10 48 L28 30 L40 40 L60 12 L78 35 L96 20 L115 40 L140 25",

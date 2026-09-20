@@ -441,6 +441,106 @@ function drawExtra(c, w, h, t, values, gain, style) {
       }
       c.stroke();
     }
+  } else if (style === 20) {
+    // Particle fountain: columns of rising sparks whose height and count track each bin's energy.
+    const columns = 32,
+      particles = 5;
+    for (let col = 0; col < columns; col++) {
+      const bin = col * 2,
+        v = values[bin] * gain,
+        x = w * (0.08 + (col / (columns - 1)) * 0.84);
+      for (let p = 0; p < particles; p++) {
+        const phase = (p / particles + t * (0.5 + v * 0.6) + col * 0.013) % 1,
+          y = h * (0.85 - phase * (0.15 + v * 0.55));
+        c.globalAlpha = Math.sin(phase * Math.PI) * (0.25 + v * 0.75);
+        c.beginPath();
+        c.arc(x, y, h * (0.002 + v * 0.006) * (1 - phase * 0.4), 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+  } else if (style === 21) {
+    // Spectrum horizon: filled skyline across the full spectrum with a faint rippling reflection.
+    const left = w * 0.08,
+      span = w * 0.84,
+      points = 80,
+      baseline = cy + h * 0.12,
+      sampleAt = u => values[Math.min(63, Math.floor(u * 63))] * gain;
+    c.shadowBlur = 0;
+    c.beginPath();
+    c.moveTo(left, baseline);
+    for (let i = 0; i <= points; i++) {
+      const u = i / points;
+      c.lineTo(left + u * span, baseline - sampleAt(u) * h * 0.32 - h * 0.01);
+    }
+    c.lineTo(left + span, baseline);
+    c.closePath();
+    c.globalAlpha = 0.55;
+    c.fill();
+    c.globalAlpha = 1;
+    c.beginPath();
+    c.moveTo(left, baseline - sampleAt(0) * h * 0.32 - h * 0.01);
+    for (let i = 1; i <= points; i++) {
+      const u = i / points;
+      c.lineTo(left + u * span, baseline - sampleAt(u) * h * 0.32 - h * 0.01);
+    }
+    c.stroke();
+    c.globalAlpha = 0.22;
+    for (let i = 0; i <= points; i += 2) {
+      const u = i / points,
+        x = left + u * span,
+        v = sampleAt(u);
+      c.beginPath();
+      c.moveTo(x, baseline);
+      c.lineTo(x, baseline + v * h * 0.18 * (0.6 + 0.4 * Math.sin(t * 2 + u * 6)));
+      c.stroke();
+    }
+  } else if (style === 22) {
+    // Pinwheel: curved blades sweep around the centre, each blade's reach set by its own bin.
+    const blades = 6;
+    for (let b = 0; b < blades; b++) {
+      const v = values[b * 10] * gain,
+        a0 = (b / blades) * Math.PI * 2 + t * 0.6,
+        len = h * (0.12 + v * 0.22),
+        midA = a0 + 0.35,
+        tipA = a0 + 0.12;
+      c.globalAlpha = 0.5 + v * 0.5;
+      c.beginPath();
+      c.moveTo(cx, cy);
+      c.quadraticCurveTo(
+        cx + Math.cos(midA) * len * 0.55,
+        cy + Math.sin(midA) * len * 0.55,
+        cx + Math.cos(tipA) * len,
+        cy + Math.sin(tipA) * len,
+      );
+      c.stroke();
+    }
+  } else if (style === 23) {
+    // Hex pulse: a hexagon grid whose cells brighten with their mapped bin plus an outward ring wave.
+    const cols = 9,
+      rows = 5,
+      spacingX = (w * 0.7) / cols,
+      spacingY = (h * 0.28) / rows,
+      originX = w * 0.15,
+      originY = cy - h * 0.14;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const x = originX + col * spacingX + (row % 2 ? spacingX / 2 : 0),
+          y = originY + row * spacingY,
+          v = values[(col * 5 + row * 3) % 64] * gain,
+          dist = Math.hypot(x - cx, y - cy) / (h * 0.4),
+          wave = Math.sin(dist * 6 - t * 3);
+        c.globalAlpha = 0.15 + v * 0.6 + Math.max(0, wave) * 0.15;
+        c.beginPath();
+        for (let k = 0; k <= 6; k++) {
+          const a = (k / 6) * Math.PI * 2,
+            hx = x + Math.cos(a) * spacingX * 0.42,
+            hy = y + Math.sin(a) * spacingY * 0.9;
+          k ? c.lineTo(hx, hy) : c.moveTo(hx, hy);
+        }
+        c.closePath();
+        c.stroke();
+      }
+    }
   }
   c.globalAlpha = 1;
 }

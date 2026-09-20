@@ -184,10 +184,28 @@ export function drawDynamic(canvas, t, b, img, s, includeSongDetails = true) {
         v = values[i] * gain,
         bar = Math.max(3, v * h * 0.3);
       if (s.style === 5) {
-        for (let j = 0; j < 12; j++) {
-          c.globalAlpha = j / 12 < v ? 1 : 0.12;
+        const rows = 16,
+          lit = v * rows;
+        for (let j = 0; j < rows; j++) {
+          const above = lit - j;
+          if (above > 0) {
+            c.globalAlpha = 0.5 + 0.5 * Math.min(1, above);
+            c.beginPath();
+            c.arc(x, h * 0.68 - j * h * 0.0213, h * (0.0032 + Math.min(1, above) * 0.0016), 0, Math.PI * 2);
+            c.fill();
+          } else {
+            const wave = Math.sin((j / rows - t * 0.4 + i * 0.03) * Math.PI * 2);
+            c.globalAlpha = 0.05 + 0.09 * Math.max(0, wave);
+            c.beginPath();
+            c.arc(x, h * 0.68 - j * h * 0.0213, h * 0.0022, 0, Math.PI * 2);
+            c.fill();
+          }
+        }
+        if (lit > 0.5) {
+          const peak = Math.min(rows - 0.5, lit);
+          c.globalAlpha = 0.55 + 0.45 * Math.sin(t * 8 + i * 0.6);
           c.beginPath();
-          c.arc(x, h * 0.68 - j * h * 0.029, h * 0.004, 0, Math.PI * 2);
+          c.arc(x, h * 0.68 - peak * h * 0.0213, h * (0.005 + Math.min(1, lit / rows) * 0.0025), 0, Math.PI * 2);
           c.fill();
         }
         c.globalAlpha = 1;

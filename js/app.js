@@ -573,8 +573,9 @@ function mini(index) {
   }
   return svg;
 }
+const styleCardRank = name => name === "無" ? 0 : name === "黑膠唱片" ? 1 : 2;
 styles.map((name, index) => ({ name, index }))
-  .sort((a, b) => Number(b.name === "無") - Number(a.name === "無"))
+  .sort((a, b) => styleCardRank(a.name) - styleCardRank(b.name))
   .forEach(({ name, index }) => {
   const button = document.createElement("button");
   button.type = "button";

@@ -91,7 +91,7 @@
         <div class="section-title"><span>03</span><h2>評分結果</h2></div>
         <div class="rating-summary">
           <div class="rating-total" aria-label="綜合美學分數"><strong id="rating-total">—</strong><span>/ 100</span></div>
-          <div><div class="eyebrow">OVERALL AESTHETIC SCORE</div><h2 id="rating-verdict">分析完成</h2><p>綜合分數由下列五項 APEX 美學分數等權換算，反映模型對 AI 歌曲的預測，不代表客觀藝術價值。</p></div>
+          <div><div class="eyebrow">OVERALL AESTHETIC SCORE</div><h2 id="rating-verdict">分析完成</h2><p>綜合分數由五項 APEX 美學分數加權換算：音樂性 25%、記憶點 25%、結構連貫 20%、混音清晰 15%、自然度 15%。這是本站對 AI 歌曲品質的綜合評估，不代表客觀藝術價值。</p></div>
         </div>
         <div id="rating-metrics" class="rating-metrics"></div>
         <div class="rating-popularity">
@@ -110,6 +110,7 @@
 
       <section class="panel rating-notes">
         <div><strong>瀏覽器評分</strong><span>Worker 只解析公開分享頁；音樂由瀏覽器取得，評分時不會再上傳。</span></div>
+        <div><strong>總分權重</strong><span>單曲評分與雙曲比較皆採用：音樂性 25%、記憶點 25%、結構連貫 20%、混音清晰 15%、自然度 15%；串流吸引力與按讚傾向不計入總分。</span></div>
         <div><strong>執行方式</strong><span id="rating-capacity">直接使用 WASM CPU，最多 16 執行緒；啟動失敗時依序改用 8、4、1 執行緒。</span></div>
         <div><strong>模型授權</strong><span>APEX 採 Apache-2.0；MERT 權重採 CC BY-NC 4.0，本功能供非商業使用。</span></div>
       </section>

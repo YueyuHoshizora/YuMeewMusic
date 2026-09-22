@@ -1,9 +1,9 @@
 export const RATING_METRICS = Object.freeze([
-  { key: "coherence", label: "結構連貫", description: "段落與和聲發展是否一致" },
-  { key: "musicality", label: "音樂性", description: "整體聽感與音樂表現" },
-  { key: "memorability", label: "記憶點", description: "旋律與作品是否容易留下印象" },
-  { key: "clarity", label: "混音清晰", description: "聲部、頻率與製作品質" },
-  { key: "naturalness", label: "自然度", description: "聲音是否自然且少有生成瑕疵" },
+  { key: "coherence", label: "結構連貫", description: "段落與和聲發展是否一致", weight: 0.20 },
+  { key: "musicality", label: "音樂性", description: "整體聽感與音樂表現", weight: 0.25 },
+  { key: "memorability", label: "記憶點", description: "旋律與作品是否容易留下印象", weight: 0.25 },
+  { key: "clarity", label: "混音清晰", description: "聲部、頻率與製作品質", weight: 0.15 },
+  { key: "naturalness", label: "自然度", description: "聲音是否自然且少有生成瑕疵", weight: 0.15 },
 ]);
 
 export function clamp(value, minimum, maximum) {
@@ -16,7 +16,7 @@ export function scoreToPercent(score) {
 
 export function presentRating(raw) {
   const metrics = RATING_METRICS.map(metric => ({ ...metric, raw: clamp(raw?.[metric.key], 1, 5), score: scoreToPercent(raw?.[metric.key]) }));
-  const overall = metrics.reduce((sum, metric) => sum + metric.score, 0) / metrics.length;
+  const overall = metrics.reduce((sum, metric) => sum + metric.score * metric.weight, 0);
   return {
     overall,
     metrics,

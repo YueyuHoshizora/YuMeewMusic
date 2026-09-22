@@ -34,6 +34,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | 其他工具（`converter.html`／`music-rating.html`／`suno-tool.html`） | 格式轉換、Suno 單曲評分（APEX 模型，`flux-klein` Worker 的 `runStoryboardCheck` 之外的另一套本機推論）、Suno 分享連結解析（`model-proxy` `/suno/resolve`） | 見各檔案 |
 
 歌曲評分的 APEX／MERT 直接使用 WASM CPU，不嘗試 WebGPU。執行緒上限依序為 16→8→4→1（工作程序失敗時重試），實際數量不超過 `navigator.hardwareConcurrency`；未隔離時固定為 1。Service Worker 為頁面與工作程序回應補上跨來源隔離標頭，工作程序從網路或既有快取載入時都必須帶有 `Cross-Origin-Embedder-Policy: credentialless`，否則隔離頁面會阻擋啟動。
+頁面 `rating-capacity` 顯示主執行緒回報的邏輯核心數與預估可用推論執行緒；`rating-engine` 使用工作程序 `status`／`result` 訊息的 `threads` 欄位顯示目前 WASM 設定，避免降級後仍顯示初始上限。數值不代表實體核心数或即時 CPU 使用率。
 
 分鏡合理性檢查是影片生成內建的輔助功能，不是獨立頁面。主要引擎退回原本的 `storyboard-checker` Worker（Cloudflare Workers AI `@cf/zai-org/glm-4.7-flash`），失敗時退回 `inspiration-chat` Worker（呼叫 OpenRouter 的 `nex-agi/nex-n2.5-pro:free` 免費模型；這顆 Worker 原本是已下架的「靈感激發」聊天頁面後端，目前先保留當備用引擎，之後有需要再切回來當主要）當備援，兩邊維持一致的分析標準與請求／回應格式。
 

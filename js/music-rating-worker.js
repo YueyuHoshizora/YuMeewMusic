@@ -21,7 +21,7 @@ let sessionsPromise = null;
 let cancelled = false;
 
 function status(text, provider = "") {
-  self.postMessage({ type: "status", text, provider });
+  self.postMessage({ type: "status", text, provider, threads: ort.env.wasm.numThreads });
 }
 
 async function modelBytes(url) {
@@ -114,7 +114,7 @@ async function analyze(audio) {
     const value = name => Number(outputs[name]?.data?.[0]);
     const result = Object.fromEntries(["streams", "likes", "coherence", "musicality", "memorability", "clarity", "naturalness"].map(name => [name, value(name)]));
     if (Object.values(result).some(number => !Number.isFinite(number))) throw Error("APEX 模型產生無效分數。");
-    self.postMessage({ type: "result", result, provider });
+    self.postMessage({ type: "result", result, provider, threads: ort.env.wasm.numThreads });
   } finally {
     input.dispose();
     for (const output of Object.values(outputs || {})) output.dispose();

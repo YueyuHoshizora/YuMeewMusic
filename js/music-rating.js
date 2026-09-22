@@ -8,6 +8,11 @@ const $ = id => document.getElementById(id);
 const TARGET_SAMPLE_RATE = 16000;
 const WASM_THREAD_FALLBACKS = [16, 8, 4, 1];
 applyTheme(loadSettings().mode, loadSettings().theme);
+const hardwareThreads = navigator.hardwareConcurrency;
+const availableThreads = globalThis.crossOriginIsolated
+  ? Math.min(WASM_THREAD_FALLBACKS[0], hardwareThreads || WASM_THREAD_FALLBACKS[0])
+  : 1;
+$("rating-capacity").textContent = `瀏覽器回報：${hardwareThreads ? `${hardwareThreads} 個邏輯核心` : "核心數未提供"}；預估可用推論執行緒：${availableThreads}。${globalThis.crossOriginIsolated ? "直接使用 WASM CPU，啟動失敗依序以 8、4、1 執行緒重試；目前使用數量顯示於上方引擎標籤。" : "未啟用跨來源隔離，使用單執行緒。"}`;
 
 // 單曲評分與雙曲比較各自獨立的播放器，畫面上同時間只會有一個在播放：使用者切到另一個
 // 播放器時，原本在播的會自動暫停，不用自己手動協調。
@@ -319,7 +324,7 @@ function analyzeAudio(audio, index, total) {
       const label = total > 1 ? `歌曲 ${index === 0 ? "A" : "B"}：` : "";
       if (data.type === "status") {
         $("rating-status").textContent = `${label}${data.text}`;
-        if (data.provider) $("rating-engine").textContent = "WASM CPU";
+        if (data.provider) $("rating-engine").textContent = `WASM CPU · ${data.threads} 執行緒`;
       } else if (data.type === "progress") {
         $("rating-progress").value = (index + data.value / 100) / total * 100;
         $("rating-status").textContent = `${label}正在分析 ${data.current}／${data.total} 個音樂片段…`;
@@ -382,12 +387,12 @@ async function startRating() {
           const nextThreads = threadFallbacks[threadFallbackIndex];
           worker?.terminate();
           worker = createRatingWorker(nextThreads);
-          $("rating-engine").textContent = "WASM CPU";
+          $("rating-engine").textContent = "WASM CPU · 重新啟動中";
           $("rating-status").textContent = `${failedThreads} 執行緒無法啟動，正在改用 ${nextThreads} 執行緒重試…`;
         }
       }
       rawResults.push(response.result);
-      $("rating-engine").textContent = "WASM CPU";
+      $("rating-engine").textContent = `WASM CPU · ${response.threads} 執行緒`;
     }
     if (mode === "single") renderSingle(rawResults[0]);
     else renderComparison(rawResults);

@@ -5,8 +5,8 @@ function isMusicRatingPage(url) {
   return url.pathname.endsWith("/music-rating.html");
 }
 
-function withCrossOriginIsolation(response, url) {
-  if (!isMusicRatingPage(url) || !response || response.type === "error") return response;
+function withCrossOriginIsolation(response, url, destination = "") {
+  if ((!isMusicRatingPage(url) && destination !== "worker") || !response || response.type === "error") return response;
   const headers = new Headers(response.headers);
   headers.set("Cross-Origin-Opener-Policy", "same-origin");
   headers.set("Cross-Origin-Embedder-Policy", "credentialless");
@@ -53,8 +53,8 @@ self.addEventListener("fetch", event => {
   if (!STATIC_DESTINATIONS.has(request.destination)) return;
   event.respondWith((async () => {
     const cached = await caches.match(request);
-    if (cached) return cached;
-    const response = await fetch(request);
+    if (cached) return withCrossOriginIsolation(cached, url, request.destination);
+    const response = withCrossOriginIsolation(await fetch(request), url, request.destination);
     if (response.ok) {
       const cache = await caches.open(CACHE_NAME);
       await cache.put(request, response.clone());

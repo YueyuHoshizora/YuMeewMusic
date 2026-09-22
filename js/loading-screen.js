@@ -18,7 +18,9 @@ if (document.readyState === "loading") {
 
 async function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || ["localhost", "127.0.0.1"].includes(location.hostname)) return;
-  const hadController = Boolean(navigator.serviceWorker.controller);
+  const isRatingPage = location.pathname.endsWith("/music-rating.html");
+  const isolationReloadKey = "music-rating-isolation-reload";
+  if (isRatingPage && globalThis.crossOriginIsolated) sessionStorage.removeItem(isolationReloadKey);
   let updateApproved = false;
   let pendingWorker = null;
 
@@ -50,14 +52,15 @@ async function registerServiceWorker() {
       location.reload();
       return;
     }
-    if (!hadController && location.pathname.endsWith("/music-rating.html") && !sessionStorage.getItem("music-rating-isolation-reload")) {
-      sessionStorage.setItem("music-rating-isolation-reload", "1");
+    if (isRatingPage && !globalThis.crossOriginIsolated && navigator.serviceWorker.controller && sessionStorage.getItem(isolationReloadKey) !== "require-corp") {
+      sessionStorage.setItem(isolationReloadKey, "require-corp");
       location.reload();
     }
   };
   navigator.serviceWorker.addEventListener("controllerchange", reloadForUpdate);
   try {
     const registration = await navigator.serviceWorker.register("./service-worker.js", { updateViaCache: "none" });
+    reloadForUpdate();
     if (registration.waiting && navigator.serviceWorker.controller) showUpdateNotice(registration.waiting);
     registration.addEventListener("updatefound", () => {
       const worker = registration.installing;
@@ -71,5 +74,4 @@ async function registerServiceWorker() {
   }
 }
 
-if (document.readyState === "complete") void registerServiceWorker();
-else window.addEventListener("load", () => void registerServiceWorker(), { once: true });
+void registerServiceWorker();

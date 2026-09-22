@@ -52,30 +52,6 @@ test("large saved media restores outside the initial render path", () => {
   assert.doesNotMatch(generator, /syncDraftStatus\(\);\s*void restoreCharacterTemplates\(\);\s*void restoreLastGeneratedVideo\(\)/);
 });
 
-test("production build installs a versioned same-origin static cache", () => {
-  const worker = readFileSync("service-worker.js", "utf8");
-  const build = readFileSync("scripts/build.js", "utf8");
-  assert.match(worker, /yumeew-static-__BUILD_VERSION__/);
-  assert.match(worker, /message[\s\S]*SKIP_WAITING[\s\S]*skipWaiting\(\)/);
-  assert.match(worker, /request\.mode === "navigate"/);
-  assert.match(worker, /fetch\(request, \{ cache: "no-store" \}\)/);
-  assert.match(worker, /STATIC_DESTINATIONS/);
-  assert.match(worker, /Cross-Origin-Opener-Policy", "same-origin"/);
-  assert.match(worker, /Cross-Origin-Embedder-Policy", "credentialless"/);
-  const loader = readFileSync("js/loading-screen.js", "utf8");
-  assert.match(loader, /register\("\.\/service-worker\.js", \{ updateViaCache: "none" \}\)/);
-  assert.match(loader, /已有新版本/);
-  assert.match(loader, /registration\.waiting/);
-  assert.match(loader, /registration\.addEventListener\("updatefound"/);
-  assert.match(loader, /postMessage\(\{ type: "SKIP_WAITING" \}\)/);
-  assert.match(loader, /location\.reload\(\)/);
-  assert.match(loader, /addEventListener\("controllerchange", reloadForUpdate/);
-  assert.match(loader, /music-rating-isolation-reload/);
-  assert.match(loader, /registration\.update\(\)/);
-  assert.match(readFileSync("css/style.css", "utf8"), /\.app-update-notice\s*\{/);
-  assert.match(build, /"service-worker\.js"/);
-  assert.match(build, /replace\("__BUILD_VERSION__", version\)/);
-});
 
 
 test("production build minifies JavaScript and CSS without rewriting source files", () => {

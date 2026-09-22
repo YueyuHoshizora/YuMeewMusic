@@ -26,7 +26,7 @@ for (const cached of [false, true]) {
       respondWith: value => { pending = value; },
     });
     const result = await pending;
-    assert.equal(result.headers.get("Cross-Origin-Embedder-Policy"), "credentialless");
+    assert.equal(result.headers.get("Cross-Origin-Embedder-Policy"), "require-corp");
     assert.equal(result.headers.get("Content-Type"), "text/javascript");
     assert.equal(await result.text(), "self.postMessage('ready')");
   });

@@ -6,7 +6,7 @@ import { registerAudioPlayer } from "./audio-player.js";
 
 const $ = id => document.getElementById(id);
 const TARGET_SAMPLE_RATE = 16000;
-const WASM_THREAD_FALLBACKS = [4, 1];
+const WASM_THREAD_FALLBACKS = [16, 8, 4, 1];
 applyTheme(loadSettings().mode, loadSettings().theme);
 
 // 單曲評分與雙曲比較各自獨立的播放器，畫面上同時間只會有一個在播放：使用者切到另一個
@@ -319,7 +319,7 @@ function analyzeAudio(audio, index, total) {
       const label = total > 1 ? `歌曲 ${index === 0 ? "A" : "B"}：` : "";
       if (data.type === "status") {
         $("rating-status").textContent = `${label}${data.text}`;
-        if (data.provider) $("rating-engine").textContent = data.provider === "webgpu" ? "WebGPU" : "WASM CPU";
+        if (data.provider) $("rating-engine").textContent = "WASM CPU";
       } else if (data.type === "progress") {
         $("rating-progress").value = (index + data.value / 100) / total * 100;
         $("rating-status").textContent = `${label}正在分析 ${data.current}／${data.total} 個音樂片段…`;
@@ -387,7 +387,7 @@ async function startRating() {
         }
       }
       rawResults.push(response.result);
-      $("rating-engine").textContent = response.provider === "webgpu" ? "WebGPU" : "WASM CPU";
+      $("rating-engine").textContent = "WASM CPU";
     }
     if (mode === "single") renderSingle(rawResults[0]);
     else renderComparison(rawResults);

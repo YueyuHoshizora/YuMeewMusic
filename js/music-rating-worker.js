@@ -11,8 +11,8 @@ const HIDDEN_SIZE = 768;
 ort.env.wasm.wasmPaths = new URL("../vendor/onnxruntime-web/", import.meta.url).href;
 const requestedThreadLimit = Number(new URL(self.location.href).searchParams.get("threads"));
 const WASM_THREAD_LIMIT = Number.isInteger(requestedThreadLimit) && requestedThreadLimit > 0
-  ? Math.min(4, requestedThreadLimit)
-  : 4;
+  ? Math.min(16, requestedThreadLimit)
+  : 16;
 ort.env.wasm.numThreads = globalThis.crossOriginIsolated
   ? Math.min(WASM_THREAD_LIMIT, navigator.hardwareConcurrency || WASM_THREAD_LIMIT)
   : 1;
@@ -31,28 +31,16 @@ async function modelBytes(url) {
 async function createSessions() {
   status("正在讀取 APEX 與 MERT 模型…");
   const [mertBytes, headBytes] = await Promise.all([modelBytes(MERT_URL), modelBytes(HEAD_URL)]);
-  const candidates = navigator.gpu ? ["webgpu", "wasm"] : ["wasm"];
-  let lastError;
-  for (const provider of candidates) {
-    let mert;
-    let head;
-    try {
-      status(provider === "webgpu"
-        ? "正在啟用 WebGPU 評分引擎…"
-        : `正在啟用 WASM 評分引擎（${ort.env.wasm.numThreads} 執行緒）…`, provider);
-      if (provider === "webgpu") ort.env.webgpu.powerPreference = "high-performance";
-      const options = { executionProviders: [provider], graphOptimizationLevel: "all" };
-      mert = await ort.InferenceSession.create(mertBytes, options);
-      head = await ort.InferenceSession.create(headBytes, options);
-      return { mert, head, provider };
-    } catch (error) {
-      await mert?.release?.();
-      await head?.release?.();
-      lastError = error;
-      if (provider === "webgpu") status("此模型無法使用目前的 WebGPU，正在改用 WASM CPU…", "wasm");
-    }
+  status(`正在啟用 WASM 評分引擎（${ort.env.wasm.numThreads} 執行緒）…`, "wasm");
+  const options = { executionProviders: ["wasm"], graphOptimizationLevel: "all" };
+  const mert = await ort.InferenceSession.create(mertBytes, options);
+  try {
+    const head = await ort.InferenceSession.create(headBytes, options);
+    return { mert, head, provider: "wasm" };
+  } catch (error) {
+    await mert.release();
+    throw error;
   }
-  throw lastError || Error("無法啟動歌曲評分模型。");
 }
 
 async function getSessions() {

@@ -88,7 +88,7 @@ export function validateSettings(value) {
   if (typeof source.textColor === "string" && /^#[0-9a-f]{6}$/i.test(source.textColor)) result.textColor = source.textColor.toLowerCase();
   if (Number.isInteger(source.textFadeAfter) && source.textFadeAfter >= 1 && source.textFadeAfter <= 15) result.textFadeAfter = source.textFadeAfter;
   if (["top", "bottom", "left", "right", "center"].includes(source.subtitlePosition)) result.subtitlePosition = source.subtitlePosition;
-  for (const [key, min, max] of [["subtitleMargin", 0, 40], ["subtitleSize", 100, 250]]) {
+  for (const [key, min, max] of [["subtitleMargin", 0, 40], ["subtitleSize", 100, 500]]) {
     if (Number.isFinite(source[key]) && source[key] >= min && source[key] <= max) result[key] = source[key];
   }
   if (["horizontal", "vertical"].includes(source.subtitleDirection)) result.subtitleDirection = source.subtitleDirection;

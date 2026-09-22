@@ -1196,7 +1196,7 @@ for (const id of ["subtitleMargin", "subtitleMargin-range", "subtitleSize"]) {
     const key = id === "subtitleMargin-range" ? "subtitleMargin" : id;
     const value = Number($(id).value);
     if (!Number.isFinite(value)) return;
-    const [min, max] = key === "subtitleSize" ? [100, 250] : key === "subtitleMargin" ? [0, 40] : [-50, 50];
+    const [min, max] = key === "subtitleSize" ? [100, 500] : key === "subtitleMargin" ? [0, 40] : [-50, 50];
     state[key] = Math.max(min, Math.min(max, value));
     update();
   });

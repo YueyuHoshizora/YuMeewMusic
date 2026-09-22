@@ -826,7 +826,7 @@ export function drawSubtitles(c, width, height, settings, time) {
   c.globalAlpha = 1;
   const position = settings.subtitlePosition || "bottom";
   const margin = Math.max(0, Math.min(40, settings.subtitleMargin ?? 5)) / 100;
-  const size = Math.min(width, height) * .035 * Math.max(100, Math.min(250, settings.subtitleSize ?? 100)) / 100;
+  const size = Math.min(width, height) * .035 * Math.max(100, Math.min(500, settings.subtitleSize ?? 100)) / 100;
   const padding = size * .3;
   const maxWidth = Math.max(size, width * (position === "left" || position === "right" ? 1 - margin - .05 : .9) - padding * 2);
   c.font = `600 ${size}px ${subtitleFontFamily(settings.subtitleFont)}`;

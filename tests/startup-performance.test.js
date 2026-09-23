@@ -19,11 +19,15 @@ const pages = [
   "ai-mastering.html",
 ];
 
-test("every page loads the AdSense publisher script once", () => {
-  for (const page of pages) {
+test("public pages load the AdSense publisher script once", () => {
+  for (const page of pages.filter(page => !["account.html", "admin.html", "settings.html"].includes(page))) {
     const html = readFileSync(page, "utf8");
     const matches = html.match(/<script async src="https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=ca-pub-7132586781018963" crossorigin="anonymous"><\/script>/g) || [];
     assert.equal(matches.length, 1, page);
+  }
+  for (const page of ["account.html", "admin.html", "settings.html"]) {
+    const html = readFileSync(page, "utf8");
+    assert.doesNotMatch(html, /pagead2\.googlesyndication\.com|adsbygoogle/);
   }
 });
 

@@ -28,7 +28,7 @@
 ### Worker（五個子專案，含 member-api／model-proxy）
 
 5. **新端點或修改既有端點**：`Origin` allowlist 檢查有沒有在最前面？是不是在限流檢查**之前**？
-6. **限流**：新端點有沒有掛上限流（Workers Rate Limiting Binding 或 Durable Object 冷卻，視所需週期長短選擇）？限流鍵是不是用 IP＋瀏覽器識別碼組合，而不是單獨信任某個可被使用者任意設定的標頭？`LIMIT.md` 有沒有同步更新？
+6. **限流**：新端點有沒有掛上限流（Workers Rate Limiting Binding 或 Durable Object 冷卻，視所需週期長短選擇）？限流鍵是不是**只用 `CF-Connecting-IP`**，沒有混入 `X-YuMeew-Client-ID`、`X-Forwarded-For` 或其他客戶端可任意設定的標頭（混入後每次換一個值就能繞過限流，本專案曾因此被弱點掃描抓到）？`LIMIT.md` 有沒有同步更新？
 7. **機密資料**：有沒有任何 API 回應（含錯誤訊息）把 `PLATFORM_API_KEYS`、`MEMBER_SERVICE_SECRET` 等伺服器端密鑰序列化出去？KV key 命名是否延續 `provider:${provider}` 慣例？
 8. **服務對服務呼叫**：`model-proxy` ↔ `member-api` 之間新增或修改的內部呼叫，有沒有用 HMAC 簽章＋時間戳？比對簽章是不是用 `constantTimeEqual()`（不是 `===`）？兩邊（簽章產生端與驗證端）改動是否同步——這是分屬不同 repo 最容易漏改一邊的地方。
 9. **金流狀態轉換**：任何新增或修改的 `credit_reservations` 狀態轉換，SQL 是不是原子的 `UPDATE ... WHERE status = '<期望狀態>'`？有沒有檢查 `result.meta.changes` 並在 `0` 時重新讀取最新狀態，而不是直接回傳「成功」？有沒有先 `SELECT` 判斷再無條件 `UPDATE` 這種會有競態條件的寫法（這正是本專案 `capture` 曾經出過的真實漏洞）？退款邏輯是否用 `INSERT OR IGNORE ... WHERE refunded_at IS NULL` 這種天生防重複的模式？金額是否全程用整數分（cents），只在組回應時才轉換成一般金額？無條件進位（`roundUpCurrency`）用在該用的地方，沒有誤用四捨五入？

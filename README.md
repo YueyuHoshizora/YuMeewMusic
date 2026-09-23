@@ -178,7 +178,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 | 人聲分離、歌曲評分 | 瀏覽器 | 只下載模型；不送出音樂 |
 | AI 母帶 | 瀏覽器 | 無 |
 | AI 字幕辨識 | 瀏覽器 + 辨識服務 | 分離後的人聲 WAV、語言、選填歌詞與時長 |
-| 圖片生成、影片生成 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY |
+| 圖片生成、影片生成 | 對應的生成服務 | 題詞、生成設定、引用資源及所需 API KEY；自帶的 OpenAI KEY 由瀏覽器直連 OpenAI，自帶的 MiniMax／BytePlus／Google KEY 會經過 model-proxy Worker 轉送（不保存、不記錄）；flux-klein Worker 不記錄題詞 |
 | Suno 工具 | Suno CDN + 解析 Worker | 公開分享連結；Worker 不保存音樂 |
 | 分鏡 AI 分析 | storyboard-checker Worker（主要）+ inspiration-chat Worker（備援）+ OpenRouter | 分鏡內容與全片風格；Worker 與模型服務端都不會保存分析內容 |
 

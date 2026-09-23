@@ -137,10 +137,12 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | `minimax-h3` | MiniMax | 依輸出秒數（768p／2K 費率不同）＋超出免費額度的圖片／音效／影片資源附加費 |
 | `seedance-2-0` | BytePlus | 基本秒費率 × 解析度倍率（480p／720p／1080p／4K）× 秒數 |
 | `seedance-2-5` | BytePlus | 同上，480p／720p 倍率（無 1080p／4K） |
-| `veo-3-1` | Google | 依輸出秒數，720p／1080p 費率不同，含音效／靜音兩種費率 |
+| `veo-3-1` | Google | 依輸出秒數，720p／1080p 費率不同；Gemini API 的 Veo 3.1 一律生成音訊，故一律以含音訊費率計價 |
 | `gpt-image-2-5` | OpenAI | 依 token 估算（文字輸入、參考圖片輸入、輸出），因 OpenAI 未公開圖片生成確切 tokenizer 公式，是近似值，實際請以帳單為準並調整 `imageReservationAmount()` 裡的三個單價常數 |
 
 每個模型的預設費率寫死在程式碼的 `defaults`，也可以透過 `/v1/admin/billing/:model` 動態覆寫存進 D1（讀不到動態設定才 fallback 回 `defaults`）。所有金額在 D1 一律存整數分（cents），只有組 JSON 回應給前端時才轉成一般金額顯示。新增計費模型時，`member-api`（新增 `BILLING_MODELS` 項目＋對應 `*ReservationAmount()` 計價函式＋ `/v1/credits/*-reservations` 路由）與 `model-proxy`（新增 `reserve*Credit()`＋`createAccountBilled*()`＋對應路由）兩邊都要加，照抄既有模型的骨架。
+
+解析度一律採白名單：Veo 只接受 720p／1080p（缺值視為 720p），MiniMax 只接受 768P／2K；Seedance 不接受清單外解析度並回 HTTP 400。不得把未支援或缺少的解析度回落至較便宜級距。帳戶扣點路徑另拒絕題詞內的 `--rs`、`--resolution`、`--dur`、`--duration`、`--frames` 文字指令。
 
 ### `credit_reservations` 資料表（`member-api` D1，`migrations/0004~0006`）
 
@@ -167,7 +169,7 @@ refund_reason    TEXT
 
 ### `model-proxy` → `member-api` 內部端點契約
 
-`POST /v1/internal/credits/reservations`，body 是 `{ action, reservationId, provider, taskId?, resultUrl?, reason?, expectedStatus? }`，`action` 可以是 `authorize`／`release`／`refund`／`complete`／`capture`。呼叫方帶 `X-YuMeew-Service`／`X-YuMeew-Timestamp`／`X-YuMeew-Signature` 三個標頭（HMAC-SHA256，簽章內容是 `${serviceId}\n${timestamp}\nPOST\n${path}\n${body}`），`member-api` 端在 `INTERNAL_SIGNATURE_TOLERANCE_SECONDS`（300 秒）容許範圍內驗證時間戳，簽章比對用 `constantTimeEqual()`。這個端點不掛在使用者可觸及的路由前綴下，前端永遠不會、也不應該直接呼叫它。
+`POST /v1/internal/credits/reservations`，body 是 `{ action, reservationId, provider, taskId?, resultUrl?, reason?, expectedStatus? }`，`action` 可以是 `authorize`／`release`／`refund`／`complete`／`capture`。`authorize` 必須帶 `taskId`，並比對該筆預扣資料的 `task_id`；回傳欄位限於 `id`、`provider`、`status`、`task_id`、`result_url`。服務身分權限：`/v1/internal/credits/transactions` 不允許 `model-proxy` 呼叫；`/v1/internal/credits/reservations` 僅允許 `model-proxy` 呼叫。呼叫方帶 `X-YuMeew-Service`／`X-YuMeew-Timestamp`／`X-YuMeew-Signature` 三個標頭（HMAC-SHA256，簽章內容是 `${serviceId}\n${timestamp}\nPOST\n${path}\n${body}`），`member-api` 端在 `INTERNAL_SIGNATURE_TOLERANCE_SECONDS`（300 秒）容許範圍內驗證時間戳，簽章比對用 `constantTimeEqual()`。這個端點不掛在使用者可觸及的路由前綴下，前端永遠不會、也不應該直接呼叫它。
 
 ## 開發指令
 
@@ -201,7 +203,7 @@ Node.js 需求：22 以上。**主站沒有任何 npm 執行期相依套件**（
 五個 Worker 雖然各自獨立部署，但共用同一套安全慣例，新增 Worker 或端點時延續這些模式（更完整的審查用 checklist 見 [CLAUDE.md](./CLAUDE.md)）：
 
 1. **Origin allowlist 是第一道關卡**：每個 Worker 的 `fetch()` 一開始就檢查 `Origin` 標頭是否等於正式站網域（`https://the-music.app`），不符合就直接 403（`OPTIONS` 預檢也一樣檢查）。這個檢查在**限流之前**執行——沒有正確 Origin 的請求連限流計數都不會消耗，避免被拿來當放大器。
-2. **雙層限流**：短週期、高頻的端點用 Workers Rate Limiting Binding（例如 `AUTOCOMPLETE_RATE_LIMITER`、`LYRICS_RATE_LIMITER`，60 秒週期），需要更長冷卻時間（2～5 分鐘）的用 SQLite Durable Object（`CooldownLimiter` 類別，`flux-klein`／`storyboard-checker` 都有各自一份）。限流鍵**只用 `CF-Connecting-IP`**（Cloudflare 邊緣自行填入、客戶端無法偽造）。前端仍會送出 `localStorage` 產生的 `X-YuMeew-Client-ID` 標頭（CORS 允許清單也保留），但它完全由客戶端產生、沒有簽章，**絕對不能再混進限流鍵**——過去這樣做過，攻擊者每次換一個識別碼就能完全繞過限流。完整規則、目前哪些端點不計入限流，見 [LIMIT.md](./LIMIT.md)——**改動任何端點的限流數值、新增端點、改變是否計入限流，都必須同步更新 LIMIT.md**。
+2. **雙層限流**：短週期、高頻的端點用 Workers Rate Limiting Binding（例如 `AUTOCOMPLETE_RATE_LIMITER`、`LYRICS_RATE_LIMITER`，60 秒週期），需要更長冷卻時間（2～5 分鐘）的用 SQLite Durable Object（`CooldownLimiter` 類別，`flux-klein`／`storyboard-checker` 都有各自一份）。限流鍵**只用 `CF-Connecting-IP`**（Cloudflare 邊緣自行填入、客戶端無法偽造）；IPv6 地址先正規化成 `/64` 前綴後再計數。前端仍會送出 `localStorage` 產生的 `X-YuMeew-Client-ID` 標頭（CORS 允許清單也保留），但它完全由客戶端產生、沒有簽章，**絕對不能再混進限流鍵**——過去這樣做過，攻擊者每次換一個識別碼就能完全繞過限流。完整規則、目前哪些端點不計入限流，見 [LIMIT.md](./LIMIT.md)——**改動任何端點的限流數值、新增端點、改變是否計入限流，都必須同步更新 LIMIT.md**。
 3. **機密只存在伺服器端，不回傳給瀏覽器**：平台自己的 API 金鑰（供帳戶扣點路徑使用）存在 `member-api`／`model-proxy` 共用的 `PLATFORM_API_KEYS` KV namespace（`8b01eb4ed3fb418eb74233d3ac7ae71f`），key 命名慣例是 `provider:${provider}`。
 4. **Worker 之間的內部呼叫用 HMAC，不是明碼比對**：`model-proxy` 呼叫 `member-api` 的 `/v1/internal/credits/reservations` 時，用共用密鑰＋時間戳算 HMAC-SHA256 簽章，並用 `constantTimeEqual()` 做抗時序攻擊的比對。
 5. **金流資料的完整性靠資料庫層的原子操作**：影片與圖片生成的扣款都走「預扣（`pending`）→ 正式扣款（`capture`）→ 完成／退款／釋放（`complete`／`refund`／`release`）」三段式流程，所有狀態轉換都必須是 D1 的原子 `UPDATE ... WHERE status = '<期望狀態>'`，並檢查 `result.meta.changes`。額度、金額一律用整數分（cents）存在 D1。

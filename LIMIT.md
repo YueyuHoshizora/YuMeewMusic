@@ -15,9 +15,12 @@
 | 影片／圖片生成 | `model-proxy` `POST /*/video/generate`、`POST /openai/image/generate` | 每分鐘 10 次 | IP；Workers Rate Limiting Binding |
 | 資源上傳 | `model-proxy` `POST /resources/upload` | 每分鐘 20 次 | IP；Workers Rate Limiting Binding |
 | 會員影片額度預扣 | `member-api` `POST /v1/credits/video-reservations` | 每分鐘 60 次 | IP；D1 原子檢查會員可用餘額 |
-| 預扣確認／釋放 | `member-api` `POST /v1/internal/credits/reservations` | 每分鐘 30 次 | 服務 IP；HMAC 驗證 |
+| 預扣確認／釋放 | `member-api` `POST /v1/internal/credits/reservations` | 每分鐘 30 次 | 僅允許 `model-proxy`；服務 IP；HMAC 驗證 |
+| 影片任務查詢／下載 | `model-proxy` 七個影片查詢／下載端點 | 每分鐘共用 60 次 | IP；`QUERY_RATE_LIMITER`，namespace `7132506` |
 
-所有 `OPTIONS` 預檢、健康檢查、模型與短效資源讀取、影片／查詢任務的查詢與下載目前不計入上述限額。
+所有 `OPTIONS` 預檢、健康檢查、模型與短效資源讀取不計入上述限額。
+以 `CF-Connecting-IP` 作為限流鍵；IPv6 地址先展開 `::`，再取前四組 hextet 作為小寫、無前導零的 `/64` 網段（`xxxx:xxxx:xxxx:xxxx::/64`），IPv4 維持原樣，缺值以 `unknown` 計數。
+`member-api` 內部端點以 `serviceId` 限制呼叫方：`/v1/internal/credits/transactions` 不允許 `model-proxy` 呼叫；`/v1/internal/credits/reservations` 僅允許 `model-proxy` 呼叫。
 
 超過限制時回傳 HTTP `429 Too Many Requests`，回應包含：
 
@@ -34,20 +37,19 @@
 | --- | --- | --- |
 | `OPTIONS *` | CORS 預檢 | 不計入 |
 | `GET /health` | 服務健康檢查 | 不計入 |
-| `POST /resources/upload` | 上傳圖片、音訊或影片參考資源 | 每分鐘 20 次；每個檔案最多 50 MB（邊讀邊計算位元組數強制執行，不受 `Content-Length` 是否誠實回報影響）；不接受 `image/svg+xml`，避免瀏覽器直接開啟資源網址時執行內嵌腳本 |
+| `POST /resources/upload` | 上傳圖片、音訊或影片參考資源 | 每分鐘 20 次；每個檔案最多 50 MB（邊讀邊計算位元組數強制執行，不受 `Content-Length` 是否誠實回報影響）；MIME 類型以完整白名單比對；讀取資源時由伺服器重新設定 `Content-Type`，並加上 `Content-Security-Policy: sandbox` 與 `X-Content-Type-Options: nosniff` |
 | `GET /resources/:id` | 模型服務讀取短效參考資源 | 不計入；資源預設保留 2 小時 |
 | `GET /models/:filename` | 下載瀏覽器端允許清單內的模型 | 不計入 |
 | `POST /suno/resolve` | 解析公開 Suno 分享連結 | 每分鐘 10 次；JSON 最多 256 KB |
 | `POST /openai/image/generate` | 建立 OpenAI 圖片生成請求 | 每分鐘 10 次；JSON 最多 256 KB |
 | `POST /minimax/video/generate` | 建立 MiniMax 影片任務 | 每分鐘 10 次；JSON 最多 256 KB |
-| `POST /minimax/video/query` | 查詢 MiniMax 任務 | 不計入；JSON 最多 256 KB |
-| `POST /minimax/video/download` | 代理下載 MiniMax 結果 | 不計入；JSON 最多 256 KB |
-| `POST /byteplus/video/generate` | 建立 Seedance 影片任務 | 每分鐘 10 次；JSON 最多 256 KB |
-| `POST /byteplus/video/query` | 查詢 Seedance 任務 | 不計入；JSON 最多 256 KB |
-| `POST /byteplus/video/download` | 代理下載 Seedance 結果 | 不計入；JSON 最多 256 KB |
+| `POST /minimax/video/query` | 查詢 MiniMax 任務 | 每分鐘 60 次；JSON 最多 256 KB，共用查詢／下載限流 |
+| `POST /minimax/video/download` | 代理下載 MiniMax 結果 | 每分鐘 60 次；JSON 最多 256 KB，共用查詢／下載限流 |
+| `POST /byteplus/video/query` | 查詢 Seedance 任務 | 每分鐘 60 次；JSON 最多 256 KB，共用查詢／下載限流 |
+| `POST /byteplus/video/download` | 代理下載 Seedance 結果 | 每分鐘 60 次；JSON 最多 256 KB，共用查詢／下載限流 |
 | `POST /google/video/generate` | 建立 Veo 影片任務 | 每分鐘 10 次；JSON 最多 256 KB |
-| `POST /google/video/query` | 查詢 Veo 任務 | 不計入；JSON 最多 256 KB |
-| `POST /google/video/download` | 代理下載 Veo 結果 | 不計入；JSON 最多 256 KB |
+| `POST /google/video/query` | 查詢 Veo 任務 | 每分鐘 60 次；JSON 最多 256 KB，共用查詢／下載限流 |
+| `POST /google/video/download` | 代理下載 Veo 結果 | 每分鐘 60 次；JSON 最多 256 KB，共用查詢／下載限流 |
 | Cron `0 * * * *` | 每小時刪除過期參考資源 | 排程事件 |
 
 
@@ -56,6 +58,7 @@ Rate Limiting Binding：
 - `SUNO_RATE_LIMITER`，namespace `7132501`，`10 / 60 秒`（`/suno/resolve`）。
 - `GENERATION_RATE_LIMITER`，namespace `7132504`，`10 / 60 秒`（三個服務商的 `/*/video/generate` 與 `/openai/image/generate` 共用同一個限流器）。
 - `UPLOAD_RATE_LIMITER`，namespace `7132505`，`20 / 60 秒`（`/resources/upload`）。
+- `QUERY_RATE_LIMITER`，namespace `7132506`，`60 / 60 秒`（三家服務商的影片查詢與下載共用，以正規化 IP 計數）。
 
 帳戶扣點的影片任務會在呼叫模型前建立十分鐘 D1 預扣，取得任務 ID 後正式扣款；模型拒絕建立任務時立即釋放。成功任務的預扣識別碼與服務商對應會在 KV 保留兩小時，供後續查詢與下載授權使用。
 
@@ -82,7 +85,7 @@ Rate Limiting Binding：
 | --- | --- | --- |
 | `OPTIONS /` | CORS 預檢 | 不計入 |
 | `GET /` | 模型、模式與服務狀態 | 不計入 |
-| `POST /` | 接收人聲音訊與完整歌詞並產生 SRT | 每分鐘 1 次；整包 multipart 最多 21 MB（音訊最多 20 MB，另留 1 MB 給歌詞與表單開銷）；超過上限在解析 `formData()` 之前回 413 |
+| `POST /` | 接收人聲音訊與完整歌詞並產生 SRT | 每分鐘 1 次；只接受 zh/en/ja/ko；歌詞最多 20,000 字元、500 行；整包 multipart 最多 21 MB（音訊最多 20 MB，另留 1 MB 給歌詞與表單開銷）；超過上限在解析 `formData()` 之前回 413 |
 
 
 歌詞辨識 Binding：`LYRICS_RATE_LIMITER`，namespace `7132503`，`1 / 60 秒`。檔案、歌詞與基本參數通過驗證後才會計入。
@@ -122,8 +125,9 @@ Rate Limiting Binding：
 
 - Workers Rate Limiting Binding 的計數器由 Cloudflare 各節點維護，適合限制突發流量，但不是精確計費系統。
 - 2 分鐘與 5 分鐘限制使用 SQLite Durable Objects，避免 60 秒週期無法表達較長冷卻時間。
-- 限流鍵只使用 `CF-Connecting-IP`（Cloudflare 邊緣網路自行填入，客戶端無法偽造）。過去曾額外混入前端在 `localStorage` 產生、透過 `X-YuMeew-Client-ID` 傳送的瀏覽器識別碼，用意是讓共用網路的不同瀏覽器分開計數；但這個值完全由前端自行產生、沒有簽章也沒有驗證，攻擊者只要每次請求換一個新的合法格式字串，就能讓限流器把每次請求都當成「新使用者」而完全繞過限制。弱點掃描發現此問題後已改為只用 IP 當限流鍵；`X-YuMeew-Client-ID` header 仍會被接受（CORS 允許清單保留），但不再影響限流判斷。
+- 限流鍵只使用 `CF-Connecting-IP`（Cloudflare 邊緣網路自行填入，客戶端無法偽造）；IPv6 地址正規化成 `/64` 前綴後再計數。過去曾額外混入前端在 `localStorage` 產生、透過 `X-YuMeew-Client-ID` 傳送的瀏覽器識別碼，用意是讓共用網路的不同瀏覽器分開計數；但這個值完全由前端自行產生、沒有簽章也沒有驗證，攻擊者只要每次請求換一個新的合法格式字串，就能讓限流器把每次請求都當成「新使用者」而完全繞過限制。弱點掃描發現此問題後已改為只用 IP 當限流鍵；`X-YuMeew-Client-ID` header 仍會被接受（CORS 允許清單保留），但不再影響限流判斷。
 - `Origin` 限制與頻率限制分開運作。請求必須先通過正式網站來源檢查。`Origin` 只是瀏覽器 CORS 閘門，不是身分驗證——非瀏覽器客戶端可以偽造；免費 AI 端點因此不改成強制登入，改用請求體位元組上限壓住偽造來源造成的 CPU／記憶體放大。
 - JSON 請求體上限：`member-api` 16 KB、`flux-klein` 64 KB、`model-proxy`／`storyboard-checker`／`inspiration-chat` 256 KB。`lyrics-transcriber` 整包 multipart 21 MB。超過回 HTTP 413；用 `Content-Length` 預檢加上邊讀邊計數，不依賴客戶端是否誠實回報大小。
+- 所有 Worker 的 HTTP 500 錯誤只回傳通用訊息，不包含內部錯誤細節。
 - 修改數值時，需同步更新 Worker 程式、`wrangler.jsonc`、測試與本文件。
 

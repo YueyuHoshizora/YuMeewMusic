@@ -19,7 +19,7 @@ function resourceCounts(resources = []) {
   }, { image: 0, audio: 0, video: 0 });
 }
 
-export function estimateVideoGenerationCost({ billingId, resolution, duration, includeAudio = true, resources = [] }, settings) {
+export function estimateVideoGenerationCost({ billingId, resolution, duration, resources = [] }, settings) {
   const seconds = Math.max(0, Number(duration) || 0);
   if (billingId === "minimax-h3") {
     const is2k = String(resolution).toLowerCase() === "2k";
@@ -43,7 +43,7 @@ export function estimateVideoGenerationCost({ billingId, resolution, duration, i
   }
   if (billingId === "veo-3-1") {
     const size = String(resolution).toLowerCase() === "1080p" ? "1080" : "720";
-    const rate = Number(settings[`${includeAudio ? "audio" : "silent"}${size}PerSecond`]);
+    const rate = Number(settings[`audio${size}PerSecond`]);
     if (!Number.isFinite(rate)) throw Error("計費設定缺少 Veo 每秒費率。");
     return { total: rate * seconds, outputCost: rate * seconds, resourceCost: 0, unitRate: rate };
   }

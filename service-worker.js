@@ -1,5 +1,6 @@
 const CACHE_NAME = "yumeew-static-__BUILD_VERSION__";
 const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image", "worker", "manifest"]);
+const NAVIGABLE_PATHS = new Set(["/", "/index.html", "/account.html", "/settings.html", "/subtitle-editor.html", "/converter.html", "/video-editor.html", "/image-video.html", "/vocal-separator.html", "/music-rating.html", "/suno-tool.html", "/image-generator.html", "/video-generator.html", "/ai-mastering.html"]);
 
 function isMusicRatingPage(url) {
   return url.pathname.endsWith("/music-rating.html");
@@ -34,16 +35,17 @@ self.addEventListener("fetch", event => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-
   if (request.mode === "navigate") {
+    if (!NAVIGABLE_PATHS.has(url.pathname)) return;
+    const cacheKey = new Request(`${url.origin}${url.pathname}`);
     event.respondWith((async () => {
       try {
         const response = await fetch(request, { cache: "no-store" });
         const isolatedResponse = withCrossOriginIsolation(response, url);
-        if (isolatedResponse.ok) void caches.open(CACHE_NAME).then(cache => cache.put(request, isolatedResponse.clone()));
+        if (isolatedResponse.ok) void caches.open(CACHE_NAME).then(cache => cache.put(cacheKey, isolatedResponse.clone()));
         return isolatedResponse;
       } catch {
-        const cached = await caches.match(request);
+        const cached = await caches.match(cacheKey);
         return cached ? withCrossOriginIsolation(cached, url) : Response.error();
       }
     })());

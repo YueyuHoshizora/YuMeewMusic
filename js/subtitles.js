@@ -24,10 +24,13 @@ export function parseSubtitles(source, extension) {
     }
     entries.sort((a,b)=>a.start-b.start);
     if (!entries.some(entry=>entry.text)) throw Error('TXT 找不到有效時間碼，請使用 [00:12.50] 字幕文字或 SRT 式起訖時間碼。');
-    return {cues:entries.map(entry=>({
-      ...entry,
-      end:entries.find(next=>next.start > entry.start)?.start ?? Infinity,
-    }))};
+    let nextStart = Infinity;
+    for (let index = entries.length - 1; index >= 0; index--) {
+      const entry = entries[index];
+      entry.end = nextStart;
+      if (index === 0 || entries[index - 1].start < entry.start) nextStart = entry.start;
+    }
+    return {cues:entries};
   }
   const cues = [];
   const add = (start, end, text) => {

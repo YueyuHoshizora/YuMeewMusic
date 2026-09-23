@@ -21,6 +21,10 @@ test('TXT respects timestamps, next-cue boundaries, blank clearing and repeated 
  assert.throws(()=>parseSubtitles('[00:99]錯誤','txt'));
  assert.throws(()=>parseSubtitles('invalid','srt'));
 });
+test('TXT assigns each cue the next strictly later timestamp in one ordered pass', () => {
+  const data = parseSubtitles('[00:02]甲\n[00:02]乙\n[00:05]丙', 'txt');
+  assert.deepEqual(data.cues.map(({ start, end }) => [start, end]), [[2, 5], [2, 5], [5, Infinity]]);
+});
 test('TXT supports SRT ranges and plain timestamp lines',()=>{
  const srt=parseSubtitles('1\n00:00:02,000 --> 00:00:04,000\n字幕','txt');
  assert.equal(subtitleAt(srt,3,10),'字幕');

@@ -40,7 +40,8 @@ test("administrator page manages margin, member top-ups and provider API keys th
   assert.match(html, /name="roundUpDecimals"[^>]*type="number"[^>]*value="2"[^>]*readonly/);
   assert.match(html, /基本係數 × 解析度倍率[\s\S]*無條件進位至小數第二位[\s\S]*再乘以影片秒數/);
   assert.match(html, /data-billing-fields="seedance-2-5"[\s\S]*value="0\.6785"[\s\S]*value="1\.525"/);
-  assert.match(html, /data-billing-fields="veo-3-1"[\s\S]*name="audio720PerSecond"[^>]*value="0\.40"[\s\S]*name="audio1080PerSecond"[^>]*value="0\.40"[\s\S]*name="silent720PerSecond"[^>]*value="0\.20"[\s\S]*name="silent1080PerSecond"[^>]*value="0\.20"/);
+  assert.match(html, /data-billing-fields="veo-3-1"[\s\S]*name="audio720PerSecond"[^>]*value="0\.40"[\s\S]*name="audio1080PerSecond"[^>]*value="0\.40"/);
+  assert.doesNotMatch(html, /silent720PerSecond|silent1080PerSecond/);
   assert.match(html, /name="multiplier480"[^>]*>[\s\S]*data-billing-preview="multiplier480"/);
   assert.match(html, /name="multiplier720"[^>]*>[\s\S]*data-billing-preview="multiplier720"/);
   assert.match(script, /function roundBillingUp\(value, decimals = 2\)[\s\S]*Math\.ceil/);

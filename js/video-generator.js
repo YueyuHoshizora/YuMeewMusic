@@ -3836,9 +3836,18 @@ function releaseVideo() {
   $("retry-save-video").hidden = true;
 }
 
+function safeVideoUrl(value) {
+  try {
+    const url = new URL(typeof value === "string" ? value : "");
+    return url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 function presentVideo() {
   const video = $("generated-video");
-  video.src = generatedVideoUrl || generatedVideoRemoteUrl;
+  video.src = generatedVideoUrl || safeVideoUrl(generatedVideoRemoteUrl);
   video.hidden = false;
   $("empty-video-result").hidden = true;
   video.load();
@@ -4022,7 +4031,6 @@ async function generateVideo() {
         payload,
         accountCredits,
         idempotencyKey,
-        billing: { includeAudio: generatedVideoMetadata.includeAudio },
       }),
       cache: "no-store",
       signal: generationAbort.signal,
@@ -4097,7 +4105,6 @@ async function openGenerateConfirmation() {
       billingId: model.billingId,
       resolution: $("video-resolution").value,
       duration,
-      includeAudio: $("veo-include-audio").checked,
       resources: inputs,
     }, billing.settings);
     if (accountCredits) {
@@ -4314,9 +4321,7 @@ $("cancel-video-generation").addEventListener("click", () => $("confirm-video-ge
 $("download-video").addEventListener("click", () => {
   if (busy || (!generatedVideoBlob && !generatedVideoRemoteUrl)) return;
   const link = document.createElement("a");
-  link.href = generatedVideoUrl || generatedVideoRemoteUrl;
-  link.download = generatedVideoBlob ? generatedVideoMetadata?.name || videoFilename() : "";
-  if (!generatedVideoBlob) link.target = "_blank";
+  link.href = generatedVideoUrl || safeVideoUrl(generatedVideoRemoteUrl);
   link.rel = "noopener";
   link.click();
 });

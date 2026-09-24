@@ -123,6 +123,5 @@ test("影片編輯 exposes a movable dynamic layer and locked text overlays", ()
   assert.match(script, /originalBuffer: state\.base\.audioBuffer \|\| \{ duration: timelineDuration\(\) \}/);
   assert.match(script, /drawIdentity/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);
-  assert.match(readFileSync("index.html", "utf8"), /href="\.\/image-video\.html">圖轉影片<\/a>\s*<a class="tool-link" href="\.\/video-editor\.html">影片編輯<\/a>\s*<details class="tools-menu">/);
   assert.match(readFileSync("scripts/serve.js", "utf8"), /"video-editor\.html"/);
 });

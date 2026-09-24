@@ -927,7 +927,7 @@ header { flex-wrap: nowrap; }
 .settings-link { flex-shrink: 0; color: var(--foreground); font-size: 14px; font-weight: 650; text-decoration: none; }
 .settings-link:hover { color: var(--primary-text); }
 .header-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 20px; margin-left: auto; }
-.studio > header { flex-wrap: wrap; }
+.studio > header { flex-wrap: nowrap; }
 .header-actions .member-widget { margin-left: 0; }
 .language-picker { display: inline-flex; flex: 0 0 auto; align-items: center; margin-left: auto; }
 .language-picker select { max-width: 126px; min-height: 40px; padding: 6px 25px 6px 9px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 12px; cursor: pointer; }
@@ -1024,3 +1024,13 @@ header { flex-wrap: nowrap; }
 }
 .tools-menu-panel strong { display: block; color: var(--primary-text); font-size: 14px; }
 .tools-menu-panel small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; }
+.tools-menu-panel .compact-shortcut { display: none; }
+@media (max-width: 2050px) {
+  .studio > header > .tool-link-compact { display: none; }
+  .tools-menu-panel .compact-shortcut { display: grid; }
+}
+@media (max-width: 1500px) {
+  .studio > header { gap: 18px; }
+  .studio > header .brand-sub { display: none; }
+  .studio > header .header-actions { gap: 14px; }
+}

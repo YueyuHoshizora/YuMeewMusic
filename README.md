@@ -14,10 +14,12 @@ YuMeew 是以純 HTML、CSS 與原生 JavaScript 製作的瀏覽器音樂視覺�
 - 常用設定與媒體可保存在目前瀏覽器，重新開啟後繼續使用。
 - 支援 [Supabase](https://supabase.com/) Auth 與 Google OAuth 會員登入，可查看剩餘額度、儲值紀錄與消費紀錄。
 - 網站本體可由 GitHub Pages 靜態部署；本機媒體仍保存在使用者的瀏覽器。
+- 全站介面可切換繁體中文（預設）、English、日本語、Français、Deutsch、Italiano、Español。
 
 ## 會員功能
 
 所有頁面右上角會顯示會員頭像與剩餘額度，點擊即可進入會員中心。未登入時可使用 Google OAuth 登入；會員中心會分別列出儲值及消費紀錄。
+帳戶入口左側的語言選單適用於主畫面、獨立工具、字幕編輯器、設定及會員／管理頁。選擇後頁面會重新載入；未儲存的編輯內容可能遺失，切換前請先儲存。選擇會保留在目前瀏覽器，跨頁套用；未選擇時一律顯示繁體中文，不依瀏覽器語言自動變更。
 
 會員身分由 [Supabase](https://supabase.com/) Auth 管理；會員資料、額度與交易紀錄保存在 Cloudflare D1。瀏覽器只能將 Supabase 登入 JWT 送至會員 Worker，無法直接存取 D1。儲值與扣款另由具備 Worker 管理密鑰的可信任服務執行。Supabase 設定方式位於 [`supabase`](./supabase) 目錄，會員 Worker 位於獨立的 `member-api` Git 專案。
 
@@ -174,6 +176,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 
 | 功能 | 處理位置 | 會送出的資料 |
 | --- | --- | --- |
+| 介面語言切換 | 瀏覽器（讀取本站靜態翻譯檔） | 無 |
 | 主畫面編輯與匯出 | 瀏覽器 | 無 |
 | 任意轉、圖轉影片、影片編輯 | 瀏覽器 | 無 |
 | 人聲分離、歌曲評分 | 瀏覽器 | 只下載模型；不送出音樂 |
@@ -195,7 +198,7 @@ MP4／MOV 可選自動、Baseline、Main、High H.264 Profile。影片輸出會�
 
 ## 瀏覽器儲存
 
-- `localStorage`：介面佈景、畫面、字幕、輸出及其他輕量設定；使用者 API KEY 依服務供應商保存在這裡。
+- `localStorage`：介面佈景、語言選擇（`yumeew.locale.v1`）、畫面、字幕、輸出及其他輕量設定；使用者 API KEY 依服務供應商保存在這裡。語言選擇在 `localStorage` 不可用時暫存於 `sessionStorage`。
 - IndexedDB 媒體快取：主畫面音樂、背景素材、字幕、人物模板、草稿及最近生成結果。
 - IndexedDB 模型快取：Spleeter、BS PolarFormer、APEX／MERT 等瀏覽器 AI 模型。
 

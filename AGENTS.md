@@ -21,7 +21,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 - **節奏動畫**：30 種樣式（見 `js/styles.js` 的 `STYLES` 陣列）＋「無」，都是 Canvas 2D 即時繪製，資料來源是 `js/visualizer.js` 的 `spectrum()`（64-bin FFT）。黑膠唱片樣式額外支援封套滑出＋每分鐘 33⅓ 轉動畫。
 - **播放與裁剪**：瀏覽器內即時預覽、裁剪範圍、三段 EQ，裁剪只影響播放／輸出範圍，不修改原始檔案。
 - **字幕編輯器**（`subtitle-editor.html`）：獨立頁面，波形＋可拖曳字幕時間帶，AI 字幕辨識先在瀏覽器用 Spleeter 分離人聲，再把處理過的人聲（單聲道／16 kHz／16-bit PCM WAV）送到 `lyrics-transcriber` Worker。
-- **介面語言**：主畫面與所有工具／會員／管理頁共用帳戶入口左側的語言選單，支援繁體中文（預設）、英文、日文、法文、德文、義大利文、西班牙文；選擇後重新載入並跨頁保留，未儲存的編輯內容可能遺失。翻譯檔只從本站載入，不會送出使用者資料。
+- **介面語言**：主畫面與所有工具／會員／管理頁共用帳戶入口左側的語言選單，支援繁體中文（預設）、英文、日文、法文、德文、義大利文、西班牙文、巴西葡萄牙文、韓文、俄文、印尼文、越南文、泰文、土耳其文、荷蘭文、波蘭文、烏克蘭文、印地文、孟加拉文、馬來文、菲律賓文、瑞典文；不提供簡體中文。選擇後重新載入並跨頁保留，未儲存的編輯內容可能遺失。翻譯檔只從本站載入，不會送出使用者資料。
 - **首頁導覽**：`index.html` 的工具捷徑在寬度不足時以 `css/style.css` 的斷點收進「其他工具」選單，保留語言與帳戶入口同列；新增語言或改動導覽文字後要在窄桌面寬度檢查不換行、捷徑不重複顯示。
 
 ### 獨立工具
@@ -93,7 +93,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 | 會員與計費 | `auth.js`（Supabase session）、`account.js`／`member-status.js`（會員狀態顯示）、`api-keys.js`（第三方 API KEY 存取＋`usesAccountCredits()`）、`provider-billing.js`（第三方費率查詢 URL）、`video-billing.js`（`roundUpCurrency()`、額度是否足夠判斷）、`admin.js`（管理後台） | 額度顯示與計費輔助邏輯；實際扣款在 Worker 端（見下方〈金流設計〉） |
 | 影片生成專屬 | `video-prompt-mode.js`（分鏡文字模式解析）、`video-project-file.js`（專案檔匯入／匯出）、`video-resources.js`（引用資源管理）、`video-editor-core.js`（圖層時間計算）、`video-generator-pwa.js`（PWA／離線） | |
 | 共用小工具 | `themes.js`（深色／淺色主題，**只能改 CSS 屬性，不能動到渲染或輸出設定**）、`client-identity.js`（`X-YuMeew-Client-ID` 標頭產生與讀取）、`image-generation-identifiers.js`／`image-generation-settings.js`（見下方安全與金流章節）、`loading-screen.js`、`model-settings.js` | |
-| 介面語系 | `i18n.js`（語系、儲存、翻譯與 DOM 觀察）、`locales/common.js`／`locales/shared.js`／`locales/<頁名>.js`（六語字典）、`member-status.js`（帳戶旁選單） | 繁體中文原始文案為預設；各頁按需載入字典，動態文字與 PDF 固定標籤也須翻譯 |
+| 介面語系 | `i18n.js`（語系、儲存、翻譯與 DOM 觀察）、`locales/common.js`／`locales/shared.js`／`locales/<頁名>.js`（21 種非預設語言字典）、`member-status.js`（帳戶旁選單） | 繁體中文原始文案為預設；各頁按需載入字典，動態文字與 PDF 固定標籤也須翻譯 |
 
 新增檔案時先判斷屬於哪一類、看同類檔案的既有寫法，不要自己發明新的資料流模式（例如不要繞過 `media-store.js` 自己操作 IndexedDB）。
 
@@ -197,10 +197,10 @@ Node.js 需求：22 以上。**主站沒有任何 npm 執行期相依套件**（
 
 ### 介面語言維護
 
-- 以 HTML／JS 內的繁體中文介面文案作為字典 key；`js/i18n.js` 的 `LOCALES` 為語言選單及儲存值的唯一名單，`zh-Hant` 是原文預設，其餘語系的代碼為 `en`、`ja`、`fr`、`de`、`it`、`es`。不依 `navigator.language` 自動切換。選擇保存在 `localStorage` 的 `yumeew.locale.v1`，被封鎖時退至 `sessionStorage`；已移除或無效的儲存值回到繁體中文。切換會重新載入頁面，勿假設尚未保存的編輯仍在記憶體內。
-- 共用文案放 `js/locales/common.js`，格式／樣式／PDF 等跨頁文案放 `js/locales/shared.js`，頁面文案放 `js/locales/<頁名>.js`。每個 key 的 value 都須含完整六語欄位；頁面同名 key 可覆寫共用字典。新增頁面時也要在 `js/i18n.js` 的 `pages` 載入對照新增字典；`scripts/build.js` 必須複製並版本化 `js/locales/*.js`。新增語言時同步增補 `LOCALES` 與每個字典 key 的新欄位；移除語言時同步刪除 `LOCALES` 及每個字典欄位，不保留不可用的選項或相容別名。
+- 以 HTML／JS 內的繁體中文介面文案作為字典 key；`js/i18n.js` 的 `LOCALES` 為語言選單及儲存值的唯一名單，`zh-Hant` 是原文預設，其餘語系的代碼為 `en`、`ja`、`fr`、`de`、`it`、`es`、`pt-BR`、`ko`、`ru`、`id`、`vi`、`th`、`tr`、`nl`、`pl`、`uk`、`hi`、`bn`、`ms`、`fil`、`sv`。不依 `navigator.language` 自動切換。選擇保存在 `localStorage` 的 `yumeew.locale.v1`，被封鎖時退至 `sessionStorage`；已移除或無效的儲存值回到繁體中文。切換會重新載入頁面，勿假設尚未保存的編輯仍在記憶體內。
+- 共用文案放 `js/locales/common.js`，格式／樣式／PDF 等跨頁文案放 `js/locales/shared.js`，頁面文案放 `js/locales/<頁名>.js`。每個 key 的 value 都須含完整 21 種非預設語言欄位；頁面同名 key 可覆寫共用字典。新增頁面時也要在 `js/i18n.js` 的 `pages` 載入對照新增字典；`scripts/build.js` 必須複製並版本化 `js/locales/*.js`。新增語言時同步增補 `LOCALES` 與每個字典 key 的新欄位；移除語言時同步刪除 `LOCALES` 及每個字典欄位，不保留不可用的選項或相容別名。
 - 一般靜態文字、`placeholder`／`data-placeholder`／`title`／`aria-label`／`alt` 與後續新增的 DOM 節點由 `i18n.js` 依原文翻譯；CSS `attr(data-label)` 若裝的是使用者名稱則不可加入翻譯清單。原生對話框、狀態訊息、模板參數及 Canvas／PDF 固定標籤則在產生文字處呼叫 `t("繁體中文原文", value)`。模板用 `{0}`、`{1}` 佔位，不翻譯 API 代碼、持久化資料、檔名、使用者輸入或 AI 回傳內容；顯示使用者文字的 DOM 容器應設 `data-i18n-ignore`，輸入框與可編輯區亦不得改寫。日期與數字顯示依目前 `locale` 格式化，但計費與模型參數維持原始值。
-- 修改語系後至少在瀏覽器切換七種選項、跨頁確認保存、檢查標題／互動狀態／帳戶選單，並執行 `npm test`、`npm run build` 與建置版預覽；維護 README.md 的語言清單、切換重載提醒與〈檔案與隱私〉欄位，確認沒有新增外送資料路徑。
+- 修改語系後至少在瀏覽器切換所有 22 種選項、跨頁確認保存、檢查標題／互動狀態／帳戶選單，並執行 `npm test`、`npm run build` 與建置版預覽；維護 README.md 的語言清單、切換重載提醒與〈檔案與隱私〉欄位，確認沒有新增外送資料路徑。
 
 ## 前端信任邊界
 

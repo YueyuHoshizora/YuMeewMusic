@@ -6,6 +6,21 @@ export const LOCALES = Object.freeze({
   de: "Deutsch",
   it: "Italiano",
   es: "Español",
+  "pt-BR": "Português (Brasil)",
+  ko: "한국어",
+  ru: "Русский",
+  id: "Bahasa Indonesia",
+  vi: "Tiếng Việt",
+  th: "ไทย",
+  tr: "Türkçe",
+  nl: "Nederlands",
+  pl: "Polski",
+  uk: "Українська",
+  hi: "हिन्दी",
+  bn: "বাংলা",
+  ms: "Bahasa Melayu",
+  fil: "Filipino",
+  sv: "Svenska",
 });
 
 const STORAGE_KEY = "yumeew.locale.v1";

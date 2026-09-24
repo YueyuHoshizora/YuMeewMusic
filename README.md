@@ -14,7 +14,7 @@ YuMeew 是以純 HTML、CSS 與原生 JavaScript 製作的瀏覽器音樂視覺�
 - 常用設定與媒體可保存在目前瀏覽器，重新開啟後繼續使用。
 - 支援 [Supabase](https://supabase.com/) Auth 與 Google OAuth 會員登入，可查看剩餘額度、儲值紀錄與消費紀錄。
 - 網站本體可由 GitHub Pages 靜態部署；本機媒體仍保存在使用者的瀏覽器。
-- 全站介面可切換繁體中文（預設）、English、日本語、Français、Deutsch、Italiano、Español。
+- 全站介面可切換繁體中文（預設）、English、日本語、Français、Deutsch、Italiano、Español、Português (Brasil)、한국어、Русский、Bahasa Indonesia、Tiếng Việt、ไทย、Türkçe、Nederlands、Polski、Українська、हिन्दी、বাংলা、Bahasa Melayu、Filipino、Svenska；不提供簡體中文。
 
 ## 會員功能
 

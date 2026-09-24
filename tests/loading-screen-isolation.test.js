@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 
-const source = readFileSync("js/loading-screen.js", "utf8");
+const source = readFileSync("js/loading-screen.js", "utf8").replace(/^import "\.\/i18n\.js";\s*/, "");
 
 async function loadPage({ controlled = true, isolated = false, storage = new Map(), path = "/music-rating.html" } = {}) {
   let reloads = 0;

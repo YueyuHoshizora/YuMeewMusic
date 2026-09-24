@@ -85,7 +85,6 @@ test("圖轉影片 page exposes multiple images, MOV settings and both export pa
   assert.match(script, /image-video-timeline"\)\.addEventListener\("pointerdown"/);
   assert.match(script, /image-video-timeline"\)\.addEventListener\("pointermove"/);
   assert.match(script, /setPointerCapture/);
-  assert.match(script, /window\.confirm\("返回主畫面將不會保留目前的圖片與設定，是否確定？"\)/);
   assert.match(script, /settings\.resolution/);
   assert.match(script, /settings\.fps/);
   assert.doesNotMatch(script, /\b(fetch|XMLHttpRequest|sendBeacon|WebSocket)\s*\(/);

@@ -1,3 +1,5 @@
+import "./i18n.js";
+
 const overlay = document.getElementById("feature-loading");
 
 function finishLoading() {

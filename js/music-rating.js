@@ -3,6 +3,7 @@ import { loadSettings } from "./settings.js";
 import { presentRating, ratingVerdict } from "./music-rating-core.js";
 import { resolveSunoAudio } from "./suno-source.js";
 import { registerAudioPlayer } from "./audio-player.js";
+import { t, locale } from "./i18n.js";
 
 const $ = id => document.getElementById(id);
 const TARGET_SAMPLE_RATE = 16000;
@@ -12,7 +13,10 @@ const hardwareThreads = navigator.hardwareConcurrency;
 const availableThreads = globalThis.crossOriginIsolated
   ? Math.min(WASM_THREAD_FALLBACKS[0], hardwareThreads || WASM_THREAD_FALLBACKS[0])
   : 1;
-$("rating-capacity").textContent = `瀏覽器回報：${hardwareThreads ? `${hardwareThreads} 個邏輯核心` : "核心數未提供"}；預估可用推論執行緒：${availableThreads}。${globalThis.crossOriginIsolated ? "直接使用 WASM CPU，啟動失敗依序以 8、4、1 執行緒重試；目前使用數量顯示於上方引擎標籤。" : "未啟用跨來源隔離，使用單執行緒。"}`;
+$("rating-capacity").textContent = (hardwareThreads
+  ? t("瀏覽器回報：{0} 個邏輯核心；預估可用推論執行緒：{1}。", hardwareThreads, availableThreads)
+  : t("瀏覽器回報：核心數未提供；預估可用推論執行緒：{0}。", availableThreads))
+  + ` ${t(globalThis.crossOriginIsolated ? "直接使用 WASM CPU，啟動失敗依序以 8、4、1 執行緒重試；目前使用數量顯示於上方引擎標籤。" : "未啟用跨來源隔離，使用單執行緒。")}`;
 
 // 單曲評分與雙曲比較各自獨立的播放器，畫面上同時間只會有一個在播放：使用者切到另一個
 // 播放器時，原本在播的會自動暫停，不用自己手動協調。
@@ -36,10 +40,10 @@ function formatTime(seconds) {
 }
 
 function setError(message = "") {
-  $("rating-error").textContent = message;
+  $("rating-error").textContent = t(message);
   $("rating-error").hidden = !message;
   $("rating-engine").classList.toggle("error", Boolean(message));
-  if (message) $("rating-engine").textContent = "操作失敗";
+  if (message) $("rating-engine").textContent = t("操作失敗");
 }
 
 function updateControls() {
@@ -81,16 +85,16 @@ function selectMode(nextMode) {
   }
   $("rating-source-form").hidden = mode !== "single";
   $("rating-compare-form").hidden = mode !== "compare";
-  $("rating-source-title").textContent = mode === "single" ? "Suno 分享連結" : "比較兩首歌曲";
-  $("rating-start").textContent = mode === "single" ? "開始歌曲評分" : "開始比較評分";
-  $("rating-status").textContent = mode === "single" ? "請先貼上公開的 Suno 分享連結。" : "請貼上歌曲 A 與歌曲 B 的公開分享連結。";
+  $("rating-source-title").textContent = t(mode === "single" ? "Suno 分享連結" : "比較兩首歌曲");
+  $("rating-start").textContent = t(mode === "single" ? "開始歌曲評分" : "開始比較評分");
+  $("rating-status").textContent = t(mode === "single" ? "請先貼上公開的 Suno 分享連結。" : "請貼上歌曲 A 與歌曲 B 的公開分享連結。");
   $("rating-engine").className = "rating-engine";
-  $("rating-engine").textContent = "等待音樂";
+  $("rating-engine").textContent = t("等待音樂");
 }
 
 async function decodeAudio(blob) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) throw Error("此瀏覽器不支援音訊解碼。");
+  if (!AudioContextClass) throw Error(t("此瀏覽器不支援音訊解碼。"));
   const context = new AudioContextClass();
   try { return await context.decodeAudioData(await blob.arrayBuffer()); }
   finally { await context.close(); }
@@ -98,7 +102,7 @@ async function decodeAudio(blob) {
 
 async function resampleMono(buffer) {
   const OfflineClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  if (!OfflineClass) throw Error("此瀏覽器不支援離線音訊分析。");
+  if (!OfflineClass) throw Error(t("此瀏覽器不支援離線音訊分析。"));
   const context = new OfflineClass(1, Math.max(1, Math.ceil(buffer.duration * TARGET_SAMPLE_RATE)), TARGET_SAMPLE_RATE);
   const mono = context.createBuffer(1, buffer.length, buffer.sampleRate);
   const output = mono.getChannelData(0);
@@ -114,16 +118,16 @@ async function resampleMono(buffer) {
 }
 
 async function fetchSource(link, label, progressOffset = 0, progressScale = 1) {
-  $("rating-status").textContent = `正在解析${label}的公開 Suno 分享頁…`;
+  $("rating-status").textContent = t("正在解析{0}的公開 Suno 分享頁…", t(label));
   const { blob, metadata } = await resolveSunoAudio(link, {
     onProgress({ received, total, percent }) {
       if (percent != null) $("rating-progress").value = progressOffset + percent * progressScale;
       $("rating-status").textContent = total
-        ? `正在下載${label} ${percent}% · ${formatBytes(received)} / ${formatBytes(total)}`
-        : `正在下載${label} · 已接收 ${formatBytes(received)}`;
+        ? t("正在下載{0} {1}% · {2} / {3}", t(label), percent, formatBytes(received), formatBytes(total))
+        : t("正在下載{0} · 已接收 {1}", t(label), formatBytes(received));
     },
   });
-  $("rating-status").textContent = `正在解碼${label}…`;
+  $("rating-status").textContent = t("正在解碼{0}…", t(label));
   const buffer = await decodeAudio(blob);
   return { blob, metadata, buffer, url: URL.createObjectURL(blob) };
 }
@@ -131,10 +135,10 @@ async function fetchSource(link, label, progressOffset = 0, progressScale = 1) {
 function showSingleSource(source) {
   source.player = $("rating-player");
   source.player.src = source.url;
-  $("rating-file-name").textContent = source.metadata.title || "Suno 音樂";
+  $("rating-file-name").textContent = source.metadata.title || t("Suno 音樂");
   $("rating-artist").textContent = source.metadata.artist || "";
   $("rating-artist").hidden = !source.metadata.artist;
-  $("rating-file-info").textContent = `${formatTime(source.buffer.duration)} · ${source.buffer.sampleRate.toLocaleString()} Hz · ${formatBytes(source.blob.size)}`;
+  $("rating-file-info").textContent = `${formatTime(source.buffer.duration)} · ${source.buffer.sampleRate.toLocaleString(locale)} Hz · ${formatBytes(source.blob.size)}`;
   $("rating-file").hidden = false;
 }
 
@@ -142,7 +146,7 @@ function showCompareSource(source, index) {
   const suffix = index === 0 ? "a" : "b";
   source.player = $(`rating-player-${suffix}`);
   source.player.src = source.url;
-  $(`rating-file-name-${suffix}`).textContent = source.metadata.title || `歌曲 ${suffix.toUpperCase()}`;
+  $(`rating-file-name-${suffix}`).textContent = source.metadata.title || t(`歌曲 ${suffix.toUpperCase()}`);
   $(`rating-artist-${suffix}`).textContent = source.metadata.artist || "";
   $(`rating-artist-${suffix}`).hidden = !source.metadata.artist;
   $(`rating-file-info-${suffix}`).textContent = `${formatTime(source.buffer.duration)} · ${formatBytes(source.blob.size)}`;
@@ -155,24 +159,24 @@ async function fetchSingle(event) {
   setError();
   fetching = true;
   updateControls();
-  $("rating-fetch").textContent = "正在取得…";
+  $("rating-fetch").textContent = t("正在取得…");
   $("rating-progress").hidden = false;
   $("rating-progress").value = 0;
   $("rating-engine").className = "rating-engine";
-  $("rating-engine").textContent = "下載中";
+  $("rating-engine").textContent = t("下載中");
   try {
     sources = [await fetchSource($("rating-suno-url").value.trim(), "音樂")];
     showSingleSource(sources[0]);
-    $("rating-status").textContent = "音樂已準備完成，可以開始評分。";
+    $("rating-status").textContent = t("歌曲已準備完成，可以開始評分。");
     $("rating-engine").className = "rating-engine ready";
-    $("rating-engine").textContent = "準備完成";
+    $("rating-engine").textContent = t("準備完成");
   } catch (error) {
     clearSources();
-    setError(error?.message || "目前無法取得這首 Suno 音樂。");
-    $("rating-status").textContent = "請確認分享連結可公開播放後再試一次。";
+    setError(error?.message || t("目前無法取得這首 Suno 音樂。"));
+    $("rating-status").textContent = t("請確認分享連結可公開播放後再試一次。");
   } finally {
     fetching = false;
-    $("rating-fetch").textContent = "取得音樂";
+    $("rating-fetch").textContent = t("取得音樂");
     $("rating-progress").hidden = true;
     updateControls();
   }
@@ -185,11 +189,11 @@ async function fetchComparison(event) {
   setError();
   fetching = true;
   updateControls();
-  $("rating-fetch-compare").textContent = "正在取得…";
+  $("rating-fetch-compare").textContent = t("正在取得…");
   $("rating-progress").hidden = false;
   $("rating-progress").value = 0;
   $("rating-engine").className = "rating-engine";
-  $("rating-engine").textContent = "下載中";
+  $("rating-engine").textContent = t("下載中");
   try {
     const first = await fetchSource($("rating-suno-url-a").value.trim(), "歌曲 A", 0, 0.5);
     sources.push(first);
@@ -198,16 +202,16 @@ async function fetchComparison(event) {
     sources.push(second);
     showCompareSource(second, 1);
     $("rating-compare-files").hidden = false;
-    $("rating-status").textContent = "兩首音樂已準備完成，可以開始比較。";
+    $("rating-status").textContent = t("兩首音樂已準備完成，可以開始比較。");
     $("rating-engine").className = "rating-engine ready";
-    $("rating-engine").textContent = "準備完成";
+    $("rating-engine").textContent = t("準備完成");
   } catch (error) {
     clearSources();
-    setError(error?.message || "目前無法取得其中一首 Suno 音樂。");
-    $("rating-status").textContent = "請確認兩個分享連結都可公開播放。";
+    setError(error?.message || t("目前無法取得其中一首 Suno 音樂。"));
+    $("rating-status").textContent = t("請確認兩個分享連結都可公開播放。");
   } finally {
     fetching = false;
-    $("rating-fetch-compare").textContent = "取得兩首音樂";
+    $("rating-fetch-compare").textContent = t("取得兩首音樂");
     $("rating-progress").hidden = true;
     updateControls();
   }
@@ -219,7 +223,7 @@ function metricCard(metric) {
   const heading = document.createElement("div");
   heading.className = "rating-metric-heading";
   const label = document.createElement("span");
-  label.textContent = metric.label;
+  label.textContent = t(metric.label);
   const score = document.createElement("strong");
   score.textContent = metric.score.toFixed(0);
   heading.append(label, score);
@@ -229,7 +233,7 @@ function metricCard(metric) {
   fill.style.width = `${metric.score}%`;
   meter.append(fill);
   const description = document.createElement("small");
-  description.textContent = metric.description;
+  description.textContent = t(metric.description);
   article.append(heading, meter, description);
   return article;
 }
@@ -237,7 +241,7 @@ function metricCard(metric) {
 function renderSingle(raw) {
   const result = presentRating(raw);
   $("rating-total").textContent = String(Math.round(result.overall));
-  $("rating-verdict").textContent = ratingVerdict(result.overall);
+  $("rating-verdict").textContent = t(ratingVerdict(result.overall));
   $("rating-streams").textContent = result.streams.toFixed(1);
   $("rating-likes").textContent = result.likes.toFixed(1);
   $("rating-metrics").replaceChildren(...result.metrics.map(metricCard));
@@ -252,8 +256,9 @@ function comparisonSong(result, source, index, winner) {
   heading.className = "comparison-song-heading";
   const title = document.createElement("div");
   const marker = document.createElement("span");
-  marker.textContent = `歌曲 ${index === 0 ? "A" : "B"}`;
+  marker.textContent = t(`歌曲 ${index === 0 ? "A" : "B"}`);
   const name = document.createElement("h3");
+  name.setAttribute("data-i18n-ignore", "");
   name.textContent = source.metadata.title || marker.textContent;
   title.append(marker, name);
   const total = document.createElement("strong");
@@ -265,15 +270,15 @@ function comparisonSong(result, source, index, winner) {
   for (const [label, metrics] of [["優勢", sorted.slice(0, 2)], ["可改善", sorted.slice(-2).reverse()]]) {
     const block = document.createElement("div");
     const strong = document.createElement("b");
-    strong.textContent = label;
+    strong.textContent = t(label);
     const text = document.createElement("p");
-    text.textContent = metrics.map(metric => `${metric.label} ${Math.round(metric.score)}`).join("、");
+    text.textContent = metrics.map(metric => `${t(metric.label)} ${Math.round(metric.score)}`).join(" · ");
     block.append(strong, text);
     notes.append(block);
   }
   const popularity = document.createElement("p");
   popularity.className = "comparison-popularity";
-  popularity.textContent = `串流吸引力 ${result.streams.toFixed(1)} · 按讚傾向 ${result.likes.toFixed(1)}`;
+  popularity.textContent = t("串流吸引力 {0} · 按讚傾向 {1}", result.streams.toFixed(1), result.likes.toFixed(1));
   article.append(heading, notes, popularity);
   return article;
 }
@@ -283,10 +288,10 @@ function renderComparison(rawResults) {
   const difference = results[0].overall - results[1].overall;
   const winner = Math.abs(difference) < 0.5 ? -1 : difference > 0 ? 0 : 1;
   $("comparison-winner-mark").textContent = winner < 0 ? "＝" : winner === 0 ? "A" : "B";
-  $("comparison-winner").textContent = winner < 0 ? "兩首歌的綜合表現相近" : `歌曲 ${winner === 0 ? "A" : "B"} 綜合表現較突出`;
+  $("comparison-winner").textContent = winner < 0 ? t("兩首歌的綜合表現相近") : t("歌曲 {0} 綜合表現較突出", winner === 0 ? "A" : "B");
   $("comparison-summary-text").textContent = winner < 0
-    ? "兩首歌曲的綜合美學分數差距不到 0.5 分，請參考各項指標判斷風格取向。"
-    : `綜合美學分數相差 ${Math.abs(difference).toFixed(1)} 分；下方列出每個面向的相對表現。`;
+    ? t("兩首歌曲的綜合美學分數差距不到 0.5 分，請參考各項指標判斷風格取向。")
+    : t("綜合美學分數相差 {0} 分；下方列出每個面向的相對表現。", Math.abs(difference).toFixed(1));
   $("comparison-songs").replaceChildren(...results.map((result, index) => comparisonSong(result, sources[index], index, winner)));
   $("comparison-breakdown").replaceChildren(...results[0].metrics.map((metric, index) => {
     const other = results[1].metrics[index];
@@ -301,7 +306,7 @@ function renderComparison(rawResults) {
     barA.append(fillA);
     const label = document.createElement("span");
     const delta = metric.score - other.score;
-    label.textContent = `${metric.label}${Math.abs(delta) >= 0.5 ? ` · ${delta > 0 ? "A" : "B"} +${Math.abs(delta).toFixed(0)}` : " · 相近"}`;
+    label.textContent = `${t(metric.label)}${Math.abs(delta) >= 0.5 ? ` · ${delta > 0 ? "A" : "B"} +${Math.abs(delta).toFixed(0)}` : ` · ${t("相近")}`}`;
     const barB = document.createElement("div");
     barB.className = "comparison-bar";
     const fillB = document.createElement("i");
@@ -321,27 +326,27 @@ function analyzeAudio(audio, index, total) {
     pendingReject = reject;
     worker.onmessage = event => {
       const data = event.data || {};
-      const label = total > 1 ? `歌曲 ${index === 0 ? "A" : "B"}：` : "";
+      const label = total > 1 ? `${t(`歌曲 ${index === 0 ? "A" : "B"}`)}： ` : "";
       if (data.type === "status") {
-        $("rating-status").textContent = `${label}${data.text}`;
-        if (data.provider) $("rating-engine").textContent = `WASM CPU · ${data.threads} 執行緒`;
+        $("rating-status").textContent = `${label}${t(data.text)}`;
+        if (data.provider) $("rating-engine").textContent = t("WASM CPU · {0} 執行緒", data.threads);
       } else if (data.type === "progress") {
         $("rating-progress").value = (index + data.value / 100) / total * 100;
-        $("rating-status").textContent = `${label}正在分析 ${data.current}／${data.total} 個音樂片段…`;
+        $("rating-status").textContent = `${label}${t("正在分析 {0}／{1} 個音樂片段…", data.current, data.total)}`;
       } else if (data.type === "result") {
         pendingReject = null;
         resolve(data);
       } else if (data.type === "cancelled") {
         pendingReject = null;
-        reject(Object.assign(Error("歌曲評分已取消。"), { code: "CANCELLED" }));
+        reject(Object.assign(Error(t("歌曲評分已取消。")), { code: "CANCELLED" }));
       } else if (data.type === "error") {
         pendingReject = null;
-        reject(Error(data.message || "歌曲評分失敗。"));
+        reject(Error(t(data.message || "歌曲評分失敗。")));
       }
     };
     worker.onerror = event => {
       pendingReject = null;
-      reject(Object.assign(Error(event.message || "歌曲評分工作程序發生錯誤。"), { code: "WORKER_CRASH" }));
+      reject(Object.assign(Error(t(event.message || "歌曲評分工作程序發生錯誤。")), { code: "WORKER_CRASH" }));
     };
     const transferableAudio = audio.slice();
     worker.postMessage({ type: "analyze", audio: transferableAudio }, [transferableAudio.buffer]);
@@ -366,14 +371,16 @@ async function startRating() {
   $("rating-progress").hidden = false;
   $("rating-progress").value = 0;
   $("rating-engine").className = "rating-engine";
-  $("rating-engine").textContent = "分析中";
+  $("rating-engine").textContent = t("分析中");
   const threadFallbacks = globalThis.crossOriginIsolated ? WASM_THREAD_FALLBACKS : [1];
   let threadFallbackIndex = 0;
   worker = createRatingWorker(threadFallbacks[threadFallbackIndex]);
   try {
     const rawResults = [];
     for (let index = 0; index < targets.length; index++) {
-      $("rating-status").textContent = `${targets.length > 1 ? `正在準備歌曲 ${index === 0 ? "A" : "B"}` : "正在準備音樂"}的 16 kHz 單聲道音訊…`;
+      $("rating-status").textContent = targets.length > 1
+        ? t("正在準備歌曲 {0}的 16 kHz 單聲道音訊…", index === 0 ? "A" : "B")
+        : t("正在準備音樂的 16 kHz 單聲道音訊…");
       const audio = await resampleMono(targets[index].buffer);
       if (cancelled) throw Object.assign(Error("歌曲評分已取消。"), { code: "CANCELLED" });
       let response;
@@ -387,26 +394,26 @@ async function startRating() {
           const nextThreads = threadFallbacks[threadFallbackIndex];
           worker?.terminate();
           worker = createRatingWorker(nextThreads);
-          $("rating-engine").textContent = "WASM CPU · 重新啟動中";
-          $("rating-status").textContent = `${failedThreads} 執行緒無法啟動，正在改用 ${nextThreads} 執行緒重試…`;
+          $("rating-engine").textContent = t("WASM CPU · 重新啟動中");
+          $("rating-status").textContent = t("{0} 執行緒無法啟動，正在改用 {1} 執行緒重試…", failedThreads, nextThreads);
         }
       }
       rawResults.push(response.result);
-      $("rating-engine").textContent = `WASM CPU · ${response.threads} 執行緒`;
+      $("rating-engine").textContent = t("WASM CPU · {0} 執行緒", response.threads);
     }
     if (mode === "single") renderSingle(rawResults[0]);
     else renderComparison(rawResults);
     $("rating-progress").value = 100;
-    $("rating-status").textContent = mode === "single" ? "歌曲評分完成。" : "兩首歌曲比較完成。";
+    $("rating-status").textContent = mode === "single" ? t("歌曲評分完成。") : t("兩首歌曲比較完成。");
     $("rating-engine").className = "rating-engine ready";
-    $("rating-engine").textContent += " 完成";
+    $("rating-engine").textContent += ` ${t("評分完成")}`;
   } catch (error) {
     if (error?.code === "CANCELLED") {
-      $("rating-status").textContent = "歌曲評分已取消。";
-      $("rating-engine").textContent = "已取消";
+      $("rating-status").textContent = t("歌曲評分已取消。");
+      $("rating-engine").textContent = t("已取消");
     } else {
-      setError(error?.message || "歌曲評分失敗。");
-      $("rating-status").textContent = "模型未能完成分析。";
+      setError(error?.message || t("歌曲評分失敗。"));
+      $("rating-status").textContent = t("模型未能完成分析。");
     }
   } finally {
     worker?.terminate();
@@ -424,7 +431,7 @@ function cancelRating() {
   worker?.postMessage({ type: "cancel" });
   worker?.terminate();
   worker = null;
-  pendingReject?.(Object.assign(Error("歌曲評分已取消。"), { code: "CANCELLED" }));
+  pendingReject?.(Object.assign(Error(t("歌曲評分已取消。")), { code: "CANCELLED" }));
   pendingReject = null;
 }
 

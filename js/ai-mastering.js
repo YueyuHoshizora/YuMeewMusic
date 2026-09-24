@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
@@ -36,9 +37,9 @@ function resetMasteringDefaults() {
   $("mastering-intensity-value").textContent = "50%";
   const defaultLevel = EQ_DEFAULT_LEVEL + 1; // 介面用 1-based（1～5 段），核心函式用 0-based
   $("mastering-clarity").value = String(defaultLevel);
-  $("mastering-clarity-value").textContent = EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL];
+  $("mastering-clarity-value").textContent = t(EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL]);
   $("mastering-impact").value = String(defaultLevel);
-  $("mastering-impact-value").textContent = EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL];
+  $("mastering-impact-value").textContent = t(EQ_LEVEL_LABELS[EQ_DEFAULT_LEVEL]);
   // 循環播放試聽同樣不寫入任何暫存，每次打開頁面固定預設為開啟。
   $("mastering-loop").checked = true;
   $("mastering-original").loop = true;
@@ -263,14 +264,12 @@ function formatTime(seconds) {
 function formatLufs(value) {
   return Number.isFinite(value) ? `${value.toFixed(1)} LUFS` : "—";
 }
-
 function status(text, mode = "") {
-  $("mastering-status").textContent = text;
+  $("mastering-status").textContent = t(text);
   $("mastering-status").className = `mastering-status ${mode}`.trim();
 }
-
 function error(text = "") {
-  $("mastering-error").textContent = text;
+  $("mastering-error").textContent = t(text);
   $("mastering-error").hidden = !text;
   $("mastering-drop").classList.toggle("invalid", Boolean(text));
   if (text) status(text, "error");
@@ -447,10 +446,8 @@ async function loadFile(file, source = "upload") {
     const loudnessLeft = audioBuffer.getChannelData(0);
     const loudnessRight = audioBuffer.numberOfChannels >= 2 ? audioBuffer.getChannelData(1) : loudnessLeft;
     sourceLufs = measureIntegratedLoudness([loudnessLeft, loudnessRight], audioBuffer.sampleRate);
-    drawWaveform();
-    $("mastering-source").textContent = source === "main" ? "主畫面音樂" : "本機上傳";
-    $("mastering-duration").textContent = formatTime(audioBuffer.duration);
-    $("mastering-channels").textContent = audioBuffer.numberOfChannels >= 2 ? "立體聲" : "單聲道";
+    $("mastering-source").textContent = t(source === "main" ? "主畫面音樂" : "本機上傳");
+    $("mastering-channels").textContent = t(audioBuffer.numberOfChannels >= 2 ? "立體聲" : "單聲道");
     $("mastering-samplerate").textContent = `${Math.round(audioBuffer.sampleRate / 100) / 10} kHz`;
     $("mastering-size").textContent = formatBytes(file.size);
     $("mastering-file-info").hidden = false;
@@ -656,11 +653,11 @@ $("mastering-intensity").addEventListener("input", () => {
   applyPreviewIntensity(Number($("mastering-intensity").value) || 0);
 });
 $("mastering-clarity").addEventListener("input", () => {
-  $("mastering-clarity-value").textContent = EQ_LEVEL_LABELS[Number($("mastering-clarity").value) - 1] || "標準";
+  $("mastering-clarity-value").textContent = t(EQ_LEVEL_LABELS[Number($("mastering-clarity").value) - 1] || "標準");
   applyPreviewEq((Number($("mastering-clarity").value) || 1) - 1, (Number($("mastering-impact").value) || 1) - 1);
 });
 $("mastering-impact").addEventListener("input", () => {
-  $("mastering-impact-value").textContent = EQ_LEVEL_LABELS[Number($("mastering-impact").value) - 1] || "標準";
+  $("mastering-impact-value").textContent = t(EQ_LEVEL_LABELS[Number($("mastering-impact").value) - 1] || "標準");
   applyPreviewEq((Number($("mastering-clarity").value) || 1) - 1, (Number($("mastering-impact").value) || 1) - 1);
 });
 $("mastering-start").addEventListener("click", startMastering);
@@ -688,7 +685,7 @@ async function restoreSharedAudio() {
     const record = await loadStoredMedia("audio");
     if (record && !sourceFile) await loadFile(unpackStoredMedia(record), "main");
   } catch (cause) {
-    if (!sourceFile) status(`無法帶入主畫面音樂：${cause.message}`, "error");
+    if (!sourceFile) status(t("無法帶入主畫面音樂：{0}", cause.message), "error");
   }
 }
 

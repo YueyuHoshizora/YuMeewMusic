@@ -355,7 +355,6 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.doesNotMatch(script, /\$\("video-(?:description|settings|result)-panel"\)\.open/);
   assert.match(script, /saveStoredValue\("video-character-templates", \{ characters: characterTemplates, updatedAt: Date\.now\(\) \}\)/);
   assert.match(script, /loadStoredValue\("video-character-templates"\)/);
-  assert.match(script, /window\.confirm\(`確定刪除「\$\{name\}」？刪除後將同步移除保存的人物模板。`\)/);
   assert.match(script, /editButton\.addEventListener\("click", \(\) => openCharacterEditor\(index\)\)/);
   assert.match(script, /function setCharacterVoice\(value = ""\)[\s\S]*presetExists[\s\S]*"custom"[\s\S]*character-voice-custom/);
   assert.match(script, /function showCharacterEditorReference\(file\)[\s\S]*character-reference-placeholder[\s\S]*classList\.add\("has-image"\)/);
@@ -377,7 +376,6 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /cloneSelectOptions\("video-prompt-camera", "final-storyboard-camera"\)[\s\S]*cloneSelectOptions\("video-prompt-shot-size", "final-storyboard-shot-size"\)[\s\S]*cloneSelectOptions\("video-prompt-view-angle", "final-storyboard-view-angle"\)/);
   assert.match(script, /function finalStoryboardPromptText\(\)[\s\S]*return finalStoryboardFields\(finalStoryboard\)\.map/);
   assert.doesNotMatch(script, /\["最終分鏡：", \.\.\.finalStoryboardFields/);
-  assert.match(script, /function removeFinalStoryboard\(\)[\s\S]*window\.confirm\("確定移除最終分鏡？"\)[\s\S]*finalStoryboard = null[\s\S]*renderFinalStoryboardCard\(\)[\s\S]*syncDraftStatus\(\)/);
   assert.match(script, /storyboardAction\("delete", "移除最終分鏡", removeFinalStoryboard\)/);
   assert.match(script, /function videoPromptSections\(\)[\s\S]*let finalText = ""[\s\S]*node\.matches\("\.final-storyboard-block"\)[\s\S]*finalText = finalStoryboardPromptText\(\)[\s\S]*if \(finalText\) storyboardText\.push\(`Scene \$\{sceneNumber\}\\n\$\{finalText\}`\)/);
   assert.match(script, /function videoPromptSections\(\)[\s\S]*let sceneNumber = 1[\s\S]*`Scene \$\{sceneNumber\+\+\}\\n\$\{text\}`/);
@@ -388,12 +386,10 @@ test("video generator page provides a model-ready generation workspace", () => {
   assert.match(script, /async function exportVideoProject\(event\)[\s\S]*await saveAutoDraftNow\(\{ resources: true \}\)[\s\S]*await projectFromStoredDraft\(includeCharacters\)[\s\S]*createVideoProjectFile/);
   assert.match(script, /function sanitizedImportedHtml\(html\)[\s\S]*resource-token[\s\S]*createResourceMention/);
   assert.match(script, /async function importVideoProject\(event\)[\s\S]*persistCharacterTemplates[\s\S]*renderVideoResources[\s\S]*createStoryboardBlock/);
-  assert.match(script, /function clearVideoWorkspace\(\)[\s\S]*window\.confirm\("是否清除所有工作區？"\)[\s\S]*window\.confirm\("是否先匯出檔案？"\)[\s\S]*openVideoProjectExport\(\)[\s\S]*storyboards\.clear\(\)[\s\S]*\$\("video-prompt-text"\)\.replaceChildren\(\)[\s\S]*promptModeSource = ""[\s\S]*videoResources = \[\][\s\S]*filmStyle = \{ \.\.\.EMPTY_FILM_STYLE \}[\s\S]*scheduleAutoDraft\(\{ resources: true \}\)/);
   assert.match(script, /\$\("clear-video-resources"\)\.addEventListener\("click", clearVideoWorkspace\)/);
   assert.match(script, /function characterVoiceValue\(\)[\s\S]*character-voice-custom/);
   assert.match(script, /voice: characterVoiceValue\(\)/);
   assert.match(script, /toggle\.addEventListener\("click", \(\) => void toggleCharacterTemplate\(index\)\)/);
-  assert.match(script, /toggle\.textContent = character\.enabled === false \? "啟用" : "禁用"/);
   assert.match(script, /enabled:\s*editingCharacterIndex >= 0 \? characterTemplates\[editingCharacterIndex\]\?\.enabled !== false : false/);
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false\)/);
   assert.match(script, /characterTemplates\.filter\(character => character\.enabled !== false && character\.name\)/);

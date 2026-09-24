@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, unpackStoredMedia } from "./media-store.js";
@@ -106,7 +107,7 @@ function setTrimInputs(start, end) {
     $(`trim-${edge}-range`).value = value;
   }
   updateTrimMarkers();
-  $("trim-info").textContent = `選取 ${formatTrimTime(end - start)}，放開後自動套用`;
+  $("trim-info").textContent = t("選取 {0}，放開後自動套用", formatTrimTime(end - start));
 }
 
 function updateTrimMarkers() {
@@ -119,9 +120,9 @@ function updateTrimMarkers() {
   $("trim-selection").style.left = `${start / duration * 100}%`;
   $("trim-selection").style.width = `${(Math.min(end, duration) - start) / duration * 100}%`;
   $("trim-selection-duration").textContent = formatTrimTime(Math.min(end, duration) - start);
-  $("trim-drag-body").setAttribute("aria-label", `拖曳平移裁剪範圍，長度 ${formatTrimTime(Math.min(end, duration) - start)}`);
-  $("trim-start-label").textContent = `開始 ${formatTrimTime(start)}`;
-  $("trim-end-label").textContent = `結束 ${formatTrimTime(end)}`;
+  $("trim-drag-body").setAttribute("aria-label", t("拖曳平移裁剪範圍，長度 {0}", formatTrimTime(Math.min(end, duration) - start)));
+  $("trim-start-label").textContent = t("開始 {0}", formatTrimTime(start));
+  $("trim-end-label").textContent = t("結束 {0}", formatTrimTime(end));
 }
 
 function updateTrimControls() {
@@ -142,7 +143,7 @@ function updateTrimControls() {
     $("trim-start-range").value = 0;
     $("trim-end").value = formatTrimTime(duration);
     $("trim-end-range").value = duration;
-    if (!$("trim-info").textContent) $("trim-info").textContent = `完整影片：${formatTrimTime(duration)}`;
+    if (!$("trim-info").textContent) $("trim-info").textContent = t("完整影片：{0}", formatTrimTime(duration));
   }
   updateTrimMarkers();
 }
@@ -154,14 +155,14 @@ function applyProjectTrim() {
   let end = parseTrimTime($("trim-end").value);
   if ($("trim-end").value === formatTrimTime(duration)) end = duration;
   if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start || end > duration + .005) {
-    $("trim-info").textContent = "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間且不可超過影片長度";
+    $("trim-info").textContent = t("請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間且不可超過影片長度");
     return false;
   }
   pauseProject();
   state.trimStart = start;
   state.trimEnd = start <= .005 && Math.abs(end - duration) <= .005 ? null : end;
   state.time = start;
-  $("trim-info").textContent = `已套用：${formatTrimTime(end - start)}`;
+  $("trim-info").textContent = t("已套用：{0}", formatTrimTime(end - start));
   update();
   return true;
 }
@@ -244,7 +245,7 @@ function renderTimeline() {
     band.className = `timeline-band${layer.id === state.selectedId ? " selected" : ""}`;
     band.style.left = layer.type === "dynamic" ? "0%" : `${layer.start / duration * 100}%`;
     band.style.width = layer.type === "dynamic" ? "100%" : `${Math.max(0.5, (layerEnd(layer) - layer.start) / duration * 100)}%`;
-    band.textContent = layer.type === "dynamic" ? "動態特效" : layer.type === "video" ? `影片${layer.audio ? " ♫" : ""}` : "圖片";
+    band.textContent = layer.type === "dynamic" ? t("動態特效") : layer.type === "video" ? t("影片") + (layer.audio ? " ♫" : "") : t("圖片");
     band.addEventListener("click", () => selectLayer(layer.id));
     track.append(band);
     return track;
@@ -256,8 +257,8 @@ function renderLayerList() {
     const row = document.createElement("div");
     row.className = `layer-row${layer.id === state.selectedId ? " selected" : ""}`;
     row.innerHTML = `<button class="layer-select" type="button"><span>${layer.type === "dynamic" ? "✦" : layer.type === "video" ? "▶" : "▧"}</span><div><strong></strong><small></small></div><b>${index + 1}</b></button><div class="layer-order"><button class="layer-up" type="button" aria-label="上移圖層">↑</button><button class="layer-down" type="button" aria-label="下移圖層">↓</button></div>`;
-    row.querySelector("strong").textContent = layer.name;
-    row.querySelector("small").textContent = layer.type === "dynamic" ? "可調整順序 · 完整時間" : `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
+    row.querySelector("strong").textContent = layer.type === "dynamic" ? t(layer.name) : layer.name;
+    row.querySelector("small").textContent = layer.type === "dynamic" ? t("可調整順序 · 完整時間") : `${formatEditorTime(layer.start)}–${formatEditorTime(layerEnd(layer))}`;
     row.querySelector(".layer-select").addEventListener("click", () => selectLayer(layer.id));
     const up = row.querySelector(".layer-up");
     const down = row.querySelector(".layer-down");
@@ -272,8 +273,8 @@ function renderLayerList() {
   $("identity-layer").classList.toggle("inactive", !hasIdentity);
   $("base-layer").classList.toggle("inactive", !state.base.audioBuffer);
   $("base-layer-detail").textContent = state.base.audioBuffer
-    ? `${formatEditorTime(state.base.duration)} · 固定最底層`
-    : "回主畫面選擇音樂後自動帶入";
+    ? `${formatEditorTime(state.base.duration)} · ${t("固定最底層")}`
+    : t("回主畫面選擇音樂後自動帶入");
 }
 
 function renderInspector() {
@@ -282,8 +283,8 @@ function renderInspector() {
   $("layer-controls").hidden = !layer;
   if (!layer) return;
   const dynamic = layer.type === "dynamic";
-  $("selected-kind").textContent = dynamic ? "動態特效圖層" : layer.type === "video" ? "影片圖層" : "圖片圖層";
-  $("selected-name").textContent = layer.name;
+  $("selected-kind").textContent = dynamic ? t("動態特效圖層") : layer.type === "video" ? t("影片圖層") : t("圖片圖層");
+  $("selected-name").textContent = dynamic ? t(layer.name) : layer.name;
   $("dynamic-layer-help").hidden = !dynamic;
   $("layer-media-controls").hidden = dynamic;
   $("remove-layer").hidden = dynamic;
@@ -335,7 +336,7 @@ function loadVideo(file) {
     video.src = url;
     video.onseeked = renderPreview;
     video.onloadedmetadata = () => resolve({ url, video });
-    video.onerror = () => { URL.revokeObjectURL(url); reject(Error(`${file.name} 無法載入。`)); };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(Error(t("{0} 無法載入。", file.name))); };
   });
 }
 
@@ -344,7 +345,7 @@ function loadImage(file) {
     const url = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => resolve({ url, image });
-    image.onerror = () => { URL.revokeObjectURL(url); reject(Error(`${file.name} 無法載入。`)); };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(Error(t("{0} 無法載入。", file.name))); };
     image.src = url;
   });
 }
@@ -353,7 +354,7 @@ async function addFiles(files, type) {
   $("file-error").hidden = true;
   for (const file of files) {
     try {
-      if (file.size > 1024 ** 3) throw Error(`${file.name} 超過 1 GB。`);
+      if (file.size > 1024 ** 3) throw Error(t("{0} 超過 1 GB。", file.name));
       const start = state.time;
       if (type === "video") {
         const { url, video } = await loadVideo(file);
@@ -364,7 +365,7 @@ async function addFiles(files, type) {
         state.layers.push({ id: nextId++, type, name: file.name, file, url, element: image, start, duration: 5, enterEffect: "none", exitEffect: "none", enterDuration: .5, exitDuration: .5 });
       }
       state.selectedId = state.layers.at(-1).id;
-      status(`已加入${type === "video" ? "影片" : "圖片"}：${file.name}`, "success");
+      status(type === "video" ? t("已加入影片：{0}", file.name) : t("已加入圖片：{0}", file.name), "success");
     } catch (error) {
       $("file-error").textContent = error.message;
       $("file-error").hidden = false;
@@ -480,13 +481,13 @@ async function restoreFixedLayers() {
       const extension = file.name.split(".").pop()?.toLowerCase() || "srt";
       state.subtitles = parseSubtitles(await file.text(), extension);
     }
-  } catch (error) { status(`字幕無法帶入：${error.message}`, "error"); }
+  } catch (error) { status(t("字幕無法帶入：{0}", error.message), "error"); }
   if (settings.identityType === "image" && settings.identityData) {
     try {
       const image = new Image();
       await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = reject; image.src = settings.identityData; });
       state.identityImage = image;
-    } catch { status("個人識別圖片無法帶入。", "error"); }
+    } catch { status(t("個人識別圖片無法帶入。"), "error"); }
   }
   try {
     const [storedAudio, storedImage, imageVideoProject] = await Promise.all([loadStoredMedia("audio"), loadStoredMedia("image"), loadStoredValue("image-video-project")]);
@@ -520,7 +521,7 @@ async function restoreFixedLayers() {
         state.base.backgroundKind = "image";
       }
     }
-  } catch (error) { status(`主畫面影片本體無法帶入：${error.message}`, "error"); }
+  } catch (error) { status(t("主畫面影片本體無法帶入：{0}", error.message), "error"); }
   update();
 }
 
@@ -529,7 +530,7 @@ async function createVideoDecoders(m, layers) {
   for (const layer of layers.filter(layer => layer.type === "video")) {
     const input = new m.Input({ source: new m.BlobSource(layer.file), formats: m.ALL_FORMATS });
     const track = await input.getPrimaryVideoTrack();
-    if (!track || !(await track.canDecode())) { input.dispose(); throw Error(`${layer.name} 的影片編碼無法解碼。`); }
+    if (!track || !(await track.canDecode())) { input.dispose(); throw Error(t("{0} 的影片編碼無法解碼。", layer.name)); }
     decoders.set(layer.id, { input, sink: new m.VideoSampleSink(track, { hardwareAcceleration: "no-preference" }) });
   }
   return decoders;
@@ -551,10 +552,10 @@ async function mixProjectAudio(layers, range, signal) {
       if (available > 0) baseSource.start(0, range.start, available);
     }
     for (const layer of audible) {
-      if (signal.aborted) throw Error("已取消匯出。");
+      if (signal.aborted) throw Error(t("已取消匯出。"));
       let decoded;
       try { decoded = await decoder.decodeAudioData(await layer.file.arrayBuffer()); }
-      catch { throw Error(`${layer.name} 的音訊無法解碼，請關閉這個圖層的音訊後再試。`); }
+      catch { throw Error(t("{0} 的音訊無法解碼，請關閉這個圖層的音訊後再試。", layer.name)); }
       const source = context.createBufferSource();
       source.buffer = decoded;
       source.connect(context.destination);
@@ -617,7 +618,7 @@ async function applyProjectToMain() {
     }
     await output.start();
     for (let index = 0; index < count; index++) {
-      if (signal.aborted) throw Error("已取消匯出。");
+      if (signal.aborted) throw Error(t("已取消匯出。"));
       const time = index / fps;
       const sourceTime = range.start + time;
       context.fillStyle = "#080a0c";
@@ -645,7 +646,9 @@ async function applyProjectToMain() {
       if (index % 5 === 0) {
         const progress = Math.round(index / count * 90);
         setApplyProgress(progress);
-        status(`正在套用 ${progress}% · ${hardwareAcceleration === "prefer-hardware" ? "硬體編碼優先" : "瀏覽器編碼"}`);
+        status(hardwareAcceleration === "prefer-hardware"
+          ? t("正在套用（硬體編碼優先）{0}%", progress)
+          : t("正在套用（瀏覽器編碼）{0}%", progress));
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
@@ -655,7 +658,7 @@ async function applyProjectToMain() {
     const blob = new Blob([target.buffer], { type: format === "webm" ? "video/webm" : "video/mp4" });
     const outputName = `yumeow-edited-background-${resolution}p-${fps}fps.${format}`;
     const file = new File([blob], outputName, { type: blob.type, lastModified: Date.now() });
-    if (file.size > 1024 ** 3) throw Error("套用後的背景影片超過主畫面 1 GB 上限，請降低解析度、FPS 或縮短時間。");
+    if (file.size > 1024 ** 3) throw Error(t("套用後的背景影片超過主畫面 1 GB 上限，請降低解析度、FPS 或縮短時間。"));
     let audioFile = null;
     if (mixedAudio) {
       const audioBlob = await encodeMedia({
@@ -670,19 +673,19 @@ async function applyProjectToMain() {
       });
       audioFile = new File([audioBlob], "yumeow-edited-audio.wav", { type: "audio/wav", lastModified: Date.now() });
     }
-    status("正在保存影片與混合音訊到主畫面…");
+    status(t("正在保存影片與混合音訊到主畫面…"));
     setApplyProgress(99);
     await deleteStoredValue("image-video-project").catch(() => {});
     await saveStoredMedia("image", file);
     if (audioFile) await saveStoredMedia("audio", audioFile);
-    if (!saveSettings({ ...settings, style: 19 })) throw Error("影片已保存，但無法將主畫面特效改為「無」。");
+    if (!saveSettings({ ...settings, style: 19 })) throw Error(t("影片已保存，但無法將主畫面特效改為「無」。"));
     void navigator.storage?.persist?.().catch(() => false);
     setApplyProgress(100);
-    status("已套用到主畫面。", "success");
+    status(t("已套用到主畫面。"), "success");
     window.location.href = "./";
   } catch (error) {
     if (output && !["finalized", "canceled"].includes(output.state)) await output.cancel().catch(() => {});
-    status(error.message || "影片套用失敗。", "error");
+    status(error.message || t("影片套用失敗。"), "error");
   } finally {
     for (const { input } of decoders.values()) input.dispose();
     baseBackgroundDecoder?.input.dispose();
@@ -730,8 +733,8 @@ for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
     updateTrimMarkers();
     const length = parseTrimTime($("trim-end").value) - parseTrimTime($("trim-start").value);
     $("trim-info").textContent = length > 0
-      ? `選取 ${formatTrimTime(length)}，按「套用裁剪」生效`
-      : "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間";
+      ? t("選取 {0}，按「套用裁剪」生效", formatTrimTime(length))
+      : t("請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間");
   });
   $(`trim-${edge}${suffix}`).addEventListener("change", applyProjectTrim);
 }
@@ -743,7 +746,7 @@ $("trim-reset").addEventListener("click", () => {
   state.trimEnd = null;
   state.time = 0;
   state.trimInputsFollowDuration = false;
-  $("trim-info").textContent = `已恢復完整影片：${formatTrimTime(timelineDuration())}，裁剪時間已保留`;
+  $("trim-info").textContent = t("已恢復完整影片：{0}，裁剪時間已保留", formatTrimTime(timelineDuration()));
   update();
 });
 for (const mode of ["start", "body", "end"]) {
@@ -819,7 +822,7 @@ $("apply-project").addEventListener("click", () => void applyProjectToMain());
 $("cancel-export").addEventListener("click", () => state.exportController?.abort());
 for (const link of document.querySelectorAll("[data-confirm-return]")) {
   link.addEventListener("click", event => {
-    if (!window.confirm("返回主畫面則不會保留所有修改結果，是否確定？")) event.preventDefault();
+    if (!window.confirm(t("返回主畫面則不會保留所有修改結果，是否確定？"))) event.preventDefault();
   });
 }
 window.addEventListener("beforeunload", () => {

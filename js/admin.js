@@ -7,9 +7,10 @@ import { loadSettings } from "./settings.js";
 import { applyTheme } from "./themes.js";
 import { PROVIDER_BILLING_URLS } from "./provider-billing.js";
 
+import { locale } from "./i18n.js";
 applyTheme(loadSettings().mode, loadSettings().theme);
 const $ = id => document.getElementById(id);
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+const usd = new Intl.NumberFormat(locale, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 const state = { session: null, members: [], selectedUserId: "", apiKeys: [], pendingTopup: null, pendingDeleteProvider: "" };
 
 function setStatus(message, error = false) {

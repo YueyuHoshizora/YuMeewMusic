@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings, saveSettings } from "./settings.js";
 import { videoDimensions } from "./dimensions.js";
@@ -45,14 +46,14 @@ function transparentOutput() {
 function renderExportMode() {
   const transparent = transparentOutput();
   const format = transparent ? "MOV" : "MP4";
-  $("image-video-export-title").textContent = `匯出 ${format}`;
+  $("image-video-export-title").textContent = t("匯出 {0}", format);
   $("image-video-aspect").textContent = transparent
-    ? `MOV · PNG 透明影格 · ${settings.aspectRatio}（畫面比例從主畫面帶入）`
-    : `MP4 · H.264 · 黑色背景 · ${settings.aspectRatio}（畫面比例從主畫面帶入）`;
-  $("export-image-video").textContent = `↓ 匯出 ${format}`;
+    ? t("MOV · PNG 透明影格 · {0}（畫面比例從主畫面帶入）", settings.aspectRatio)
+    : t("MP4 · H.264 · 黑色背景 · {0}（畫面比例從主畫面帶入）", settings.aspectRatio);
+  $("export-image-video").textContent = t("↓ 匯出 {0}", format);
   $("image-video-format-help").textContent = transparent
-    ? "使用 PNG 影格保留透明通道；靜止畫面會自動合併影格以縮小檔案，含大量特效時仍會比一般影片大。"
-    : "透明區域會填入黑色並使用 H.264 編碼，檔案會比透明 MOV 小很多。";
+    ? t("使用 PNG 影格保留透明通道；靜止畫面會自動合併影格以縮小檔案，含大量特效時仍會比一般影片大。")
+    : t("透明區域會填入黑色並使用 H.264 編碼，檔案會比透明 MOV 小很多。");
 }
 
 function selected() {
@@ -77,7 +78,7 @@ function moveSlide(id, direction) {
   [state.slides[index], state.slides[target]] = [state.slides[target], state.slides[index]];
   state.selectedId = id;
   state.time = slideStart(selected());
-  status(`已將 ${selected().name}${direction < 0 ? "上移" : "下移"}。`, "success");
+  status(direction < 0 ? t("已將素材 {0} 上移。", selected().name) : t("已將素材 {0} 下移。", selected().name), "success");
   update();
 }
 
@@ -132,7 +133,7 @@ function renderList() {
     const name = document.createElement("strong");
     name.textContent = slide.name;
     const timing = document.createElement("small");
-    timing.textContent = `${formatEditorTime(slideStart(slide))}–${formatEditorTime(slideStart(slide) + slide.duration)} · ${slide.duration.toFixed(1)} 秒`;
+    timing.textContent = t("{0}–{1} · {2} 秒", formatEditorTime(slideStart(slide)), formatEditorTime(slideStart(slide) + slide.duration), slide.duration.toFixed(1));
     detail.append(name, timing);
     select.append(thumbnail, detail);
     select.addEventListener("click", () => { state.selectedId = slide.id; pause(); setPlaybackTime(slideStart(slide)); update(); });
@@ -144,23 +145,23 @@ function renderList() {
     up.type = "button";
     up.className = "image-order-button";
     up.textContent = "↑";
-    up.title = "上移素材";
-    up.setAttribute("aria-label", `上移 ${slide.name}`);
+    up.title = t("上移素材");
+    up.setAttribute("aria-label", t("上移 {0}", slide.name));
     up.disabled = index === 0 || state.exporting;
     up.addEventListener("click", () => moveSlide(slide.id, -1));
     const down = document.createElement("button");
     down.type = "button";
     down.className = "image-order-button";
     down.textContent = "↓";
-    down.title = "下移素材";
-    down.setAttribute("aria-label", `下移 ${slide.name}`);
+    down.title = t("下移素材");
+    down.setAttribute("aria-label", t("下移 {0}", slide.name));
     down.disabled = index === state.slides.length - 1 || state.exporting;
     down.addEventListener("click", () => moveSlide(slide.id, 1));
     controls.append(order, up, down);
     row.append(select, controls);
     return row;
   }));
-  $("image-count").textContent = `${state.slides.length} 個`;
+  $("image-count").textContent = t("{0} 個", state.slides.length);
   $("empty-images").hidden = Boolean(state.slides.length);
 }
 
@@ -170,11 +171,11 @@ function renderInspector() {
   $("image-controls").hidden = !slide;
   if (!slide) return;
   const video = slide.type === "video";
-  $("selected-media-kind").textContent = video ? "影片 · 靜音 · 不循環" : "圖片";
+  $("selected-media-kind").textContent = video ? t("影片 · 靜音 · 不循環") : t("圖片");
   $("selected-image-name").textContent = slide.name;
   $("image-duration").value = slide.duration;
   $("image-duration").disabled = video || state.exporting;
-  $("image-duration-label").textContent = video ? "影片原始長度（秒）" : "持續時間（秒）";
+  $("image-duration-label").textContent = video ? t("影片原始長度（秒）") : t("持續時間（秒）");
   $("image-duration-help").hidden = !video;
   for (const phase of ["enter", "exit"]) {
     $(`image-${phase}-effect`).value = slide[`${phase}Effect`];
@@ -208,7 +209,7 @@ function renderTimeline() {
     band.className = `timeline-band${slide.id === state.selectedId ? " selected" : ""}`;
     band.style.left = `${start / scaleDuration * 100}%`;
     band.style.width = `${slide.duration / scaleDuration * 100}%`;
-    band.textContent = `${slide.duration.toFixed(1)} 秒`;
+    band.textContent = t("{0} 秒", slide.duration.toFixed(1));
     const seek = start;
     band.addEventListener("click", () => { state.selectedId = slide.id; pause(); setPlaybackTime(seek); update(); });
     track.append(band);
@@ -242,7 +243,7 @@ function updatePlayer() {
   $("image-video-current").textContent = formatEditorTime(state.time);
   $("image-video-total").textContent = formatEditorTime(total);
   $("image-video-playhead").style.left = `calc(78px + (100% - 84px) * ${state.time / scaleDuration})`;
-  $("image-video-playhead").setAttribute("aria-label", `播放位置 ${formatEditorTime(state.time)}，可左右拖曳`);
+  $("image-video-playhead").setAttribute("aria-label", t("播放位置 {0}，可左右拖曳", formatEditorTime(state.time)));
   $("play-image-video").textContent = state.playing ? "❚❚" : "▶";
   const ready = state.slides.length > 0 && !state.exporting;
   $("play-image-video").disabled = !ready;
@@ -267,7 +268,7 @@ function loadImage(file) {
     const url = URL.createObjectURL(file);
     const image = new Image();
     image.onload = () => resolve({ image, url });
-    image.onerror = () => { URL.revokeObjectURL(url); reject(Error(`${file.name} 無法載入。`)); };
+    image.onerror = () => { URL.revokeObjectURL(url); reject(Error(t("{0} 無法載入。", file.name))); };
     image.src = url;
   });
 }
@@ -284,13 +285,13 @@ function loadVideo(file) {
     video.onloadeddata = () => {
       if (!Number.isFinite(video.duration) || !(video.duration > 0) || !video.videoWidth || !video.videoHeight) {
         URL.revokeObjectURL(url);
-        reject(Error(`${file.name} 沒有可播放的影片畫面。`));
+        reject(Error(t("{0} 沒有可播放的影片畫面。", file.name)));
         return;
       }
       video.addEventListener("seeked", () => { if (!state.playing && !state.exporting) renderFrame(); });
       resolve({ video, url });
     };
-    video.onerror = () => { URL.revokeObjectURL(url); reject(Error(`${file.name} 無法載入或影片編碼不受支援。`)); };
+    video.onerror = () => { URL.revokeObjectURL(url); reject(Error(t("{0} 無法載入或影片編碼不受支援。", file.name))); };
     video.src = url;
   });
 }
@@ -304,8 +305,8 @@ async function addImages(files) {
       const video = isBackgroundVideo(file);
       const extension = file.name.split(".").pop()?.toLowerCase();
       const image = ["image/jpeg", "image/png", "image/webp"].includes(file.type) || ["jpg", "jpeg", "png", "webp"].includes(extension);
-      if (!image && !video) throw Error(`${file.name} 不是支援的圖片或影片格式。`);
-      if (file.size > (video ? 1024 ** 3 : 30 * 1024 * 1024)) throw Error(`${file.name} 超過 ${video ? "1 GB" : "30 MB"}。`);
+      if (!image && !video) throw Error(t("{0} 不是支援的圖片或影片格式。", file.name));
+      if (file.size > (video ? 1024 ** 3 : 30 * 1024 * 1024)) throw Error(t("{0} 超過 {1}。", file.name, video ? "1 GB" : "30 MB"));
       const loaded = video ? await loadVideo(file) : await loadImage(file);
       added.push({
         id: nextId++, type: video ? "video" : "image", file, name: file.name,
@@ -317,12 +318,12 @@ async function addImages(files) {
     state.slides.push(...added);
     state.selectedId = added[0]?.id || state.selectedId;
     state.time = added[0] ? slideStart(added[0]) : state.time;
-    status(`已加入 ${added.length} 個素材；影片會靜音播放一次且不循環。`, "success");
+    status(t("已加入 {0} 個素材；影片會靜音播放一次且不循環。", added.length), "success");
     update();
   } catch (reason) {
     for (const slide of added) { if (slide.type === "video") slide.element.pause(); URL.revokeObjectURL(slide.url); }
-    error(reason.message || "素材無法載入。");
-    status("部分或全部素材無法加入。", "error");
+    error(reason.message || t("素材無法載入。"));
+    status(t("部分或全部素材無法加入。"), "error");
   }
 }
 
@@ -377,7 +378,7 @@ function animate(timestamp) {
 }
 
 function canvasPng(canvas) {
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error("PNG 影格編碼失敗。")), "image/png"));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error(t("PNG 影格編碼失敗。"))), "image/png"));
 }
 
 async function createExportVideoSources(fps, total, signal) {
@@ -387,12 +388,12 @@ async function createExportVideoSources(fps, total, signal) {
   const m = await import("../vendor/mediabunny.min.mjs");
   try {
     for (const slide of slides) {
-      if (signal.aborted) throw Error("已取消匯出。");
+      if (signal.aborted) throw Error(t("已取消匯出。"));
       const input = new m.Input({ source: new m.BlobSource(slide.file), formats: m.ALL_FORMATS });
       const track = await input.getPrimaryVideoTrack();
       if (!track || !(await track.canDecode())) {
         input.dispose();
-        throw Error(`${slide.name} 的影片編碼無法解碼。`);
+        throw Error(t("{0} 的影片編碼無法解碼。", slide.name));
       }
       sources.set(slide.id, { input, sink: new m.VideoSampleSink(track, { hardwareAcceleration: "no-preference" }) });
     }
@@ -421,7 +422,7 @@ async function renderExportFrame(time, total, videoSources) {
     return null;
   }
   const { value: sample } = await videoSources.get(active.slide.id).iterator.next();
-  if (!sample) throw Error(`${active.slide.name} 無法讀取 ${formatEditorTime(time)} 的影片畫面。`);
+  if (!sample) throw Error(t("{0} 無法讀取 {1} 的影片畫面。", active.slide.name, formatEditorTime(time)));
   renderFrame(time, sample);
   return sample;
 }
@@ -439,7 +440,7 @@ async function encodeMp4(canvas, dimensions, fps, total, signal, videoSources) {
     await output.start();
     const count = Math.ceil(total * fps);
     for (let index = 0; index < count; index++) {
-      if (signal.aborted) throw Error("已取消匯出。");
+      if (signal.aborted) throw Error(t("已取消匯出。"));
       const time = index / fps;
       const sample = await renderExportFrame(time, total, videoSources);
       try {
@@ -450,7 +451,9 @@ async function encodeMp4(canvas, dimensions, fps, total, signal, videoSources) {
       if (index % 5 === 0 || index === count - 1) {
         const progress = Math.round((index + 1) / count * 98);
         $("image-video-progress").value = progress;
-        status(`正在建立 MP4 ${progress}% · ${hardwareAcceleration === "prefer-hardware" ? "硬體編碼優先" : "瀏覽器編碼"}`);
+        status(hardwareAcceleration === "prefer-hardware"
+          ? t("正在建立 MP4（硬體編碼優先）{0}%", progress)
+          : t("正在建立 MP4（瀏覽器編碼）{0}%", progress));
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
@@ -488,7 +491,7 @@ async function encodeVideo(toMain) {
       const frames = [];
       const stillFrames = new Map();
       for (let index = 0; index < count; index++) {
-        if (signal.aborted) throw Error("已取消匯出。");
+        if (signal.aborted) throw Error(t("已取消匯出。"));
         const frameTime = index / fps;
         const active = imageSequenceAt(state.slides, Math.min(frameTime, Math.max(0, total - .0001)));
         const effect = active ? layerEffectState({ ...active.slide, start: active.start }, frameTime) : null;
@@ -506,7 +509,7 @@ async function encodeVideo(toMain) {
         if (index % 3 === 0 || index === count - 1) {
           const progress = Math.round((index + 1) / count * 94);
           $("image-video-progress").value = progress;
-          status(`正在建立透明 MOV ${progress}% · ${index + 1}/${count} 影格`);
+          status(t("正在建立透明 MOV {0}% · {1}/{2} 影格", progress, index + 1, count));
           await new Promise(resolve => setTimeout(resolve, 0));
         }
       }
@@ -519,8 +522,8 @@ async function encodeVideo(toMain) {
     const outputName = `yumeew-image-video-${resolution}p-${fps}fps.${extension}`;
     const file = new File([blob], outputName, { type: mime, lastModified: Date.now() });
     if (toMain) {
-      if (file.size > 1024 ** 3) throw Error("這個影片超過主畫面背景素材的 1 GB 上限，請降低解析度、FPS 或縮短圖片時間。");
-      status("正在保存背景素材到瀏覽器…");
+      if (file.size > 1024 ** 3) throw Error(t("這個影片超過主畫面背景素材的 1 GB 上限，請降低解析度、FPS 或縮短圖片時間。"));
+      status(t("正在保存背景素材到瀏覽器…"));
       if (transparent) {
         const project = serializeImageSequence(state.slides, { outputName, ...dimensions, aspectRatio: settings.aspectRatio, fps });
         await saveStoredValue("image-video-project", project);
@@ -542,9 +545,9 @@ async function encodeVideo(toMain) {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
     $("image-video-progress").value = 100;
-    status(`${transparent ? "透明 MOV" : "MP4"} 已完成，下載已開始。`, "success");
+    status(transparent ? t("透明 MOV 已完成，下載已開始。") : t("MP4 已完成，下載已開始。"), "success");
   } catch (reason) {
-    status(reason.message || "影片匯出失敗。", "error");
+    status(reason.message || t("影片匯出失敗。"), "error");
   } finally {
     for (const source of videoSources.values()) source.input.dispose();
     state.exporting = false;
@@ -624,7 +627,7 @@ $("export-image-video").addEventListener("click", () => void encodeVideo(false))
 $("export-image-video-to-main").addEventListener("click", () => void encodeVideo(true));
 $("cancel-image-video-export").addEventListener("click", () => state.controller?.abort());
 for (const link of document.querySelectorAll("[data-confirm-return]")) link.addEventListener("click", event => {
-  if (!state.slides.length || window.confirm("返回主畫面將不會保留目前的圖片與設定，是否確定？")) return;
+  if (!state.slides.length || window.confirm(t("返回主畫面將不會保留目前的圖片與設定，是否確定？"))) return;
   event.preventDefault();
 });
 window.addEventListener("pagehide", () => {

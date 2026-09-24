@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { trimAudio } from "./trim.js";
 import { moveTrimRange } from "./trim-range.js";
 import { formatTrimTime, parseTrimTime } from "./trim-time.js";
@@ -139,7 +140,7 @@ const formatTime = (t) =>
   `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
 
 function message(text = "") {
-  $("message-text").textContent = text;
+  $("message-text").textContent = text ? t(text) : "";
   $("message").hidden = !text;
 }
 const previewFrame = $("preview-frame");
@@ -159,7 +160,7 @@ async function togglePreviewFullscreen() {
     else if (previewFrame.webkitRequestFullscreen) await previewFrame.webkitRequestFullscreen();
     else message("目前瀏覽器不支援預覽全螢幕。");
   } catch (error) {
-    message(`無法切換全螢幕：${error.message || "請再試一次。"}`);
+    message(t("無法切換全螢幕：{0}", error.message || "請再試一次。"));
   }
 }
 previewFrame.addEventListener("click", togglePreviewFullscreen);
@@ -175,7 +176,7 @@ function fileError(kind, text = "") {
   const hint = $(`${kind}-error`);
   area.classList.toggle("load-error", Boolean(text));
   area.setAttribute("aria-invalid", String(Boolean(text)));
-  hint.textContent = text ? `載入失敗：${text}` : "";
+  hint.textContent = text ? t("載入失敗：{0}", text) : "";
   hint.hidden = !text;
 }
 
@@ -201,11 +202,11 @@ function update() {
     $(`${key}-value`).textContent = `${state[key]}%`;
   }
   $("vinyl-assets").hidden = state.style !== 18;
-  for (const [key, label] of [["sleeve", "黑膠封套"], ["record", "唱片封面"]]) {
-    $(`${key}-name`).textContent = state[`${key}Name`] || `加入${label}圖片`;
+  for (const key of ["sleeve", "record"]) {
+    $(`${key}-name`).textContent = state[`${key}Name`] || t(key === "sleeve" ? "加入黑膠封套圖片" : "加入唱片封面圖片");
     $(`remove-${key}`).hidden = !state[key];
   }
-  $("textFadeAfter-value").textContent = `${state.textFadeAfter} 秒`;
+  $("textFadeAfter-value").textContent = t("{0} 秒", state.textFadeAfter);
   $("trim-empty").hidden = Boolean(state.originalBuffer);
   $("subtitlePosition").value = state.subtitlePosition;
   $("subtitleMargin").value = $("subtitleMargin-range").value = state.subtitleMargin;
@@ -228,7 +229,7 @@ function update() {
   $("loop-playback").classList.toggle("active", state.loopPlayback);
   $("loop-playback").setAttribute("aria-pressed", String(state.loopPlayback));
   $("loop-playback").setAttribute("aria-label", state.loopPlayback ? "關閉循環播放" : "開啟循環播放");
-  $("loop-playback").title = `循環播放：${state.loopPlayback ? "開啟" : "關閉"}`;
+  $("loop-playback").title = t("循環播放：{0}", t(state.loopPlayback ? "開啟" : "關閉"));
   $("subtitle-name").textContent = state.subtitleName || "選擇字幕檔";
   $("remove-subtitle").hidden = !state.subtitles;
   const locked = state.busy || state.loading || state.imageLoading;
@@ -244,11 +245,11 @@ function update() {
   $("video-export-settings").hidden = !type.video;
   $("profile-export-settings").hidden = type.videoCodec !== "avc";
   $("profile").disabled = $("resolution").disabled = $("fps").disabled = locked;
-  $("format-description").textContent = type.description + (type.video ? "" : " · 不包含頻譜畫面");
+  $("format-description").textContent = t(type.description) + (type.video ? "" : ` · ${t("不包含頻譜畫面")}`);
   $("play").disabled = $("seek").disabled = $("export").disabled = !state.buffer || locked;
   $("audio-name").textContent = state.loading ? "正在讀取音樂…" : state.name || "選擇本機音樂";
   $("audio-info").textContent = state.buffer
-    ? `${formatTime(state.buffer.duration)} · 點擊更換`
+    ? `${formatTime(state.buffer.duration)} · ${t("點擊更換")}`
     : "拖放檔案或點擊選擇";
   $("image-name").textContent = state.imageLoading
     ? "正在讀取背景素材…"
@@ -277,7 +278,7 @@ function update() {
     ? "匯出期間請保持此頁面開啟。"
     : "先選擇音樂，就能匯出。";
   $("progress").hidden = $("cancel").hidden = !state.busy;
-  if (!state.busy) $("export").textContent = `↓ 匯出 ${format.toUpperCase()} ↗`;
+  if (!state.busy) $("export").textContent = t("↓ 匯出 {0} ↗", format.toUpperCase());
   document.querySelectorAll(".style-card").forEach((el) => {
     const i = Number(el.dataset.style);
     el.classList.toggle("selected", state.style === i);
@@ -607,7 +608,7 @@ async function persistMediaFile(kind, file) {
     await saveStoredMedia(kind, file);
     void navigator.storage?.persist?.().catch(() => false);
   } catch (error) {
-    message(`${kind === "audio" ? "音樂" : kind === "image" ? "背景素材" : "字幕"}已載入，但無法保存到瀏覽器：${error.message}`);
+    message(t(kind === "audio" ? "音樂已載入，但無法保存到瀏覽器：{0}" : kind === "image" ? "背景素材已載入，但無法保存到瀏覽器：{0}" : "字幕已載入，但無法保存到瀏覽器：{0}", error.message));
   }
 }
 
@@ -637,7 +638,7 @@ async function loadAudio(file, persist = true) {
     return true;
   } catch (error) {
     fileError("audio", error.message || "請選擇可讀取的音樂檔案。");
-    message(`無法讀取音樂：${error.message}`);
+    message(t("無法讀取音樂：{0}", error.message));
     return false;
   } finally {
     if (context) await context.close().catch(() => {});
@@ -666,7 +667,7 @@ async function loadImage(file, kind = "image", persist = true) {
     return true;
   } catch (error) {
     fileError(kind, error.message || "請選擇可讀取的圖片檔案。");
-    message(`無法讀取圖片：${error.message}`);
+    message(t("無法讀取圖片：{0}", error.message));
     return false;
   } finally {
     if (url) URL.revokeObjectURL(url);
@@ -735,7 +736,7 @@ async function loadBackground(file, persist = true, project = null) {
     return true;
   } catch (error) {
     fileError("image", error.message || "請選擇可讀取的背景素材。");
-    message(`無法讀取背景素材：${error.message}`);
+    message(t("無法讀取背景素材：{0}", error.message));
     return false;
   } finally {
     if (url) URL.revokeObjectURL(url);
@@ -777,7 +778,7 @@ $("remove-image").addEventListener("click", () => {
   state.backgroundKind = "";
   fileError("image");
   update();
-  void deleteStoredMedia("image").catch(error => message(`背景素材已移除，但無法清除瀏覽器副本：${error.message}`));
+  void deleteStoredMedia("image").catch(error => message(t("背景素材已移除，但無法清除瀏覽器副本：{0}", error.message)));
   void deleteStoredValue("image-video-project").catch(() => {});
 });
 $("dismiss-message").addEventListener("click", () => message());
@@ -890,7 +891,7 @@ $("export").addEventListener("click", async () => {
   message();
   update();
   $("progress").value = 0;
-  $("export").textContent = "正在匯出 0%";
+  $("export").textContent = t("正在匯出 {0}%", 0);
   try {
     const resolution = $("resolution").value,
       fps = $("fps").value;
@@ -907,13 +908,13 @@ $("export").addEventListener("click", async () => {
       fps,
       signal: exportController.signal,
       onEncodingMode: mode => {
-        $("export-note").textContent = mode === "prefer-hardware"
+        $("export-note").textContent = t(mode === "prefer-hardware"
           ? "硬體編碼優先（由瀏覽器決定實際加速方式）"
-          : mode === "prefer-software" ? "使用軟體編碼" : "使用瀏覽器自動選擇的編碼方式";
+          : mode === "prefer-software" ? "使用軟體編碼" : "使用瀏覽器自動選擇的編碼方式");
       },
       onProgress: (value) => {
         $("progress").value = value;
-        $("export").textContent = `正在匯出 ${value}%`;
+        $("export").textContent = t("正在匯出 {0}%", value);
       },
     });
     const url = URL.createObjectURL(blob),
@@ -924,9 +925,9 @@ $("export").addEventListener("click", async () => {
     link.click();
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    message(`${format.toUpperCase()} 已完成，下載已開始。`);
+    message(t("{0} 已完成，下載已開始。", format.toUpperCase()));
   } catch (error) {
-    message(error.message || "匯出失敗，請降低解析度再試。");
+    message(error.message ? t(error.message) : t("匯出失敗，請降低解析度再試。"));
   } finally {
     state.busy = false;
     exportController = null;
@@ -1025,7 +1026,7 @@ function resetTrimInputs() {
     const seconds = edge === "start" ? 0 : state.originalBuffer.duration;
     input.value = suffix ? seconds : formatTrimTime(seconds);
   }
-  $("trim-info").textContent = `完整音樂：${formatTrimTime(state.originalBuffer.duration)}`;
+  $("trim-info").textContent = t("完整音樂：{0}", formatTrimTime(state.originalBuffer.duration));
 }
 for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
   $(`trim-${edge}${suffix}`).addEventListener("input", () => {
@@ -1035,7 +1036,7 @@ for (const edge of ["start", "end"]) for (const suffix of ["", "-range"]) {
     else if (Number.isFinite(parseTrimTime(value))) $(`trim-${edge}-range`).value = parseTrimTime(value);
     updateTrimMarkers();
     const length = parseTrimTime($("trim-end").value) - parseTrimTime($("trim-start").value);
-    $("trim-info").textContent = length > 0 ? `選取 ${formatTrimTime(length)}，按「套用裁剪」生效` : "請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間";
+    $("trim-info").textContent = length > 0 ? t("選取 {0}，按「套用裁剪」生效", formatTrimTime(length)) : t("請使用分：秒格式（例如 01:30.00），結束時間須大於開始時間");
   });
 }
 async function applyTrim() {
@@ -1053,7 +1054,7 @@ async function applyTrim() {
     state.trimStart = result.start;
     state.trimDirty = false;
     audio.currentTime = state.trimStart;
-    $("trim-info").textContent = `已套用：${formatTrimTime(state.buffer.duration)}`;
+    $("trim-info").textContent = t("已套用：{0}", formatTrimTime(state.buffer.duration));
     message("裁剪已套用，可播放試聽或匯出。");
     return true;
   } catch (error) { message(error.message || "裁剪失敗，請重新設定範圍。"); }
@@ -1068,7 +1069,7 @@ $("trim-reset").addEventListener("click", () => {
   state.trimDirty = false;
   state.trimStart = 0;
   audio.currentTime = 0;
-  $("trim-info").textContent = `已恢復完整音樂：${formatTrimTime(state.buffer.duration)}，裁剪時間已保留`;
+  $("trim-info").textContent = t("已恢復完整音樂：{0}，裁剪時間已保留", formatTrimTime(state.buffer.duration));
   update();
 });
 function enforceTrimEnd() {
@@ -1097,9 +1098,9 @@ function updateTrimMarkers() {
   $("trim-selection").style.left = `${start / duration * 100}%`;
   $("trim-selection").style.width = `${(Math.min(end, duration) - start) / duration * 100}%`;
   $("trim-selection-duration").textContent = formatTrimTime(Math.min(end, duration) - start);
-  $("trim-drag-body").setAttribute("aria-label", `拖曳平移裁剪範圍，長度 ${formatTrimTime(Math.min(end, duration) - start)}`);
-  $("trim-start-label").textContent = `開始 ${formatTrimTime(start)}`;
-  $("trim-end-label").textContent = `結束 ${formatTrimTime(end)}`;
+  $("trim-drag-body").setAttribute("aria-label", t("拖曳平移裁剪範圍，長度 {0}", formatTrimTime(Math.min(end, duration) - start)));
+  $("trim-start-label").textContent = t("開始 {0}", formatTrimTime(start));
+  $("trim-end-label").textContent = t("結束 {0}", formatTrimTime(end));
 }
 
 function setTrimRange(start, end) {
@@ -1109,7 +1110,7 @@ function setTrimRange(start, end) {
     $(`trim-${edge}-range`).value = value;
   }
   updateTrimMarkers();
-  $("trim-info").textContent = `選取 ${formatTrimTime(end - start)}，放開後自動套用`;
+  $("trim-info").textContent = t("選取 {0}，放開後自動套用", formatTrimTime(end - start));
 }
 for (const mode of ["start", "body", "end"]) {
   const handle = $(`trim-drag-${mode}`);
@@ -1182,7 +1183,7 @@ $("remove-subtitle").addEventListener("click", () => {
   state.subtitleName = "";
   fileError("subtitle");
   update();
-  void deleteStoredMedia("subtitle").catch(error => message(`字幕已移除，但無法清除瀏覽器副本：${error.message}`));
+  void deleteStoredMedia("subtitle").catch(error => message(t("字幕已移除，但無法清除瀏覽器副本：{0}", error.message)));
 });
 
 $("subtitlePosition").addEventListener("change", () => {
@@ -1287,7 +1288,7 @@ async function restoreIdentityImage() {
 async function restoreSavedMedia() {
   let imageVideoProject = null;
   try { imageVideoProject = await loadStoredValue("image-video-project"); }
-  catch (error) { message(`無法還原圖轉影片背景：${error.message}`); }
+  catch (error) { message(t("無法還原圖轉影片背景：{0}", error.message)); }
   for (const [kind, loader] of [
     ["audio", file => loadAudio(file, false)],
     ["image", file => loadBackground(file, false, imageVideoProject)],
@@ -1297,7 +1298,7 @@ async function restoreSavedMedia() {
       const record = await loadStoredMedia(kind);
       if (record) await loader(unpackStoredMedia(record));
     } catch (error) {
-      message(`無法還原保存的${kind === "audio" ? "音樂" : kind === "image" ? "背景素材" : "字幕"}：${error.message}`);
+      message(t(kind === "audio" ? "無法還原保存的音樂：{0}" : kind === "image" ? "無法還原保存的背景素材：{0}" : "無法還原保存的字幕：{0}", error.message));
     }
   }
 }

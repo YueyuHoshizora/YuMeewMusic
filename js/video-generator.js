@@ -13,6 +13,7 @@ import { getCurrentSession, onAuthStateChange } from "./auth.js";
 import { fetchMemberAccount, fetchVideoBillingSettings } from "./member-api.js";
 import { estimateVideoGenerationCost, hasSufficientVideoCredit } from "./video-billing.js";
 import { providerBillingUrl } from "./provider-billing.js";
+import { locale, t } from "./i18n.js";
 
 const VIDEO_PROXY_URL = "https://model-proxy.plain-leaf-e871.workers.dev/minimax/video";
 const CREATE_VIDEO_URL = `${VIDEO_PROXY_URL}/generate`;
@@ -244,7 +245,7 @@ function selectPromptMode(mode) {
   } else {
     const current = editorText($("video-prompt-text"));
     if (current !== promptModeSource && !parseStoryboardPrompt(current)
-      && !window.confirm("此操作會清除所有輸入內容，是否繼續？")) return;
+      && !window.confirm(t("此操作會清除所有輸入內容，是否繼續？"))) return;
     if (current !== promptModeSource) {
       storyboards.clear();
       $("video-prompt").replaceChildren();
@@ -501,6 +502,7 @@ function renderFinalStoryboardCharacterControls(selectedSubjects = [], viewpoint
     input.value = character.name;
     input.checked = selectedSubjects.includes(character.name);
     const text = document.createElement("span");
+    text.setAttribute("data-i18n-ignore", "");
     text.textContent = character.name;
     label.append(input, text);
     return label;
@@ -630,6 +632,7 @@ function renderStoryboardCharacterControls(selectedSubjects = selectedStoryboard
       input.value = character.name;
       input.checked = selectedSubjects.includes(character.name);
       const text = document.createElement("span");
+      text.setAttribute("data-i18n-ignore", "");
       text.textContent = character.name;
       label.append(input, text);
       return label;
@@ -642,6 +645,7 @@ function renderStoryboardCharacterControls(selectedSubjects = selectedStoryboard
   viewpointSelect.replaceChildren(placeholder, ...enabledCharacters.map(character => {
     const option = document.createElement("option");
     option.value = character.name;
+    option.setAttribute("data-i18n-ignore", "");
     option.textContent = character.name;
     return option;
   }));
@@ -657,6 +661,7 @@ function renderStoryboardCharacterControls(selectedSubjects = selectedStoryboard
   actionSelect.replaceChildren(unspecified, everyone, ...enabledCharacters.map(character => {
     const option = document.createElement("option");
     option.value = character.name;
+    option.setAttribute("data-i18n-ignore", "");
     option.textContent = character.name;
     return option;
   }));
@@ -923,6 +928,7 @@ function showCharacterMentionMenu(target) {
     option.setAttribute("role", "option");
     option.setAttribute("aria-selected", String(index === 0));
     const name = document.createElement("strong");
+    name.setAttribute("data-i18n-ignore", "");
     name.textContent = character.name;
     option.append(name);
     option.addEventListener("mousedown", event => {
@@ -1272,8 +1278,8 @@ async function addVideoResources(files) {
   $("video-resource-input").value = "";
   renderVideoResources();
   scheduleAutoDraft({ resources: true });
-  if (unsupported.length) setStatus(`${added ? `已加入 ${added} 個資源；` : ""}${unsupported.length} 個檔案格式不支援`, "error");
-  else setStatus(`已加入 ${added} 個資源`, "success");
+  if (unsupported.length) setStatus(t("已加入 {0} 個資源；{1} 個檔案格式不支援", added, unsupported.length), "error");
+  else setStatus(t("已加入 {0} 個資源", added), "success");
 }
 
 function resourceReferenceCount(id) {
@@ -1285,8 +1291,8 @@ async function deleteVideoResource(id) {
   if (!resource) return;
   const references = resourceReferenceCount(id);
   const message = references
-    ? `${resource.referenceName} 已被引用 ${references} 次，刪除後引用將標示為資源不存在，是否刪除？`
-    : `確定刪除 ${resource.referenceName}？`;
+    ? t("{0} 已被引用 {1} 次，刪除後引用將標示為資源不存在，是否刪除？", resource.referenceName, references)
+    : t("確定刪除 {0}？", resource.referenceName);
   if (!window.confirm(message)) return;
   videoResources = videoResources.filter(item => item.id !== id);
   document.querySelectorAll(".resource-token").forEach(token => {
@@ -1543,7 +1549,7 @@ function finalStoryboardFields(draft) {
 }
 
 function removeFinalStoryboard() {
-  if (busy || !finalStoryboard || !window.confirm("確定移除最終分鏡？")) return;
+  if (busy || !finalStoryboard || !window.confirm(t("確定移除最終分鏡？"))) return;
   finalStoryboard = null;
   resetFinalStoryboardEditor();
   renderFinalStoryboardCard();
@@ -1621,8 +1627,8 @@ function storyboardAction(kind, label, handler) {
 function refreshStoryboardLabels() {
   const blocks = [...document.querySelectorAll("#video-prompt .storyboard-block:not(.final-storyboard-block)")];
   blocks.forEach((block, index) => {
-    block.querySelector(".storyboard-card-title").textContent = `分鏡 ${index + 1}`;
-    block.setAttribute("aria-label", `編輯分鏡 ${index + 1}`);
+    block.querySelector(".storyboard-card-title").textContent = t("分鏡 {0}", index + 1);
+    block.setAttribute("aria-label", t("編輯分鏡 {0}", index + 1));
     block.querySelector(".storyboard-card-action.up").disabled = index === 0;
     block.querySelector(".storyboard-card-action.down").disabled = index === blocks.length - 1;
   });
@@ -1648,7 +1654,7 @@ function redrawStoryboard(id) {
 
 function reflowStoryboardTimes() {
   const entries = orderedStoryboardEntries();
-  if (!entries.length || busy || !window.confirm("將依目前排序從 0 秒開始，重新接續所有分鏡時間，是否繼續？")) return;
+  if (!entries.length || busy || !window.confirm(t("將依目前排序從 0 秒開始，重新接續所有分鏡時間，是否繼續？"))) return;
   let cursor = 0;
   for (const { draft } of entries) {
     const duration = Math.max(.1, Number(draft.end) - Number(draft.start) || .1);
@@ -1660,7 +1666,7 @@ function reflowStoryboardTimes() {
   refreshStoryboardLabels();
   renderStoryboardInspection(inspectStoryboardProject());
   syncDraftStatus();
-  setStatus(`已重新接續 ${entries.length} 個分鏡時間`, "success");
+  setStatus(t("已重新接續 {0} 個分鏡時間", entries.length), "success");
 }
 
 function createStoryboardBlock(draft) {
@@ -1776,7 +1782,7 @@ function duplicateStoryboard(id) {
 function deleteStoryboard(id) {
   if (promptBuilderMinimized) return;
   const block = document.querySelector(`[data-storyboard-id="${CSS.escape(id)}"]`);
-  if (!block || !window.confirm("確定刪除這個分鏡？")) return;
+  if (!block || !window.confirm(t("確定刪除這個分鏡？"))) return;
   storyboards.delete(id);
   block.remove();
   refreshStoryboardLabels();
@@ -1850,10 +1856,12 @@ function createCharacterThumbnail(character, index) {
   } else {
     const placeholder = document.createElement("span");
     placeholder.className = "character-thumbnail-placeholder";
+    placeholder.setAttribute("data-i18n-ignore", "");
     placeholder.textContent = (character.name || "人").slice(0, 1);
     editButton.append(placeholder);
   }
   const name = document.createElement("strong");
+  name.setAttribute("data-i18n-ignore", "");
   name.textContent = character.name || `人物 ${index + 1}`;
   editButton.append(name);
   editButton.addEventListener("click", () => openCharacterEditor(index));
@@ -1870,7 +1878,7 @@ function createCharacterThumbnail(character, index) {
 function syncCharacterTemplateButton() {
   const enabledCount = characterTemplates.filter(character => character.enabled !== false).length;
   $("open-character-template").textContent = characterTemplates.length
-    ? `人物模板 (啟用 ${enabledCount}/${characterTemplates.length})`
+    ? t("人物模板 (啟用 {0}/{1})", enabledCount, characterTemplates.length)
     : "人物模板";
 }
 
@@ -1882,7 +1890,7 @@ async function toggleCharacterTemplate(index) {
   renderCharacterTemplates();
   try {
     await persistCharacterTemplates();
-    setStatus(`已${character.enabled ? "啟用" : "停用"}人物「${character.name}」`, "success");
+    setStatus(t(character.enabled ? "已啟用人物「{0}」" : "已停用人物「{0}」", character.name), "success");
   } catch {
     character.enabled = previous;
     renderCharacterTemplates();
@@ -1996,7 +2004,7 @@ async function submitCharacterEditor(event) {
     await persistCharacterTemplates();
     renderCharacterTemplates();
     $("character-editor-dialog").close();
-    setStatus(`已保存人物「${character.name}」`, "success");
+    setStatus(t("已保存人物「{0}」", character.name), "success");
   } catch {
     setStatus("人物模板無法保存到瀏覽器", "error");
   }
@@ -2006,13 +2014,13 @@ async function deleteEditingCharacter() {
   if (editingCharacterIndex < 0) return;
   const character = characterTemplates[editingCharacterIndex];
   const name = character?.name || "這個人物";
-  if (!window.confirm(`確定刪除「${name}」？刪除後將同步移除保存的人物模板。`)) return;
+  if (!window.confirm(t("確定刪除「{0}」？刪除後將同步移除保存的人物模板。", name))) return;
   characterTemplates.splice(editingCharacterIndex, 1);
   try {
     await persistCharacterTemplates();
     renderCharacterTemplates();
     $("character-editor-dialog").close();
-    setStatus(`已刪除人物「${name}」`, "success");
+    setStatus(t("已刪除人物「{0}」", name), "success");
   } catch {
     setStatus("人物模板刪除後無法同步保存", "error");
   }
@@ -2337,9 +2345,10 @@ function parseStoryboardAiResult(payload) {
   return result;
 }
 
-function reportText(tag, className, value) {
+function reportText(tag, className, value, userText = false) {
   const element = document.createElement(tag);
   if (className) element.className = className;
+  if (userText) element.setAttribute("data-i18n-ignore", "");
   element.textContent = String(value ?? "");
   return element;
 }
@@ -2348,7 +2357,7 @@ function storyboardAiList(title, values = []) {
   if (!values.length) return null;
   const section = reportText("section", "storyboard-ai-section", "");
   const list = document.createElement("ul");
-  list.replaceChildren(...values.map(value => reportText("li", "", value)));
+  list.replaceChildren(...values.map(value => reportText("li", "", value, true)));
   section.append(reportText("h3", "", title), list);
   return section;
 }
@@ -2360,7 +2369,7 @@ function renderStoryboardAiReport(report) {
   heading.append(
     reportText("span", "storyboard-ai-score", Number.isFinite(Number(report.overall_score)) ? Math.round(Number(report.overall_score)) : "—"),
     reportText("span", "storyboard-ai-status", statusLabels[report.status] || "分析完成"),
-    reportText("p", "", report.summary || "AI 已完成分鏡分析。"),
+    reportText("p", "", report.summary || "AI 已完成分鏡分析。", Boolean(report.summary)),
   );
   const nodes = [heading];
   const strengths = storyboardAiList("做得好的地方", Array.isArray(report.strengths) ? report.strengths : []);
@@ -2374,7 +2383,7 @@ function renderStoryboardAiReport(report) {
       const related = problem.related_scene === null || problem.related_scene === undefined ? "" : ` ↔ Scene ${problem.related_scene}`;
       item.append(
         reportText("strong", "", `Scene ${problem.scene}${related} · ${problem.severity || "提醒"}`),
-        reportText("p", "", problem.message || ""),
+        reportText("p", "", problem.message || "", true),
         reportText("small", "", problem.suggestion ? `建議：${problem.suggestion}` : ""),
       );
       section.append(item);
@@ -2472,7 +2481,7 @@ async function runStoryboardBackend(checkUrl, input) {
   const created = await storyboardCheckerRequest(checkUrl, input);
   if (created.status === "complete" || created.result) return parseStoryboardAiResult(created);
   const requestId = created.requestId;
-  if (!requestId) throw new Error("AI 分析服務沒有回傳任務編號。");
+  if (!requestId) throw new Error(t("AI 分析服務沒有回傳任務編號。"));
   const startedAt = Date.now();
   while (Date.now() - startedAt < STORYBOARD_CHECKER_TIMEOUT) {
     await new Promise(resolve => setTimeout(resolve, STORYBOARD_CHECKER_POLL_INTERVAL));
@@ -2705,7 +2714,7 @@ function videoProjectMetadata(includeCharacters, binaries) {
 }
 
 function draftTimeLabel(timestamp = Date.now()) {
-  return new Intl.DateTimeFormat("zh-TW", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(timestamp);
+  return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(timestamp);
 }
 
 function setAutoDraftStatus(text, mode = "") {
@@ -2770,7 +2779,7 @@ function saveAutoDraftNow({ resources = false } = {}) {
     }
     const draft = { metadata: autoDraftMetadata(), updatedAt: savedAt };
     await saveStoredValue("video-generator-draft", draft);
-    setAutoDraftStatus(`草稿已自動儲存 · ${draftTimeLabel(savedAt)}`);
+    setAutoDraftStatus(t("草稿已自動儲存 · {0}", draftTimeLabel(savedAt)));
     return draft;
   };
   autoDraftSavePromise = autoDraftSavePromise.then(operation, operation).catch(error => {
@@ -2945,7 +2954,7 @@ async function exportVideoProject(event) {
     const { metadata, binaries } = await projectFromStoredDraft(includeCharacters);
     const file = await createVideoProjectFile(metadata, binaries);
     downloadBlob(file, file.name);
-    setStatus(`已匯出設定 · ${metadata.storyboards.length} 個分鏡 · ${metadata.resources.length} 個資源`, "success");
+    setStatus(t("已匯出設定 · {0} 個分鏡 · {1} 個資源", metadata.storyboards.length, metadata.resources.length), "success");
   } catch (error) {
     setStatus(error.message || "影片設定匯出失敗", "error");
   } finally {
@@ -2955,8 +2964,8 @@ async function exportVideoProject(event) {
 
 function clearVideoWorkspace() {
   if (busy || !hasClearableWorkspace()) return;
-  if (!window.confirm("是否清除所有工作區？")) return;
-  if (window.confirm("是否先匯出檔案？")) {
+  if (!window.confirm(t("是否清除所有工作區？"))) return;
+  if (window.confirm(t("是否先匯出檔案？"))) {
     openVideoProjectExport();
     return;
   }
@@ -3031,7 +3040,7 @@ async function selectVideoProject(event) {
     );
     $("import-project-characters").disabled = !characterCount;
     $("import-character-count").textContent = characterCount
-      ? `勾選後以檔案中的 ${characterCount} 位人物複寫目前人物模板`
+      ? t("勾選後以檔案中的 {0} 位人物複寫目前人物模板", characterCount)
       : "這個設定檔未包含人物";
     $("confirm-import-video-project").disabled = false;
   } catch (error) {
@@ -3226,7 +3235,7 @@ function restoreImportedFilmStyle(saved = {}) {
 async function importVideoProject(event) {
   event.preventDefault();
   if (!pendingVideoProject) return;
-  if (!window.confirm("匯入設定將會複寫目前的所有資料，是否確認？")) return;
+  if (!window.confirm(t("匯入設定將會複寫目前的所有資料，是否確認？"))) return;
   const { metadata, binaries } = pendingVideoProject;
   const overwriteCharacters = $("import-project-characters").checked && Array.isArray(metadata.characters);
   $("confirm-import-video-project").disabled = true;
@@ -3264,7 +3273,7 @@ async function importVideoProject(event) {
     $("import-video-project-dialog").close();
     syncDraftStatus();
     scheduleAutoDraft({ resources: true });
-    setStatus(`已匯入設定 · ${metadata.storyboards.length} 個分鏡 · ${metadata.resources.length} 個資源`, "success");
+    setStatus(t("已匯入設定 · {0} 個分鏡 · {1} 個資源", metadata.storyboards.length, metadata.resources.length), "success");
   } catch (error) {
     $("import-video-project-error").textContent = error.message || "影片設定匯入失敗。";
     $("import-video-project-error").hidden = false;
@@ -3642,8 +3651,8 @@ async function pollVideoTask(taskId, apiKey, model, signal, billing = {}, starte
     }
     const elapsed = Math.floor((Date.now() - startedAt) / 1000);
     $("video-generation-lock-title").textContent = taskState === "running" ? "影片生成中" : "影片任務排隊中";
-    $("video-generation-lock-detail").textContent = `任務 ${taskId} · 已等待 ${elapsed} 秒`;
-    setStatus(`${taskState === "running" ? "影片生成中" : "影片排隊中"} · 已等待 ${elapsed} 秒`);
+    $("video-generation-lock-detail").textContent = t("任務 {0} · 已等待 {1} 秒", taskId, elapsed);
+    setStatus(t(taskState === "running" ? "影片生成中 · 已等待 {0} 秒" : "影片排隊中 · 已等待 {0} 秒", elapsed));
     await wait(POLL_INTERVAL, signal);
   }
   throw Error(`影片生成等待超過 30 分鐘，請稍後至 ${model.apiKey} 查詢任務狀態。`);
@@ -3672,7 +3681,7 @@ async function loadGenerationHistory() {
 }
 
 function syncHistoryButton() {
-  $("open-video-history").textContent = generationHistory.length ? `生成歷史（${generationHistory.length}）` : "生成歷史";
+  $("open-video-history").textContent = generationHistory.length ? t("生成歷史（{0}）", generationHistory.length) : "生成歷史";
   $("open-video-history").disabled = busy || !generationHistory.length;
 }
 
@@ -3708,7 +3717,7 @@ function releaseUrlSet(urls) {
 }
 
 function historyTime(value) {
-  return new Intl.DateTimeFormat("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale, { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(value));
 }
 
 function loadHistoryVersion(id) {
@@ -3727,7 +3736,7 @@ function loadHistoryVersion(id) {
 
 async function deleteHistoryVersion(id) {
   const record = generationHistory.find(item => item.id === id);
-  if (!record || !window.confirm(`確定刪除 ${historyTime(record.createdAt)} 的生成版本？`)) return;
+  if (!record || !window.confirm(t("確定刪除 {0} 的生成版本？", historyTime(record.createdAt)))) return;
   generationHistory = generationHistory.filter(item => item.id !== id);
   videoHistorySelection.delete(id);
   if (generationHistory.length) await saveStoredValue("video-generation-history", { items: generationHistory, updatedAt: Date.now() });
@@ -3960,8 +3969,8 @@ async function restorePendingGeneration() {
   setBusy(true);
   generationAbort = new AbortController();
   $("video-generation-lock-title").textContent = "正在恢復影片生成任務";
-  $("video-generation-lock-detail").textContent = `任務 ${pending.taskId}`;
-  setStatus(`正在恢復 ${metadata.modelLabel || model.label} 生成任務…`);
+  $("video-generation-lock-detail").textContent = t("任務 {0}", pending.taskId);
+  setStatus(t("正在恢復 {0} 生成任務…", metadata.modelLabel || model.label));
   try {
     const task = await pollVideoTask(pending.taskId, apiKey, model, generationAbort.signal, {
       accountCredits: Boolean(metadata.accountCredits),
@@ -4054,7 +4063,7 @@ async function generateVideo() {
       pendingTaskSaved = false;
     }
     setStatus(saved
-      ? `生成完成 · ${task.resolution || $("video-resolution").value} · ${task.duration || $("video-duration").value} 秒`
+      ? t("生成完成 · {0} · {1} 秒", task.resolution || $("video-resolution").value, task.duration || $("video-duration").value)
       : "影片已生成，但尚未保存到瀏覽器；下次開啟時會再次嘗試",
     saved ? "success" : "error");
   } catch (error) {

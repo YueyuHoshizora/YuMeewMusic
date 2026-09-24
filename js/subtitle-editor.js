@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 import { applyTheme } from './themes.js';
 import { loadSettings } from './settings.js';
 import { loadStoredMedia, saveStoredMedia, unpackStoredMedia } from './media-store.js';
@@ -59,8 +60,7 @@ function restoreHistory(snapshot, action) {
   state.cues = snapshot.cues;
   state.selected = Math.max(-1, Math.min(snapshot.selected, state.cues.length - 1));
   state.dirty = true;
-  textHistoryCue = null;
-  status(`已${action}上一個操作`, 'success');
+  status(t(action === '復原' ? '已復原上一個操作' : '已恢復上一個操作'), 'success');
   render();
 }
 
@@ -74,7 +74,7 @@ function redoEdit() {
 
 function markDirty() {
   state.dirty = true;
-  status('尚未儲存的修改', '');
+  status(t('尚未儲存的修改'), '');
 }
 
 function setRecognitionProgress(value, stage, text) {
@@ -110,11 +110,11 @@ function recognitionFailed(message, run) {
   if (run !== recognition.run) return;
   releaseRecognition();
   setRecognitionBusy(false);
-  setRecognitionProgress($('recognition-progress').value, '辨識失敗', message);
+  setRecognitionProgress($('recognition-progress').value, t('辨識失敗'), message);
 }
 
 function recognitionUnavailable(message) {
-  setRecognitionProgress(0, '無法開始辨識', message);
+  setRecognitionProgress(0, t('無法開始辨識'), message);
 }
 
 function vocalsAudioBuffer(left, right) {
@@ -128,7 +128,7 @@ function vocalsAudioBuffer(left, right) {
 async function transcriptionAudioBuffer(left, right) {
   const sourceBuffer = vocalsAudioBuffer(left, right);
   const OfflineContextClass = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-  if (!OfflineContextClass) throw Error('此瀏覽器無法建立辨識用的 16 kHz 音訊。');
+  if (!OfflineContextClass) throw Error(t('此瀏覽器無法建立辨識用的 16 kHz 音訊。'));
   const context = new OfflineContextClass(1, Math.ceil(sourceBuffer.duration * 16000), 16000);
   const source = context.createBufferSource();
   source.buffer = sourceBuffer;
@@ -139,7 +139,7 @@ async function transcriptionAudioBuffer(left, right) {
 
 async function uploadVocals(wav, audioDuration, run) {
   if (run !== recognition.run) return;
-  setRecognitionProgress(72, '第三階段：辨識字幕', '正在上傳單聲道、16 kHz、16-bit PCM 人聲 WAV 並等待辨識…');
+  setRecognitionProgress(72, t('第三階段：辨識字幕'), t('正在上傳單聲道、16 kHz、16-bit PCM 人聲 WAV 並等待辨識…'));
   const form = new FormData();
   const baseName = state.audioFile.name.replace(/\.[^.]+$/, '') || 'audio';
   form.append('audio', wav, `${baseName}-vocals.wav`);
@@ -153,9 +153,9 @@ async function uploadVocals(wav, audioDuration, run) {
     signal: recognition.controller.signal,
   });
   const text = await response.text();
-  if (!response.ok) throw Error(text.trim().slice(0, 300) || `字幕辨識服務回應錯誤（HTTP ${response.status}）。`);
+  if (!response.ok) throw Error(text.trim().slice(0, 300) || t('字幕辨識服務回應錯誤（HTTP {0}）。', response.status));
   const parsed = parseSubtitles(text, 'srt');
-  if (!parsed.cues.length) throw Error('辨識服務沒有回傳有效的 SRT 字幕。');
+  if (!parsed.cues.length) throw Error(t('辨識服務沒有回傳有效的 SRT 字幕。'));
   if (run !== recognition.run) return;
   recordHistory();
   state.cues = normalizeCues(parsed.cues, state.duration);
@@ -163,11 +163,11 @@ async function uploadVocals(wav, audioDuration, run) {
   state.subtitleName = generatedSubtitleFilename();
   state.dirty = true;
   textHistoryCue = null;
-  $('editor-subtitle-name').textContent = `AI 辨識草稿 · ${state.cues.length} 句`;
+  $('editor-subtitle-name').textContent = `${t('AI 辨識草稿')} · ${state.cues.length} ${t('句')}`;
   releaseRecognition();
   setRecognitionBusy(false);
-  setRecognitionProgress(100, '辨識完成', `已載入 ${state.cues.length} 句 SRT 字幕，請檢查後保存。`);
-  status(`AI 已載入 ${state.cues.length} 句字幕，尚未保存。`, 'success');
+  setRecognitionProgress(100, t('辨識完成'), t('已載入 {0} 句 SRT 字幕，請檢查後保存。', state.cues.length));
+  status(t('AI 已載入 {0} 句字幕，尚未保存。', state.cues.length), 'success');
   render();
 }
 
@@ -177,8 +177,8 @@ async function encodeAndUploadVocals(data, run) {
     recognition.worker?.terminate();
     recognition.worker = null;
     if (!(data.vocalsLeft instanceof Float32Array) || !(data.vocalsRight instanceof Float32Array))
-      throw Error('Spleeter 沒有產生可用的人聲軌道。');
-    setRecognitionProgress(56, '第二階段：產生 WAV', '正在轉為單聲道、16 kHz 音訊…');
+      throw Error(t('Spleeter 沒有產生可用的人聲軌道。'));
+    setRecognitionProgress(56, t('第二階段：產生 WAV'), t('正在轉為單聲道、16 kHz 音訊…'));
     const transcriptionBuffer = await transcriptionAudioBuffer(data.vocalsLeft, data.vocalsRight);
     if (run !== recognition.run) return;
     const wav = await encodeMedia({
@@ -188,34 +188,34 @@ async function encodeAndUploadVocals(data, run) {
       resolution: '1080',
       fps: '60',
       signal: recognition.controller.signal,
-      onProgress: value => setRecognitionProgress(56 + value * .15, '第二階段：產生 WAV', `正在建立 16-bit PCM WAV · ${value}%`),
+      onProgress: value => setRecognitionProgress(56 + value * .15, t('第二階段：產生 WAV'), t('正在建立 16-bit PCM WAV · {0}%', value)),
     });
     if (run !== recognition.run) return;
     await uploadVocals(wav, transcriptionBuffer.duration, run);
   } catch (error) {
-    if (error?.name !== 'AbortError') recognitionFailed(error?.message || '字幕辨識失敗。', run);
+    if (error?.name !== 'AbortError') recognitionFailed(error?.message || t('字幕辨識失敗。'), run);
   }
 }
 
 async function startSubtitleRecognition() {
   if (recognition.busy) return;
   if (!state.audioFile || !state.waveformBuffer) {
-    recognitionUnavailable('請先在主畫面選擇可解析的音樂。');
+    recognitionUnavailable(t('請先在主畫面選擇可解析的音樂。'));
     return;
   }
   if (state.audioFile.size > MAX_RECOGNITION_FILE_SIZE) {
-    recognitionUnavailable('字幕辨識的音樂檔案上限為 150 MB。');
+    recognitionUnavailable(t('字幕辨識的音樂檔案上限為 150 MB。'));
     return;
   }
   if (state.waveformBuffer.duration > SEPARATOR_MAX_DURATION + .01) {
-    recognitionUnavailable('字幕辨識目前最多處理 8 分鐘，請先在主畫面裁剪音樂。');
+    recognitionUnavailable(t('字幕辨識目前最多處理 8 分鐘，請先在主畫面裁剪音樂。'));
     return;
   }
   const run = ++recognition.run;
   recognition.controller = new AbortController();
   setRecognitionBusy(true);
   audio.pause();
-  setRecognitionProgress(1, '第一階段：分離人聲', '正在準備 Spleeter；原始音樂不會上傳。');
+  setRecognitionProgress(1, t('第一階段：分離人聲'), t('正在準備 Spleeter；原始音樂不會上傳。'));
   try { await navigator.storage?.persist?.(); } catch {}
   try {
     const left = Float32Array.from(state.waveformBuffer.getChannelData(0));
@@ -224,20 +224,20 @@ async function startSubtitleRecognition() {
       : state.waveformBuffer.getChannelData(0));
     const worker = new Worker(new URL('./vocal-separator-worker.js', import.meta.url), { type: 'module' });
     recognition.worker = worker;
-    worker.addEventListener('error', event => recognitionFailed(event.message || 'Spleeter 處理程序發生錯誤。', run));
+    worker.addEventListener('error', event => recognitionFailed(event.message || t('Spleeter 處理程序發生錯誤。'), run));
     worker.addEventListener('message', event => {
       if (run !== recognition.run || worker !== recognition.worker) return;
       const data = event.data || {};
       if (data.type === 'status') {
-        setRecognitionProgress($('recognition-progress').value, '第一階段：分離人聲', data.text);
+        setRecognitionProgress($('recognition-progress').value, t('第一階段：分離人聲'), data.text);
       } else if (data.type === 'gpu-fallback') {
-        setRecognitionProgress($('recognition-progress').value, '第一階段：改用 CPU', data.text);
+        setRecognitionProgress($('recognition-progress').value, t('第一階段：改用 CPU'), data.text);
       } else if (data.type === 'progress') {
-        setRecognitionProgress(Math.max(2, data.value * .55), '第一階段：分離人聲', data.text);
+        setRecognitionProgress(Math.max(2, data.value * .55), t('第一階段：分離人聲'), data.text);
       } else if (data.type === 'complete') {
         void encodeAndUploadVocals(data, run);
       } else if (data.type === 'error') {
-        recognitionFailed(/fetch|network|load/i.test(data.text) ? '無法下載 Spleeter 模型，請檢查網路後再試。' : data.text, run);
+        recognitionFailed(/fetch|network|load/i.test(data.text) ? t('無法下載 Spleeter 模型，請檢查網路後再試。') : data.text, run);
       }
     });
     worker.postMessage({
@@ -248,7 +248,7 @@ async function startSubtitleRecognition() {
       right: right.buffer,
     }, [left.buffer, right.buffer]);
   } catch (error) {
-    recognitionFailed(error?.message || '無法開始字幕辨識。', run);
+    recognitionFailed(error?.message || t('無法開始字幕辨識。'), run);
   }
 }
 
@@ -268,8 +268,8 @@ function cancelSubtitleRecognition() {
   recognition.controller?.abort();
   releaseRecognition();
   setRecognitionBusy(false);
-  setRecognitionProgress(0, '已取消辨識', '處理已取消，原本的字幕沒有變更。');
-  status('已取消 AI 字幕辨識。');
+  setRecognitionProgress(0, t('已取消辨識'), t('處理已取消，原本的字幕沒有變更。'));
+  status(t('已取消 AI 字幕辨識。'));
 }
 
 function selectCue(index, seek = false) {
@@ -283,7 +283,7 @@ function selectCue(index, seek = false) {
 function renderList() {
   const list = $('cue-list');
   list.replaceChildren();
-  $('cue-count').textContent = `${state.cues.length} 句`;
+  $('cue-count').textContent = t('{0} 句', state.cues.length);
   $('cue-empty').hidden = Boolean(state.cues.length);
   state.cues.forEach((cue, index) => {
     const item = document.createElement('button');
@@ -369,7 +369,7 @@ function renderForm() {
   const cue = currentCue();
   $('cue-form').hidden = false;
   $('cue-form-empty').hidden = true;
-  $('selected-label').textContent = cue ? `第 ${state.selected + 1} 句` : '目前沒有字幕';
+  $('selected-label').textContent = cue ? t('第 {0} 句', state.selected + 1) : t('目前沒有字幕');
   $('previous-cue').disabled = state.selected <= 0;
   $('next-cue').disabled = state.selected < 0 || state.selected >= state.cues.length - 1;
   $('delete-cue').disabled = !cue;
@@ -393,7 +393,7 @@ function applyTimeField(id, key) {
   const value = parseSubtitleTime($(id).value);
   const valid = Number.isFinite(value) && value >= 0 && (key === 'start' ? value < cue.end : value > cue.start);
   if (!valid) {
-    $('cue-error').textContent = key === 'start' ? '開始時間必須早於結束時間。' : '結束時間必須晚於開始時間。';
+    $('cue-error').textContent = t(key === 'start' ? '開始時間必須早於結束時間。' : '結束時間必須晚於開始時間。');
     $('cue-error').hidden = false;
     $(id).value = editorTime(cue[key]);
     return;
@@ -467,24 +467,24 @@ function subtitleFile() {
 }
 
 async function saveAndReturn() {
-  if (!state.cues.length) { status('請先新增至少一句字幕。', 'error'); return; }
+  if (!state.cues.length) { status(t('請先新增至少一句字幕。'), 'error'); return; }
   try {
     $('save-subtitles').disabled = true;
-    status('正在保存字幕…');
+    status(t('正在保存字幕…'));
     const file = subtitleFile();
     await saveStoredMedia('subtitle', file);
     state.subtitleName = file.name;
     state.dirty = false;
-    status('字幕已保存，正在返回主畫面。', 'success');
+    status(t('字幕已保存，正在返回主畫面。'), 'success');
     location.href = `./?subtitleUpdated=${Date.now()}`;
   } catch (error) {
     $('save-subtitles').disabled = false;
-    status(`無法保存字幕：${error.message}`, 'error');
+    status(t('無法保存字幕：{0}', error.message), 'error');
   }
 }
 
 function downloadSrt() {
-  if (!state.cues.length) { status('目前沒有可下載的字幕。', 'error'); return; }
+  if (!state.cues.length) { status(t('目前沒有可下載的字幕。'), 'error'); return; }
   const file = subtitleFile();
   const url = URL.createObjectURL(file);
   const link = document.createElement('a');
@@ -492,7 +492,7 @@ function downloadSrt() {
   link.download = file.name;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 0);
-  status(`已下載 ${file.name}`, 'success');
+  status(t('已下載 {0}', file.name), 'success');
 }
 
 function updatePlayhead() {
@@ -553,7 +553,7 @@ async function loadWorkspace() {
         state.waveformBuffer = decoded;
         state.duration = decoded.duration;
         await context.close();
-      } catch { status('音樂波形無法解析，但仍可編輯字幕。', 'error'); }
+      } catch { status(t('音樂波形無法解析，但仍可編輯字幕。'), 'error'); }
     }
     if (subtitleRecord) {
       const file = unpackStoredMedia(subtitleRecord);
@@ -563,17 +563,17 @@ async function loadWorkspace() {
       state.cues = normalizeCues(parsed.cues, state.duration);
       state.duration = Math.max(state.duration, ...state.cues.map(cue => cue.end));
       state.selected = state.cues.length ? 0 : -1;
-      $('editor-subtitle-name').textContent = `${file.name} · 匯入後以 SRT 編輯`;
+      $('editor-subtitle-name').textContent = `${file.name} · ${t('匯入後以 SRT 編輯')}`;
     }
     $('editor-duration').textContent = editorTime(state.duration);
     drawWaveform(decoded);
     render();
     $('recognize-subtitles').disabled = !state.audioFile || !state.waveformBuffer;
-    status(state.cues.length ? `已載入 ${state.cues.length} 句字幕` : '尚無字幕，可從目前時間新增。', state.cues.length ? 'success' : '');
+    status(state.cues.length ? t('已載入 {0} 句字幕', state.cues.length) : t('尚無字幕，可從目前時間新增。'), state.cues.length ? 'success' : '');
   } catch (error) {
     drawWaveform();
     render();
-    status(`無法讀取保存的素材：${error.message}`, 'error');
+    status(t('無法讀取保存的素材：{0}', error.message), 'error');
   }
 }
 

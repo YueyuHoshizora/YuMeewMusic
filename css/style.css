@@ -927,7 +927,13 @@ header { flex-wrap: nowrap; }
 .settings-link { flex-shrink: 0; color: var(--foreground); font-size: 14px; font-weight: 650; text-decoration: none; }
 .settings-link:hover { color: var(--primary-text); }
 .header-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 20px; margin-left: auto; }
+.studio > header { flex-wrap: wrap; }
 .header-actions .member-widget { margin-left: 0; }
+.language-picker { display: inline-flex; flex: 0 0 auto; align-items: center; margin-left: auto; }
+.language-picker select { max-width: 126px; min-height: 40px; padding: 6px 25px 6px 9px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 12px; cursor: pointer; }
+.language-picker select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.header-actions .language-picker { margin-left: 0; }
+.language-picker + .member-widget { margin-left: 0; }
 .coffee-link { flex-shrink: 0; display: inline-flex; align-items: center; line-height: 0; }
 .coffee-link img { height: 40px; width: auto; display: block; border-radius: 8px; }
 .coffee-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; border-radius: 8px; }

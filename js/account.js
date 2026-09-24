@@ -2,6 +2,7 @@ import { getCurrentSession, isSupabaseConfigured, onAuthStateChange, signInWithG
 import { fetchMemberAccount, fetchUsdTwdExchangeRate, isMemberApiConfigured } from "./member-api.js";
 import { loadSettings } from "./settings.js";
 import { applyTheme } from "./themes.js";
+import { locale, t } from "./i18n.js";
 
 const appearance = loadSettings();
 applyTheme(appearance.mode, appearance.theme);
@@ -51,7 +52,7 @@ const MIN_TOPUP_TWD = 300;
 const MAX_TOPUP_TWD = 3_000;
 let topupPayoutRate = 0.85;
 let topupMarginPercent = 15;
-const usdFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
+const usdFormatter = new Intl.NumberFormat(locale, { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 
 const setStatus = (message, error = false) => {
   status.textContent = message;
@@ -63,7 +64,7 @@ function setVisible(panel) {
 }
 
 function formatDate(value) {
-  return new Intl.DateTimeFormat("zh-TW", {
+  return new Intl.DateTimeFormat(locale, {
     timeZone: "Asia/Taipei",
     year: "numeric",
     month: "2-digit",
@@ -221,7 +222,7 @@ async function loadAccountData(session) {
   if (avatarUrl) {
     const image = new Image();
     image.src = avatarUrl;
-    image.alt = `${name.textContent}的會員頭像`;
+    image.alt = t("{0}的會員頭像", name.textContent);
     image.referrerPolicy = "no-referrer";
     image.addEventListener("error", () => avatar.replaceChildren(name.textContent.charAt(0)), { once: true });
     avatar.append(image);

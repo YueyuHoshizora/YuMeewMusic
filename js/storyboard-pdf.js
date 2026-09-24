@@ -1,3 +1,4 @@
+import { locale, t } from "./i18n.js";
 import { buildJpegPdf } from "./pdf-export.js";
 
 const PAGE_WIDTH = 1240;
@@ -87,7 +88,7 @@ async function resourcePreview(resource) {
 }
 
 export async function createStoryboardCardsPdf(project, generatedAt = new Date()) {
-  if (!project?.scenes?.length) throw Error("請先加入至少一張分鏡卡。");
+  if (!project?.scenes?.length) throw Error(t("請先加入至少一張分鏡卡。"));
   await document.fonts?.ready;
   const pages = [];
   let canvas;
@@ -99,7 +100,7 @@ export async function createStoryboardCardsPdf(project, generatedAt = new Date()
     canvas.width = PAGE_WIDTH;
     canvas.height = PAGE_HEIGHT;
     context = canvas.getContext("2d");
-    if (!context) throw Error("瀏覽器無法建立 PDF 畫布。");
+    if (!context) throw Error(t("瀏覽器無法建立 PDF 畫布。"));
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, PAGE_WIDTH, PAGE_HEIGHT);
     y = MARGIN;
@@ -131,7 +132,7 @@ export async function createStoryboardCardsPdf(project, generatedAt = new Date()
     ensureSpace((["image", "video"].includes(entry.kind) ? 760 : 250) + details.filter(([, value]) => value).length * 45);
     sectionHeading(entry.referenceName);
     for (const [label, value] of details) {
-      if (value) write(`${label}：${value}`, { size: 22, color: "#4d5260", indent: 18, after: 4 });
+      if (value) write(`${t(label)}${t("：")}${value}`, { size: 22, color: "#4d5260", indent: 18, after: 4 });
     }
     if (entry.meta) write(entry.meta, { size: 21, color: "#666b78", after: 14 });
     let preview = null;
@@ -151,27 +152,27 @@ export async function createStoryboardCardsPdf(project, generatedAt = new Date()
       context.fillRect(MARGIN, y, CONTENT_WIDTH, 105);
       context.fillStyle = "#5b35b1";
       context.font = `700 25px ${FONT_FAMILY}`;
-      context.fillText(entry.kind === "audio" ? "音效資源" : "此格式無法產生預覽", MARGIN + 28, y + 63);
+      context.fillText(t(entry.kind === "audio" ? "音效資源" : "此格式無法產生預覽"), MARGIN + 28, y + 63);
       y += 133;
     }
   };
 
   startPage();
-  write("影片分鏡表", { size: 48, lineHeight: 65, weight: 800, color: "#5b35b1", after: 6 });
-  write(new Intl.DateTimeFormat("zh-TW", { dateStyle: "long", timeStyle: "medium" }).format(generatedAt), { size: 20, color: "#747986", after: 30 });
+  write(t("影片分鏡表"), { size: 48, lineHeight: 65, weight: 800, color: "#5b35b1", after: 6 });
+  write(new Intl.DateTimeFormat(locale, { dateStyle: "long", timeStyle: "medium" }).format(generatedAt), { size: 20, color: "#747986", after: 30 });
   for (const scene of project.scenes) {
     sectionHeading(scene.title);
     if (scene.summary) write(scene.summary, { size: 27, weight: 700, color: "#343743", after: 12 });
     for (const [label, value] of scene.fields || []) {
       if (!value) continue;
-      write(`${label}：${value}`, { indent: 18, after: 5 });
+      write(`${t(label)}${t("：")}${value}`, { indent: 18, after: 5 });
     }
     y += 18;
   }
 
   if (project.characters?.length) {
     startPage();
-    write("引用人物", { size: 45, lineHeight: 62, weight: 800, color: "#5b35b1", after: 20 });
+    write(t("引用人物"), { size: 45, lineHeight: 62, weight: 800, color: "#5b35b1", after: 20 });
     for (const character of project.characters) {
       await mediaEntry(character, [
         ["聲線", character.voice],
@@ -184,7 +185,7 @@ export async function createStoryboardCardsPdf(project, generatedAt = new Date()
 
   if (project.resources?.length) {
     startPage();
-    write("引用資源", { size: 45, lineHeight: 62, weight: 800, color: "#5b35b1", after: 20 });
+    write(t("引用資源"), { size: 45, lineHeight: 62, weight: 800, color: "#5b35b1", after: 20 });
     for (const resource of project.resources) {
       await mediaEntry(resource);
     }
@@ -195,7 +196,7 @@ export async function createStoryboardCardsPdf(project, generatedAt = new Date()
     pageContext.font = `20px ${FONT_FAMILY}`;
     pageContext.fillStyle = "#8a8f9b";
     pageContext.textAlign = "right";
-    pageContext.fillText(`${index + 1} / ${pages.length}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 34);
+    pageContext.fillText(`${new Intl.NumberFormat(locale).format(index + 1)} / ${new Intl.NumberFormat(locale).format(pages.length)}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 34);
   });
   return buildJpegPdf(await Promise.all(pages.map(canvasJpeg)));
 }

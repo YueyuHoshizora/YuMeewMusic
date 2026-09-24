@@ -1,3 +1,4 @@
+import { locale, t } from "./i18n.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
 import { deleteStoredValue, loadStoredMedia, loadStoredValue, saveStoredMedia, saveStoredValue } from "./media-store.js";
@@ -11,7 +12,7 @@ const WORKER_URL = "https://flux-klein.plain-leaf-e871.workers.dev/generate";
 const AUTOCOMPLETE_URL = "https://flux-klein.plain-leaf-e871.workers.dev/autocomplete";
 const OPENAI_IMAGE_URL = "https://api.openai.com/v1/images/generations";
 const MODEL_PROXY_IMAGE_URL = "https://model-proxy.plain-leaf-e871.workers.dev/openai/image/generate";
-const QUOTA_MESSAGE = "今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。";
+const QUOTA_MESSAGE = t("今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試。");
 // GPT Image（Flare／Sunburst）依 token 計費，OpenAI 未公開單一官方費率表；
 // 以下為目前已知公開資訊換算的估算費率（USD／百萬 token），實際請以 OpenAI
 // 帳單為準，如有落差請調整這三個常數。
@@ -94,13 +95,13 @@ async function callOpenAiImage({ model, prompt, apiKey, width, height }) {
       headers: { "Content-Type": imageBlob.type || "image/jpeg", ...identifierHeaders, ...costHeaders },
     });
   }
-  throw Error("OpenAI 沒有回傳可用的圖片資料。");
+  throw Error(t("OpenAI 沒有回傳可用的圖片資料。"));
 }
 
 async function callOpenAiImageAccountCredits({ model, prompt, width, height }) {
   const { session, error } = await getCurrentSession();
   if (error) throw error;
-  if (!session?.access_token) throw Error("請先登入會員帳號。");
+  if (!session?.access_token) throw Error(t("請先登入會員帳號。"));
   return fetch(MODEL_PROXY_IMAGE_URL, {
     method: "POST",
     headers: {
@@ -169,8 +170,8 @@ const fullscreenElement = () => document.fullscreenElement || document.webkitFul
 function syncResultFullscreen() {
   const active = fullscreenElement() === resultFrame || resultFrame.classList.contains("fullscreen-fallback");
   resultFrame.classList.toggle("is-fullscreen", active);
-  resultFrame.setAttribute("aria-label", active ? "恢復生成結果原尺寸" : "放大生成結果至全螢幕");
-  $("result-fullscreen-hint").textContent = active ? "↙ 點擊恢復" : "⛶ 點擊全螢幕";
+  resultFrame.setAttribute("aria-label", t(active ? "恢復生成結果原尺寸" : "放大生成結果至全螢幕"));
+  $("result-fullscreen-hint").textContent = active ? t("↙ 點擊恢復") : t("⛶ 點擊全螢幕");
 }
 
 function closeFullscreenFallback() {
@@ -224,9 +225,8 @@ function localImageTaskId() {
 function renderGenerationProgress() {
   if (!generationProgress) return;
   const elapsed = Math.floor((Date.now() - generationProgress.startedAt) / 1000);
-  $("image-generation-lock-title").textContent = "圖片生成中";
-  $("image-generation-lock-detail").textContent = `${generationProgress.label}：${generationProgress.identifier} · 已執行 ${elapsed} 秒`;
-  status(`圖片生成中 · 已執行 ${elapsed} 秒`);
+  $("image-generation-lock-detail").textContent = t(`${generationProgress.label}：{0} · 已執行 {1} 秒`, generationProgress.identifier, elapsed);
+  status(t("圖片生成中 · 已執行 {0} 秒", elapsed));
 }
 
 function startGenerationProgress() {
@@ -306,8 +306,8 @@ function syncGenerationSettings({ save = true } = {}) {
   $("result-format").textContent = `${size.ratio} · JPEG`;
   const supported = sizeSupportedBySelectedModel(size);
   $("generation-size-note").textContent = supported
-    ? "輸出尺寸會依生成比例自動計算。"
-    : "Flux.2 Klein 4B 的寬高皆不可超過 1920px，請降低水平像素或調整比例。";
+    ? t("輸出尺寸會依生成比例自動計算。")
+    : t("Flux.2 Klein 4B 的寬高皆不可超過 1920px，請降低水平像素或調整比例。");
   $("generation-size-note").classList.toggle("error", !supported);
   if (save) saveGenerationSettings(size);
   syncGenerateAvailability();
@@ -331,7 +331,7 @@ function syncModelDetails() {
   const model = IMAGE_MODELS[modelId];
   const isFree = model?.apiKey === "Free";
   const storedKey = isFree ? null : getApiKey(model?.provider);
-  $("model-api-key").textContent = isFree ? "Free" : usesAccountCredits(modelId) ? (memberSignedIn ? "帳戶扣點" : "需登入") : storedKey ? "已設定" : "未設定";
+  $("model-api-key").textContent = isFree ? "Free" : usesAccountCredits(modelId) ? (memberSignedIn ? t("帳戶扣點") : t("需登入")) : storedKey ? t("已設定") : t("未設定");
   $("model-api-key").disabled = busy || isFree || !model;
   syncGenerationSettings({ save: false });
   syncGenerateAvailability();
@@ -343,11 +343,11 @@ function openApiKeyDialog() {
   if (!model || model.apiKey === "Free" || busy) return;
   const storedKey = getApiKey(model.provider);
   $("api-key-dialog-title").textContent = `${model.apiKey} API KEY`;
-  $("api-key-dialog-description").textContent = `同一服務供應商的模型會共用這把金鑰。金鑰只會保存在目前瀏覽器。`;
+  $("api-key-dialog-description").textContent = t("同一服務供應商的模型會共用這把金鑰。金鑰只會保存在目前瀏覽器。");
   $("api-key-input").value = storedKey?.value || "";
   $("api-key-account-credits").checked = memberSignedIn && usesAccountCredits(modelId);
   syncApiKeyCreditControls();
-  $("api-key-input").placeholder = storedKey ? "已載入保存的 API KEY" : "輸入 API KEY";
+  $("api-key-input").placeholder = t(storedKey ? "已載入保存的 API KEY" : "輸入 API KEY");
   $("api-key-error").hidden = true;
   $("api-key-dialog").showModal();
   ($("api-key-input").disabled ? $("api-key-account-credits") : $("api-key-input")).focus();
@@ -368,17 +368,17 @@ function submitApiKey(event) {
   const accountCredits = $("api-key-account-credits").checked;
   if (!model || model.apiKey === "Free") return;
   if (accountCredits && !memberSignedIn) {
-    $("api-key-error").textContent = "請先登入會員帳號。";
+    $("api-key-error").textContent = t("請先登入會員帳號。");
     $("api-key-error").hidden = false;
     return;
   }
   if (!accountCredits && !value) {
-    $("api-key-error").textContent = "請輸入 API KEY。";
+    $("api-key-error").textContent = t("請輸入 API KEY。");
     $("api-key-error").hidden = false;
     return;
   }
   if (!saveAccountCredits(modelId, accountCredits) || (!accountCredits && !saveApiKey(model.provider, model.apiKey, value))) {
-    $("api-key-error").textContent = "瀏覽器無法保存 API KEY。";
+    $("api-key-error").textContent = t("瀏覽器無法保存 API KEY。");
     $("api-key-error").hidden = false;
     return;
   }
@@ -408,7 +408,7 @@ function setComposing(value) {
   composing = value;
   $("prompt-keywords").disabled = value || busy;
   $("compose-prompt").disabled = value || busy || !$("prompt-keywords").value.trim();
-  $("compose-prompt").textContent = value ? "組成中…" : "組成題詞";
+  $("compose-prompt").textContent = value ? t("組成中…") : t("組成題詞");
   syncGenerateAvailability();
 }
 
@@ -425,14 +425,14 @@ function rateLimitMessage(body) {
   const retryAfter = Math.max(1, Math.ceil(Number(body.retryAfter) || 60));
   return typeof body.error === "string" && body.error.trim()
     ? body.error.trim()
-    : `操作過於頻繁，請在 ${retryAfter} 秒後再試。`;
+    : t("操作過於頻繁，請在 {0} 秒後再試。", retryAfter);
 }
 
 async function composePrompt() {
   const prompt = $("prompt-keywords").value.trim();
   if (!prompt || busy || composing) return;
   showError();
-  status("正在組成題詞…");
+  status(t("正在組成題詞…"));
   setComposing(true);
   try {
     const response = await fetch(AUTOCOMPLETE_URL, {
@@ -448,17 +448,17 @@ async function composePrompt() {
       const limitedMessage = rateLimitMessage(body);
       if (limitedMessage) throw Error(limitedMessage);
       if (isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
-      throw Error(detail || `文字補全服務回傳 ${response.status}`);
+      throw Error(detail || t("文字補全服務回傳 {0}", response.status));
     }
     const result = completedPrompt(body);
-    if (!result) throw Error("文字補全服務沒有回傳可用的題詞。");
+    if (!result) throw Error(t("文字補全服務沒有回傳可用的題詞。"));
     $("image-prompt").value = result.slice(0, 2048);
     $("image-prompt").dispatchEvent(new Event("input"));
-    status("題詞已組成，可繼續修改或直接生成圖片。", "success");
+    status(t("題詞已組成，可繼續修改或直接生成圖片。"), "success");
   } catch (error) {
-    const message = error instanceof TypeError ? "文字補全服務目前無法連線，請稍後再試。" : error.message || "題詞組成失敗。";
+    const message = error instanceof TypeError ? t("文字補全服務目前無法連線，請稍後再試。") : error.message || t("題詞組成失敗。");
     showError(message);
-    status("題詞組成失敗", "error");
+    status(t("題詞組成失敗"), "error");
   } finally {
     setComposing(false);
   }
@@ -484,10 +484,12 @@ async function displayGeneratedImage(blob, restored = false, costUsd = 0) {
   await image.decode();
   image.hidden = false;
   $("empty-result").hidden = true;
-  const costSuffix = costUsd > 0 ? ` · 本次實際使用約 US$${(Math.ceil(costUsd * 100) / 100).toFixed(2)}（估算）` : "";
-  status(`${restored ? "已載入上次生成結果" : "生成完成"} · ${image.naturalWidth} × ${image.naturalHeight}${costSuffix}`, "success");
-}
+  const costSuffix = costUsd > 0 ? t(" · 本次實際使用約 US${0}（估算）", (Math.ceil(costUsd * 100) / 100).toFixed(2)) : "";
+  status(restored
+    ? t("已載入上次生成結果 · {0} × {1}{2}", image.naturalWidth, image.naturalHeight, costSuffix)
+    : t("生成完成 · {0} × {1}{2}", image.naturalWidth, image.naturalHeight, costSuffix), "success");
 
+}
 async function restoreLastGeneratedImage() {
   try {
     const record = await loadStoredMedia("generated-image");
@@ -497,13 +499,12 @@ async function restoreLastGeneratedImage() {
     setBusy(false);
   } catch {}
 }
-
 function historyTime(value) {
-  return new Intl.DateTimeFormat("zh-TW", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(value));
+  return new Intl.DateTimeFormat(locale, { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(value));
 }
 
 function syncHistoryButton() {
-  $("open-image-history").textContent = generationHistory.length ? `生成歷史（${generationHistory.length}）` : "生成歷史";
+  $("open-image-history").textContent = generationHistory.length ? t("生成歷史（{0}）", generationHistory.length) : t("生成歷史");
   $("open-image-history").disabled = busy || !generationHistory.length;
 }
 
@@ -539,7 +540,7 @@ function releaseHistoryUrls() {
 
 async function deleteHistoryImage(id) {
   const record = generationHistory.find(item => item.id === id);
-  if (!record || !confirm(`確定刪除 ${historyTime(record.createdAt)} 的生成圖片？`)) return;
+  if (!record || !confirm(t("確定刪除 {0} 的生成圖片？", historyTime(record.createdAt)))) return;
   generationHistory = generationHistory.filter(item => item.id !== id);
   if (generationHistory.length) await saveStoredValue("image-generation-history", { items: generationHistory, updatedAt: Date.now() });
   else await deleteStoredValue("image-generation-history");
@@ -551,26 +552,26 @@ function renderImageHistory() {
   releaseHistoryUrls();
   $("image-history-list").replaceChildren(...generationHistory.map(record => {
     const card = document.createElement("article"); card.className = "image-history-card";
-    const image = document.createElement("img"); const url = URL.createObjectURL(record.blob); historyPreviewUrls.add(url); image.src = url; image.alt = record.prompt || "生成圖片";
+    const image = document.createElement("img"); const url = URL.createObjectURL(record.blob); historyPreviewUrls.add(url); image.src = url; image.alt = record.prompt || t("生成圖片");
     const info = document.createElement("div"); info.className = "image-history-card-info";
-    const title = document.createElement("strong"); title.textContent = record.modelLabel || "生成圖片";
+    const title = document.createElement("strong"); title.textContent = record.modelLabel || t("生成圖片");
     const meta = document.createElement("small"); meta.textContent = historyTime(record.createdAt);
     const identifierMeta = document.createElement("small");
     identifierMeta.textContent = record.taskId
-      ? `任務 ID：${record.taskId}`
+      ? t("任務 ID：{0}", record.taskId)
       : record.generationId
-        ? `生成 ID：${record.generationId}`
+        ? t("生成 ID：{0}", record.generationId)
         : record.requestId
-          ? `請求 ID：${record.requestId}`
+          ? t("請求 ID：{0}", record.requestId)
           : record.localTaskId
-            ? `任務 ID：${record.localTaskId}`
+            ? t("任務 ID：{0}", record.localTaskId)
             : "";
     identifierMeta.hidden = !identifierMeta.textContent;
     const prompt = document.createElement("p"); prompt.textContent = record.prompt || "";
     const actions = document.createElement("div"); actions.className = "image-history-card-actions";
-    const load = document.createElement("button"); load.type = "button"; load.textContent = "載入"; load.addEventListener("click", async () => { await displayGeneratedImage(record.blob, true); $("image-history-dialog").close(); });
-    const download = document.createElement("button"); download.type = "button"; download.textContent = "下載"; download.addEventListener("click", () => { const link = document.createElement("a"); link.href = url; link.download = imageFilename(); link.click(); });
-    const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "刪除"; remove.addEventListener("click", () => void deleteHistoryImage(record.id));
+    const load = document.createElement("button"); load.type = "button"; load.textContent = t("載入"); load.addEventListener("click", async () => { await displayGeneratedImage(record.blob, true); $("image-history-dialog").close(); });
+    const download = document.createElement("button"); download.type = "button"; download.textContent = t("下載"); download.addEventListener("click", () => { const link = document.createElement("a"); link.href = url; link.download = imageFilename(); link.click(); });
+    const remove = document.createElement("button"); remove.type = "button"; remove.textContent = t("刪除"); remove.addEventListener("click", () => void deleteHistoryImage(record.id));
     actions.append(load, download, remove); info.append(title, meta, identifierMeta, prompt, actions); card.append(image, info); return card;
   }));
 }
@@ -589,11 +590,11 @@ async function generateImage() {
   setBusy(true);
   const progress = startGenerationProgress();
   try {
-    if (!model) throw Error("找不到所選圖片模型的呼叫方式。");
+    if (!model) throw Error(t("找不到所選圖片模型的呼叫方式。"));
     const accountCredits = usesAccountCredits(modelId);
-    if (accountCredits && !memberSignedIn) throw Error("請先登入會員帳號，再使用帳戶扣點。");
+    if (accountCredits && !memberSignedIn) throw Error(t("請先登入會員帳號，再使用帳戶扣點。"));
     const apiKey = model.apiKey === "Free" || accountCredits ? "" : getApiKey(model.provider)?.value || "";
-    if (model.apiKey !== "Free" && !accountCredits && !apiKey) throw Error("請先點擊 API KEY 並輸入金鑰。");
+    if (model.apiKey !== "Free" && !accountCredits && !apiKey) throw Error(t("請先點擊 API KEY 並輸入金鑰。"));
     const { width, height } = generationSize();
     const response = await model.call({ prompt, enhance, apiKey, width, height, accountCredits });
     if (!response.ok) {
@@ -606,31 +607,31 @@ async function generateImage() {
       const limitedMessage = rateLimitMessage(errorBody);
       if (limitedMessage) throw Error(limitedMessage);
       if (model.publicResource && isQuotaError(response.status, detail)) throw Error(QUOTA_MESSAGE);
-      throw Error(detail || `圖片服務回傳 ${response.status}`);
+      throw Error(detail || t("圖片服務回傳 {0}", response.status));
     }
     const identifiers = responseGenerationIdentifiers(response.headers);
     identifiers.localTaskId = progress.localTaskId;
     updateGenerationProgress(identifiers);
     const estimatedCostUsd = Number(response.headers.get("X-YuMeew-Estimated-Cost-USD")) || 0;
     const blob = await response.blob();
-    if (!blob.type.startsWith("image/") || !blob.size) throw Error("圖片服務沒有回傳可用的圖片。");
+    if (!blob.type.startsWith("image/") || !blob.size) throw Error(t("圖片服務沒有回傳可用的圖片。"));
     const result = blob.type === "image/jpeg" ? blob : new Blob([blob], { type: blob.type });
     stopGenerationProgress();
     await displayGeneratedImage(result, false, estimatedCostUsd);
     const cachedFile = new File([result], imageFilename(), { type: result.type || "image/jpeg", lastModified: Date.now() });
-    await saveGenerationHistory(result, prompt, modelId, identifiers).catch(() => showError("圖片已生成，但無法保存生成歷史。"));
+    await saveGenerationHistory(result, prompt, modelId, identifiers).catch(() => showError(t("圖片已生成，但無法保存生成歷史。")));
     await saveStoredMedia("generated-image", cachedFile).catch(() => {
-      showError("圖片已生成，但瀏覽器無法保存最後一次生成結果。");
+      showError(t("圖片已生成，但瀏覽器無法保存最後一次生成結果。"));
     });
   } catch (error) {
     const corsHint = error instanceof TypeError
       ? model?.apiKey === "OpenAI" && !usesAccountCredits(modelId)
-        ? "目前無法從瀏覽器連線至 OpenAI Image API，請檢查網路或 API 服務狀態。"
-        : "圖片服務目前不允許 GitHub Pages 跨網域讀取，請在 Worker 回應加入 Access-Control-Allow-Origin。"
+        ? t("目前無法從瀏覽器連線至 OpenAI Image API，請檢查網路或 API 服務狀態。")
+        : t("圖片服務目前不允許 GitHub Pages 跨網域讀取，請在 Worker 回應加入 Access-Control-Allow-Origin。")
       : "";
-    const message = corsHint || error.message || "圖片生成失敗，請稍後再試。";
+    const message = corsHint || error.message || t("圖片生成失敗，請稍後再試。");
     showError(message);
-    status("圖片生成失敗", "error");
+    status(t("圖片生成失敗"), "error");
   } finally {
     stopGenerationProgress();
     setBusy(false);
@@ -645,22 +646,22 @@ function requestImageGeneration() {
   const size = generationSize();
   const accountCredits = usesAccountCredits(modelId);
   $("confirm-image-generation-message").textContent = model.publicResource
-    ? "此為公共資源，請勿濫用。是否確定開始生成？"
+    ? t("此為公共資源，請勿濫用。是否確定開始生成？")
     : accountCredits
-      ? "圖片生成費用將會從帳戶額度扣除，是否確定開始生成？"
-      : `圖片生成會消耗 ${model.apiKey} 帳戶額度，是否確定開始生成？`;
-  const estimatedFee = model.publicResource ? "Free" : accountCredits ? "帳戶扣點" : `依 ${model.apiKey} 計費`;
+      ? t("圖片生成費用將會從帳戶額度扣除，是否確定開始生成？")
+      : t("圖片生成會消耗 {0} 帳戶額度，是否確定開始生成？", model.apiKey);
+  const estimatedFee = model.publicResource ? "Free" : accountCredits ? t("帳戶扣點") : t("依 {0} 計費", model.apiKey);
   const values = [
-    ["生成模型", model.label],
-    ["生成比例", size.ratio],
-    ["輸出尺寸", `${size.width} × ${size.height}`],
-    ["生成數量", "1 張"],
-    ["題詞轉譯", $("enhance-prompt").checked ? "啟用" : "停用"],
-    ["預估費用", estimatedFee],
+    [t("生成模型"), model.label],
+    [t("生成比例"), size.ratio],
+    [t("輸出尺寸"), `${size.width} × ${size.height}`],
+    [t("生成數量"), t("1 張")],
+    [t("題詞轉譯"), $("enhance-prompt").checked ? t("啟用") : t("停用")],
+    [t("預估費用"), estimatedFee],
   ];
   $("image-generation-summary").replaceChildren(...values.map(([label, value]) => {
     const item = document.createElement("span");
-    if (label === "預估費用") {
+    if (label === t("預估費用")) {
       const fee = document.createElement("span");
       fee.className = "image-generation-estimated-fee";
       const amount = document.createElement("strong");
@@ -740,13 +741,13 @@ $("download-image").addEventListener("click", () => {
   link.href = generatedUrl;
   link.download = imageFilename();
   link.click();
-  status("圖片下載已開始。", "success");
+  status(t("圖片下載已開始。"), "success");
 });
 
 $("apply-background").addEventListener("click", async () => {
   if (!generatedBlob || busy) return;
   setBusy(true);
-  status("正在保存為主畫面背景…");
+  status(t("正在保存為主畫面背景…"));
   showError();
   try {
     const file = new File([generatedBlob], imageFilename(), { type: generatedBlob.type || "image/jpeg", lastModified: Date.now() });
@@ -754,8 +755,8 @@ $("apply-background").addEventListener("click", async () => {
     await deleteStoredValue("image-video-project").catch(() => {});
     window.location.href = "./";
   } catch (error) {
-    showError(error.message || "無法保存圖片到瀏覽器。");
-    status("背景套用失敗", "error");
+    showError(error.message || t("無法保存圖片到瀏覽器。"));
+    status(t("背景套用失敗"), "error");
     setBusy(false);
   }
 });

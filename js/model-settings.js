@@ -4,6 +4,7 @@ import { deleteAllCachedModels, deleteCachedModel, listCachedModels } from './in
 import { API_KEY_PROVIDERS, deleteApiKey, listApiKeys, maskApiKey, saveApiKey } from './api-keys.js';
 import { deleteAllStoredEntries, deleteStoredEntry, listStoredEntries } from './media-store.js';
 
+import { locale } from './i18n.js';
 const $ = id => document.getElementById(id);
 const state = { models: [], apiKeys: [], cache: [], pending: null, pendingApiKey: null, editingApiKey: null, pendingCache: null, busy: false, cacheBusy: false };
 const settings = loadSettings();
@@ -36,7 +37,9 @@ function formatBytes(bytes) {
   let amount = value;
   let unit = -1;
   do { amount /= 1024; unit += 1; } while (amount >= 1024 && unit < units.length - 1);
-  return `${amount.toFixed(amount >= 100 ? 0 : amount >= 10 ? 1 : 2)} ${units[unit]}`;
+  const digits = amount >= 100 ? 0 : amount >= 10 ? 1 : 2;
+  const formatted = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(amount);
+  return `${formatted} ${units[unit]}`;
 }
 
 function setStatus(text, kind = '') {

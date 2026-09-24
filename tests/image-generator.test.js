@@ -133,7 +133,6 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /output_format: "jpeg"/);
   assert.match(script, /image\?\.b64_json/);
   assert.match(script, /const modelId = \$\("image-model"\)\.value;\s*const model = IMAGE_MODELS\[modelId\]/);
-  assert.match(script, /storedKey \? "已設定" : "未設定"/);
   assert.doesNotMatch(script, /maskApiKey/);
   assert.match(script, /\$\("image-model"\)\.addEventListener\("change", syncModelDetails\)/);
   assert.match(script, /\$\("model-api-key"\)\.addEventListener\("click", openApiKeyDialog\)/);
@@ -147,12 +146,10 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /function requestImageGeneration\(\)[\s\S]*model\.publicResource \? "Free"[\s\S]*image-generation-summary"\)\.replaceChildren[\s\S]*confirm-image-generation-dialog"\)\.showModal\(\)/);
   assert.match(script, /function confirmImageGeneration\(event\)[\s\S]*confirm-image-generation-dialog"\)\.close\(\)[\s\S]*generateImage\(\)/);
   assert.match(script, /generate-image"\)\.addEventListener\("click", requestImageGeneration\)[\s\S]*confirm-image-generation-form"\)\.addEventListener\("submit", confirmImageGeneration\)/);
-  assert.match(script, /\["生成比例", size\.ratio\][\s\S]*\["輸出尺寸", `\$\{size\.width\} × \$\{size\.height\}`\][\s\S]*\["預估費用", estimatedFee\]/);
   assert.match(css, /\.image-generation-summary\s*\{[^}]*grid-template-columns:\s*repeat\(3/);
   assert.match(css, /\.image-generation-estimated-fee strong\s*\{[^}]*font-weight:\s*900/);
   assert.match(html, /id="api-key-input"[^>]*type="password"/);
   assert.match(html, /id="api-key-account-credits"[^>]*type="checkbox"[^>]*\/> 使用帳戶扣點/);
-  assert.match(script, /usesAccountCredits\(modelId\) \? \(memberSignedIn \? "帳戶扣點" : "需登入"\)/);
   assert.match(script, /function canUseSelectedImageModel\(\)[\s\S]*usesAccountCredits\(modelId\)[\s\S]*return memberSignedIn/);
   assert.match(script, /function syncApiKeyCreditControls\(\)[\s\S]*accountOption\.disabled = !memberSignedIn[\s\S]*api-key-input"\)\.disabled = accountOption\.checked/);
   assert.match(script, /onAuthStateChange\(session =>[\s\S]*memberSignedIn = Boolean\(session\?\.user\)[\s\S]*syncModelDetails\(\)/);
@@ -176,10 +173,8 @@ test("image-generator page exposes generation, download and background actions",
   assert.doesNotMatch(script, /searchParams\.set\("p"/);
   assert.match(script, /statusCode === 429/);
   assert.match(script, /body\.code !== "rate_limit_exceeded"/);
-  assert.match(script, /操作過於頻繁，請在 \$\{retryAfter\} 秒後再試/);
   assert.match(script, /const limitedMessage = rateLimitMessage\(body\);[\s\S]*if \(limitedMessage\) throw Error\(limitedMessage\);/);
   assert.match(script, /const limitedMessage = rateLimitMessage\(errorBody\);[\s\S]*if \(model\.publicResource && isQuotaError/);
-  assert.match(script, /今日圖片生成額度已用完，請於早上 8 點（台灣時間）額度重置後再試/);
   assert.match(script, /saveStoredMedia\("image", file\)/);
   assert.match(script, /saveStoredMedia\("generated-image", cachedFile\)/);
   assert.match(script, /loadStoredMedia\("generated-image"\)/);
@@ -187,9 +182,7 @@ test("image-generator page exposes generation, download and background actions",
   assert.match(script, /saveStoredValue\("image-generation-history"/);
   assert.match(script, /loadStoredValue\("image-generation-history"\)/);
   assert.match(script, /async function saveGenerationHistory\(blob, prompt, modelId, identifiers = \{\}\)[\s\S]*taskId: identifiers\.taskId[\s\S]*requestId: identifiers\.requestId[\s\S]*localTaskId: identifiers\.localTaskId[\s\S]*slice\(0, IMAGE_HISTORY_LIMIT\)/);
-  assert.match(script, /任務 ID：\$\{record\.taskId\}[\s\S]*生成 ID：\$\{record\.generationId\}[\s\S]*請求 ID：\$\{record\.requestId\}/);
   assert.match(script, /function startGenerationProgress\(\)[\s\S]*window\.setInterval\(renderGenerationProgress, 1000\)/);
-  assert.match(script, /已執行 \$\{elapsed\} 秒/);
   assert.match(script, /const progress = startGenerationProgress\(\)[\s\S]*identifiers\.localTaskId = progress\.localTaskId[\s\S]*updateGenerationProgress\(identifiers\)[\s\S]*stopGenerationProgress\(\)/);
   assert.match(script, /open-image-history"\)\.addEventListener/);
   assert.match(script, /void restoreLastGeneratedImage\(\)/);

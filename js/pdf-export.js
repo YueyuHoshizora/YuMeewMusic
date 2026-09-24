@@ -1,3 +1,4 @@
+import { locale, t } from "./i18n.js";
 const encoder = new TextEncoder();
 const A4_WIDTH = 595.28;
 const A4_HEIGHT = 841.89;
@@ -18,7 +19,7 @@ function joinBytes(chunks) {
 }
 
 export function buildJpegPdf(pages) {
-  if (!Array.isArray(pages) || !pages.length) throw Error("PDF 至少需要一頁內容。");
+  if (!Array.isArray(pages) || !pages.length) throw Error(t("PDF 至少需要一頁內容。"));
   const objects = new Map();
   const pageIds = pages.map((_, index) => 3 + index * 3);
   objects.set(1, textBytes("<< /Type /Catalog /Pages 2 0 R >>"));
@@ -63,7 +64,7 @@ export function buildJpegPdf(pages) {
 function canvasJpeg(canvas) {
   return new Promise((resolve, reject) => {
     canvas.toBlob(async blob => {
-      if (!blob) return reject(Error("瀏覽器無法建立 PDF 頁面。"));
+      if (!blob) return reject(Error(t("瀏覽器無法建立 PDF 頁面。")));
       resolve({ width: canvas.width, height: canvas.height, bytes: new Uint8Array(await blob.arrayBuffer()) });
     }, "image/jpeg", 0.92);
   });
@@ -106,7 +107,7 @@ export async function createStoryboardReportPdf(report, generatedAt = new Date()
     canvas.width = width;
     canvas.height = height;
     context = canvas.getContext("2d");
-    if (!context) throw Error("瀏覽器無法建立 PDF 畫布。");
+    if (!context) throw Error(t("瀏覽器無法建立 PDF 畫布。"));
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, width, height);
     y = margin;
@@ -137,46 +138,47 @@ export async function createStoryboardReportPdf(report, generatedAt = new Date()
   };
 
   startPage();
-  write("AI 分鏡分析報告", { size: 48, lineHeight: 64, weight: 800, color: "#5b35b1", after: 8 });
-  write(new Intl.DateTimeFormat("zh-TW", { dateStyle: "long", timeStyle: "medium" }).format(generatedAt), { size: 21, color: "#6b7280", after: 28 });
-  write(`${Math.round(Number(report.overall_score))} 分 · ${{ pass: "可直接生成", needs_revision: "建議修改", fail: "需要重整" }[report.status] || "分析完成"}`, { size: 36, lineHeight: 52, weight: 800, color: "#5b35b1", after: 12 });
+  write(t("AI 分鏡分析報告"), { size: 48, lineHeight: 64, weight: 800, color: "#5b35b1", after: 8 });
+  write(new Intl.DateTimeFormat(locale, { dateStyle: "long", timeStyle: "medium" }).format(generatedAt), { size: 21, color: "#6b7280", after: 28 });
+  const status = { pass: "可直接生成", needs_revision: "建議修改", fail: "需要重整" }[report.status] || "分析完成";
+  write(`${new Intl.NumberFormat(locale).format(Math.round(Number(report.overall_score)))} ${t("分")} · ${t(status)}`, { size: 36, lineHeight: 52, weight: 800, color: "#5b35b1", after: 12 });
   write(report.summary, { size: 29, lineHeight: 44, after: 24 });
 
   if (report.strengths?.length) {
-    heading("做得好的地方");
+    heading(t("做得好的地方"));
     bulletList(report.strengths);
   }
   if (report.problems?.length) {
-    heading("需要處理的問題");
+    heading(t("需要處理的問題"));
     for (const problem of report.problems) {
-      const related = problem.related_scene === null || problem.related_scene === undefined ? "" : ` ↔ Scene ${problem.related_scene}`;
-      write(`Scene ${problem.scene}${related} · ${problem.severity || "提醒"}`, { weight: 700, color: "#9f1239", after: 3 });
+      const related = problem.related_scene === null || problem.related_scene === undefined ? "" : ` ${t("↔ Scene {0}", problem.related_scene)}`;
+      write(`${t("Scene {0}", problem.scene)}${related} · ${problem.severity || t("提醒")}`, { weight: 700, color: "#9f1239", after: 3 });
       write(problem.message, { indent: 16, after: 2 });
-      if (problem.suggestion) write(`建議：${problem.suggestion}`, { size: 24, lineHeight: 37, color: "#4b5563", indent: 16, after: 13 });
+      if (problem.suggestion) write(t("建議：{0}", problem.suggestion), { size: 24, lineHeight: 37, color: "#4b5563", indent: 16, after: 13 });
     }
   }
   if (report.scene_reviews?.length) {
-    heading("逐鏡分析");
+    heading(t("逐鏡分析"));
     for (const review of report.scene_reviews) {
-      write(`Scene ${review.scene} · ${review.score ?? "—"} 分`, { weight: 700, color: "#5b35b1", after: 3 });
-      write(`連續性：${review.continuity || "未說明"}`, { indent: 16, after: 1 });
-      write(`鏡頭：${review.camera || "未說明"}`, { indent: 16, after: 1 });
-      write(`時間：${review.timing || "未說明"}`, { indent: 16, after: 1 });
-      write(`生成穩定性：${review.ai_generation || "未說明"}`, { indent: 16, after: 13 });
+      write(t("Scene {0} · {1} 分", review.scene, review.score === null || review.score === undefined ? "—" : new Intl.NumberFormat(locale).format(review.score)), { weight: 700, color: "#5b35b1", after: 3 });
+      write(review.continuity ? t("連續性：{0}", review.continuity) : t("連續性：未說明"), { indent: 16, after: 1 });
+      write(review.camera ? t("鏡頭：{0}", review.camera) : t("鏡頭：未說明"), { indent: 16, after: 1 });
+      write(review.timing ? t("時間：{0}", review.timing) : t("時間：未說明"), { indent: 16, after: 1 });
+      write(review.ai_generation ? t("生成穩定性：{0}", review.ai_generation) : t("生成穩定性：未說明"), { indent: 16, after: 13 });
     }
   }
   if (report.corrected_scenes?.length) {
-    heading("修正版分鏡");
+    heading(t("修正版分鏡"));
     for (const scene of report.corrected_scenes) {
-      const duration = scene.duration === null || scene.duration === undefined ? "" : ` · ${scene.duration} 秒`;
+      const duration = scene.duration === null || scene.duration === undefined ? "" : t(" · {0} 秒", new Intl.NumberFormat(locale).format(scene.duration));
       const camera = [scene.shot, scene.camera].filter(Boolean).join("／");
-      write(`Scene ${scene.id}${duration}${camera ? ` · ${camera}` : ""}`, { weight: 700, color: "#5b35b1", after: 3 });
+      write(`${t("Scene {0}", scene.id)}${duration}${camera ? ` · ${camera}` : ""}`, { weight: 700, color: "#5b35b1", after: 3 });
       write(scene.description, { indent: 16, after: 2 });
-      if (scene.reason) write(`原因：${scene.reason}`, { size: 24, lineHeight: 37, color: "#4b5563", indent: 16, after: 13 });
+      if (scene.reason) write(t("原因：{0}", scene.reason), { size: 24, lineHeight: 37, color: "#4b5563", indent: 16, after: 13 });
     }
   }
   if (report.generation_advice?.length) {
-    heading("生成建議");
+    heading(t("生成建議"));
     bulletList(report.generation_advice);
   }
 
@@ -185,7 +187,7 @@ export async function createStoryboardReportPdf(report, generatedAt = new Date()
     pageContext.font = '20px -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif';
     pageContext.fillStyle = "#8a8f9b";
     pageContext.textAlign = "right";
-    pageContext.fillText(`${index + 1} / ${canvases.length}`, width - margin, height - 38);
+    pageContext.fillText(`${new Intl.NumberFormat(locale).format(index + 1)} / ${new Intl.NumberFormat(locale).format(canvases.length)}`, width - margin, height - 38);
   });
   return buildJpegPdf(await Promise.all(canvases.map(canvasJpeg)));
 }

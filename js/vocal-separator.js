@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { SEPARATOR_EQ_PROFILE } from "./audio-eq.js";
 import { applyTheme } from "./themes.js";
 import { loadSettings } from "./settings.js";
@@ -256,15 +257,15 @@ function setupSeparatedPlayback(duration) {
   pauseSeparatedPlayback();
   for (const track of TRACK_NAMES) drawTrackSpectrum(track);
 }
-
 function showError(text = "") {
-  $("separator-error").textContent = text;
+  const translated = t(text);
+  $("separator-error").textContent = translated;
   $("separator-error").hidden = !text;
   $("separator-drop").classList.toggle("invalid", Boolean(text));
   $("separator-engine").classList.toggle("error", Boolean(text));
   if (text) {
-    $("separator-engine").textContent = "無法處理";
-    $("separator-status").textContent = text;
+    $("separator-engine").textContent = t("無法處理");
+    $("separator-status").textContent = translated;
   }
 }
 
@@ -345,7 +346,7 @@ async function loadFile(file) {
     sourceFile = file;
     decodedBuffer = buffer;
     $("separator-duration").textContent = formatTime(buffer.duration);
-    $("separator-channels").textContent = buffer.numberOfChannels === 1 ? "單聲道（將轉為雙聲道）" : `${buffer.numberOfChannels} 聲道（使用前兩聲道）`;
+    $("separator-channels").textContent = buffer.numberOfChannels === 1 ? t("單聲道（將轉為雙聲道）") : t("{0} 聲道（使用前兩聲道）", buffer.numberOfChannels);
     $("separator-size").textContent = formatBytes(file.size);
     $("separator-file-info").hidden = false;
     $("separator-file-help").textContent = "點擊可更換音樂";
@@ -355,8 +356,8 @@ async function loadFile(file) {
     $("separator-start").disabled = false;
     $("separator-status").textContent = modelReady
       ? "準備完成；AI 模型仍在記憶體中，可直接開始分離。"
-      : `準備完成；開始後將下載約 ${selectedModelSize()} MB 的模型。`;
-    $("separator-engine").textContent = navigator.gpu ? "WebGPU 可用" : "WASM CPU 模式";
+      : t("準備完成；開始後將下載約 {0} MB 的模型。", selectedModelSize());
+    $("separator-engine").textContent = navigator.gpu ? t("WebGPU 可用") : t("WASM CPU 模式");
   } catch (error) {
     $("separator-file-help").textContent = "MP3 · WAV · M4A · FLAC · 150 MB 以內";
     showError(error?.message || "無法解碼這個音樂檔案。");
@@ -370,7 +371,7 @@ async function restoreMainAudio() {
     const record = await loadStoredMedia("audio");
     if (record) await loadFile(unpackStoredMedia(record));
   } catch (error) {
-    $("separator-status").textContent = `無法帶入主畫面音樂：${error.message}`;
+    $("separator-status").textContent = t("無法帶入主畫面音樂：{0}", error.message);
   }
 }
 
@@ -385,7 +386,7 @@ async function startSeparation() {
   $("separator-start").textContent = "正在準備…";
   $("separator-status").textContent = modelReady
     ? "正在準備音訊並沿用已載入的 AI 模型…"
-    : `正在準備音訊與約 ${selectedModelSize()} MB 的 AI 模型…`;
+    : t("正在準備音訊與約 {0} MB 的 AI 模型…", selectedModelSize());
   try {
     if (!decodedBuffer) decodedBuffer = await decodeFile(sourceFile);
     const left = Float32Array.from(decodedBuffer.getChannelData(0));
@@ -401,28 +402,39 @@ async function startSeparation() {
     finishWithError(error?.message || "無法開始人聲分離。");
   }
 }
+function translateSeparationProgress(text) {
+  const match = /^正在分離 (\d+)／(\d+) · (首次推論完成，正在估算|預估剩餘 (\d+) 秒) · 本段 ([\d.]+) 秒$/.exec(text);
+  if (!match) return t(text);
+  const estimate = match[4]
+    ? t("預估剩餘 {0} 秒", match[4])
+    : t("首次推論完成，正在估算");
+  return t("正在分離 {0}／{1} · {2} · 本段 {3} 秒", match[1], match[2], estimate, match[5]);
+}
+
 
 function handleWorkerMessage(event) {
   const data = event.data || {};
   if (data.type === "gpu-fallback") {
-    $("separator-gpu-diagnostic").textContent = `改用 CPU 的原因：${data.text}`;
+    const gpuFailure = /^GPU (.+)：(.+)$/.exec(data.text);
+    $("separator-gpu-diagnostic").textContent = gpuFailure
+      ? t("GPU {0}：{1}", t(gpuFailure[1]), gpuFailure[2])
+      : t(data.text);
     $("separator-gpu-diagnostic").hidden = false;
     return;
   }
-  if (data.provider) $("separator-engine").textContent = data.provider === "webgpu" ? "WebGPU GPU 加速（FP32）" : "WASM CPU 模式";
+  if (data.provider) $("separator-engine").textContent = data.provider === "webgpu" ? t("WebGPU GPU 加速（FP32）") : t("WASM CPU 模式");
   if (data.type === "status") {
-    $("separator-status").textContent = data.text;
+    $("separator-status").textContent = t(data.text);
     return;
   }
   if (data.type === "progress") {
-    modelReady = true;
     $("separator-progress").value = data.value;
-    $("separator-start").textContent = `正在分離 ${data.value}%`;
-    $("separator-status").textContent = data.text;
+    $("separator-start").textContent = t("正在分離 {0}%", data.value);
+    $("separator-status").textContent = translateSeparationProgress(data.text);
     return;
   }
   if (data.type === "error") {
-    finishWithError(/fetch|network|load/i.test(data.text) ? "無法下載 AI 模型，請檢查網路後再試。" : data.text);
+    finishWithError(/fetch|network|load/i.test(data.text) ? "無法下載 AI 模型，請檢查網路後再試。" : t(data.text));
     return;
   }
   if (data.type !== "complete") return;
@@ -490,12 +502,12 @@ function handleAutotuneMessage(event) {
   if (data.type === "progress") {
     $("autotune-progress").value = data.value;
     $("autotune-status").textContent = data.value < 35
-      ? `正在偵測音高 ${data.value}%`
-      : `正在校正人聲 ${data.value}%`;
+      ? t("正在偵測音高 {0}%", data.value)
+      : t("正在校正人聲 {0}%", data.value);
     return;
   }
   if (data.type === "error") {
-    finishAutotuneWithError(data.text);
+    finishAutotuneWithError(t(data.text));
     return;
   }
   if (data.type !== "complete") return;
@@ -590,8 +602,8 @@ function setMixBusy(value) {
 function createAdjustedMix() {
   return mixSeparatedWav(vocalsBlob, instrumentalBlob, trackSettings, (fraction, pass) => {
     const progress = Math.round((pass * 0.5 + fraction * 0.5) * 100);
-    $("download-mix").textContent = `正在混合 ${progress}%`;
-    $("apply-mix-main").textContent = `正在混合 ${progress}%`;
+    $("download-mix").textContent = t("正在混合 {0}%", progress);
+    $("apply-mix-main").textContent = t("正在混合 {0}%", progress);
   });
 }
 
@@ -639,7 +651,7 @@ $("separator-model").addEventListener("change", () => {
   $("separator-model-help").textContent = light
     ? "優先縮短處理時間；人聲可能殘留較多伴奏。所有音訊仍在瀏覽器處理。"
     : "保留原本高品質模型，處理時間較長。";
-  $("separator-status").textContent = `已切換模型；首次下載約 ${selectedModelSize()} MB。`;
+  $("separator-status").textContent = t("已切換模型；首次下載約 {0} MB。", selectedModelSize());
 });
 $("separator-start").addEventListener("click", startSeparation);
 $("separator-cancel").addEventListener("click", cancel);

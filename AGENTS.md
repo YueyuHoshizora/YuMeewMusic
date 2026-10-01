@@ -73,6 +73,7 @@ YuMeew Music Studio 是一個**純前端**的瀏覽器音樂視覺化工作室�
 ├── suno-tool.html             # Suno 工具
 ├── ai-mastering.html          # AI 母帶
 ├── settings.html              # 設定與快取管理
+├── privacy.html               # 隱私權政策（靜態頁，內容同步 PRIVACY-POLICY.md）
 ├── css/                       # 頁面樣式（跟 html/js 同名三胞胎，見下方架構慣例）
 ├── js/                        # UI、DSP、Canvas 與編碼邏輯（見下方模組地圖）
 ├── vendor/                    # 隨網站提供的瀏覽器套件與授權

@@ -1,0 +1,20 @@
+.privacy-main { max-width: 920px; padding-top: 34px; padding-bottom: 60px; }
+.privacy-article { padding: 34px 40px; line-height: 1.8; font-size: 15px; }
+.privacy-article h1 { margin: 6px 0 4px; }
+.privacy-article h2 { margin: 36px 0 12px; padding-top: 18px; border-top: 1px solid var(--border); font-size: 20px; }
+.privacy-article h3 { margin: 22px 0 8px; font-size: 16px; }
+.privacy-article p, .privacy-article li { color: var(--foreground); }
+.privacy-article ul, .privacy-article ol { padding-left: 1.4em; }
+.privacy-article a { color: var(--primary-text); }
+.privacy-article section { scroll-margin-top: 20px; }
+.privacy-updated { color: var(--muted); font-size: 13px; }
+.privacy-toc { margin: 22px 0; padding: 14px 20px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.privacy-toc ol { margin: 0; columns: 2; }
+.privacy-table-wrap { overflow-x: auto; }
+.privacy-article table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.privacy-article th, .privacy-article td { padding: 10px 12px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+.privacy-article th { background: var(--surface); }
+@media (max-width: 640px) {
+  .privacy-article { padding: 22px 18px; }
+  .privacy-toc ol { columns: 1; }
+}

@@ -233,6 +233,7 @@ npm run preview  # 預覽 dist/
 ├── music-rating.html          # 歌曲評分
 ├── suno-tool.html             # Suno 工具
 ├── settings.html              # 設定與快取管理
+├── privacy.html               # 隱私權政策（靜態頁，內容同步 PRIVACY-POLICY.md）
 ├── css/                       # 頁面樣式
 ├── js/                        # UI、DSP、Canvas 與編碼邏輯
 ├── vendor/                    # 隨網站提供的瀏覽器套件與授權

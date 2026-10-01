@@ -1,6 +1,6 @@
 const CACHE_NAME = "yumeew-static-__BUILD_VERSION__";
 const STATIC_DESTINATIONS = new Set(["style", "script", "font", "image", "worker", "manifest"]);
-const NAVIGABLE_PATHS = new Set(["/", "/index.html", "/account.html", "/settings.html", "/subtitle-editor.html", "/converter.html", "/video-editor.html", "/image-video.html", "/vocal-separator.html", "/music-rating.html", "/suno-tool.html", "/image-generator.html", "/video-generator.html", "/ai-mastering.html"]);
+const NAVIGABLE_PATHS = new Set(["/", "/index.html", "/account.html", "/settings.html", "/privacy.html", "/subtitle-editor.html", "/converter.html", "/video-editor.html", "/image-video.html", "/vocal-separator.html", "/music-rating.html", "/suno-tool.html", "/image-generator.html", "/video-generator.html", "/ai-mastering.html"]);
 
 function isMusicRatingPage(url) {
   return url.pathname.endsWith("/music-rating.html");
